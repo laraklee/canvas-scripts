@@ -1,0 +1,23 @@
+#!/bin/sh
+# Runs automatically before every `git commit`. Blocks the commit if a secret
+# or a must-fix standards problem is in the files being committed.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks is not installed, so the commit is blocked. See SETUP.md."
+  exit 1
+fi
+
+echo "pre-commit: scanning staged changes for secrets..."
+if ! gitleaks git --pre-commit --staged --config .gitleaks.toml --redact --no-banner -v; then
+  echo "pre-commit: SECRET FOUND. Commit blocked. Remove it, and revoke the token in Canvas."
+  exit 1
+fi
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(js|gs|json|csv|xlsx?|tsv)$')
+if [ -n "$STAGED" ]; then
+  echo "pre-commit: checking project standards..."
+  # shellcheck disable=SC2086
+  node scripts/check-standards.js $STAGED || { echo "pre-commit: must-fix issues found. Commit blocked."; exit 1; }
+fi
+exit 0

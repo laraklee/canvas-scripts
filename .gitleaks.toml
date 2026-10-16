@@ -1,0 +1,11 @@
+# gitleaks settings: the built-in rules plus one for Canvas API tokens.
+title = "canvas-scripts"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "canvas-api-token"
+description = "Canvas LMS API access token (format: <digits>~<long random string>)"
+regex = '''\b\d{1,6}~[A-Za-z0-9]{30,}\b'''
+keywords = ["~"]

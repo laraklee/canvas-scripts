@@ -1,0 +1,13 @@
+{
+  "name": "canvas-scripts",
+  "private": true,
+  "description": "Lara's Google Apps Script projects for the Canvas API, with shared security standards.",
+  "scripts": {
+    "scan": "bash scripts/scan.sh",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "eslint": "^10.12.0",
+    "eslint-plugin-security": "^4.2.0"
+  }
+}

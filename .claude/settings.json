@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "defaultMode": "default",
+    "deny": [
+      "Read(~/.clasprc.json)",
+      "Read(**/.clasprc.json)",
+      "Read(**/.env)",
+      "Read(**/*.csv)",
+      "Read(**/*.xlsx)",
+      "Read(**/*.xls)",
+      "Bash(sudo *)"
+    ],
+    "ask": [
+      "Bash(clasp push *)",
+      "Bash(clasp deploy *)",
+      "Bash(clasp undeploy *)",
+      "Bash(clasp delete *)",
+      "Bash(npx clasp *)",
+      "Bash(git push *)",
+      "Bash(npm install *)",
+      "Bash(curl *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/after-edit.js\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

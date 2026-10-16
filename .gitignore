@@ -1,0 +1,17 @@
+# Credentials: never commit
+.clasprc.json
+.env
+*.pem
+*.key
+
+# Student data exports: never store in this folder
+*.csv
+*.tsv
+*.xlsx
+*.xls
+exports/
+
+# Tools and system files
+node_modules/
+.DS_Store
+.claude/settings.local.json
