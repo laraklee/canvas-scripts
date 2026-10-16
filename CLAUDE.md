@@ -71,5 +71,8 @@ reviewable steps over large multi-file changes.
 
 - Work inside one project subfolder at a time.
 - Commit small, focused changes with clear messages.
-- To publish changes to Google: show the diff, confirm with Lara, then `clasp push`
-  from that project's folder.
+- To publish changes to Google: show the diff, commit, confirm with Lara, then
+  `clasp push` from that project's folder. Always commit before `clasp push` so the
+  change can be undone.
+- If testing in Google fails: fix it and commit again, or `git revert` the commit.
+  Then `clasp push` again (after confirming with Lara) so Google matches.

@@ -49,11 +49,13 @@ backup) are copies of it.
    ("Sync from Google").
 3. **Make the change in Claude Code.** Describe what you want, read the diff, and let
    the automatic scan run.
-4. **Test it in Google.** Approve `clasp push`, then run it from the Sheet. Test anything
-   that writes to Canvas in a sandbox course first.
-5. **Save it.**
-   - Works: "Commit this." At the end of the session: "Push to GitHub."
-   - Doesn't work: "Undo that change." Git goes back to the last good version.
+4. **Commit, then test it in Google.** "Commit this" first, so you can undo it. Then
+   approve `clasp push` and run it from the Sheet. Test anything that writes to Canvas
+   in a sandbox course first.
+5. **Keep it or undo it.**
+   - Works: you're done. At the end of the session: "Push to GitHub."
+   - Doesn't work: fix it and commit again, or "Revert that commit." Git goes back to
+     the last good version. Then `clasp push` again so Google matches.
 
 ### The one rule
 
