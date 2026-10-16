@@ -37,12 +37,44 @@ still works until it's revoked.
 
 ## Daily use
 
-- `cd ~/code/canvas-scripts && claude` starts a session with the standards loaded.
-  Always start from this folder, not a project subfolder, so the settings and hooks apply.
+The copy on your Mac is the main version. Google (the live script) and GitHub (the
+backup) are copies of it.
+
+### The everyday loop
+
+1. **Start.** Run `cd ~/code/canvas-scripts && claude`. Always start from this folder,
+   not a project subfolder, so the settings and hooks apply.
+2. **Sync first, if needed.** If you edited the script in Google's browser editor since
+   last time, ask Claude to run `clasp pull` in that project's folder and commit
+   ("Sync from Google").
+3. **Make the change in Claude Code.** Describe what you want, read the diff, and let
+   the automatic scan run.
+4. **Test it in Google.** Approve `clasp push`, then run it from the Sheet. Test anything
+   that writes to Canvas in a sandbox course first.
+5. **Save it.**
+   - Works: "Commit this." At the end of the session: "Push to GitHub."
+   - Doesn't work: "Undo that change." Git goes back to the last good version.
+
+### The one rule
+
+**Don't edit in two places between syncs.** If you fix something in the browser editor
+and then `clasp push` from the Mac without pulling first, the browser edit is
+overwritten. Quick browser fixes are fine: just `clasp pull` and commit next time.
+
+### Where each tool fits
+
+| Tool | Use it for |
+|---|---|
+| Claude Code | Writing and changing code, reviews, scans, commits |
+| Google's script editor | Running and testing, logs, Script Properties, emergency fixes |
+| GitHub (private) | Backup, browsable history, getting the code onto another computer |
+| Claude (Cowork) | Planning, questions, privacy and design decisions |
+
+### Handy commands
+
 - `npm run scan` scans everything. `bash scripts/scan.sh course-manager` scans one project.
-- `/clear` between tasks.
-- **Before `clasp push`:** read the diff, check that the scan passes, and commit first,
-  so you can undo it.
+- `/clear` in Claude Code between tasks.
+- Use one Claude Code session at a time in this folder.
 
 ## Adding another Apps Script project
 
