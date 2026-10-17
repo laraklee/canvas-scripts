@@ -59,16 +59,22 @@ sheet's name, so keep it exactly).
 **Keep every cell in its legacy position at first**, because sheet formulas point at
 them. Add named ranges now; Lara will rearrange the layout only after everything is ported.
 
-| Name | Legacy cell | Notes |
+These twelve names match the Sheet's Named ranges panel exactly. All are on `ref_Config`.
+
+| Name | Cell | Notes |
 |---|---|---|
-| `cfg_CourseID` | B4 | Used by nearly every tool and by formulas on about 7 tool tabs |
-| `cfg_CourseName` | C4 | Formula (lookup in `CourseIDs`), shown on tool tabs |
 | `cfg_UserID` | B3 | Keep. Lara uses it in batch email and API-by-row |
-| `cfg_CcEmail` | B5 | Keep. Same tools as above |
-| `cfg_SheetID` | B6 | Auto-written by the full data refresh; the Home index formula reads it |
+| `cfg_CourseID` | B4 | Used by nearly every tool and by formulas on about 7 tool tabs |
+| `cfg_CcEmail` | B5 | Keep. Same tools as `cfg_UserID` |
+| `cfg_ThisSheetID` | B6 | Auto-written by the full data refresh; the Home index formula reads it |
 | `cfg_MasterCalendarDocID` | D3 | Read by the `ref_simpleSchedule` formula (IMPORTRANGE) |
 | `cfg_SchoolYearTab` | D5 | Same formula |
-| `cfg_TimeSchoolStart`, `cfg_TimeSchoolEnd`, `cfg_TimeAfterSchool`, `cfg_TimeNight` | B14:B17 | Due-time dropdown choices, 24-hour values |
+| `cfg_TimeSchoolStart` | B14 | Due-time dropdown choice, 24-hour value |
+| `cfg_TimeSchoolEnd` | B15 | Due-time dropdown choice, 24-hour value |
+| `cfg_TimeAfterSchool` | B16 | Due-time dropdown choice, 24-hour value |
+| `cfg_TimeNight` | B17 | Due-time dropdown choice, 24-hour value |
+| `cfg_JupiterCategories` | G:I | Whole columns, including the header row (G = Canvas category, H = export checkbox, I = Canvas group ID) |
+| `cfg_CourseName` | C4 | Formula (lookup in `CourseIDs`), shown on tool tabs |
 
 Other items:
 
@@ -76,9 +82,9 @@ Other items:
 - **Canvas token** moves to User Properties (`CANVAS_TOKEN`), per `CLAUDE.md`. The legacy
   code kept it in User Properties as `CANVAS_API_KEY`. Never in Config, never in Script
   Properties.
-- **Jupiter categories** (legacy G:I; H = Lara's checkboxes, I = group IDs; rebuilt from
-  Canvas by `refreshJupiterCategories`, which preserves the checkmarks). Undecided
-  whether this becomes its own sheet. Decide when the Jupiter tools are ported.
+- **Jupiter categories** stay on `ref_Config` as `cfg_JupiterCategories` (G:I; H = Lara's
+  checkboxes, I = group IDs; rebuilt from Canvas by `refreshJupiterCategories`, which
+  preserves the checkmarks).
 - **Seating chart** (legacy B7 and A8:C11). Port only if Lara confirms she uses it; B7 is
   empty in the current workbook.
 - **Period Pairs** (legacy F2:F5). No reader found in code or formulas. Ask Lara.
@@ -138,4 +144,3 @@ show a review summary, wait for approval, commit.
 - What consumes the time-dropdown values (see duplicates above)?
 - Does Lara use the seating-chart tool? What are Period Pairs for?
 - Should `CourseIDs` become `ref_CourseIDs`?
-- Jupiter categories: own sheet or stay with Config?
