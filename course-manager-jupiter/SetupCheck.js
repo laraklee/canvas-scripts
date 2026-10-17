@@ -17,6 +17,7 @@
 function onOpen() {
   const menu = SpreadsheetApp.getUi().createMenu('Course Manager');
   addSetupMenuItems_(menu);
+  addCredentialsMenuItems_(menu);
   menu.addToUi();
 
   try {
