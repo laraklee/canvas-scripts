@@ -74,6 +74,9 @@ reviewable steps over large multi-file changes.
 ## Workflow
 
 - Work inside one project subfolder at a time.
+- Before working in a project folder, read its `BRIEF.md` if it has one. The brief
+  adds project-specific rules and decisions; if it ever conflicts with this file,
+  this file wins.
 - Commit small, focused changes with clear messages.
 - To publish changes to Google: show the diff, commit, confirm with Lara, then
   `clasp push` from that project's folder. Always commit before `clasp push` so the
