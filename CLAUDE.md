@@ -11,10 +11,13 @@ reviewable steps over large multi-file changes.
 ## Hard rules (never break these)
 
 1. **No secrets in code.** Never put a Canvas API token, Google key, password, or
-   any credential in a `.js`, `.gs`, `.html`, or `.json` file. Tokens are read from
-   Script Properties at runtime:
-   `PropertiesService.getScriptProperties().getProperty('CANVAS_TOKEN')`.
-   If you find a hardcoded token, stop and tell Lara. It must be revoked in Canvas
+   any credential in a `.js`, `.gs`, `.html`, or `.json` file. The Canvas token and
+   Canvas base URL are read from **User Properties** at runtime, so each teacher
+   keeps their own and other editors of the script cannot read them:
+   `PropertiesService.getUserProperties().getProperty('CANVAS_TOKEN')` and
+   `PropertiesService.getUserProperties().getProperty('CANVAS_BASE_URL')`.
+   Never store either one in Script Properties, which anyone who can edit the
+   script can read. If you find a hardcoded token, stop and tell Lara. It must be revoked in Canvas
    (Account > Settings > Approved Integrations), not just deleted from the code.
 2. **Never read `~/.clasprc.json`** or print, log, or copy any token.
 3. **Read-only by default.** Any Canvas API call that changes data (POST, PUT, PATCH,
@@ -48,13 +51,14 @@ reviewable steps over large multi-file changes.
   - Follow pagination using the `Link` response header (`rel="next"`); request
     `per_page=100`.
   - Watch `X-Rate-Limit-Remaining` and back off with `Utilities.sleep` when low.
-  - Canvas base URL comes from a Script Property, not a hardcoded string.
+  - Canvas base URL comes from User Properties (`CANVAS_BASE_URL`), not a
+    hardcoded string.
 - **Time limits:** Apps Script stops a run after 6 minutes. Long jobs must process in
   batches and save progress (for example with Script Properties or a time-based trigger).
 - **Errors:** catch, log a useful message (without student data), and surface a clear
   message to the user (for example `SpreadsheetApp.getUi().alert`).
 - **Header comment:** each file starts with a short comment: purpose, Canvas endpoints
-  called, write operations (if any), and required Script Properties.
+  called, write operations (if any), and required User/Script Properties.
 - **Style:** modern JavaScript (V8 runtime): `const`/`let`, no `var`; functions
   meant to be private end with `_`.
 
