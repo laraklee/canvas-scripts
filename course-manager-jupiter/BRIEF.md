@@ -1,5 +1,27 @@
 # course-manager-jupiter — Project Brief
 
+> **Where we left off (2026-10-16)**
+>
+> - **Built and tested in the Sheet:** `ref_Config` with its twelve `cfg_` named ranges;
+>   `ref_CourseIDs` ("Refresh course list"); `ref_peopleList` ("Refresh people list");
+>   token setup ("Set Canvas token", User Properties); the read-only Canvas request
+>   helper `canvasGet_()` ("Test Canvas connection"); the startup check ("Check setup").
+> - **Next:**
+>   1. Add `ref_simpleSchedule` and `ref_gradingScale` to `SHEETS_BUILT`, so the
+>      startup check covers them.
+>   2. Build `ref_gradingPeriods`.
+>   3. `ref_SectionLookup`.
+>   4. The assignment reorder tool, with `canvasWrite_()` and `DRY_RUN` built first.
+> - **Open questions:**
+>   - Assignment ID vs. the ID in the Canvas URL in the old `assignmentGroups` data:
+>     which one does the reorder call need? (Answer before the reorder tool.)
+>   - What reads the time-dropdown values back, and in what format?
+>   - Does Lara use the seating chart? What are Period Pairs for?
+>   - The "Design rules for reference sheets" section is not in this brief yet.
+>   - Should reference sheets be hidden automatically when built?
+>   - Limit `script.external_request` with a `urlFetchWhitelist` for the school's
+>     Canvas address?
+
 Read this at the start of every session, together with the repo-level `CLAUDE.md`
 (which always wins if the two disagree). Lara is new to the command line: explain each
 command in plain language before running it, and prefer small, reviewable steps.
