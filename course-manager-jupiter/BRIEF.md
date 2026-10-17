@@ -46,9 +46,11 @@ Reference sheets (hidden, mostly script-built):
 | `*gradingPeriods*` | `ref_gradingPeriods` |
 | `*gradingScale*` | `ref_gradingScale` |
 | `*Index*` | `ref_Index` |
+| `CourseIDs` | `ref_CourseIDs` |
 
-`CourseIDs` is not starred in the legacy workbook, but Config C4 depends on it. Ask Lara
-whether it should become `ref_CourseIDs`.
+`ref_CourseIDs` is built from Canvas by **Refresh course list** (A = course ID, B = course
+name; your active teacher courses). The time of the last refresh is in the named range
+`CourseIDs_LastRefreshed`. The `cfg_CourseName` formula (C4) must look up `ref_CourseIDs`.
 
 User-facing tool sheets keep their names. Known so far: `JupiterExport`,
 `Assignment Dates`, `rubricCanvasExport`, `API Batch` (a function checks the active
@@ -143,4 +145,3 @@ show a review summary, wait for approval, commit.
   step 5, and why they differ.
 - What consumes the time-dropdown values (see duplicates above)?
 - Does Lara use the seating-chart tool? What are Period Pairs for?
-- Should `CourseIDs` become `ref_CourseIDs`?

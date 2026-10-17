@@ -19,6 +19,7 @@ function onOpen() {
   addSetupMenuItems_(menu);
   addCredentialsMenuItems_(menu);
   addCanvasApiMenuItems_(menu);
+  addRefSheetsMenuItems_(menu);
   menu.addToUi();
 
   try {

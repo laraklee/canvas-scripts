@@ -16,10 +16,11 @@ const SHEETS = Object.freeze({
   GRADING_PERIODS: 'ref_gradingPeriods',
   GRADING_SCALE: 'ref_gradingScale',
   INDEX: 'ref_Index',
+  COURSE_IDS: 'ref_CourseIDs',
 });
 
 /** Sheets built so far. Add each one here as it is created. */
-const SHEETS_BUILT = Object.freeze([SHEETS.CONFIG]);
+const SHEETS_BUILT = Object.freeze([SHEETS.CONFIG, SHEETS.COURSE_IDS]);
 
 const CFG_PREFIX = 'cfg_';
 
