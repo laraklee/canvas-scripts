@@ -20,7 +20,7 @@ const SHEETS = Object.freeze({
 });
 
 /** Sheets built so far. Add each one here as it is created. */
-const SHEETS_BUILT = Object.freeze([SHEETS.CONFIG, SHEETS.COURSE_IDS]);
+const SHEETS_BUILT = Object.freeze([SHEETS.CONFIG, SHEETS.COURSE_IDS, SHEETS.PEOPLE_LIST]);
 
 const CFG_PREFIX = 'cfg_';
 

@@ -138,6 +138,30 @@ show a review summary, wait for approval, commit.
    Verify the Canvas reorder endpoint in the official API docs before writing it. Test in a
    sandbox course first. This changes ordering only, never grades.
 
+## Status
+
+Update this list as each piece lands. "Tested" means Lara confirmed it in the Sheet.
+
+- **Step 1 (folder and tag):** done.
+- **Step 2 (function map):** done; Lara is filling in the Decision column.
+- **Step 3 (foundation):**
+  - done: explicit `oauthScopes`; `SHEETS`, `SHEETS_BUILT`, `CFG_NAMES`, `getCfg_()`
+    (`Config.js`); startup check and "Check setup" (`SetupCheck.js`, tested);
+    "Set Canvas token" (`Credentials.js`); `canvasGet_()` and "Test Canvas connection"
+    (`CanvasApi.js`).
+  - to do: `canvasWrite_()` with `DRY_RUN`.
+  - The startup check covers the sheets in `SHEETS_BUILT`, not every name in `SHEETS`,
+    so unbuilt sheets don't raise alerts.
+- **Step 4 (reference sheets)**, all in `RefSheets.js`:
+  - `ref_CourseIDs` ("Refresh course list"; stamp `CourseIDs_LastRefreshed`): built.
+  - `ref_peopleList` ("Refresh people list"; stamp `PeopleList_LastRefreshed`): built.
+    Ported from legacy `createPeopleList`; same nine columns and name formulas; all
+    enrollment types; `state[]=active&invited`; now follows every page (legacy read
+    only the first 100).
+  - to do: `ref_gradingScale`, `ref_gradingPeriods`, `ref_SectionLookup`,
+    `ref_assignmentGroups`.
+- **Step 5 (assignment reorder):** not started.
+
 ## Open questions to resolve before or during the steps above
 
 - In the old `assignmentGroups` data, the "Assignment ID" column did not match the ID in
