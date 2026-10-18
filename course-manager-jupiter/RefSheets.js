@@ -6,11 +6,15 @@
  *     (A = course ID, B = course name).
  *   - ref_peopleList ("Refresh people list"): every active or invited enrollment in the
  *     cfg_CourseID course, all enrollment types, same nine columns as the legacy tab.
+ *   - ref_assignmentGroups ("Refresh assignment groups"): every assignment in the
+ *     cfg_CourseID course, same seven columns as the legacy tab, sorted by group order
+ *     and then position. readAssignmentGroups_() reads it back by header name.
  * Canvas endpoints called (all GET, via canvasGet_):
  *   /api/v1/courses?enrollment_type=teacher&enrollment_state=active
  *     &state[]=available&state[]=unpublished
  *   /api/v1/courses/:course
  *   /api/v1/courses/:course/enrollments?state[]=active&state[]=invited
+ *   /api/v1/courses/:course/assignment_groups?include[]=assignments&include[]=all_dates
  * Canvas write operations: none.
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN
  *   (read by canvasGet_).
@@ -23,6 +27,9 @@ const REFRESHED_NUMBER_FORMAT = 'M/d/yyyy h:mm am/pm';
 // range. After that the named range is the source of truth, so the cell can be moved.
 const COURSE_IDS_REFRESHED = Object.freeze({ name: 'CourseIDs_LastRefreshed', label: 'D1', home: 'E1' });
 const PEOPLE_LIST_REFRESHED = Object.freeze({ name: 'PeopleList_LastRefreshed', label: 'K1', home: 'L1' });
+const ASSIGNMENT_GROUPS_REFRESHED = Object.freeze({
+  name: 'AssignmentGroups_LastRefreshed', label: 'I1', home: 'J1',
+});
 
 const COURSE_IDS_HEADERS = Object.freeze(['Course ID', 'Course name']);
 const PEOPLE_LIST_HEADERS = Object.freeze(['Course ID', 'Course Name', 'Section ID', 'User ID',
@@ -31,11 +38,14 @@ const PEOPLE_LIST_HEADER_COLOR = '#d0e8d2';
 // Same formulas as the legacy tab: split "Last, First" in column E.
 const PEOPLE_LIST_LAST_NAME_FORMULA = '=IFERROR(LEFT(E2, FIND(",", E2) - 1), E2)';
 const PEOPLE_LIST_FIRST_NAME_FORMULA = '=IFERROR(TRIM(RIGHT(E2, LEN(E2) - FIND(",", E2))), "")';
+const ASSIGNMENT_GROUPS_HEADERS = Object.freeze(['Assignment ID', 'Assignment Name', 'Group ID',
+  'Group Name', 'Position', 'Due Date (ISO)', 'Canvas URL']);
 
 /** Adds this file's menu items. Called by onOpen. */
 function addRefSheetsMenuItems_(menu) {
   menu.addItem('Refresh course list', 'refreshCourseList');
   menu.addItem('Refresh people list', 'refreshPeopleList');
+  menu.addItem('Refresh assignment groups', 'refreshAssignmentGroups');
 }
 
 /**
@@ -133,6 +143,109 @@ function refreshPeopleList() {
   } catch (error) {
     reportRefreshFailure_('Refresh people list', 'The people list was not changed.', error);
   }
+}
+
+/**
+ * Menu: Course Manager › Refresh assignment groups.
+ * Replaces ref_assignmentGroups columns A:G with one row per assignment in the
+ * cfg_CourseID course (ported from legacy createAssignmentGroupsList), sorted by group
+ * order and then position. Stamps AssignmentGroups_LastRefreshed.
+ * Nothing on the sheet changes unless Canvas answers successfully.
+ */
+function refreshAssignmentGroups() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  try {
+    const courseId = getCourseIdForRefresh_();
+    const existing = ss.getSheetByName(SHEETS.ASSIGNMENT_GROUPS);
+    if (existing) checkHeaderLayout_(existing, ASSIGNMENT_GROUPS_HEADERS);
+
+    const groups = canvasStep_('assignment groups request', () =>
+      canvasGet_('/courses/' + courseId + '/assignment_groups',
+        { 'include[]': ['assignments', 'all_dates'] }));
+    if (!Array.isArray(groups)) {
+      throw sheetProblem_('Canvas did not return a list for the assignment groups request.');
+    }
+
+    // Canvas lists groups in their display order; keep it, then order by position.
+    const rows = groups.flatMap(group => (group.assignments || [])
+      .slice()
+      .sort((a, b) => (a.position || 0) - (b.position || 0))
+      .map(assignment => [
+        assignment.id,
+        assignment.name || '',
+        group.id,
+        group.name || '',
+        assignment.position ?? '',
+        latestDueAt_(assignment),
+        assignment.html_url || '',
+      ]));
+
+    const sheet = existing || createRefSheet_(ss, SHEETS.ASSIGNMENT_GROUPS);
+    sheet.getRange(1, 1, 1, ASSIGNMENT_GROUPS_HEADERS.length)
+      .setValues([ASSIGNMENT_GROUPS_HEADERS.slice()]).setFontWeight('bold');
+    replaceDataRows_(sheet, rows, ASSIGNMENT_GROUPS_HEADERS.length);
+    sheet.setFrozenRows(1);
+    sheet.autoResizeColumns(1, ASSIGNMENT_GROUPS_HEADERS.length);
+    getRefreshedCell_(ss, sheet, ASSIGNMENT_GROUPS_REFRESHED).setValue(new Date());
+
+    const summary = `${rows.length} assignment(s) in ${groups.length} group(s)`;
+    console.log(`Refresh assignment groups: ${summary} written.`);
+    ss.toast(`${summary} listed on ${SHEETS.ASSIGNMENT_GROUPS}.`, 'Refresh assignment groups', 5);
+  } catch (error) {
+    reportRefreshFailure_('Refresh assignment groups',
+      'The assignment groups list was not changed.', error);
+  }
+}
+
+/**
+ * The latest due date across section due dates (all_dates), skipping blank ones;
+ * falls back to the assignment's own due date. ISO text, or '' when there is none.
+ */
+function latestDueAt_(assignment) {
+  const dates = (assignment.all_dates || []).map(date => date.due_at).filter(Boolean);
+  if (!dates.length) return assignment.due_at || '';
+  return dates.reduce((latest, date) => (new Date(date) > new Date(latest) ? date : latest));
+}
+
+/**
+ * Reads ref_assignmentGroups back as a list of
+ * { assignmentId, name, groupId, groupName, position }, finding columns by header name.
+ * IDs come back as text. Used by the reorder tool.
+ */
+function readAssignmentGroups_() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ASSIGNMENT_GROUPS);
+  if (!sheet) {
+    throw sheetProblem_(`${SHEETS.ASSIGNMENT_GROUPS} is missing. Run Refresh assignment groups.`);
+  }
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  const values = sheet.getRange(1, 1, lastRow, sheet.getLastColumn()).getValues();
+  const header = values[0];
+  const column = name => {
+    const index = header.indexOf(name);
+    if (index === -1) {
+      throw sheetProblem_(`${SHEETS.ASSIGNMENT_GROUPS} has no "${name}" column. ` +
+        'Run Refresh assignment groups.');
+    }
+    return index;
+  };
+  const col = {
+    id: column('Assignment ID'),
+    name: column('Assignment Name'),
+    groupId: column('Group ID'),
+    groupName: column('Group Name'),
+    position: column('Position'),
+  };
+  const asId = value => String(value).replace(/\.0$/, '').trim();
+  return values.slice(1)
+    .filter(row => asId(row[col.id]) !== '')
+    .map(row => ({
+      assignmentId: asId(row[col.id]),
+      name: row[col.name],
+      groupId: asId(row[col.groupId]),
+      groupName: row[col.groupName],
+      position: Number(row[col.position]),
+    }));
 }
 
 /** Reads cfg_CourseID and checks it is a Canvas course number. */
