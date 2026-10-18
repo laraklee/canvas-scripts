@@ -5,6 +5,7 @@
   "scripts": {
     "scan": "bash scripts/scan.sh",
     "porting-summary": "node scripts/porting-summary.js",
+    "check-offline": "node scripts/check-offline.js",
     "lint": "eslint ."
   },
   "devDependencies": {
