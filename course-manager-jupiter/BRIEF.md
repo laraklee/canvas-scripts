@@ -283,9 +283,14 @@
 >     numeric Section ID and a Due Date; a section used twice is Not ready (Canvas allows
 >     one override per section); payload `assignment_override` with `course_section_id`
 >     and due/unlock/lock (blank dates left out).
->   - **Step 2b (makeAll) done for Types A and D (2026-10-18, Lara approved the writes; real build
->     of a Type A item + overrides in Sequence 9 worked; Type D + overrides also worked;
->     CQ, NQ being tested next):** `makeAssignmentAll` (makeAll button + menu). Asks
+>   - **Step 2b (makeAll) done for all four types (2026-10-18, Lara approved the writes; real build
+>     of a Type A item + overrides in Sequence 9 worked; then D, CQ (Classic quiz, quiz ID
+>     in Canvas URL), and NQ (New Quiz) with overrides also worked. One earlier CQ test
+>     seemed to make a New Quiz although Preview's Payload was the Classic request
+>     (`quiz_type: "assignment"`, sent to the Classic endpoint); Lara couldn't reproduce
+>     it, cause unknown. If it happens again, check Status/canvasID/Canvas URL first (a
+>     leftover canvasID means only overrides were sent), then try createByRow CQ in the
+>     same course; if Canvas itself converts Classic to New Quizzes, ask school IT):** `makeAssignmentAll` (makeAll button + menu). Asks
 >     first (course, counts, dry-run state). Sends through `canvasWrite_`: (1) the item,
 >     same request as createByRow, unless canvasID is filled; writes canvasID, Canvas URL,
 >     Status; (2) each ready override, `POST /courses/:course/assignments/:id/overrides`;
