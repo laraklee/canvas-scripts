@@ -20,6 +20,7 @@ function onOpen() {
   addCredentialsMenuItems_(menu);
   addCanvasApiMenuItems_(menu);
   addRefSheetsMenuItems_(menu);
+  addReorderToolMenuItems_(menu);
   menu.addToUi();
 
   try {

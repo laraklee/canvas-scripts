@@ -19,6 +19,11 @@ const SHEETS = Object.freeze({
   COURSE_IDS: 'ref_CourseIDs',
 });
 
+/** User-facing tool sheets built by this project. Names are exact; never rename them. */
+const TOOL_SHEETS = Object.freeze({
+  ASSIGNMENT_ORDER: 'Assignment Order',
+});
+
 /** Sheets built so far. Add each one here as it is created. */
 const SHEETS_BUILT = Object.freeze([
   SHEETS.CONFIG,

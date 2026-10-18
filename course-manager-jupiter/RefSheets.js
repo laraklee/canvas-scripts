@@ -155,46 +155,57 @@ function refreshPeopleList() {
 function refreshAssignmentGroups() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   try {
-    const courseId = getCourseIdForRefresh_();
-    const existing = ss.getSheetByName(SHEETS.ASSIGNMENT_GROUPS);
-    if (existing) checkHeaderLayout_(existing, ASSIGNMENT_GROUPS_HEADERS);
-
-    const groups = canvasStep_('assignment groups request', () =>
-      canvasGet_('/courses/' + courseId + '/assignment_groups',
-        { 'include[]': ['assignments', 'all_dates'] }));
-    if (!Array.isArray(groups)) {
-      throw sheetProblem_('Canvas did not return a list for the assignment groups request.');
-    }
-
-    // Canvas lists groups in their display order; keep it, then order by position.
-    const rows = groups.flatMap(group => (group.assignments || [])
-      .slice()
-      .sort((a, b) => (a.position || 0) - (b.position || 0))
-      .map(assignment => [
-        assignment.id,
-        assignment.name || '',
-        group.id,
-        group.name || '',
-        assignment.position ?? '',
-        latestDueAt_(assignment),
-        assignment.html_url || '',
-      ]));
-
-    const sheet = existing || createRefSheet_(ss, SHEETS.ASSIGNMENT_GROUPS);
-    sheet.getRange(1, 1, 1, ASSIGNMENT_GROUPS_HEADERS.length)
-      .setValues([ASSIGNMENT_GROUPS_HEADERS.slice()]).setFontWeight('bold');
-    replaceDataRows_(sheet, rows, ASSIGNMENT_GROUPS_HEADERS.length);
-    sheet.setFrozenRows(1);
-    sheet.autoResizeColumns(1, ASSIGNMENT_GROUPS_HEADERS.length);
-    getRefreshedCell_(ss, sheet, ASSIGNMENT_GROUPS_REFRESHED).setValue(new Date());
-
-    const summary = `${rows.length} assignment(s) in ${groups.length} group(s)`;
-    console.log(`Refresh assignment groups: ${summary} written.`);
+    const counts = writeAssignmentGroupsSheet_(ss);
+    const summary = `${counts.assignments} assignment(s) in ${counts.groups} group(s)`;
     ss.toast(`${summary} listed on ${SHEETS.ASSIGNMENT_GROUPS}.`, 'Refresh assignment groups', 5);
   } catch (error) {
     reportRefreshFailure_('Refresh assignment groups',
       'The assignment groups list was not changed.', error);
   }
+}
+
+/**
+ * Does the work of Refresh assignment groups without any pop-up, so the reorder tool
+ * can call it too. Returns { assignments, groups } counts. Throws on any problem,
+ * before the sheet is touched if Canvas fails.
+ */
+function writeAssignmentGroupsSheet_(ss) {
+  const courseId = getCourseIdForRefresh_();
+  const existing = ss.getSheetByName(SHEETS.ASSIGNMENT_GROUPS);
+  if (existing) checkHeaderLayout_(existing, ASSIGNMENT_GROUPS_HEADERS);
+
+  const groups = canvasStep_('assignment groups request', () =>
+    canvasGet_('/courses/' + courseId + '/assignment_groups',
+      { 'include[]': ['assignments', 'all_dates'] }));
+  if (!Array.isArray(groups)) {
+    throw sheetProblem_('Canvas did not return a list for the assignment groups request.');
+  }
+
+  // Canvas lists groups in their display order; keep it, then order by position.
+  const rows = groups.flatMap(group => (group.assignments || [])
+    .slice()
+    .sort((a, b) => (a.position || 0) - (b.position || 0))
+    .map(assignment => [
+      assignment.id,
+      assignment.name || '',
+      group.id,
+      group.name || '',
+      assignment.position ?? '',
+      latestDueAt_(assignment),
+      assignment.html_url || '',
+    ]));
+
+  const sheet = existing || createRefSheet_(ss, SHEETS.ASSIGNMENT_GROUPS);
+  sheet.getRange(1, 1, 1, ASSIGNMENT_GROUPS_HEADERS.length)
+    .setValues([ASSIGNMENT_GROUPS_HEADERS.slice()]).setFontWeight('bold');
+  replaceDataRows_(sheet, rows, ASSIGNMENT_GROUPS_HEADERS.length);
+  sheet.setFrozenRows(1);
+  sheet.autoResizeColumns(1, ASSIGNMENT_GROUPS_HEADERS.length);
+  getRefreshedCell_(ss, sheet, ASSIGNMENT_GROUPS_REFRESHED).setValue(new Date());
+
+  console.log(`Refresh assignment groups: ${rows.length} assignment(s) in ` +
+    `${groups.length} group(s) written.`);
+  return { assignments: rows.length, groups: groups.length };
 }
 
 /**

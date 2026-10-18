@@ -31,9 +31,23 @@
 >   show status", "Dry run: switch on/off" (asks first, extra warning when turning off),
 >   and the temporary "Test dry-run write" (runs only while dry run is ON; remove in
 >   step 4).
+> - **Reorder plan, step 4a written (2026-10-17, not yet tested in the Sheet):** tool
+>   sheet `Assignment Order` (`TOOL_SHEETS.ASSIGNMENT_ORDER`), `ReorderTool.js`. Columns:
+>   Group, Assignment, Current Position (grey, read-only), New Position (yellow, typed),
+>   Assignment ID (grey). Menu: "Open reorder tool" (refreshes `ref_assignmentGroups`
+>   first; asks before clearing typed entries), "Number selected rows 1, 2, 3…" (legacy
+>   `fillSelectedRangeSequentially`, New Position column only), "Preview reorder"
+>   (group names and move counts; sends nothing). `planReorder_()`: blank New Position
+>   keeps the current position; a typed number wins a tie; duplicates or non-whole
+>   numbers skip that group; group always comes from `ref_assignmentGroups` by ID.
+>   `writeAssignmentGroupsSheet_()` now holds the refresh work (no pop-up).
 > - **Next (Lara's 4-step reorder plan):**
->   4. The visible reorder tool sheet: Preview, then Push one group at a time.
->      Remove "Test dry-run write" here.
+>   4b. "Push reorder": refresh first, confirm (show dry-run state), send per group
+>      through `canvasWrite_()` (only `assignment[position]`), refresh again and report
+>      "Canvas now matches your order in X of Y groups", clear New Position only after a
+>      verified real push, stop safely before the 6-minute limit. Remove "Test dry-run
+>      write" here. Test dry run ON in the real course, then a sandbox course with dry
+>      run OFF; turn it back ON after.
 >   Then `ref_gradingPeriods` and `ref_SectionLookup`.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
@@ -214,7 +228,8 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
     legacy `createAssignmentGroupsList`, sorted by group order then position (legacy
     sorted by name); blank section due dates are skipped when finding the latest.
   - to do: `ref_gradingPeriods`, `ref_SectionLookup`.
-- **Step 5 (assignment reorder):** not started.
+- **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built, not yet
+  tested; 4b (Push) not started.
 
 ## Open questions to resolve before or during the steps above
 
