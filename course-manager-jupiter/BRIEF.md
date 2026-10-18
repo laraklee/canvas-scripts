@@ -92,7 +92,8 @@
 >   use it), Section ID Copy. Sorted by period, then name; no-period sections last.
 >   Added to `SHEETS_BUILT`. Readers in legacy: a tool-tab formula (MATCH period in C,
 >   return A), `getPeriodNameFromId` (A → C), roster and seating-chart tools.
-> - **Home tab / `ref_Index` written (2026-10-17, not yet tested):** `SheetIndex.js`,
+> - **Home tab / `ref_Index` done (2026-10-17, tested: built on open, Home formula gives
+>   one column of clickable tab links; Lara is assigning the button):** `SheetIndex.js`,
 >   `refreshSheetIndex` (menu item at the bottom after a separator; Lara assigns it to a
 >   Home button herself). Ported from legacy `refreshIndex` (no helpers) and
 >   `writeCurrentSpreadsheetIdToConfig`: same layout as legacy `*Index*` (title A1,
@@ -113,7 +114,6 @@
 >     after step 2, using IDs and URL paths only (no names).
 >   - What reads the time-dropdown values back, and in what format?
 >   - Does Lara use the seating chart? What are Period Pairs for?
->   - The "Design rules for reference sheets" section is not in this brief yet.
 >   - Should reference sheets be hidden automatically when built?
 >   - Limit `script.external_request` with a `urlFetchWhitelist` for the school's
 >     Canvas address?
@@ -149,6 +149,28 @@ Jupiter Grades. Only the tools Lara actually uses are ported, one at a time.
 5. **Reference tabs get a red tab color** as the "be careful here" signal.
 6. **Everything in `CLAUDE.md` applies**: dry-run writes, explicit `oauthScopes`,
    no student data in logs, header comment on every file, `clasp push` only after asking.
+
+## Design rules for reference sheets
+
+Decided with Lara on 2026-10-17. The aim: no tool depends on someone remembering to
+refresh.
+
+1. **Script-built snapshots.** Each `ref_` sheet is rebuilt by code (from Canvas, or from
+   the workbook for `ref_Index`). Nobody types into them, except columns a builder is
+   written to keep across refreshes (e.g. Jupiter category checkmarks).
+2. **Refresh before use.** Every script tool that reads a Canvas-built `ref_` sheet
+   refreshes it first. It may skip that when the sheet's `*_LastRefreshed` stamp is only a
+   few minutes old, so back-to-back tools don't re-download the same list. (The reorder
+   tool already refreshes on open and before Push.)
+3. **Formulas that read `ref_` data** don't trigger refreshes. Put them on tool tabs whose
+   tool refreshes what they need, or decide case by case when porting.
+4. **Refresh on open only without Canvas.** The automatic `onOpen` can't contact Canvas
+   (Google requires an installable trigger for that), so only `ref_Index` rebuilds on open.
+   An installable trigger is Lara's call if one is ever needed.
+5. **Manual "Refresh …" menu items stay** as a backup. They don't need Home buttons.
+6. **Safe rebuilds.** Each builder checks the header row before overwriting, changes
+   nothing unless Canvas answers, stamps a `*_LastRefreshed` named range, and logs counts
+   only.
 
 ## Sheet names: legacy → new
 
@@ -287,8 +309,8 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
     sorted by name); blank section due dates are skipped when finding the latest.
   - `ref_SectionLookup` ("Refresh section list"; stamp `SectionLookup_LastRefreshed`):
     built and tested.
-  - `ref_Index` ("Refresh sheet index", also on open; `SheetIndex.js`): built, not yet
-    tested.
+  - `ref_Index` ("Refresh sheet index", also on open; `SheetIndex.js`): built and tested.
+  - Design rules for reference sheets: recorded (see that section).
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).
