@@ -147,15 +147,33 @@
 >   if D2 already has an ID; Create groups skips rows with a GroupID and writes each ID as
 >   it goes; refused rows listed by row number; 5-minute stop. `CANVAS_STOP_ALL_TYPES`
 >   moved from `ReorderTool.js` to `CanvasApi.js` so both tools share it.
-> - **Next:** pick the next tool from Lara's Decision column in
->   `docs/legacy-function-map.md` (the two Jupiter export tools read
->   `cfg_JupiterCategories`, now in place). Button ideas for later (Lara still deciding): a
+> - **createByRow step 1 (Type A) written (2026-10-17, not yet tested):** new
+>   `PostRows.js`. Ported from legacy `postRows`, `postSingleAssignment`,
+>   `generateDescription2`. Legacy facts: `convertToUTC` was a *custom function* used by
+>   sheet formulas (column O normalized the Due Time; P–R built due/unlock/lock); legacy
+>   `postRows` sent P–R as-is and used midnight for unlock/lock. Lara chose: compute
+>   dates in code (`buildCanvasTime_`, Sheet time zone, sent with offset e.g.
+>   `-10:00`), drop the O–R formula columns and the custom function, and show the exact
+>   JSON in a new **Payload** column; new **Unlock Time** / **Lock Time** columns; a
+>   blank time means 11:59 PM on that date. Tab `createByRow` (`TOOL_SHEETS.CREATE_BY_ROW`):
+>   labels in row 3 (`CREATE_BY_ROW_LABELS`, found by label; checked before every run and
+>   by "Check createByRow labels"), rows from 4; selection-based like legacy. Functions:
+>   `postRows` (button name kept), `previewRows` (fills Payload/Status, never sends),
+>   `checkCreateByRowLabels`. Rows with a CanvasID are skipped. Type A payload = legacy
+>   fields (name, points, description, `online_upload`, published, dates). D/NQ/CQ show
+>   "not built yet". Classic quizzes will keep the quiz ID in the link column (Lara: needed
+>   for adding questions later). Also in this commit: `canvasApiPath_()` in `CanvasApi.js`
+>   (paths starting `/api/` used as-is, for New Quizzes; untested until the NQ step).
+> - **Next:** test createByRow Type A (dry run, then Sequence 9); then D, NQ, CQ one at a
+>   time; then pick from Lara's Decision column in `docs/legacy-function-map.md` (the two
+>   Jupiter export tools read `cfg_JupiterCategories`, now in place). Button ideas for later (Lara still deciding): a
 >   "refresh all ref tables" button, buttons on the Assignment Order tab.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
 >     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
 >     after step 2, using IDs and URL paths only (no names).
->   - What reads the time-dropdown values back, and in what format?
+>   - Time dropdowns: answered for createByRow (the Due Time cell shows "Label (0815)";
+>     `parseSheetTime_` reads it). Still check other tabs when porting them.
 >   - What are Period Pairs for? (Seating chart: yes, Lara uses it; ported.)
 >   - Should reference sheets be hidden automatically when built?
 >   - Limit `script.external_request` with a `urlFetchWhitelist` for the school's
@@ -358,6 +376,7 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
   - Jupiter categories (`Jupiter.js`, "Refresh Jupiter categories"): built and tested.
   - `ref_Config`: finished for now; hidden by Lara.
   - Groups (`Groups.js`, three `createGroups`-tab buttons): built and tested.
+  - createByRow (`PostRows.js`): Type A built, not yet tested; D, NQ, CQ to do.
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).

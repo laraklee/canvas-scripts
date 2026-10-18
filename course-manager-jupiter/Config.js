@@ -23,6 +23,7 @@ const SHEETS = Object.freeze({
 const TOOL_SHEETS = Object.freeze({
   ASSIGNMENT_ORDER: 'Assignment Order',
   CREATE_GROUPS: 'createGroups',
+  CREATE_BY_ROW: 'createByRow',
 });
 
 /** Sheets built so far. Add each one here as it is created. */

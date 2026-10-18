@@ -80,7 +80,8 @@ function canvasGet_(path, query) {
 
 /**
  * The only way to change anything in Canvas. method is POST, PUT, PATCH, or DELETE;
- * path is like '/courses/123/assignments/456'; payload is sent as JSON.
+ * path is like '/courses/123/assignments/456' (or '/api/quiz/v1/…' for New Quizzes, see
+ * canvasApiPath_); payload is sent as JSON.
  * While dry run is ON (the default), logs what would be sent and returns
  * { dryRun: true } without contacting Canvas. Otherwise sends the request with the
  * shared retry, back-off, and response checks, and returns Canvas's reply.
@@ -90,10 +91,10 @@ function canvasWrite_(method, path, payload) {
   if (!CANVAS_WRITE_METHODS.includes(verb)) {
     throw canvasError_('BAD_METHOD', 'canvasWrite_ only sends POST, PUT, PATCH, or DELETE.');
   }
-  const cleanPath = path.startsWith('/') ? path : '/' + path;
+  const apiPath = canvasApiPath_(path);
   if (isDryRun_()) {
     const fields = describeFields_(payload);
-    console.log(`DRY RUN: would ${verb} ${cleanPath.replace(/\d+/g, ':id')}` +
+    console.log(`DRY RUN: would ${verb} ${apiPath.replace(/\/\d+(?=\/|$)/g, '/:id')}` +
       ` (fields: ${fields.length ? fields.join(', ') : 'none'})`);
     return { dryRun: true };
   }
@@ -108,8 +109,18 @@ function canvasWrite_(method, path, payload) {
     options.contentType = 'application/json';
     options.payload = JSON.stringify(payload);
   }
-  const response = fetchCanvas_(creds.baseUrl + '/api/v1' + cleanPath, options);
+  const response = fetchCanvas_(creds.baseUrl + apiPath, options);
   return response.getContentText() ? parseCanvasJson_(response) : {};
+}
+
+/**
+ * The API path for a request. Most Canvas APIs live under /api/v1, so '/courses/1'
+ * becomes '/api/v1/courses/1'. A path that already starts with /api/ is used as-is, for
+ * APIs outside v1 such as New Quizzes ('/api/quiz/v1/courses/1/quizzes').
+ */
+function canvasApiPath_(path) {
+  const cleanPath = path.startsWith('/') ? path : '/' + path;
+  return cleanPath.startsWith('/api/') ? cleanPath : '/api/v1' + cleanPath;
 }
 
 /** True unless the DRY_RUN Script Property is exactly "false" (any case). Fails safe. */
@@ -181,7 +192,7 @@ function getCanvasCredentials_() {
   return { token, baseUrl };
 }
 
-/** Builds https://host/api/v1/path?per_page=100&... from a path and query object. */
+/** Builds https://host/api/v1/path?per_page=100&... (see canvasApiPath_) from a path and query. */
 function buildCanvasUrl_(baseUrl, path, query) {
   const params = Object.assign({ per_page: CANVAS_PAGE_SIZE }, query || {});
   const parts = [];
@@ -190,8 +201,7 @@ function buildCanvasUrl_(baseUrl, path, query) {
       parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(v));
     });
   });
-  const cleanPath = path.startsWith('/') ? path : '/' + path;
-  return baseUrl + '/api/v1' + cleanPath + '?' + parts.join('&');
+  return baseUrl + canvasApiPath_(path) + '?' + parts.join('&');
 }
 
 /**
