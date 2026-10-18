@@ -187,7 +187,9 @@
 >   Link = the quiz ID (Lara's choice, for the question sheet); CanvasID = the quiz's
 >   `assignment_id` (docs don't promise it's returned; Status warns if not). Each request
 >   now has `readLink` as well as `readId`.
-> - **createByRow step 4 (Type NQ) written (2026-10-17, not yet tested):** New Quiz,
+> - **createByRow step 4 (Type NQ) done (2026-10-17, tested in Sequence 9: right points,
+>   dates, instructions; CanvasID and built link work; Canvas creates New Quizzes
+>   UNPUBLISHED by default):** New Quiz,
 >   `POST /api/quiz/v1/courses/:course/quizzes` (first real use of `canvasApiPath_`) with
 >   `quiz`: title, `points_possible` (must be above 0; else "Not ready"), `grading_type:
 >   points`, `instructions` (description builder; Lara's choice), due/unlock/lock.
@@ -195,9 +197,13 @@
 >   (Lara chose to leave Canvas's default; rows with Published FALSE say "(NQ, Published
 >   ignored)"), and the response has `id` (= the assignment ID) but no `assignment_id` or
 >   `html_url`, so legacy likely left CanvasID/link blank. Now CanvasID = `id`; Canvas
->   Link = `<base>/courses/:course/assignments/:id`. Learn the default publish state in
->   the test.
-> - **Next:** test NQ (Sequence 9); then pick from Lara's Decision column in
+>   Link = `<base>/courses/:course/assignments/:id`.
+> - **Published column, in practice:** a CQ test row published because the tab had no
+>   Published column (blank = publish, by design, to match legacy for A/D). Lara chose to
+>   add a Published column filled with checkboxes: new checkboxes start unticked = draft,
+>   ticked = publish, so each row is chosen explicitly. A cell with no checkbox still
+>   means publish; offered to make blank = draft too (one-line change) if she wants.
+> - **Next:** pick from Lara's Decision column in
 >   `docs/legacy-function-map.md` (the two Jupiter export tools read
 >   `cfg_JupiterCategories`, now in place). Button ideas for later (Lara still deciding): a
 >   "refresh all ref tables" button, buttons on the Assignment Order tab.
@@ -409,8 +415,8 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
   - Jupiter categories (`Jupiter.js`, "Refresh Jupiter categories"): built and tested.
   - `ref_Config`: finished for now; hidden by Lara.
   - Groups (`Groups.js`, three `createGroups`-tab buttons): built and tested.
-  - createByRow (`PostRows.js`): Types A, D, CQ and the optional Published column built
-    and tested; NQ built, not yet tested.
+  - createByRow (`PostRows.js`): all four types (A, D, CQ, NQ) and the optional Published
+    column built and tested.
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).
