@@ -31,7 +31,7 @@
 >   show status", "Dry run: switch on/off" (asks first, extra warning when turning off),
 >   and the temporary "Test dry-run write" (runs only while dry run is ON; remove in
 >   step 4).
-> - **Reorder plan, step 4a written (2026-10-17, not yet tested in the Sheet):** tool
+> - **Reorder plan, step 4a done (2026-10-17, tested: Preview works in Lara's course):** tool
 >   sheet `Assignment Order` (`TOOL_SHEETS.ASSIGNMENT_ORDER`), `ReorderTool.js`. Columns:
 >   Group, Assignment, Due Date, Current Position (grey, read-only), New Position
 >   (yellow, typed), Assignment ID, Group ID (grey; Group ID is for Lara to see only,
@@ -57,14 +57,21 @@
 >   slots. Fixed with the exact-slot rule above, plus Due Date column and new-order
 >   Preview (Lara's requests). Then: her legacy habit (sort whole sheet by due date,
 >   number every row) would have produced numbers larger than each group, so numbering
->   now counts per group, and Group ID was added for visibility. Retest pending.
-> - **Next (Lara's 4-step reorder plan):**
->   4b. "Push reorder": refresh first, confirm (show dry-run state), send per group
->      through `canvasWrite_()` (only `assignment[position]`), refresh again and report
->      "Canvas now matches your order in X of Y groups", clear New Position only after a
->      verified real push, stop safely before the 6-minute limit. Remove "Test dry-run
->      write" here. Test dry run ON in the real course, then a sandbox course with dry
->      run OFF; turn it back ON after.
+>   now counts per group, and Group ID was added for visibility. Retested: Preview OK.
+> - **Reorder plan, step 4b written (2026-10-17, not yet tested):** "Push reorder" in
+>   `ReorderTool.js`: refreshes, plans from fresh data, confirms (shows dry-run state),
+>   sends per group through `canvasWrite_()` (`PUT assignments/:id`, only
+>   `assignment[position]`, never `notify_of_update`). A refused move (403/404/400, e.g.
+>   closed grading period) stops that group only; token/network/busy errors stop the
+>   whole Push. Stops starting moves after 5 minutes. One Push at a time (document
+>   lock). After a real push: refresh, report "matches your order in X of Y groups";
+>   rebuild the tool sheet only if all match and nothing was skipped, otherwise keep
+>   the numbers (Push again only sends what is still out of place). "Test dry-run write"
+>   removed. Canvas docs: closed grading periods, moderated grading, and admin-frozen
+>   attributes can block assignment edits.
+> - **Next:** test 4b in order: (1) dry run ON in Lara's real course; (2) her sandbox
+>   course (`cfg_CourseID`), dry run OFF, small reorder, check Canvas; (3) real course;
+>   turn dry run back ON and set `cfg_CourseID` back.
 >   Then `ref_gradingPeriods` and `ref_SectionLookup`.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
@@ -245,8 +252,8 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
     legacy `createAssignmentGroupsList`, sorted by group order then position (legacy
     sorted by name); blank section due dates are skipped when finding the latest.
   - to do: `ref_gradingPeriods`, `ref_SectionLookup`.
-- **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built, not yet
-  tested; 4b (Push) not started.
+- **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
+  tested; 4b (Push) built, not yet tested.
 
 ## Open questions to resolve before or during the steps above
 

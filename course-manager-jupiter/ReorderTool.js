@@ -3,16 +3,20 @@
  * Purpose: the "Assignment Order" tool sheet for reordering assignments within their
  *   groups. Step 4a: "Open reorder tool" (refreshes ref_assignmentGroups, then rebuilds
  *   the tool sheet), "Number selected rows 1, 2, 3…" (ported from the legacy
- *   fillSelectedRangeSequentially; counts separately per group, skips hidden rows), and
- *   "Preview reorder" (shows what would change, sends nothing). Push comes in step 4b.
+ *   fillSelectedRangeSequentially; counts separately per group, skips hidden rows),
+ *   "Preview reorder" (shows what would change, sends nothing), and "Push reorder"
+ *   (sends the changes, then checks them in Canvas).
  *   Each assignment's group always comes from ref_assignmentGroups by Assignment ID,
  *   never from the tool sheet, so the tool can never move an assignment to another group.
  *   Logs counts only.
  * Canvas endpoints called: GET /api/v1/courses/:course/assignment_groups (through
  *   writeAssignmentGroupsSheet_ in RefSheets.js).
- * Canvas write operations: none yet.
+ * Canvas write operations: Push reorder only, through canvasWrite_ (so DRY_RUN applies):
+ *   PUT /api/v1/courses/:course/assignments/:id with assignment[position] only. It changes
+ *   the order of assignments within their group; never the group, grades, or anything
+ *   else, and never sends notify_of_update.
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN
- *   (read by canvasGet_).
+ *   (read by canvasGet_ and canvasWrite_); Script Property DRY_RUN (read by canvasWrite_).
  */
 
 // Group ID (G) is for Lara to see only (e.g. two groups with the same name). The code
@@ -30,6 +34,11 @@ const ORDER_DUE_DATE_FORMAT = 'ddd m/d/yyyy h:mm am/pm';
 const ORDER_READ_ONLY_COLOR = '#eeeeee';
 const ORDER_INPUT_COLOR = '#fff2cc';
 const ORDER_PREVIEW_LINES = 10;
+// Apps Script stops a run at 6 minutes; Push stops sending before then.
+const PUSH_TIME_LIMIT_MS = 5 * 60 * 1000;
+// Canvas error types that stop the whole Push (any other error stops only that group).
+const PUSH_STOP_ALL_TYPES = Object.freeze(['NOT_SET_UP', 'TOKEN_REJECTED', 'UNREACHABLE',
+  'RATE_LIMITED', 'BAD_RESPONSE', 'BAD_METHOD']);
 
 /** Adds this file's menu items. Called by onOpen. */
 function addReorderToolMenuItems_(menu) {
@@ -37,6 +46,7 @@ function addReorderToolMenuItems_(menu) {
   menu.addItem('Open reorder tool', 'openReorderTool');
   menu.addItem('Number selected rows 1, 2, 3…', 'numberSelectedRows');
   menu.addItem('Preview reorder', 'previewReorder');
+  menu.addItem('Push reorder', 'pushReorder');
 }
 
 /**
@@ -70,32 +80,43 @@ function openReorderTool() {
     }
 
     writeAssignmentGroupsSheet_(ss);
-    const rows = readAssignmentGroups_().map(a =>
-      [a.groupName, a.name, toDueDate_(a.dueAt), a.position, '', a.assignmentId, a.groupId]);
+    const count = buildOrderSheet_(ss);
 
-    const sheet = existing || ss.insertSheet(TOOL_SHEETS.ASSIGNMENT_ORDER);
-    const existingFilter = sheet.getFilter();
-    if (existingFilter) existingFilter.remove();
-    sheet.getRange(1, 1, 1, ORDER_HEADERS.length)
-      .setValues([ORDER_HEADERS.slice()]).setFontWeight('bold');
-    replaceDataRows_(sheet, rows, ORDER_HEADERS.length);
-    sheet.getRange(2, 1, sheet.getMaxRows() - 1, ORDER_HEADERS.length).setBackground(null);
-    if (rows.length) {
-      sheet.getRange(2, 1, rows.length, ORDER_HEADERS.length).setBackground(ORDER_READ_ONLY_COLOR);
-      sheet.getRange(2, ORDER_NEW_POSITION_COLUMN, rows.length, 1).setBackground(ORDER_INPUT_COLOR);
-      sheet.getRange(2, ORDER_DUE_DATE_COLUMN, rows.length, 1).setNumberFormat(ORDER_DUE_DATE_FORMAT);
-      sheet.getRange(1, 1, rows.length + 1, ORDER_HEADERS.length).createFilter();
-    }
-    sheet.setFrozenRows(1);
-    sheet.autoResizeColumns(1, ORDER_HEADERS.length);
-    sheet.activate();
-
-    console.log(`Open reorder tool: ${rows.length} assignment row(s) written.`);
-    ss.toast(`${rows.length} assignment(s) listed. Type new positions in the yellow column, ` +
+    console.log(`Open reorder tool: ${count} assignment row(s) written.`);
+    ss.toast(`${count} assignment(s) listed. Type new positions in the yellow column, ` +
       'then use Preview reorder.', 'Open reorder tool', 8);
   } catch (error) {
     reportRefreshFailure_('Open reorder tool', 'The reorder tool did not finish.', error);
   }
+}
+
+/**
+ * Rebuilds Assignment Order from ref_assignmentGroups as it is now (no Canvas request),
+ * with New Position blank. Used by Open reorder tool and after a verified Push.
+ * Returns the number of assignment rows.
+ */
+function buildOrderSheet_(ss) {
+  const rows = readAssignmentGroups_().map(a =>
+    [a.groupName, a.name, toDueDate_(a.dueAt), a.position, '', a.assignmentId, a.groupId]);
+
+  const sheet = ss.getSheetByName(TOOL_SHEETS.ASSIGNMENT_ORDER) ||
+    ss.insertSheet(TOOL_SHEETS.ASSIGNMENT_ORDER);
+  const existingFilter = sheet.getFilter();
+  if (existingFilter) existingFilter.remove();
+  sheet.getRange(1, 1, 1, ORDER_HEADERS.length)
+    .setValues([ORDER_HEADERS.slice()]).setFontWeight('bold');
+  replaceDataRows_(sheet, rows, ORDER_HEADERS.length);
+  sheet.getRange(2, 1, sheet.getMaxRows() - 1, ORDER_HEADERS.length).setBackground(null);
+  if (rows.length) {
+    sheet.getRange(2, 1, rows.length, ORDER_HEADERS.length).setBackground(ORDER_READ_ONLY_COLOR);
+    sheet.getRange(2, ORDER_NEW_POSITION_COLUMN, rows.length, 1).setBackground(ORDER_INPUT_COLOR);
+    sheet.getRange(2, ORDER_DUE_DATE_COLUMN, rows.length, 1).setNumberFormat(ORDER_DUE_DATE_FORMAT);
+    sheet.getRange(1, 1, rows.length + 1, ORDER_HEADERS.length).createFilter();
+  }
+  sheet.setFrozenRows(1);
+  sheet.autoResizeColumns(1, ORDER_HEADERS.length);
+  sheet.activate();
+  return rows.length;
 }
 
 /**
@@ -182,6 +203,137 @@ function previewReorder() {
   } catch (error) {
     reportRefreshFailure_('Preview reorder', 'Nothing was sent to Canvas.', error);
   }
+}
+
+/**
+ * Menu: Course Manager › Push reorder.
+ * Refreshes ref_assignmentGroups, works out the plan from that fresh data, asks for
+ * confirmation (showing the dry-run state), then sends each move through canvasWrite_
+ * one group at a time: PUT /courses/:course/assignments/:id with assignment[position]
+ * only. After a real push, refreshes again and checks which groups now match. If all
+ * match, rebuilds Assignment Order; otherwise keeps the New Position numbers so Push can
+ * be run again (it only sends what is still out of place). Reports counts and group
+ * names only.
+ */
+function pushReorder() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const lock = LockService.getDocumentLock();
+  if (!lock.tryLock(1000)) {
+    ui.alert('Push reorder', 'Another Push is already running. Wait for it to finish.',
+      ui.ButtonSet.OK);
+    return;
+  }
+  try {
+    const started = Date.now();
+    const courseId = getCourseIdForRefresh_();
+    writeAssignmentGroupsSheet_(ss);
+    const orderRows = readOrderSheet_();
+    const plan = planReorder_(orderRows, readAssignmentGroups_());
+    const total = countMoves_(plan);
+    if (!plan.changes.length) {
+      ui.alert('Push reorder', formatPlan_(plan) + '\n\nNothing to send.', ui.ButtonSet.OK);
+      return;
+    }
+
+    const dryRun = isDryRun_();
+    const answer = ui.alert(dryRun ? 'Push reorder (dry run)' : 'Push reorder',
+      formatPlan_(plan) + '\n\n' + (dryRun ?
+        `Dry run is ON: nothing will be sent. The ${total} update(s) will only be logged.` :
+        `Dry run is OFF: this will send ${total} update(s) in ${plan.changes.length} ` +
+          'group(s) to Canvas.') + '\n\nContinue?',
+      ui.ButtonSet.YES_NO);
+    if (answer !== ui.Button.YES) {
+      ui.alert('Push reorder', 'Cancelled. Nothing was sent.', ui.ButtonSet.OK);
+      return;
+    }
+
+    const sent = sendReorder_(courseId, plan, started);
+    const refusedText = sent.refused.size ?
+      '\n\nRefused by Canvas (that group stopped): ' +
+        Array.from(sent.refused, ([message, n]) => `${n} × ${message}`).join(' ') +
+        ' A closed grading period or a locked assignment can cause this.' : '';
+    const timeText = sent.timedOut ?
+      ` Stopped near the time limit with ${sent.groupsNotStarted} group(s) not started; ` +
+        'run Push again to finish.' : '';
+    console.log(`Push reorder${dryRun ? ' (dry run)' : ''}: ${sent.count} update(s), ` +
+      `${sent.refusedCount} refused, ${plan.changes.length} group(s) planned` +
+      (sent.timedOut ? ', stopped at time limit.' : '.'));
+
+    if (dryRun) {
+      ui.alert('Push reorder (dry run)', `Dry run: ${sent.count} update(s) in ` +
+        `${plan.changes.length} group(s) would have been sent. Nothing was sent.${timeText}` +
+        '\n\nSee Extensions › Apps Script › Executions for the "DRY RUN" lines.',
+        ui.ButtonSet.OK);
+      return;
+    }
+
+    // Check the result in Canvas. A group matches when its order no longer differs
+    // (a numbering-only tidy-up left over does not count as a mismatch).
+    writeAssignmentGroupsSheet_(ss);
+    const after = planReorder_(orderRows, readAssignmentGroups_());
+    const stillDifferent = after.changes.filter(c => c.newOrder.length);
+    const differentIds = new Set(stillDifferent.map(c => c.groupId));
+    const matched = plan.changes.filter(c => !differentIds.has(c.groupId)).length;
+    // Rebuild (which clears New Position) only when nothing is left to fix.
+    const allMatched = matched === plan.changes.length && !sent.timedOut &&
+      !plan.problems.length;
+    if (allMatched) buildOrderSheet_(ss);
+    console.log(`Push reorder check: ${matched} of ${plan.changes.length} group(s) match.`);
+
+    ui.alert('Push reorder',
+      `${sent.count} update(s) sent.${refusedText}${timeText}\n\n` +
+      `Canvas now matches your order in ${matched} of ${plan.changes.length} group(s).` +
+      (stillDifferent.length ? '\nStill different: ' +
+        stillDifferent.map(c => c.groupName).join(', ') + '.' : '') +
+      (plan.problems.length ? `\n${plan.problems.length} problem(s) were skipped (see Preview).` : '') +
+      '\n\n' + (allMatched ?
+        'The Assignment Order sheet was rebuilt with the new positions.' :
+        'Your New Position numbers were kept. Run Preview to see what is still different, ' +
+          'then Push again; it only sends what is still out of place.'),
+      ui.ButtonSet.OK);
+  } catch (error) {
+    reportRefreshFailure_('Push reorder', 'Push stopped. Run Preview to see where things ' +
+      'stand; running Push again only sends what is still out of place.', error);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Sends a plan's moves one group at a time through canvasWrite_ (which only logs while
+ * dry run is ON). If Canvas refuses a move, that group stops and the next group starts.
+ * Stops starting new moves near the time limit.
+ * Returns { count, refused: Map(type → n), refusedCount, timedOut, groupsNotStarted }.
+ */
+function sendReorder_(courseId, plan, started) {
+  const result = { count: 0, refused: new Map(), refusedCount: 0, timedOut: false,
+    groupsNotStarted: 0 };
+  plan.changes.forEach(change => {
+    if (result.timedOut) {
+      result.groupsNotStarted++;
+      return;
+    }
+    for (const move of change.moves) {
+      if (Date.now() - started > PUSH_TIME_LIMIT_MS) {
+        result.timedOut = true;
+        return;
+      }
+      try {
+        canvasWrite_('PUT', `/courses/${courseId}/assignments/${move.assignmentId}`,
+          { assignment: { position: move.position } });
+        result.count++;
+      } catch (error) {
+        // Problems that would hit every group (token, network, busy) stop the whole Push.
+        if (!error.canvasType || PUSH_STOP_ALL_TYPES.includes(error.canvasType)) throw error;
+        // error.message names the type and code only, e.g. "...not allowed to do this (403)."
+        result.refused.set(error.message, (result.refused.get(error.message) || 0) + 1);
+        result.refusedCount++;
+        return; // stop this group; the next group still runs
+      }
+    }
+  });
+  return result;
 }
 
 /**
