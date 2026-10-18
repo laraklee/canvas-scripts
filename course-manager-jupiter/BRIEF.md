@@ -324,7 +324,15 @@
 >     link (`quizIdFromLink_`), so the tab needs no Quiz ID cell. Overrides now end above
 >     the next table's labels or a row whose OverrideID cell holds words (the "Questions"
 >     title in A20), so Clear IDs never erases the title.
->   - **New Quiz questions: possible now (checked 2026-10-18, not decided or built).**
+>   - **NQ questions written (2026-10-18, Lara approved the item POSTs; offline checks
+>     pass; not yet tested in Google):** same Questions table and four type names; on a
+>     Type NQ tab makeAll sends each row to the New Quiz Items API (below) after the
+>     overrides. Lara's choices: multiple answers = partial credit (`PartialScore`); 0
+>     Points = Not ready (NQ requires above 0). Essays use the documented default
+>     settings, no grading notes. QuestionID = the item's top-level `id`. The quiz ID is
+>     the NQ's canvasID. First real test should confirm `item_body` (not `itemBody`) for
+>     choices and whether the quiz total changes to the sum of question points.
+>   - **New Quiz Items API (checked 2026-10-18):**
 >     Canvas's New Quiz Items API: `POST /api/quiz/v1/courses/:course/quizzes/:assignment_id/items`
 >     (the NQ's canvasID). Each item: `entry_type: "Item"`, `points_possible` (must be
 >     above 0), and an `entry` with `item_body` (HTML), `interaction_type_slug`

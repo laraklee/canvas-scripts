@@ -14,12 +14,16 @@ const vm = require('vm');
 const PROJECT = path.join(__dirname, '..', '..', 'course-manager-jupiter');
 // Stand-ins for the Google pieces the helpers use (same as create-by-row.check.js).
 const context = {
+  uuidCount: 0,
   isBlank_: value => value === '' || value === null || value === undefined,
   sheetProblem_: message => Object.assign(new Error(message), { isSheetProblem: true }),
   CANVAS_STOP_ALL_TYPES: ['NOT_SET_UP', 'TOKEN_REJECTED', 'UNREACHABLE', 'RATE_LIMITED',
     'BAD_RESPONSE', 'BAD_METHOD'],
   describeCanvasError_: error => `(${error.canvasType})`,
+  getCanvasCredentials_: () => ({ baseUrl: 'https://canvas.example' }),
   Utilities: {
+    // Made-up choice IDs, numbered so checks can predict them.
+    getUuid: () => `uuid-${++context.uuidCount}`,
     formatDate(date, timeZone, pattern) {
       if (pattern === 'yyyy-MM-dd') {
         return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit',
@@ -432,8 +436,8 @@ check('TF bad answer', qMessage(['true_false_question', '', 1, 'Q?', 'yes']),
   'Not ready: Answer must be True or False');
 check('QuestionID skips', qMessage(['essay_question', '', 1, 'Q?', '', '', '', '', '', '', '',
   '', '555']), 'Skipped: already has a QuestionID');
-check('questions only for CQ', cqTab([QUESTIONS[0]], { C7: 'A' }).plan().questions[0].message,
-  'Not sent: questions are only for Type CQ');
+check('questions only for CQ or NQ', cqTab([QUESTIONS[0]], { C7: 'A' }).plan().questions[0].message,
+  'Not sent: questions are only for Type CQ or NQ');
 p = cqTab([QUESTIONS[0]], { A4: '777', A7: 'https://canvas.example/courses/5000/quizzes/4321' })
   .plan();
 check('existing quiz: quiz ID from Canvas URL', [p.item.quizId, Boolean(p.questions[0].payload)],
@@ -494,6 +498,66 @@ const clearedCq = c.clearCreationCells_(cqTab(QUESTIONS).layout)
   .map(cell => c.cellName_(cell.row, cell.column));
 check('Clear IDs: question cells', clearedCq.slice(-3), ['M27', 'K27', 'L27']);
 check('Clear IDs: not the Questions title', clearedCq.includes('A20'), false);
+
+// ---- New Quiz questions (Type NQ). ----
+context.uuidCount = 0;
+const nqTab = (rows, changes = {}) => cqTab(rows, Object.assign({ C7: 'NQ' }, changes));
+p = nqTab(QUESTIONS.slice(0, 4)).plan();
+check('NQ: four questions ready', p.questions.map(q => Boolean(q.payload)), [true, true, true, true]);
+check('NQ essay item', p.questions[0].payload, { item: { entry_type: 'Item', points_possible: 2,
+  entry: { item_body: '<p>In your own words, what is the purpose of this lab?</p>',
+    interaction_type_slug: 'essay',
+    interaction_data: { rce: true, essay: null, word_count: false, file_upload: false,
+      spell_check: false, word_limit_enabled: false, word_limit_max: '1000',
+      word_limit_min: '0' },
+    scoring_data: { value: '' }, scoring_algorithm: 'None' } } });
+check('NQ choice item', p.questions[1].payload.item.entry, {
+  item_body: '<p>Which is the acid?</p>', interaction_type_slug: 'choice',
+  interaction_data: { choices: [{ id: 'uuid-1', position: 1, item_body: '<p>HCl</p>' },
+    { id: 'uuid-2', position: 2, item_body: '<p>NaOH</p>' }] },
+  scoring_data: { value: 'uuid-1' }, scoring_algorithm: 'Equivalence' });
+check('NQ multi-answer: partial credit, two correct IDs', [
+  p.questions[2].payload.item.entry.interaction_type_slug,
+  p.questions[2].payload.item.entry.scoring_data.value,
+  p.questions[2].payload.item.entry.scoring_algorithm],
+['multi-answer', ['uuid-4', 'uuid-5'], 'PartialScore']);
+check('NQ true/false item', p.questions[3].payload.item.entry, {
+  item_body: '<p>Is pH &lt; 7 acidic?</p>', interaction_type_slug: 'true-false',
+  interaction_data: { true_choice: 'True', false_choice: 'False' },
+  scoring_data: { value: true }, scoring_algorithm: 'Equivalence' });
+check('NQ: 0 points not ready', nqTab([['essay_question', '', 0, 'Q?']]).plan().questions[0].message,
+  'Not ready: New Quiz questions need Points above 0');
+check('CQ: 0 points still fine', Boolean(cqTab([['essay_question', '', 0, 'Q?']]).plan()
+  .questions[0].payload), true);
+p = nqTab([QUESTIONS[0]], { A4: '777' }).plan();
+check('existing NQ: quiz ID is the canvasID', [p.item.quizId, Boolean(p.questions[0].payload)],
+  ['777', true]);
+
+// makeAll for NQ, fake Canvas: the quiz's ID is its assignment ID.
+const nqJob = changes => {
+  const writes = [];
+  return { plan: nqTab(QUESTIONS.slice(0, 2), changes).plan(), courseId: '5000', writes,
+    writeItem: (label, value) => writes.push(['item', label, value]),
+    writeOverride: (o, label, value) => writes.push([o.rowNumber, label, value]),
+    writeQuestion: (q, label, value) => writes.push(['q' + q.rowNumber, label, value]) };
+};
+job = nqJob();
+sent = [];
+r = c.runMakeAssignment_(job, (method, p2) => {
+  sent.push(p2);
+  if (p2.endsWith('/quizzes')) return { id: 888 };
+  return { id: String(nextId++) };
+});
+check('NQ: quiz first, through the New Quizzes API', sent[0], '/api/quiz/v1/courses/5000/quizzes');
+check('NQ: questions go to its items', sent.slice(3), ['/api/quiz/v1/courses/5000/quizzes/888/items',
+  '/api/quiz/v1/courses/5000/quizzes/888/items']);
+check('NQ: question IDs written', [written(job, 'q22', 'QuestionID'), r.questionsCreated],
+  [String(nextId - 2), 2]);
+job = nqJob({ A4: '777' });
+sent = [];
+c.runMakeAssignment_(job, (method, p2) => { sent.push(p2); return { id: '1' }; });
+check('existing NQ: only new overrides and questions', sent.slice(-2),
+  ['/api/quiz/v1/courses/5000/quizzes/777/items', '/api/quiz/v1/courses/5000/quizzes/777/items']);
 
 if (failures) {
   console.log(`\n${failures} check(s) failed.`);

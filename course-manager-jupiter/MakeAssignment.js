@@ -9,8 +9,8 @@
  *     row's values are in the row just below it.
  *   - Overrides ("OverrideID" row): one override per row below it, ending above the next
  *     table's labels or above a row whose OverrideID cell holds words (a section title).
- *   - Questions ("Question Type" row; optional, CQ copies only): one Classic quiz question
- *     per row below it, to the last row used (see QuizQuestions.js).
+ *   - Questions ("Question Type" row; optional, quiz copies only): one question per row
+ *     below it, to the last row used; Classic (CQ) or New Quiz (NQ) (QuizQuestions.js).
  *   Labels are every non-blank cell from the first label to the right edge of that row
  *   (blank cells, e.g. a merged label's extra cells, are skipped), so don't put another
  *   table beside one; labels the code doesn't use (e.g. Schedule) are ignored.
@@ -22,7 +22,7 @@
  *     are planned. An override row needs a numeric Section ID and a Due Date; blank rows
  *     are skipped. Blank times: Due and Lock 11:59 PM, Unlock 12:00 AM.
  *   - makeAssignmentAll (makeAll button; legacy name): asks first, then creates the item
- *     and each ready override, then (Type CQ only) each ready question, writing
+ *     and each ready override, then (Type CQ or NQ) each ready question, writing
  *     canvasID, Canvas URL, OverrideID, QuestionID, and Status. If the item isn't created,
  *     nothing else is sent. A CQ's Instructions go in the request that creates it. Stops
  *     cleanly near the time limit. Only creates; never changes or deletes anything.
@@ -37,7 +37,8 @@
  * Canvas write operations (via canvasWrite_, so DRY_RUN applies):
  *   POST the item: same requests as createByRow (A, D, CQ, NQ; see PostRows.js)
  *   POST /api/v1/courses/:course/assignments/:assignment_id/overrides (one per section)
- *   POST /api/v1/courses/:course/quizzes/:quiz/questions (CQ only; one per question)
+ *   POST /api/v1/courses/:course/quizzes/:quiz/questions (CQ; one per question)
+ *   POST /api/quiz/v1/courses/:course/quizzes/:assignment_id/items (NQ; one per question)
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
  *   Script Property DRY_RUN. Named ranges: cfg_CourseID (cfg_CourseName for messages);
  *   cfg_TimeSchoolStart, cfg_TimeSchoolEnd, cfg_TimeAfterSchool, cfg_TimeNight (Get Times).
@@ -131,7 +132,7 @@ function previewAssignment() {
 /**
  * Button / menu: makeAll (legacy name kept, so the button works). Asks first (showing the
  * course, counts, and the dry-run state), then creates the item (unless it already has a
- * canvasID), each ready override, and (CQ only) each ready question through canvasWrite_,
+ * canvasID), each ready override, and (CQ or NQ) each ready question through canvasWrite_,
  * writing IDs and Status.
  */
 function makeAssignmentAll() {
@@ -213,6 +214,7 @@ function runMakeAssignment_(job, send, started = Date.now()) {
         assignmentId = item.request.readId(reply);
         const link = item.request.readLink(reply) || '';
         if (item.type === 'CQ') quizId = String(reply.id || quizIdFromLink_(link));
+        if (item.type === 'NQ') quizId = assignmentId;
         job.writeItem('canvasID', assignmentId || '');
         job.writeItem('Canvas URL', link);
         result.itemOutcome = assignmentId ? 'created' : 'no ID';
@@ -276,9 +278,10 @@ function runMakeAssignment_(job, send, started = Date.now()) {
       'Not sent: no quiz ID (Canvas URL should be the quiz link)'));
     return result;
   }
-  readyQuestions.forEach(plan => sendRow(plan, questionsPath_(job.courseId, quizId || 'new'),
-    job.writeQuestion, 'QuestionID', () => result.questionsCreated++,
-    () => result.questionsFailed++));
+  const questionPath = item.type === 'NQ' ? newQuizItemsPath_(job.courseId, quizId || 'new') :
+    questionsPath_(job.courseId, quizId || 'new');
+  readyQuestions.forEach(plan => sendRow(plan, questionPath, job.writeQuestion, 'QuestionID',
+    () => result.questionsCreated++, () => result.questionsFailed++));
   return result;
 }
 
@@ -558,7 +561,7 @@ function readMakeAssignment_(ss) {
  * - overrides: [{ rowNumber, sectionId, payload?, message? }], blank rows left out.
  *   Each override is sent to overridePath_(courseId, the item's canvasID).
  * - questions: [{ rowNumber, payload?, message? }], rows with no Question left out;
- *   only sent for Type CQ, to questionsPath_(courseId, the quiz ID).
+ *   only sent for Type CQ (questionsPath_) or NQ (newQuizItemsPath_).
  */
 function planMakeAssignment_(layout, values, shown, courseId, timeZone) {
   const { item, itemMore, overrides, questions } = layout.tables;
@@ -588,11 +591,11 @@ function planMakeAssignment_(layout, values, shown, courseId, timeZone) {
     row++) {
     const cell = label => at(values, row, questions.columns.get(label));
     const text = label => at(shown, row, questions.columns.get(label));
-    const plan = planQuestion_(row, cell, text);
+    const plan = planQuestion_(row, cell, text, itemPlan.type);
     if (!plan) continue;
-    if (plan.payload && itemPlan.type !== 'CQ') {
+    if (plan.payload && itemPlan.type !== 'CQ' && itemPlan.type !== 'NQ') {
       delete plan.payload;
-      plan.message = 'Not sent: questions are only for Type CQ';
+      plan.message = 'Not sent: questions are only for Type CQ or NQ';
     } else if (plan.payload && itemPlan.canvasId && !itemPlan.quizId) {
       delete plan.payload;
       plan.message = 'Not ready: no quiz ID (Canvas URL should be the quiz link)';
@@ -609,7 +612,9 @@ function planMakeAssignmentItem_(cell, text, courseId, timeZone) {
   const plan = { type: type || '?', label: type || '?' };
   const canvasId = text('canvasID');
   if (canvasId) {
-    return Object.assign(plan, { canvasId, quizId: quizIdFromLink_(text('Canvas URL')),
+    // A New Quiz's ID is its canvasID; a Classic quiz's is in its link.
+    return Object.assign(plan, { canvasId,
+      quizId: type === 'NQ' ? canvasId : quizIdFromLink_(text('Canvas URL')),
       message: 'Already created; only rows without an ID will be made' });
   }
   if (!name) return Object.assign(plan, { message: 'Not ready: no name' });
