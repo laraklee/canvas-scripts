@@ -72,8 +72,9 @@
 >   attributes can block assignment edits.
 > - **Test course:** Lara tests writes in last quarter's "Sequence 9, AI literacy" course
 >   (has students, grades, and comments; still live in Canvas; course and grades backed
->   up; nothing bad if its order gets messed up). Point `cfg_CourseID` at it for tests,
->   then back to the real course, and leave dry run ON afterward.
+>   up; nothing bad if its order gets messed up). `cfg_CourseID` stays on Sequence 9 until
+>   the whole port is finished (Lara, 2026-10-17); then point it at the real course.
+>   Leave dry run ON between tests.
 > - **Grades:** Lara can never push grades (admin turned it off). Never build or try
 >   grade writes.
 > - **Menus:** reorganization deferred to the end of the build. Until then, each new
@@ -203,6 +204,7 @@
 >   add a Published column filled with checkboxes: new checkboxes start unticked = draft,
 >   ticked = publish, so each row is chosen explicitly. A cell with no checkbox still
 >   means publish; offered to make blank = draft too (one-line change) if she wants.
+>   Lara has added the Published checkbox column to `createByRow`.
 > - **makeAssignment redesign: decisions so far (2026-10-17, nothing built yet).** Legacy
 >   (03a/03b/03c) had one tab per type with fixed cells (row 3 main item, F4/H4/H5
 >   description bits, rows 7–11 overrides, K–O `convertToUTC`/JSON formulas, F1 edit
@@ -304,6 +306,28 @@ refresh.
 6. **Safe rebuilds.** Each builder checks the header row before overwriting, changes
    nothing unless Canvas answers, stamps a `*_LastRefreshed` named range, and logs counts
    only.
+
+## Definition of done for a port
+
+Agreed with Lara on 2026-10-17. A legacy function (or group of them) is done when:
+
+1. **Planned first.** Before any code, Lara sees a plan: what the legacy code does (read
+   it, don't guess), what changes and why, and, for any Canvas write, what Canvas's
+   official docs say about that call. Her decisions are recorded in BRIEF.md.
+2. **Built to the project rules.** Header comment; reads through `canvasGet_()`, writes
+   through `canvasWrite_()` (so `DRY_RUN` applies) with a confirm pop-up; no student data in
+   logs or messages; cells found by label or named range, not fixed addresses; menu items
+   at the bottom after a separator; no new Google scope without Lara's OK.
+3. **Checked.** The scan has no findings in `course-manager-jupiter`; logic that can be
+   tested without Google gets an offline check with made-up data (never real data).
+4. **Approved and shipped.** Lara approves the diff → commit + `git push` → Lara approves
+   `clasp push` (manifest changes need `--force`; compare first if unsure).
+5. **Tested by Lara.** Dry run first; real writes in the test course (Sequence 9 for now);
+   clean up; dry run back ON. Then BRIEF.md ("Where we left off" and Status) says tested.
+6. **Recorded in the map.** The matching row(s) in `docs/legacy-function-map.md` get a
+   Decision: `ported → newName (File.js)`, `later`, or `leave behind: <one-line reason>`
+   (a blank Decision means "not yet reviewed"). Then regenerate
+   `docs/porting-summary.md` from the map (`npm run porting-summary`), never by hand.
 
 ## Sheet names: legacy → new
 
