@@ -79,7 +79,12 @@
 > - **Menus:** reorganization deferred to the end of the build. Until then, each new
 >   tool's items go at the bottom of Course Manager after a separator line, like the
 >   reorder tool. Lara will say when the menu gets out of hand.
-> - **Next:** `ref_gradingPeriods`, then `ref_SectionLookup`.
+> - **`ref_gradingPeriods` shelved (2026-10-17):** nothing in the legacy code builds it;
+>   its only reader, `fillGradesForSelectedGradingPeriodInActiveColumn`, pulled past
+>   quarters' scores from the Canvas gradebook, which the Jupiter build doesn't need. If
+>   it's needed later, build it from `GET /courses/:course/grading_periods` (keep A = ID,
+>   B = title; preserve hand-typed columns such as "Grades Published" by ID).
+> - **Next:** `ref_SectionLookup`.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
 >     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
@@ -258,7 +263,7 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
     `AssignmentGroups_LastRefreshed`): built and tested. Same seven columns as
     legacy `createAssignmentGroupsList`, sorted by group order then position (legacy
     sorted by name); blank section due dates are skipped when finding the latest.
-  - to do: `ref_gradingPeriods`, `ref_SectionLookup`.
+  - to do: `ref_SectionLookup`. Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).
 
