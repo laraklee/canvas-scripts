@@ -283,16 +283,16 @@
 >     numeric Section ID and a Due Date; a section used twice is Not ready (Canvas allows
 >     one override per section); payload `assignment_override` with `course_section_id`
 >     and due/unlock/lock (blank dates left out).
->   - **Step 2b (makeAll) written (2026-10-18, Lara approved the writes; offline checks
->     pass; not yet tested in Google):** `makeAssignmentAll` (makeAll button + menu). Asks
+>   - **Step 2b (makeAll) done for Type A (2026-10-18, Lara approved the writes; real build
+>     of a Type A item + overrides in Sequence 9 worked; D, CQ, NQ being tested next):** `makeAssignmentAll` (makeAll button + menu). Asks
 >     first (course, counts, dry-run state). Sends through `canvasWrite_`: (1) the item,
 >     same request as createByRow, unless canvasID is filled; writes canvasID, Canvas URL,
 >     Status; (2) each ready override, `POST /courses/:course/assignments/:id/overrides`;
 >     writes OverrideID, Status. Item not created → no overrides sent. One override
 >     refused → others still go. Token/network-type errors stop everything. Create only;
 >     never updates or deletes. Logic in `runMakeAssignment_` (tested with a fake Canvas).
->   - **Get Times (`createDropdowns1`) written (2026-10-18, built before makeAll's real
->     test at Lara's request; offline checks pass; not yet tested in Google):** on every
+>   - **Get Times (`createDropdowns1`) done (2026-10-18, built before makeAll's real
+>     test at Lara's request; tested on Lara's tab):** on every
 >     override row, Due Time gets a dropdown: "Period Start (0815)" / "Period End (0925)"
 >     (legacy wording) when the row's Period and Due Date are found in
 >     `ref_simpleSchedule`, then School Start / School End / After School / Night from
@@ -300,8 +300,7 @@
 >     only. Rule only; cell values are never changed. Toast lists rows whose Period/date
 >     wasn't in the schedule. Item Due Time untouched (an old rule there stays until Lara
 >     removes it in Data › Data validation).
->   - **Clear IDs (`clearCreationIDs`) written (2026-10-18, offline checks pass; not yet
->     tested in Google):** Lara's keep-list decision: clear the item's canvasID, Canvas
+>   - **Clear IDs (`clearCreationIDs`) done (2026-10-18, tested on Lara's tab):** Lara's keep-list decision: clear the item's canvasID, Canvas
 >     URL, Status, Payload and every override row's OverrideID, Status, Payload (legacy
 >     cleared only the IDs); keep everything else (name, dates, the copy's defaults and
 >     formulas). Asks Yes/No only if an ID is filled in. Sheet only; Canvas unchanged.
