@@ -340,7 +340,8 @@ Lara set these on 2026-10-17. Follow them in every session, on any computer.
    "Skipping push" about the manifest at the next `clasp push` from either computer:
    compare Google's copy first (read-only `clasp clone` into a temporary folder), then
    `clasp push --force` if the only difference is line endings. After that, a manifest
-   prompt means a real manifest change (e.g. a new permission).
+   prompt means a real manifest change (e.g. a new permission). (2026-10-18: the first
+   Mac push went through with no manifest prompt, so Google's copy is LF now.)
 5. Things that are the same on both computers: dry run and the Canvas token (stored in
    Google), and `cfg_CourseID` (in the Sheet).
 
