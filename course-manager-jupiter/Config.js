@@ -33,7 +33,16 @@ const SHEETS_BUILT = Object.freeze([
   SHEETS.GRADING_SCALE,
   SHEETS.ASSIGNMENT_GROUPS,
   SHEETS.SECTION_LOOKUP,
+  SHEETS.INDEX,
 ]);
+
+/** Reference (system) sheets are the ones named with this prefix. */
+const SYSTEM_SHEET_PREFIX = 'ref_';
+
+/** True for reference sheets (ref_…). Replaces the legacy "name starts with *" check. */
+function isSystemSheet_(name) {
+  return String(name).startsWith(SYSTEM_SHEET_PREFIX);
+}
 
 const CFG_PREFIX = 'cfg_';
 

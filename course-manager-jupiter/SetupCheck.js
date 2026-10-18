@@ -1,9 +1,9 @@
 /**
  * SetupCheck.js
- * Purpose: the project's onOpen (builds the Course Manager menu) and the setup check,
- *   run silently on open and on demand from "Check setup". Confirms the reference sheets
- *   built so far (SHEETS_BUILT) and the cfg_ named ranges (CFG_NAMES) exist. Reports
- *   names and counts only, never cell values.
+ * Purpose: the project's onOpen (builds the Course Manager menu, rebuilds ref_Index
+ *   silently) and the setup check, run silently on open and on demand from "Check
+ *   setup". Confirms the reference sheets built so far (SHEETS_BUILT) and the cfg_ named
+ *   ranges (CFG_NAMES) exist. Reports names and counts only, never cell values.
  * Canvas endpoints called: none.
  * Canvas write operations: none.
  * Required User/Script Properties: none.
@@ -21,7 +21,15 @@ function onOpen() {
   addCanvasApiMenuItems_(menu);
   addRefSheetsMenuItems_(menu);
   addReorderToolMenuItems_(menu);
+  addSheetIndexMenuItems_(menu);
   menu.addToUi();
+
+  // Rebuild ref_Index first (silently), so a new one exists before the setup check.
+  try {
+    buildSheetIndex_(SpreadsheetApp.getActiveSpreadsheet());
+  } catch (error) {
+    console.error('Sheet index refresh on open failed: ' + error.message);
+  }
 
   try {
     const problems = findSetupProblems_();

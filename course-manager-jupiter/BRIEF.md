@@ -92,9 +92,21 @@
 >   use it), Section ID Copy. Sorted by period, then name; no-period sections last.
 >   Added to `SHEETS_BUILT`. Readers in legacy: a tool-tab formula (MATCH period in C,
 >   return A), `getPeriodNameFromId` (A → C), roster and seating-chart tools.
-> - **Next:** reference sheets on the build list are done (except shelved
->   `ref_gradingPeriods`). Pick the next tool to port from Lara's Decision column in
->   `docs/legacy-function-map.md` (port / later / leave behind).
+> - **Home tab / `ref_Index` written (2026-10-17, not yet tested):** `SheetIndex.js`,
+>   `refreshSheetIndex` (menu item at the bottom after a separator; Lara assigns it to a
+>   Home button herself). Ported from legacy `refreshIndex` (no helpers) and
+>   `writeCurrentSpreadsheetIdToConfig`: same layout as legacy `*Index*` (title A1,
+>   headers row 3 Sheet Name / Link / GID, data from row 4; Lara's tabs first, then
+>   `ref_` tabs via the new `isSystemSheet_()` in `Config.js`); writes the workbook ID
+>   into `cfg_ThisSheetID`. Runs silently in `onOpen` before the setup check (like
+>   legacy). Home tab is hand-built by Lara; she'll replace the legacy
+>   `=IMPORTRANGE(INDIRECT("'*Config*'!B6"), "'*Index*'!A1:ZZZ")` with
+>   `=ARRAYFORMULA(IF(ref_Index!C4:C="", "", HYPERLINK("#gid=" & ref_Index!C4:C, ref_Index!A4:A)))`.
+>   Buttons: Insert › Drawing, ⋮ › Assign script, type a public function name (no
+>   trailing `_`); drawings don't work in the Sheets phone app.
+> - **Next:** pick the next tool to port from Lara's Decision column in
+>   `docs/legacy-function-map.md` (port / later / leave behind); Lara is adding Home
+>   buttons as tools are built.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
 >     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
@@ -275,6 +287,8 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
     sorted by name); blank section due dates are skipped when finding the latest.
   - `ref_SectionLookup` ("Refresh section list"; stamp `SectionLookup_LastRefreshed`):
     built and tested.
+  - `ref_Index` ("Refresh sheet index", also on open; `SheetIndex.js`): built, not yet
+    tested.
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).
