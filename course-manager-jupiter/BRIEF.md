@@ -332,8 +332,8 @@
 >     overrides. Lara's choices: multiple answers = partial credit (`PartialScore`); 0
 >     Points = Not ready (NQ requires above 0). Essays use the documented default
 >     settings, no grading notes. QuestionID = the item's top-level `id`. The quiz ID is
->     the NQ's canvasID. Not yet checked: whether the quiz total becomes the sum of
->     question points; essay, true-false, and multi-answer items on NQ.
+>     the NQ's canvasID. Later test (same day): all four question types work on NQ
+>     (Lara checked in Canvas). Quiz-total behavior not specifically recorded.
 >   - **New Quiz Items API (checked 2026-10-18):**
 >     Canvas's New Quiz Items API: `POST /api/quiz/v1/courses/:course/quizzes/:assignment_id/items`
 >     (the NQ's canvasID). Each item: `entry_type: "Item"`, `points_possible` (must be
