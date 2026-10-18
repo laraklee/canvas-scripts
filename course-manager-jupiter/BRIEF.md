@@ -58,7 +58,8 @@
 >   Preview (Lara's requests). Then: her legacy habit (sort whole sheet by due date,
 >   number every row) would have produced numbers larger than each group, so numbering
 >   now counts per group, and Group ID was added for visibility. Retested: Preview OK.
-> - **Reorder plan, step 4b written (2026-10-17, not yet tested):** "Push reorder" in
+> - **Reorder plan, step 4b done (2026-10-17, tested: a real Push in the test course
+>   reordered assignments as Lara set them up):** "Push reorder" in
 >   `ReorderTool.js`: refreshes, plans from fresh data, confirms (shows dry-run state),
 >   sends per group through `canvasWrite_()` (`PUT assignments/:id`, only
 >   `assignment[position]`, never `notify_of_update`). A refused move (403/404/400, e.g.
@@ -69,10 +70,16 @@
 >   the numbers (Push again only sends what is still out of place). "Test dry-run write"
 >   removed. Canvas docs: closed grading periods, moderated grading, and admin-frozen
 >   attributes can block assignment edits.
-> - **Next:** test 4b in order: (1) dry run ON in Lara's real course; (2) her sandbox
->   course (`cfg_CourseID`), dry run OFF, small reorder, check Canvas; (3) real course;
->   turn dry run back ON and set `cfg_CourseID` back.
->   Then `ref_gradingPeriods` and `ref_SectionLookup`.
+> - **Test course:** Lara tests writes in last quarter's "Sequence 9, AI literacy" course
+>   (has students, grades, and comments; still live in Canvas; course and grades backed
+>   up; nothing bad if its order gets messed up). Point `cfg_CourseID` at it for tests,
+>   then back to the real course, and leave dry run ON afterward.
+> - **Grades:** Lara can never push grades (admin turned it off). Never build or try
+>   grade writes.
+> - **Menus:** reorganization deferred to the end of the build. Until then, each new
+>   tool's items go at the bottom of Course Manager after a separator line, like the
+>   reorder tool. Lara will say when the menu gets out of hand.
+> - **Next:** `ref_gradingPeriods`, then `ref_SectionLookup`.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
 >     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
@@ -253,7 +260,7 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
     sorted by name); blank section due dates are skipped when finding the latest.
   - to do: `ref_gradingPeriods`, `ref_SectionLookup`.
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
-  tested; 4b (Push) built, not yet tested.
+  tested; 4b (Push) built and tested (real Push in the test course).
 
 ## Open questions to resolve before or during the steps above
 
