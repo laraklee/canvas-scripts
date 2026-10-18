@@ -3,8 +3,8 @@
  * Purpose: the "Assignment Order" tool sheet for reordering assignments within their
  *   groups. Step 4a: "Open reorder tool" (refreshes ref_assignmentGroups, then rebuilds
  *   the tool sheet), "Number selected rows 1, 2, 3…" (ported from the legacy
- *   fillSelectedRangeSequentially), and "Preview reorder" (shows what would change,
- *   sends nothing). Push comes in step 4b.
+ *   fillSelectedRangeSequentially; counts separately per group, skips hidden rows), and
+ *   "Preview reorder" (shows what would change, sends nothing). Push comes in step 4b.
  *   Each assignment's group always comes from ref_assignmentGroups by Assignment ID,
  *   never from the tool sheet, so the tool can never move an assignment to another group.
  *   Logs counts only.
@@ -15,11 +15,15 @@
  *   (read by canvasGet_).
  */
 
+// Group ID (G) is for Lara to see only (e.g. two groups with the same name). The code
+// always finds an assignment's group in ref_assignmentGroups by Assignment ID.
 const ORDER_HEADERS = Object.freeze(['Group', 'Assignment', 'Due Date', 'Current Position',
-  'New Position', 'Assignment ID']);
-// The first layout (before Due Date was added). Open reorder tool rebuilds it in place.
-const ORDER_HEADERS_BEFORE_DUE_DATE = Object.freeze(['Group', 'Assignment',
-  'Current Position', 'New Position', 'Assignment ID']);
+  'New Position', 'Assignment ID', 'Group ID']);
+// Earlier layouts. Open reorder tool rebuilds them in place with ORDER_HEADERS.
+const ORDER_PREVIOUS_LAYOUTS = Object.freeze([
+  ['Group', 'Assignment', 'Current Position', 'New Position', 'Assignment ID'],
+  ['Group', 'Assignment', 'Due Date', 'Current Position', 'New Position', 'Assignment ID'],
+]);
 const ORDER_DUE_DATE_COLUMN = 3;
 const ORDER_NEW_POSITION_COLUMN = 5;
 const ORDER_DUE_DATE_FORMAT = 'ddd m/d/yyyy h:mm am/pm';
@@ -47,11 +51,15 @@ function openReorderTool() {
   try {
     const existing = ss.getSheetByName(TOOL_SHEETS.ASSIGNMENT_ORDER);
     if (existing) {
-      try {
-        checkHeaderLayout_(existing, ORDER_HEADERS);
-      } catch {
-        checkHeaderLayout_(existing, ORDER_HEADERS_BEFORE_DUE_DATE);
-      }
+      const knownLayout = [ORDER_HEADERS, ...ORDER_PREVIOUS_LAYOUTS].some(headers => {
+        try {
+          checkHeaderLayout_(existing, headers);
+          return true;
+        } catch {
+          return false;
+        }
+      });
+      if (!knownLayout) checkHeaderLayout_(existing, ORDER_HEADERS); // throws the clear message
       const typed = readOrderSheet_().filter(row => !isBlank_(row.newPosition)).length;
       if (typed > 0) {
         const answer = ui.alert('Open reorder tool',
@@ -63,7 +71,7 @@ function openReorderTool() {
 
     writeAssignmentGroupsSheet_(ss);
     const rows = readAssignmentGroups_().map(a =>
-      [a.groupName, a.name, toDueDate_(a.dueAt), a.position, '', a.assignmentId]);
+      [a.groupName, a.name, toDueDate_(a.dueAt), a.position, '', a.assignmentId, a.groupId]);
 
     const sheet = existing || ss.insertSheet(TOOL_SHEETS.ASSIGNMENT_ORDER);
     const existingFilter = sheet.getFilter();
@@ -92,30 +100,70 @@ function openReorderTool() {
 
 /**
  * Menu: Course Manager › Number selected rows 1, 2, 3…
- * Fills the selected New Position cells on Assignment Order with 1, 2, 3… from top to
- * bottom. Ported from the legacy fillSelectedRangeSequentially, limited to that column.
+ * Fills the selected New Position cells on Assignment Order from top to bottom, counting
+ * 1, 2, 3… separately for each group (found by Assignment ID in ref_assignmentGroups).
+ * So sorting the whole sheet by Due Date and numbering every row gives each group its
+ * own 1…N in due-date order. Rows hidden by a filter (or hidden by hand) are skipped and
+ * keep what they had. Ported from the legacy fillSelectedRangeSequentially.
  */
 function numberSelectedRows() {
   const ui = SpreadsheetApp.getUi();
   try {
     const range = SpreadsheetApp.getActiveRange();
     const sheet = range ? range.getSheet() : null;
-    if (!sheet || sheet.getName() !== TOOL_SHEETS.ASSIGNMENT_ORDER ||
-        range.getColumn() !== ORDER_NEW_POSITION_COLUMN || range.getNumColumns() !== 1 ||
-        range.getRow() < 2) {
+    const onToolSheet = sheet && sheet.getName() === TOOL_SHEETS.ASSIGNMENT_ORDER;
+    const lastColumn = onToolSheet ? sheet.getLastColumn() : 0;
+    const header = onToolSheet ? sheet.getRange(1, 1, 1, lastColumn).getValues()[0] : [];
+    const col = { id: header.indexOf('Assignment ID'), newPosition: header.indexOf('New Position') };
+    if (!onToolSheet || range.getColumn() !== col.newPosition + 1 ||
+        range.getNumColumns() !== 1 || range.getRow() < 2) {
       ui.alert('Number selected rows',
         `Select cells in the New Position column (the yellow column) on ` +
         `${TOOL_SHEETS.ASSIGNMENT_ORDER}, below the header, then try again.`, ui.ButtonSet.OK);
       return;
     }
-    const numbers = Array.from({ length: range.getNumRows() }, (_, i) => [i + 1]);
-    range.setValues(numbers);
-    SpreadsheetApp.getActiveSpreadsheet()
-      .toast(`${numbers.length} cell(s) numbered.`, 'Number selected rows', 3);
+    if (col.id === -1) {
+      throw sheetProblem_(`${TOOL_SHEETS.ASSIGNMENT_ORDER} has no "Assignment ID" column. ` +
+        'Run Open reorder tool.');
+    }
+    const firstRow = range.getRow();
+    const rows = sheet.getRange(firstRow, 1, range.getNumRows(), lastColumn).getValues()
+      .map((row, i) => ({
+        assignmentId: String(row[col.id]).replace(/\.0$/, '').trim(),
+        current: row[col.newPosition],
+        skip: sheet.isRowHiddenByFilter(firstRow + i) || sheet.isRowHiddenByUser(firstRow + i),
+      }));
+    const groupIdById = new Map(readAssignmentGroups_().map(a => [a.assignmentId, a.groupId]));
+    numberByGroup_(rows, groupIdById);
+    range.setValues(rows.map(row => [row.number ?? row.current]));
+
+    const numberedRows = rows.filter(row => row.number !== undefined);
+    const groups = new Set(numberedRows.map(row => groupIdById.get(row.assignmentId))).size;
+    const numbered = numberedRows.length;
+    const skipped = rows.length - numbered;
+    SpreadsheetApp.getActiveSpreadsheet().toast(
+      `${numbered} cell(s) numbered in ${groups} group(s)` +
+      (skipped ? `; ${skipped} hidden or unknown row(s) skipped.` : '.'),
+      'Number selected rows', 5);
   } catch (error) {
-    console.error('Number selected rows failed: ' + error.message);
-    ui.alert('Number selected rows could not finish: ' + error.message);
+    reportRefreshFailure_('Number selected rows', 'No cells were changed.', error);
   }
+}
+
+/**
+ * Numbers rows top to bottom, counting separately per group. rows is
+ * [{ assignmentId, skip }]; sets row.number on each row that is not skipped and whose
+ * group is found in groupIdById. Other rows are left without a number.
+ */
+function numberByGroup_(rows, groupIdById) {
+  const counts = new Map();
+  rows.forEach(row => {
+    const groupId = groupIdById.get(row.assignmentId);
+    if (row.skip || groupId === undefined) return;
+    const next = (counts.get(groupId) || 0) + 1;
+    counts.set(groupId, next);
+    row.number = next;
+  });
 }
 
 /**
@@ -172,7 +220,8 @@ function readOrderSheet_() {
  * remaining slots in their current order. Duplicates, non-whole numbers, or numbers larger
  * than the group skip that group. Moves are listed top to bottom and only for
  * assignments that need to move, except when the group's Canvas numbering is messy
- * (not exactly 1, 2, 3…): then every assignment in the group gets its new position.
+ * (not exactly 1, 2, 3…): then every assignment in the group gets its new position,
+ * also when every row in the group was numbered and the order stays the same (tidy up).
  * Groups with no typed numbers are never changed.
  * Returns { changes: [{ groupId, groupName, moves: [{ assignmentId, position }],
  *   renumberAll, newOrder: ['1. name', ...], hiddenLines }], unchangedGroups,
@@ -262,18 +311,22 @@ function planReorder_(orderRows, refRows) {
       working.splice(slot, 0, assignmentId);
       moves.push({ assignmentId, position: slot + 1 });
     });
-    // If the order changes and Canvas numbering is messy, renumber the whole group
-    // 1…N in the new order instead of relying on Canvas to shift the others.
-    if (moves.length && messy) {
+    // If Canvas numbering is messy, renumber the whole group 1…N in the new order instead
+    // of relying on Canvas to shift the others: when the order changes, or when every
+    // assignment in the group was numbered (a "tidy up" even if the order stays the same).
+    const fullyNumbered = group.typed.size === size;
+    if (messy && (moves.length || fullyNumbered)) {
       moves = desired.map((assignmentId, slot) => ({ assignmentId, position: slot + 1 }));
     }
     if (moves.length) {
       // For Preview: the new order from the first changed slot to the last, capped.
+      // Empty when only the numbering is tidied.
       const changedSlots = desired
         .map((assignmentId, slot) => (current.indexOf(assignmentId) !== slot ? slot : -1))
         .filter(slot => slot >= 0);
-      const first = Math.min(...changedSlots);
-      const lines = desired.slice(first, Math.max(...changedSlots) + 1)
+      const first = changedSlots.length ? Math.min(...changedSlots) : 0;
+      const last = changedSlots.length ? Math.max(...changedSlots) : -1;
+      const lines = desired.slice(first, last + 1)
         .map((assignmentId, k) => `${first + k + 1}. ${refById.get(assignmentId).name}`);
       changes.push({ groupId, groupName: group.groupName, moves, renumberAll: messy,
         newOrder: lines.slice(0, ORDER_PREVIEW_LINES),
@@ -305,6 +358,10 @@ function formatPlan_(plan) {
       const how = c.renumberAll ?
         `numbering has duplicates or gaps; all ${c.moves.length} will be renumbered` :
         `${c.moves.length} move(s)`;
+      if (!c.newOrder.length) {
+        parts.push(`• ${c.groupName}: ${how} 1-${c.moves.length}. Order stays the same.`);
+        return;
+      }
       parts.push(`• ${c.groupName}: ${how}. New order:\n    ` +
         c.newOrder.join('\n    ') +
         (c.hiddenLines ? `\n    …and ${c.hiddenLines} more` : ''));
