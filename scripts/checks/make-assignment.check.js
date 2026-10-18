@@ -334,6 +334,15 @@ check('choices with period', c.dueTimeChoices_({ start: '0815', end: '0925' }, s
   ['Period Start (0815)', 'Period End (0925)', 'School Start (0815)', 'School End (1500)',
     'After School (1530)', 'Night (2200)']);
 check('choices without period', c.dueTimeChoices_(null, standard).length, 4);
+// ---- Clear IDs: which cells are emptied (Lara's layout). ----
+const cleared = c.clearCreationCells_(c.findMakeAssignmentLayout_(labGrid()))
+  .map(cell => c.cellName_(cell.row, cell.column) + (cell.isId ? '*' : ''));
+check('Clear IDs: item cells', cleared.slice(0, 4), ['A4*', 'A7', 'K7', 'L7']);
+check('Clear IDs: override cells (rows 12–17)', cleared.slice(4),
+  [12, 13, 14, 15, 16, 17].flatMap(row => [`A${row}*`, `K${row}`, `L${row}`]));
+check('Clear IDs never touches name, dates, Type, or Published',
+  cleared.some(name => /^(B|C|D|E|F|G|H|I|J)\d/.test(name.replace('*', ''))), false);
+
 check('every choice reads as a time', c.dueTimeChoices_({ start: '0815', end: '0925' }, standard)
   .every(choice => c.parseSheetTime_(choice)), true);
 

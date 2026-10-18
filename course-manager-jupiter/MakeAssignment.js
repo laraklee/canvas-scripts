@@ -25,7 +25,9 @@
  *   - createDropdowns1 (Get Times button; legacy name): Due Time dropdowns on every
  *     override row (Period Start/End for that row's Period and Due Date from
  *     ref_simpleSchedule, plus the four cfg_Time… choices). Typed times still allowed.
- *   Still to come: clearCreationIDs.
+ *   - clearCreationIDs (Clear IDs button; legacy name): clears canvasID, Canvas URL,
+ *     OverrideIDs, and every Status and Payload cell for the next assignment; keeps
+ *     everything else. Asks first if any ID is filled in. Sheet only; Canvas unchanged.
  *   No student data is read or written. Logs counts only.
  * Canvas endpoints called: none directly.
  * Canvas write operations (via canvasWrite_, so DRY_RUN applies):
@@ -69,6 +71,7 @@ function addMakeAssignmentMenuItems_(menu) {
   menu.addItem('Preview assignment (this tab)', 'previewAssignment');
   menu.addItem('makeAll: create assignment + overrides (this tab)', 'makeAssignmentAll');
   menu.addItem('Get Times: Due Time dropdowns (this tab)', 'createDropdowns1');
+  menu.addItem('Clear IDs, Status, Payload (this tab)', 'clearCreationIDs');
   menu.addItem('Check makeAssignment labels (this tab)', 'checkMakeAssignmentLabels');
 }
 
@@ -299,6 +302,64 @@ function createDropdowns1() {
   } catch (error) {
     reportRefreshFailure_('Get Times', 'No dropdowns were changed.', error);
   }
+}
+
+/**
+ * Button / menu: Clear IDs (legacy name kept). Clears the item's canvasID, Canvas URL,
+ * Status, and Payload, and each override row's OverrideID, Status, and Payload, so the
+ * tab is ready for the next assignment. Everything else (name, dates, the copy's
+ * defaults and formulas) stays. Asks first if any ID is filled in. Nothing in Canvas
+ * changes.
+ */
+function clearCreationIDs() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const sheet = ss.getActiveSheet();
+    const lastRow = sheet.getLastRow();
+    const lastColumn = sheet.getLastColumn();
+    if (!lastRow || !lastColumn) throw sheetProblem_('This tab is empty.');
+    const shown = sheet.getRange(1, 1, lastRow, lastColumn).getDisplayValues()
+      .map(row => row.map(value => String(value).trim()));
+    const layout = findMakeAssignmentLayout_(shown);
+    if (layout.problemCount) {
+      throw sheetProblem_(`This tab's labels have ${layout.problemCount} problem(s). Use ` +
+        'Course Manager › Check makeAssignment labels (this tab).');
+    }
+    const cells = clearCreationCells_(layout);
+    const ids = cells.filter(cell => cell.isId &&
+      shown.slice(cell.row - 1, cell.row)[0].slice(cell.column - 1, cell.column)[0]).length;
+    if (ids) {
+      const answer = ui.alert('Clear IDs', `Clear ${ids} Canvas ID(s), plus the Canvas URL, ` +
+        'Status, and Payload cells, on this tab?\n\nThis only clears the sheet. Anything ' +
+        'already created stays in Canvas.', ui.ButtonSet.YES_NO);
+      if (answer !== ui.Button.YES) return;
+    }
+    cells.forEach(cell => sheet.getRange(cell.row, cell.column).clearContent());
+    console.log(`Clear IDs: ${cells.length} cell(s) cleared, ${ids} of them IDs.`);
+    ss.toast('IDs, Canvas URL, Status, and Payload cleared. Ready for the next assignment.',
+      'Clear IDs', 5);
+  } catch (error) {
+    reportRefreshFailure_('Clear IDs', 'Nothing was cleared.', error);
+  }
+}
+
+/**
+ * The cells Clear IDs empties: [{ row, column, isId }]. Item: canvasID, Canvas URL,
+ * Status, Payload. Each override row: OverrideID, Status, Payload.
+ */
+function clearCreationCells_(layout) {
+  const { item, itemMore, overrides } = layout.tables;
+  const cells = [
+    { row: item.headerRow + 1, column: item.columns.get('canvasID'), isId: true },
+  ].concat(['Canvas URL', 'Status', 'Payload'].map(label =>
+    ({ row: itemMore.headerRow + 1, column: itemMore.columns.get(label), isId: false })));
+  for (let row = overrides.firstDataRow; row <= overrides.lastDataRow; row++) {
+    cells.push({ row, column: overrides.columns.get('OverrideID'), isId: true });
+    ['Status', 'Payload'].forEach(label =>
+      cells.push({ row, column: overrides.columns.get(label), isId: false }));
+  }
+  return cells;
 }
 
 /** The four cfg_Time… values as 4-digit 24-hour text, e.g. { schoolStart: '0815', … }. */

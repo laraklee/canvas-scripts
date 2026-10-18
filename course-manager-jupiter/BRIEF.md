@@ -300,6 +300,11 @@
 >     only. Rule only; cell values are never changed. Toast lists rows whose Period/date
 >     wasn't in the schedule. Item Due Time untouched (an old rule there stays until Lara
 >     removes it in Data › Data validation).
+>   - **Clear IDs (`clearCreationIDs`) written (2026-10-18, offline checks pass; not yet
+>     tested in Google):** Lara's keep-list decision: clear the item's canvasID, Canvas
+>     URL, Status, Payload and every override row's OverrideID, Status, Payload (legacy
+>     cleared only the IDs); keep everything else (name, dates, the copy's defaults and
+>     formulas). Asks Yes/No only if an ID is filled in. Sheet only; Canvas unchanged.
 >   - **Dates in code** (same as createByRow), with Payload/Status per item and override.
 >     Reuse createByRow's request builders for the four types.
 >   - **No course ID on the tab** (code uses `cfg_CourseID`); optional `=cfg_CourseName`
