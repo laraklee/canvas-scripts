@@ -22,6 +22,7 @@ const SHEETS = Object.freeze({
 /** User-facing tool sheets built by this project. Names are exact; never rename them. */
 const TOOL_SHEETS = Object.freeze({
   ASSIGNMENT_ORDER: 'Assignment Order',
+  CREATE_GROUPS: 'createGroups',
 });
 
 /** Sheets built so far. Add each one here as it is created. */

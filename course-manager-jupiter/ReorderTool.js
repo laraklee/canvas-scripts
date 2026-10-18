@@ -36,9 +36,6 @@ const ORDER_INPUT_COLOR = '#fff2cc';
 const ORDER_PREVIEW_LINES = 10;
 // Apps Script stops a run at 6 minutes; Push stops sending before then.
 const PUSH_TIME_LIMIT_MS = 5 * 60 * 1000;
-// Canvas error types that stop the whole Push (any other error stops only that group).
-const PUSH_STOP_ALL_TYPES = Object.freeze(['NOT_SET_UP', 'TOKEN_REJECTED', 'UNREACHABLE',
-  'RATE_LIMITED', 'BAD_RESPONSE', 'BAD_METHOD']);
 
 /** Adds this file's menu items. Called by onOpen. */
 function addReorderToolMenuItems_(menu) {
@@ -325,7 +322,7 @@ function sendReorder_(courseId, plan, started) {
         result.count++;
       } catch (error) {
         // Problems that would hit every group (token, network, busy) stop the whole Push.
-        if (!error.canvasType || PUSH_STOP_ALL_TYPES.includes(error.canvasType)) throw error;
+        if (!error.canvasType || CANVAS_STOP_ALL_TYPES.includes(error.canvasType)) throw error;
         // error.message names the type and code only, e.g. "...not allowed to do this (403)."
         result.refused.set(error.message, (result.refused.get(error.message) || 0) + 1);
         result.refusedCount++;

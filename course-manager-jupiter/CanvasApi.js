@@ -23,6 +23,10 @@ const CANVAS_RATE_LIMIT_FLOOR = 100;
 const CANVAS_PAUSE_MS = 2000;
 const CANVAS_WRITE_METHODS = Object.freeze(['POST', 'PUT', 'PATCH', 'DELETE']);
 const PROP_DRY_RUN = 'DRY_RUN';
+// Error types that would hit every remaining request (token, network, busy, bad reply),
+// so tools that send many writes stop entirely; other errors affect only one item.
+const CANVAS_STOP_ALL_TYPES = Object.freeze(['NOT_SET_UP', 'TOKEN_REJECTED', 'UNREACHABLE',
+  'RATE_LIMITED', 'BAD_RESPONSE', 'BAD_METHOD']);
 
 /** Adds this file's menu items. Called by onOpen. */
 function addCanvasApiMenuItems_(menu) {
