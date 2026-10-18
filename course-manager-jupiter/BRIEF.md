@@ -7,14 +7,23 @@
 >   token setup ("Set Canvas token", User Properties); the read-only Canvas request
 >   helper `canvasGet_()` ("Test Canvas connection"); the startup check ("Check setup").
 > - **Done 2026-10-17:** `ref_simpleSchedule` and `ref_gradingScale` added to
->   `SHEETS_BUILT`, so the startup check covers them (not yet tested in the Sheet).
-> - **Next:**
->   1. Build `ref_gradingPeriods`.
->   2. `ref_SectionLookup`.
->   3. The assignment reorder tool, with `canvasWrite_()` and `DRY_RUN` built first.
+>   `SHEETS_BUILT`, so the startup check covers them (tested: "Setup OK").
+> - **Reorder plan, step 1 of 4 done (read-only report, 2026-10-17):** legacy
+>   `createAssignmentGroupsList` (06_DataSetup.js) and
+>   `updateAssignmentPositionsFromSelectedRows` (09_MiscTools.js) reviewed. Verified
+>   call per the Canvas docs: `PUT /api/v1/courses/:course_id/assignments/:id` with
+>   `assignment[position]`, one call per assignment. Canvas has no documented
+>   reorder-within-group endpoint. Don't send `assignment_group_id` (the legacy code did,
+>   which can move an assignment to another group) or `notify_of_update`.
+> - **Next (Lara's 4-step reorder plan):**
+>   2. `ref_assignmentGroups` in `RefSheets.js` (legacy's 7 columns, read-only).
+>   3. `canvasWrite_()` with `DRY_RUN` plus menu items to show and flip it.
+>   4. The visible reorder tool sheet: Preview, then Push one group at a time.
+>   Then `ref_gradingPeriods` and `ref_SectionLookup`.
 > - **Open questions:**
->   - Assignment ID vs. the ID in the Canvas URL in the old `assignmentGroups` data:
->     which one does the reorder call need? (Answer before the reorder tool.)
+>   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
+>     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
+>     after step 2, using IDs and URL paths only (no names).
 >   - What reads the time-dropdown values back, and in what format?
 >   - Does Lara use the seating chart? What are Period Pairs for?
 >   - The "Design rules for reference sheets" section is not in this brief yet.
