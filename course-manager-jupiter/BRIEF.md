@@ -287,10 +287,13 @@ Lara set these on 2026-10-17. Follow them in every session, on any computer.
    code. (If it happens, pull and push again.)
 3. **Start the session by reading this file.** Claude Code sessions and Claude's private
    notes stay on the computer where they ran; this file travels through GitHub.
-4. **Line endings:** Windows and Mac end lines differently. If `clasp push` says "Skipping
-   push" about the manifest, compare Google's copy first (read-only `clasp clone` into a
-   temporary folder), then `clasp push --force` only if the sole difference is line
-   endings. (`.gitattributes` is meant to prevent this; see Status.)
+4. **Line endings:** Windows and Mac end lines differently. Since 2026-10-17 the repo's
+   `.gitattributes` (`* text=auto eol=lf`) keeps LF on both computers, matching Git.
+   Google's manifest was still CRLF then (pushed from the PC), so expect **one more**
+   "Skipping push" about the manifest at the next `clasp push` from either computer:
+   compare Google's copy first (read-only `clasp clone` into a temporary folder), then
+   `clasp push --force` if the only difference is line endings. After that, a manifest
+   prompt means a real manifest change (e.g. a new permission).
 5. Things that are the same on both computers: dry run and the Canvas token (stored in
    Google), and `cfg_CourseID` (in the Sheet).
 

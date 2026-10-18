@@ -1,0 +1,5 @@
+# Use Unix-style (LF) line endings for every text file, on every computer (PC and Mac).
+# Without this, Windows checks files out with CRLF endings and clasp sees the manifest
+# (appsscript.json) as "changed" compared with Google's copy, so clasp push stops with
+# "Skipping push" even when nothing real changed. Binary files are detected and left alone.
+* text=auto eol=lf
