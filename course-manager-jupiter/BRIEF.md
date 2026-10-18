@@ -33,14 +33,24 @@
 >   step 4).
 > - **Reorder plan, step 4a written (2026-10-17, not yet tested in the Sheet):** tool
 >   sheet `Assignment Order` (`TOOL_SHEETS.ASSIGNMENT_ORDER`), `ReorderTool.js`. Columns:
->   Group, Assignment, Current Position (grey, read-only), New Position (yellow, typed),
->   Assignment ID (grey). Menu: "Open reorder tool" (refreshes `ref_assignmentGroups`
->   first; asks before clearing typed entries), "Number selected rows 1, 2, 3…" (legacy
+>   Group, Assignment, Due Date, Current Position (grey, read-only), New Position
+>   (yellow, typed), Assignment ID (grey). Menu: "Open reorder tool" (refreshes
+>   `ref_assignmentGroups` first; asks before clearing typed entries; rebuilds the
+>   earlier 5-column layout in place), "Number selected rows 1, 2, 3…" (legacy
 >   `fillSelectedRangeSequentially`, New Position column only), "Preview reorder"
->   (group names and move counts; sends nothing). `planReorder_()`: blank New Position
->   keeps the current position; a typed number wins a tie; duplicates or non-whole
->   numbers skip that group; group always comes from `ref_assignmentGroups` by ID.
+>   (group names, move counts, and each changing group's new order, up to 10 lines;
+>   sends nothing). `planReorder_()`: a typed New Position is the exact final slot;
+>   blank rows fill the remaining slots in their current order; duplicates, non-whole
+>   numbers, or numbers larger than the group skip that group; group always comes from
+>   `ref_assignmentGroups` by ID. Reads the whole New Position column (not the
+>   selection); groups with nothing typed are never touched. Minimal moves, except when
+>   an edited group's Canvas numbering is messy (duplicates or gaps, e.g. two 1s, seen
+>   in Lara's course): then every assignment in that group gets 1…N in the new order.
 >   `writeAssignmentGroupsSheet_()` now holds the refresh work (no pop-up).
+> - **First 4a test (Lara):** sheet built and Preview ran. Her question exposed a bug:
+>   typed numbers were mixed in with the current positions instead of taking exact
+>   slots. Fixed with the exact-slot rule above, plus Due Date column and new-order
+>   Preview (Lara's requests). Retest pending.
 > - **Next (Lara's 4-step reorder plan):**
 >   4b. "Push reorder": refresh first, confirm (show dry-run state), send per group
 >      through `canvasWrite_()` (only `assignment[position]`), refresh again and report

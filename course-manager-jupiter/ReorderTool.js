@@ -15,11 +15,17 @@
  *   (read by canvasGet_).
  */
 
-const ORDER_HEADERS = Object.freeze(['Group', 'Assignment', 'Current Position',
+const ORDER_HEADERS = Object.freeze(['Group', 'Assignment', 'Due Date', 'Current Position',
   'New Position', 'Assignment ID']);
-const ORDER_NEW_POSITION_COLUMN = 4;
+// The first layout (before Due Date was added). Open reorder tool rebuilds it in place.
+const ORDER_HEADERS_BEFORE_DUE_DATE = Object.freeze(['Group', 'Assignment',
+  'Current Position', 'New Position', 'Assignment ID']);
+const ORDER_DUE_DATE_COLUMN = 3;
+const ORDER_NEW_POSITION_COLUMN = 5;
+const ORDER_DUE_DATE_FORMAT = 'ddd m/d/yyyy h:mm am/pm';
 const ORDER_READ_ONLY_COLOR = '#eeeeee';
 const ORDER_INPUT_COLOR = '#fff2cc';
+const ORDER_PREVIEW_LINES = 10;
 
 /** Adds this file's menu items. Called by onOpen. */
 function addReorderToolMenuItems_(menu) {
@@ -41,7 +47,11 @@ function openReorderTool() {
   try {
     const existing = ss.getSheetByName(TOOL_SHEETS.ASSIGNMENT_ORDER);
     if (existing) {
-      checkHeaderLayout_(existing, ORDER_HEADERS);
+      try {
+        checkHeaderLayout_(existing, ORDER_HEADERS);
+      } catch {
+        checkHeaderLayout_(existing, ORDER_HEADERS_BEFORE_DUE_DATE);
+      }
       const typed = readOrderSheet_().filter(row => !isBlank_(row.newPosition)).length;
       if (typed > 0) {
         const answer = ui.alert('Open reorder tool',
@@ -53,7 +63,7 @@ function openReorderTool() {
 
     writeAssignmentGroupsSheet_(ss);
     const rows = readAssignmentGroups_().map(a =>
-      [a.groupName, a.name, a.position, '', a.assignmentId]);
+      [a.groupName, a.name, toDueDate_(a.dueAt), a.position, '', a.assignmentId]);
 
     const sheet = existing || ss.insertSheet(TOOL_SHEETS.ASSIGNMENT_ORDER);
     const existingFilter = sheet.getFilter();
@@ -65,6 +75,7 @@ function openReorderTool() {
     if (rows.length) {
       sheet.getRange(2, 1, rows.length, ORDER_HEADERS.length).setBackground(ORDER_READ_ONLY_COLOR);
       sheet.getRange(2, ORDER_NEW_POSITION_COLUMN, rows.length, 1).setBackground(ORDER_INPUT_COLOR);
+      sheet.getRange(2, ORDER_DUE_DATE_COLUMN, rows.length, 1).setNumberFormat(ORDER_DUE_DATE_FORMAT);
       sheet.getRange(1, 1, rows.length + 1, ORDER_HEADERS.length).createFilter();
     }
     sheet.setFrozenRows(1);
@@ -156,12 +167,16 @@ function readOrderSheet_() {
 }
 
 /**
- * Works out the changes per group. For each group with New Position entries, the new
- * order sorts every assignment by its New Position, or by its current position when
- * blank; on a tie, a typed number goes first (so "move to 2" lands before the current
- * 2nd). Moves are listed top to bottom and only for assignments that need to move.
- * Returns { changes: [{ groupId, groupName, moves: [{ assignmentId, position }] }],
- *   unchangedGroups, problems: [{ groupName, reason }] }.
+ * Works out the changes per group. A typed New Position is that assignment's exact final
+ * slot in its group (typing 1-5 on five rows makes them exactly 1-5). Blank rows fill the
+ * remaining slots in their current order. Duplicates, non-whole numbers, or numbers larger
+ * than the group skip that group. Moves are listed top to bottom and only for
+ * assignments that need to move, except when the group's Canvas numbering is messy
+ * (not exactly 1, 2, 3…): then every assignment in the group gets its new position.
+ * Groups with no typed numbers are never changed.
+ * Returns { changes: [{ groupId, groupName, moves: [{ assignmentId, position }],
+ *   renumberAll, newOrder: ['1. name', ...], hiddenLines }], unchangedGroups,
+ *   problems: [{ groupName, reason }] }.
  */
 function planReorder_(orderRows, refRows) {
   const refById = new Map(refRows.map(row => [row.assignmentId, row]));
@@ -208,10 +223,16 @@ function planReorder_(orderRows, refRows) {
   const changes = [];
   let unchangedGroups = 0;
   groups.forEach((group, groupId) => {
+    const size = group.members.length;
     const typedNumbers = Array.from(group.typed.values());
     if (new Set(typedNumbers).size !== typedNumbers.length) {
       badGroups.add(groupId);
       problems.push({ groupName: group.groupName, reason: 'two rows have the same New Position' });
+    }
+    if (typedNumbers.some(position => position > size)) {
+      badGroups.add(groupId);
+      problems.push({ groupName: group.groupName,
+        reason: `a New Position is larger than the group's ${size} assignment(s)` });
     }
     if (badGroups.has(groupId)) return;
     if (!group.typed.size) {
@@ -224,18 +245,16 @@ function planReorder_(orderRows, refRows) {
       .sort((a, b) => (a.member.position - b.member.position) || (a.index - b.index))
       .map(entry => entry.member);
     const current = currentMembers.map(member => member.assignmentId);
-    const desired = currentMembers
-      .map((member, index) => {
-        const typed = group.typed.get(member.assignmentId);
-        return { assignmentId: member.assignmentId, index,
-          key: typed ?? member.position, typed: typed !== undefined };
-      })
-      .sort((a, b) => (a.key - b.key) || (Number(b.typed) - Number(a.typed)) || (a.index - b.index))
-      .map(entry => entry.assignmentId);
+    // Canvas numbering is "messy" when it is not exactly 1, 2, 3… (duplicates or gaps).
+    const messy = currentMembers.some((member, slot) => member.position !== slot + 1);
+    // Typed rows take their exact slots; the rest fill the gaps in their current order.
+    const typedBySlot = new Map(Array.from(group.typed, ([assignmentId, slot]) => [slot, assignmentId]));
+    const untyped = current.filter(assignmentId => !group.typed.has(assignmentId));
+    const desired = Array.from({ length: size }, (_, i) => typedBySlot.get(i + 1) ?? untyped.shift());
 
     // Walk top to bottom; each move puts the right assignment into that slot.
     const working = current.slice();
-    const moves = [];
+    let moves = [];
     desired.forEach((assignmentId, slot) => {
       const from = working.indexOf(assignmentId);
       if (from === slot) return;
@@ -243,8 +262,22 @@ function planReorder_(orderRows, refRows) {
       working.splice(slot, 0, assignmentId);
       moves.push({ assignmentId, position: slot + 1 });
     });
+    // If the order changes and Canvas numbering is messy, renumber the whole group
+    // 1…N in the new order instead of relying on Canvas to shift the others.
+    if (moves.length && messy) {
+      moves = desired.map((assignmentId, slot) => ({ assignmentId, position: slot + 1 }));
+    }
     if (moves.length) {
-      changes.push({ groupId, groupName: group.groupName, moves });
+      // For Preview: the new order from the first changed slot to the last, capped.
+      const changedSlots = desired
+        .map((assignmentId, slot) => (current.indexOf(assignmentId) !== slot ? slot : -1))
+        .filter(slot => slot >= 0);
+      const first = Math.min(...changedSlots);
+      const lines = desired.slice(first, Math.max(...changedSlots) + 1)
+        .map((assignmentId, k) => `${first + k + 1}. ${refById.get(assignmentId).name}`);
+      changes.push({ groupId, groupName: group.groupName, moves, renumberAll: messy,
+        newOrder: lines.slice(0, ORDER_PREVIEW_LINES),
+        hiddenLines: Math.max(0, lines.length - ORDER_PREVIEW_LINES) });
     } else {
       unchangedGroups++;
     }
@@ -256,7 +289,10 @@ function countMoves_(plan) {
   return plan.changes.reduce((total, change) => total + change.moves.length, 0);
 }
 
-/** Alert text for a plan: group names and counts only. */
+/**
+ * Alert text for a plan: group names, counts, and each changing group's new order
+ * (assignment names). Never logged.
+ */
 function formatPlan_(plan) {
   const parts = [];
   const stamp = SpreadsheetApp.getActiveSpreadsheet().getRangeByName(ASSIGNMENT_GROUPS_REFRESHED.name);
@@ -264,8 +300,15 @@ function formatPlan_(plan) {
     parts.push('Based on Canvas as of ' + stamp.getDisplayValue() + '.');
   }
   if (plan.changes.length) {
-    parts.push(`${plan.changes.length} group(s) would change (${countMoves_(plan)} move(s)):\n• ` +
-      plan.changes.map(c => `${c.groupName}: ${c.moves.length} move(s)`).join('\n• '));
+    parts.push(`${plan.changes.length} group(s) would change (${countMoves_(plan)} move(s)):`);
+    plan.changes.forEach(c => {
+      const how = c.renumberAll ?
+        `numbering has duplicates or gaps; all ${c.moves.length} will be renumbered` :
+        `${c.moves.length} move(s)`;
+      parts.push(`• ${c.groupName}: ${how}. New order:\n    ` +
+        c.newOrder.join('\n    ') +
+        (c.hiddenLines ? `\n    …and ${c.hiddenLines} more` : ''));
+    });
   } else {
     parts.push('No groups would change.');
   }
@@ -275,6 +318,14 @@ function formatPlan_(plan) {
       plan.problems.map(p => `${p.groupName}: ${p.reason}`).join('\n• '));
   }
   return parts.join('\n\n');
+}
+
+/** A due date for the sheet: a real date (shown in the Sheet's time zone), or blank. */
+function toDueDate_(value) {
+  if (value instanceof Date) return value;
+  if (isBlank_(value)) return '';
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? '' : date;
 }
 
 function isBlank_(value) {
