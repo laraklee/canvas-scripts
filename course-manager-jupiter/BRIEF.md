@@ -84,7 +84,7 @@
 >   quarters' scores from the Canvas gradebook, which the Jupiter build doesn't need. If
 >   it's needed later, build it from `GET /courses/:course/grading_periods` (keep A = ID,
 >   B = title; preserve hand-typed columns such as "Grades Published" by ID).
-> - **`ref_SectionLookup` written (2026-10-17, not yet tested):** "Refresh section list"
+> - **`ref_SectionLookup` done (2026-10-17, tested: periods right, "Setup OK"):** "Refresh section list"
 >   (`RefSheets.js`, stamp `SectionLookup_LastRefreshed` in G1). One read-only
 >   `GET /courses/:course/sections` instead of legacy's one request per section; lists
 >   every section (legacy listed only sections with people). Same 4 columns as legacy:
@@ -92,6 +92,9 @@
 >   use it), Section ID Copy. Sorted by period, then name; no-period sections last.
 >   Added to `SHEETS_BUILT`. Readers in legacy: a tool-tab formula (MATCH period in C,
 >   return A), `getPeriodNameFromId` (A → C), roster and seating-chart tools.
+> - **Next:** reference sheets on the build list are done (except shelved
+>   `ref_gradingPeriods`). Pick the next tool to port from Lara's Decision column in
+>   `docs/legacy-function-map.md` (port / later / leave behind).
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
 >     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
@@ -271,7 +274,7 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
     legacy `createAssignmentGroupsList`, sorted by group order then position (legacy
     sorted by name); blank section due dates are skipped when finding the latest.
   - `ref_SectionLookup` ("Refresh section list"; stamp `SectionLookup_LastRefreshed`):
-    built, not yet tested.
+    built and tested.
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).
