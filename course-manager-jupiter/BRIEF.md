@@ -15,7 +15,7 @@
 >   `assignment[position]`, one call per assignment. Canvas has no documented
 >   reorder-within-group endpoint. Don't send `assignment_group_id` (the legacy code did,
 >   which can move an assignment to another group) or `notify_of_update`.
-> - **Reorder plan, step 2 of 4 written (2026-10-17, not yet tested in the Sheet):**
+> - **Reorder plan, step 2 of 4 done (2026-10-17, tested: refresh count right, "Setup OK"):**
 >   `ref_assignmentGroups` ("Refresh assignment groups", stamp
 >   `AssignmentGroups_LastRefreshed` in J1), legacy's 7 columns, sorted by group order
 >   then position; `readAssignmentGroups_()` reads it back by header name; added to
@@ -199,7 +199,7 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
   - `ref_simpleSchedule` (IMPORTRANGE formula) and `ref_gradingScale` (copied as is):
     in the Sheet and in `SHEETS_BUILT`; no script builds them.
   - `ref_assignmentGroups` ("Refresh assignment groups"; stamp
-    `AssignmentGroups_LastRefreshed`): built, not yet tested. Same seven columns as
+    `AssignmentGroups_LastRefreshed`): built and tested. Same seven columns as
     legacy `createAssignmentGroupsList`, sorted by group order then position (legacy
     sorted by name); blank section due dates are skipped when finding the latest.
   - to do: `ref_gradingPeriods`, `ref_SectionLookup`.
