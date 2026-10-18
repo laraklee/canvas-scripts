@@ -306,8 +306,8 @@
 >     only. Rule only; cell values are never changed. Toast lists rows whose Period/date
 >     wasn't in the schedule. Item Due Time untouched (an old rule there stays until Lara
 >     removes it in Data › Data validation).
->   - **Step 3 (CQ questions) written (2026-10-18, Lara approved the question POSTs;
->     offline checks pass; not yet tested in Google):** new `QuizQuestions.js`. Optional
+>   - **Step 3 (CQ questions) done (2026-10-18, Lara approved the question POSTs; real
+>     test: a Classic quiz with its questions created in Sequence 9, "work fine"):** new `QuizQuestions.js`. Optional
 >     **Questions** table (first label `Question Type`; also `Notes (Ignored)` (not read),
 >     `Points`, `Question`, `Answer`, `Opt 1`–`Opt 5`, `Status`, `Payload`, `QuestionID`),
 >     rows from below the labels to the end of the tab. Lara's decisions: four types only
@@ -324,6 +324,16 @@
 >     link (`quizIdFromLink_`), so the tab needs no Quiz ID cell. Overrides now end above
 >     the next table's labels or a row whose OverrideID cell holds words (the "Questions"
 >     title in A20), so Clear IDs never erases the title.
+>   - **New Quiz questions: possible now (checked 2026-10-18, not decided or built).**
+>     Canvas's New Quiz Items API: `POST /api/quiz/v1/courses/:course/quizzes/:assignment_id/items`
+>     (the NQ's canvasID). Each item: `entry_type: "Item"`, `points_possible` (must be
+>     above 0), and an `entry` with `item_body` (HTML), `interaction_type_slug`
+>     (`choice`, `multi-answer`, `true-false`, `essay`), `interaction_data` (choices as
+>     `{id: UUID, position, item_body}`; T/F labels; essay settings), `scoring_data`
+>     (correct choice UUID(s), true/false, or essay grading notes), `scoring_algorithm`
+>     (`Equivalence`; `AllOrNothing`/`PartialScore` for multi-answer; `None` for essay).
+>     Choices need UUIDs (`Utilities.getUuid()`). The docs show both `itemBody` and
+>     `item_body` for choices: test which Canvas accepts. Legacy had no NQ questions.
 >   - **Clear IDs (`clearCreationIDs`) done (2026-10-18, tested on Lara's tab):** Lara's keep-list decision: clear the item's canvasID, Canvas
 >     URL, Status, Payload and every override row's OverrideID, Status, Payload (legacy
 >     cleared only the IDs); keep everything else (name, dates, the copy's defaults and
