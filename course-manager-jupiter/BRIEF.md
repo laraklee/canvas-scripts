@@ -147,7 +147,9 @@
 >   if D2 already has an ID; Create groups skips rows with a GroupID and writes each ID as
 >   it goes; refused rows listed by row number; 5-minute stop. `CANVAS_STOP_ALL_TYPES`
 >   moved from `ReorderTool.js` to `CanvasApi.js` so both tools share it.
-> - **createByRow step 1 (Type A) written (2026-10-17, not yet tested):** new
+> - **createByRow step 1 (Type A) done (2026-10-17, tested: labels check, Preview, dry run,
+>   two real assignments in Sequence 9 with correct dates; Lara moved Status left, which
+>   is fine since columns are found by label):** new
 >   `PostRows.js`. Ported from legacy `postRows`, `postSingleAssignment`,
 >   `generateDescription2`. Legacy facts: `convertToUTC` was a *custom function* used by
 >   sheet formulas (column O normalized the Due Time; P–R built due/unlock/lock); legacy
@@ -164,8 +166,17 @@
 >   "not built yet". Classic quizzes will keep the quiz ID in the link column (Lara: needed
 >   for adding questions later). Also in this commit: `canvasApiPath_()` in `CanvasApi.js`
 >   (paths starting `/api/` used as-is, for New Quizzes; untested until the NQ step).
-> - **Next:** test createByRow Type A (dry run, then Sequence 9); then D, NQ, CQ one at a
->   time; then pick from Lara's Decision column in `docs/legacy-function-map.md` (the two
+> - **createByRow step 2 (Type D + Published column) written (2026-10-17, not yet
+>   tested):** Type D = graded discussion, `POST /courses/:course/discussion_topics` with
+>   `title`, `message` (same description builder), `published`, and an `assignment` part
+>   (`grading_type: points`, points, due/unlock/lock). Legacy sent `is_posted` (not a
+>   Canvas setting; ignored by Canvas) and logged the whole request; both dropped.
+>   CanvasID = the discussion's `assignment_id` (like legacy; matches Type A). New
+>   optional row 3 label **Published** (`CREATE_BY_ROW_OPTIONAL_LABELS`): blank/TRUE/ticked
+>   = publish, FALSE/unticked = draft; works for every type; Status/Preview say "(A,
+>   draft)". Reason: Sequence 9 still has students, and Canvas's docs don't say whether
+>   creating published items notifies them, so test rows can be drafts.
+> - **Next:** test Type D (drafts in Sequence 9), then CQ, then NQ, one at a time; then pick from Lara's Decision column in `docs/legacy-function-map.md` (the two
 >   Jupiter export tools read `cfg_JupiterCategories`, now in place). Button ideas for later (Lara still deciding): a
 >   "refresh all ref tables" button, buttons on the Assignment Order tab.
 > - **Open questions:**
@@ -376,7 +387,8 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
   - Jupiter categories (`Jupiter.js`, "Refresh Jupiter categories"): built and tested.
   - `ref_Config`: finished for now; hidden by Lara.
   - Groups (`Groups.js`, three `createGroups`-tab buttons): built and tested.
-  - createByRow (`PostRows.js`): Type A built, not yet tested; D, NQ, CQ to do.
+  - createByRow (`PostRows.js`): Type A built and tested; Type D and the optional
+    Published column built, not yet tested; CQ, NQ to do.
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).

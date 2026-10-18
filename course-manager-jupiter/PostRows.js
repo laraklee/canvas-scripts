@@ -13,11 +13,13 @@
  *   change. Rows that already have a CanvasID are skipped (no duplicates). A blank time
  *   means 11:59 PM on that date. Times are sent with the Sheet's UTC offset
  *   (e.g. 2026-01-28T14:05:00-10:00), so the Payload is readable in Hawaii time.
- *   Built so far: Type A (assignment). D, NQ, and CQ come in later steps.
+ *   Optional "Published" column: blank or TRUE publishes; FALSE creates a draft.
+ *   Built so far: Type A (assignment), D (graded discussion). NQ and CQ come later.
  *   No student data is read or written. Logs counts only.
  * Canvas endpoints called: none directly.
  * Canvas write operations (via canvasWrite_, so DRY_RUN applies):
  *   POST /api/v1/courses/:course/assignments (Type A)
+ *   POST /api/v1/courses/:course/discussion_topics with an assignment part (Type D)
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
  *   Script Property DRY_RUN. Named ranges: cfg_CourseID (cfg_CourseName for messages).
  */
@@ -43,7 +45,11 @@ const CREATE_BY_ROW_LABELS = Object.freeze({
   PAYLOAD: 'Payload',
   STATUS: 'Status',
 });
-const CREATE_BY_ROW_BUILT_TYPES = Object.freeze(['A']);
+// Labels the code uses when present, but doesn't require.
+const CREATE_BY_ROW_OPTIONAL_LABELS = Object.freeze({
+  PUBLISHED: 'Published',
+});
+const CREATE_BY_ROW_BUILT_TYPES = Object.freeze(['A', 'D']);
 const CREATE_BY_ROW_KNOWN_TYPES = Object.freeze(['A', 'D', 'NQ', 'CQ']);
 const CREATE_BY_ROW_BLANK_TIME = Object.freeze({ hours: 23, minutes: 59 });
 const CREATE_BY_ROW_TIME_LIMIT_MS = 5 * 60 * 1000;
@@ -61,12 +67,15 @@ function checkCreateByRowLabels() {
   const ui = SpreadsheetApp.getUi();
   try {
     const sheet = getCreateByRowSheet_(SpreadsheetApp.getActiveSpreadsheet());
-    const { missing } = findCreateByRowColumns_(sheet);
-    ui.alert('Check createByRow labels', missing.length ?
+    const { columns, missing } = findCreateByRowColumns_(sheet);
+    const optional = Object.values(CREATE_BY_ROW_OPTIONAL_LABELS)
+      .map(label => `• ${label}: ${columns.has(label) ? 'found' : 'not used (optional)'}`)
+      .join('\n');
+    ui.alert('Check createByRow labels', (missing.length ?
       `Row ${CREATE_BY_ROW_HEADER_ROW} is missing ${missing.length} label(s):\n• ` +
         missing.join('\n• ') + '\n\nLabels must match exactly, including capitals.' :
       `All ${Object.keys(CREATE_BY_ROW_LABELS).length} labels are in row ` +
-        `${CREATE_BY_ROW_HEADER_ROW}.`, ui.ButtonSet.OK);
+        `${CREATE_BY_ROW_HEADER_ROW}.`) + `\n\nOptional:\n${optional}`, ui.ButtonSet.OK);
   } catch (error) {
     reportRefreshFailure_('Check createByRow labels', 'Nothing was changed.', error);
   }
@@ -85,7 +94,7 @@ function previewRows() {
       if (plan.request) {
         ready++;
         job.write(plan, CREATE_BY_ROW_LABELS.PAYLOAD, JSON.stringify(plan.request.payload));
-        job.write(plan, CREATE_BY_ROW_LABELS.STATUS, `Preview (${plan.type}): not sent`);
+        job.write(plan, CREATE_BY_ROW_LABELS.STATUS, `Preview (${plan.label}): not sent`);
       } else {
         job.write(plan, CREATE_BY_ROW_LABELS.STATUS, plan.message);
       }
@@ -137,11 +146,13 @@ function postRows() {
       try {
         const result = canvasWrite_('POST', plan.request.path, plan.request.payload);
         if (result.dryRun) {
-          job.write(plan, CREATE_BY_ROW_LABELS.STATUS, `Dry run (${plan.type}): not sent`);
+          job.write(plan, CREATE_BY_ROW_LABELS.STATUS, `Dry run (${plan.label}): not sent`);
         } else {
-          job.write(plan, CREATE_BY_ROW_LABELS.CANVAS_ID, result.id || '');
+          const canvasId = plan.request.readId(result);
+          job.write(plan, CREATE_BY_ROW_LABELS.CANVAS_ID, canvasId || '');
           job.write(plan, CREATE_BY_ROW_LABELS.CANVAS_LINK, result.html_url || '');
-          job.write(plan, CREATE_BY_ROW_LABELS.STATUS, `Posted (${plan.type})`);
+          job.write(plan, CREATE_BY_ROW_LABELS.STATUS, canvasId ? `Posted (${plan.label})` :
+            `Posted (${plan.label}), but Canvas returned no ID; check it in Canvas`);
         }
         posted++;
       } catch (error) {
@@ -175,7 +186,10 @@ function getCreateByRowSheet_(ss) {
   return sheet;
 }
 
-/** Finds each label's column (1-based) in row 3: { columns: Map(label → column), missing }. */
+/**
+ * Finds each label's column (1-based) in row 3: { columns: Map(label → column), missing }.
+ * Optional labels go into columns when present and are never "missing".
+ */
 function findCreateByRowColumns_(sheet) {
   const lastColumn = Math.max(sheet.getLastColumn(), 1);
   const header = sheet.getRange(CREATE_BY_ROW_HEADER_ROW, 1, 1, lastColumn).getValues()[0]
@@ -186,6 +200,10 @@ function findCreateByRowColumns_(sheet) {
     const index = header.indexOf(label);
     if (index === -1) missing.push(label);
     else columns.set(label, index + 1);
+  });
+  Object.values(CREATE_BY_ROW_OPTIONAL_LABELS).forEach(label => {
+    const index = header.indexOf(label);
+    if (index !== -1) columns.set(label, index + 1);
   });
   return { columns, missing };
 }
@@ -215,7 +233,9 @@ function readSelectedRows_(ss) {
   const block = sheet.getRange(firstRow, 1, lastRow - firstRow + 1, sheet.getLastColumn());
   const values = block.getValues();
   const shown = block.getDisplayValues();
-  const pick = (row, label) => row.slice(columns.get(label) - 1, columns.get(label))[0];
+  // A missing optional column reads as blank.
+  const pick = (row, label) => (columns.has(label) ?
+    row.slice(columns.get(label) - 1, columns.get(label))[0] : '');
   const plans = values
     .map((row, i) => {
       const displayRow = shown.slice(i, i + 1)[0];
@@ -240,7 +260,7 @@ function planCreateByRow_(rowNumber, cell, text, courseId, timeZone) {
   const name = text(CREATE_BY_ROW_LABELS.NAME);
   const type = text(CREATE_BY_ROW_LABELS.TYPE).toUpperCase();
   if (!name && !type) return null;
-  const plan = { rowNumber, type: type || '?' };
+  const plan = { rowNumber, type: type || '?', label: type || '?' };
   if (!isBlank_(cell(CREATE_BY_ROW_LABELS.CANVAS_ID))) {
     return Object.assign(plan, { message: 'Skipped: already has a CanvasID' });
   }
@@ -262,31 +282,84 @@ function planCreateByRow_(rowNumber, cell, text, courseId, timeZone) {
       lockAt: time(CREATE_BY_ROW_LABELS.LOCK_DATE, CREATE_BY_ROW_LABELS.LOCK_TIME, 'Lock'),
       description: buildDescription_(text(CREATE_BY_ROW_LABELS.DESCRIPTION),
         text(CREATE_BY_ROW_LABELS.DOC_LINK), text(CREATE_BY_ROW_LABELS.LINK_TEXT)),
+      published: parsePublished_(cell(CREATE_BY_ROW_OPTIONAL_LABELS.PUBLISHED)),
     };
-    return Object.assign(plan, {
-      request: { path: `/courses/${courseId}/assignments`, payload: assignmentPayload_(fields) },
-    });
+    if (!fields.published) plan.label = `${type}, draft`;
+    return Object.assign(plan, { request: requestForType_(type, fields, courseId) });
   } catch (error) {
     if (!error.isSheetProblem) throw error;
     return Object.assign(plan, { message: 'Not ready: ' + error.message });
   }
 }
 
+/**
+ * The request for a built type: { path, payload, readId(result) }. readId picks the ID
+ * that goes in the CanvasID column (always the item's assignment ID).
+ */
+function requestForType_(type, fields, courseId) {
+  if (type === 'A') {
+    return { path: `/courses/${courseId}/assignments`, payload: assignmentPayload_(fields),
+      readId: result => result.id };
+  }
+  if (type === 'D') {
+    return { path: `/courses/${courseId}/discussion_topics`, payload: discussionPayload_(fields),
+      readId: result => result.assignment_id };
+  }
+  throw sheetProblem_(`Type ${type} is not built yet`);
+}
+
+/** Blank or TRUE → publish; FALSE → draft (a checkbox works too). */
+function parsePublished_(value) {
+  if (isBlank_(value) || value === true) return true;
+  if (value === false) return false;
+  const textValue = String(value).trim().toUpperCase();
+  if (textValue === 'TRUE') return true;
+  if (textValue === 'FALSE') return false;
+  throw sheetProblem_('Published must be TRUE, FALSE, or blank');
+}
+
+function pointsFrom_(value) {
+  const points = isBlank_(value) ? 0 : Number(value);
+  if (isNaN(points)) throw sheetProblem_('points_possible is not a number');
+  return points;
+}
+
+/** Due/unlock/lock dates for an assignment part, leaving out blank ones. */
+function addDates_(target, fields) {
+  if (fields.dueAt) target.due_at = fields.dueAt;
+  if (fields.unlockAt) target.unlock_at = fields.unlockAt;
+  if (fields.lockAt) target.lock_at = fields.lockAt;
+  return target;
+}
+
 /** The Type A request body (same fields as legacy postSingleAssignment). */
 function assignmentPayload_(fields) {
-  const points = isBlank_(fields.points) ? 0 : Number(fields.points);
-  if (isNaN(points)) throw sheetProblem_('points_possible is not a number');
-  const assignment = {
-    name: fields.name,
-    points_possible: points,
-    description: fields.description,
-    submission_types: ['online_upload'],
-    published: true,
+  return {
+    assignment: addDates_({
+      name: fields.name,
+      points_possible: pointsFrom_(fields.points),
+      description: fields.description,
+      submission_types: ['online_upload'],
+      published: fields.published !== false,
+    }, fields),
   };
-  if (fields.dueAt) assignment.due_at = fields.dueAt;
-  if (fields.unlockAt) assignment.unlock_at = fields.unlockAt;
-  if (fields.lockAt) assignment.lock_at = fields.lockAt;
-  return { assignment };
+}
+
+/**
+ * The Type D request body: a graded discussion (legacy postSingleDiscussion). The
+ * assignment part carries points and dates. Legacy sent is_posted, which Canvas ignores;
+ * published is the documented setting.
+ */
+function discussionPayload_(fields) {
+  return {
+    title: fields.name,
+    message: fields.description,
+    published: fields.published !== false,
+    assignment: addDates_({
+      grading_type: 'points',
+      points_possible: pointsFrom_(fields.points),
+    }, fields),
+  };
 }
 
 /**
