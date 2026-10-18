@@ -24,6 +24,8 @@ const TOOL_SHEETS = Object.freeze({
   ASSIGNMENT_ORDER: 'Assignment Order',
   CREATE_GROUPS: 'createGroups',
   CREATE_BY_ROW: 'createByRow',
+  // Jupiter's own import template (Lara copies it in; the code fills it, never builds it).
+  JUPITER_EXPORT: 'JupiterExport',
 });
 
 /** Sheets built so far. Add each one here as it is created. */

@@ -361,10 +361,28 @@
 >   - Legacy quirks to avoid: types read dates differently (NQ always midnight); descriptions
 >     differ by type (D had none); legacy CQ wrote the quiz ID into O3, over the update
 >     formula; no dry run; errors often only logged.
-> - **Next:** the makeAssignment redesign (above), starting from Lara's new tab layout; other
->   tools from Lara's Decision column in `docs/legacy-function-map.md` (the two Jupiter
->   export tools read `cfg_JupiterCategories`, now in place). Button ideas for later (Lara still deciding): a
->   "refresh all ref tables" button, buttons on the Assignment Order tab.
+> - **Jupiter export (2026-10-18, written; offline checks pass; not yet tested in Google).**
+>   Lara's workflow: on her grading sheet (tab "Comments": A1 "Last Jupiter Sync:", B1
+>   the stamp; row 2 labels; students from row 3; hidden C, D, F–I; Average/% rows below,
+>   kept by hand) she clicks **CreateRoster** (`createActiveSheetRoster`) once per class,
+>   types Jupiter IDs into **F** from a Jupiter export, then uses **Update Grades**
+>   (`buildJupiterExportFromRecentCanvasGrades`) to fill **JupiterExport** (Jupiter's
+>   template: instructions rows 1–3, `Class:` row 6, `Assignment:`, `Date:`, `Possible:`,
+>   `Score:`/`Comment:` row 10, students "Name (JupiterID)" from row 11), then saves it as
+>   CSV and imports it into Jupiter by hand. Both tabs were copied into the new workbook.
+>   Decisions: CreateRoster writes **only A–E** (User ID, Name, Period, Section Name,
+>   Email) from ref_peopleList + ref_SectionLookup; never touches F, other columns,
+>   formatting, or Average rows (asks if the roster would cover one; clears A–E only on
+>   old student rows past the new roster); ends with a **reminder to check the Jupiter IDs
+>   in F**, which don't move with the roster (legacy cleared A–J, values and formatting).
+>   Update Grades sends Canvas's **final score** (after any late penalty; legacy sent
+>   `entered_score`, the score before it; Lara doesn't use Canvas late penalties now);
+>   excused/ungraded stay blank; only student rows with a numeric "(ID)" count; the alert
+>   counts JupiterExport students with no match in F. Reads Canvas only (no writes, so dry
+>   run doesn't apply); no new permissions. Offline check: `scripts/checks/jupiter-export.check.js`.
+> - **Next:** test the Jupiter export in the Biology course; other tools from Lara's
+>   Decision column in `docs/legacy-function-map.md`. Button ideas for later (Lara still
+>   deciding): a "refresh all ref tables" button, buttons on the Assignment Order tab.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
 >     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
@@ -396,8 +414,14 @@ Lara set these on 2026-10-17. Follow them in every session, on any computer.
 - **She tests everything herself** in the Sheet: dry run first, then real writes in the
   test course. Never assume a test passed; ask.
 - **Test course:** "Sequence 9, AI literacy" (last quarter; backed up; students enrolled).
-  `cfg_CourseID` stays on it until the whole port is finished. Turn dry run back ON after
-  each test. Test items can be drafts (Published column) so students don't see them.
+  Test items can be drafts (Published column) so students don't see them.
+- **Live course (2026-10-18):** Lara switched `cfg_CourseID` to her **Biology** course for
+  the Jupiter export (read-only tools; it has the live lessons). While it points there,
+  keep **dry run ON**; switch back to Sequence 9 for any write test, then turn dry run
+  back ON after each test.
+- **No student data in chat.** Real names, emails, IDs, grades, and comments must not be
+  pasted or screenshotted into Claude (CLAUDE.md rule 5). Describe layouts instead, or
+  blur/crop student rows. Claude never repeats or records student data it sees.
 - **She can never push grades** (admin setting). Don't build or attempt grade writes.
 - **Offline checks** use made-up data only: `npm run check-offline`.
 - **Questions:** the multiple-choice pop-up sometimes doesn't reach her; if an answer
