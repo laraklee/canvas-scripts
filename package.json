@@ -4,6 +4,7 @@
   "description": "Lara's Google Apps Script projects for the Canvas API, with shared security standards.",
   "scripts": {
     "scan": "bash scripts/scan.sh",
+    "porting-summary": "node scripts/porting-summary.js",
     "lint": "eslint ."
   },
   "devDependencies": {
