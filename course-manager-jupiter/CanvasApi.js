@@ -1,14 +1,20 @@
 /**
  * CanvasApi.js
- * Purpose: the project's one Canvas request helper (read-only), and the
- *   "Test Canvas connection" menu item. Every Canvas read goes through canvasGet_().
- * Canvas endpoints called: whatever path a caller passes to canvasGet_();
- *   the connection test calls GET /api/v1/users/self.
- * Canvas write operations: none. (Writes will go through canvasWrite_(), not here.)
- * Required User/Script Properties: reads User Properties CANVAS_BASE_URL and CANVAS_TOKEN.
+ * Purpose: the project's Canvas request helpers and their menu items. Every Canvas read
+ *   goes through canvasGet_(); every Canvas write goes through canvasWrite_(), which
+ *   only sends when the DRY_RUN Script Property is exactly "false". Menu items: "Test
+ *   Canvas connection", "Dry run: show status", "Dry run: switch on/off", and the
+ *   temporary "Test dry-run write" (remove in reorder step 4).
+ * Canvas endpoints called: whatever path a caller passes to canvasGet_() or
+ *   canvasWrite_(); the connection test calls GET /api/v1/users/self.
+ * Canvas write operations: canvasWrite_() sends POST/PUT/PATCH/DELETE for its callers.
+ *   No caller sends a real write yet; the test item runs only while dry run is ON.
+ * Required User/Script Properties: reads User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
+ *   reads and writes Script Property DRY_RUN (unset means dry run is ON).
  *
  * Error messages name the problem type only. They never include the token, the request
- * path or query (which could contain IDs), or anything Canvas sent back.
+ * path or query (which could contain IDs), or anything Canvas sent back. Dry-run logs
+ * show the method, the path with every number replaced by ":id", and field names only.
  */
 
 const CANVAS_PAGE_SIZE = 100;
@@ -16,10 +22,15 @@ const CANVAS_MAX_PAGES = 200;
 const CANVAS_MAX_ATTEMPTS = 4;
 const CANVAS_RATE_LIMIT_FLOOR = 100;
 const CANVAS_PAUSE_MS = 2000;
+const CANVAS_WRITE_METHODS = Object.freeze(['POST', 'PUT', 'PATCH', 'DELETE']);
+const PROP_DRY_RUN = 'DRY_RUN';
 
 /** Adds this file's menu items. Called by onOpen. */
 function addCanvasApiMenuItems_(menu) {
   menu.addItem('Test Canvas connection', 'testCanvasConnection');
+  menu.addItem('Dry run: show status', 'showDryRunStatus');
+  menu.addItem('Dry run: switch on/off', 'toggleDryRun');
+  menu.addItem('Test dry-run write (temporary)', 'testDryRunWrite');
 }
 
 /**
@@ -63,6 +74,121 @@ function canvasGet_(path, query) {
     url = getCanvasNextUrl_(response.getHeaders(), creds.baseUrl);
   }
   return items;
+}
+
+/**
+ * The only way to change anything in Canvas. method is POST, PUT, PATCH, or DELETE;
+ * path is like '/courses/123/assignments/456'; payload is sent as JSON.
+ * While dry run is ON (the default), logs what would be sent and returns
+ * { dryRun: true } without contacting Canvas. Otherwise sends the request with the
+ * shared retry, back-off, and response checks, and returns Canvas's reply.
+ */
+function canvasWrite_(method, path, payload) {
+  const verb = String(method).toUpperCase();
+  if (!CANVAS_WRITE_METHODS.includes(verb)) {
+    throw canvasError_('BAD_METHOD', 'canvasWrite_ only sends POST, PUT, PATCH, or DELETE.');
+  }
+  const cleanPath = path.startsWith('/') ? path : '/' + path;
+  if (isDryRun_()) {
+    const fields = describeFields_(payload);
+    console.log(`DRY RUN: would ${verb} ${cleanPath.replace(/\d+/g, ':id')}` +
+      ` (fields: ${fields.length ? fields.join(', ') : 'none'})`);
+    return { dryRun: true };
+  }
+
+  const creds = getCanvasCredentials_();
+  const options = {
+    method: verb.toLowerCase(),
+    headers: { Authorization: 'Bearer ' + creds.token, Accept: 'application/json' },
+    muteHttpExceptions: true,
+  };
+  if (payload !== undefined) {
+    options.contentType = 'application/json';
+    options.payload = JSON.stringify(payload);
+  }
+  const response = fetchCanvas_(creds.baseUrl + '/api/v1' + cleanPath, options);
+  return response.getContentText() ? parseCanvasJson_(response) : {};
+}
+
+/** True unless the DRY_RUN Script Property is exactly "false" (any case). Fails safe. */
+function isDryRun_() {
+  const value = PropertiesService.getScriptProperties().getProperty(PROP_DRY_RUN);
+  return String(value).trim().toLowerCase() !== 'false';
+}
+
+/** Field names in a payload, e.g. ['assignment[position]']. Never the values. */
+function describeFields_(payload, prefix) {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+    return prefix ? [prefix] : [];
+  }
+  return Object.entries(payload).flatMap(([key, value]) =>
+    describeFields_(value, prefix ? `${prefix}[${key}]` : key));
+}
+
+/** Menu: Course Manager › Dry run: show status. */
+function showDryRunStatus() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    ui.alert('Dry run', describeDryRun_(isDryRun_()), ui.ButtonSet.OK);
+  } catch (error) {
+    console.error('Dry run status failed: ' + error.message);
+    ui.alert('Could not read the dry-run setting: ' + error.message);
+  }
+}
+
+/** Menu: Course Manager › Dry run: switch on/off. Asks first, then confirms the result. */
+function toggleDryRun() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const dryRunOn = isDryRun_();
+    const question = dryRunOn ?
+      'Dry run is ON now.\n\nIf you turn it off, changes WILL be sent to Canvas until ' +
+        'you turn dry run back on.\n\nTurn dry run OFF?' :
+      'Dry run is OFF now: changes are being sent to Canvas.\n\nTurn dry run ON?';
+    const answer = ui.alert(dryRunOn ? 'Turn dry run OFF?' : 'Turn dry run ON?',
+      question, ui.ButtonSet.YES_NO);
+    if (answer !== ui.Button.YES) {
+      ui.alert('Dry run', 'No change. ' + describeDryRun_(dryRunOn), ui.ButtonSet.OK);
+      return;
+    }
+    PropertiesService.getScriptProperties()
+      .setProperty(PROP_DRY_RUN, dryRunOn ? 'false' : 'true');
+    console.log('Dry run switched ' + (dryRunOn ? 'OFF.' : 'ON.'));
+    ui.alert('Dry run', describeDryRun_(!dryRunOn), ui.ButtonSet.OK);
+  } catch (error) {
+    console.error('Dry run switch failed: ' + error.message);
+    ui.alert('Could not change the dry-run setting: ' + error.message);
+  }
+}
+
+function describeDryRun_(dryRunOn) {
+  return dryRunOn ?
+    'Dry run is ON. Changes are only logged; nothing is sent to Canvas.' :
+    'Dry run is OFF. Changes WILL be sent to Canvas.';
+}
+
+/**
+ * Menu: Course Manager › Test dry-run write (temporary; remove in reorder step 4).
+ * Refuses unless dry run is ON, then calls canvasWrite_ once with a made-up assignment
+ * so the "DRY RUN: would PUT ..." line appears under Executions. Never sends anything.
+ */
+function testDryRunWrite() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    if (!isDryRun_()) {
+      ui.alert('Test dry-run write', 'Dry run is OFF, so this test will not run. ' +
+        'Turn dry run ON first.', ui.ButtonSet.OK);
+      return;
+    }
+    const result = canvasWrite_('PUT', '/courses/0/assignments/0', { assignment: { position: 1 } });
+    ui.alert('Test dry-run write', result.dryRun ?
+      'Nothing was sent. See Extensions › Apps Script › Executions for the "DRY RUN" line.' :
+      'Unexpected: the test was not a dry run.', ui.ButtonSet.OK);
+  } catch (error) {
+    console.error('Test dry-run write failed: ' + (error.canvasType || error.message));
+    ui.alert('Test dry-run write', 'The test could not run. ' + describeCanvasError_(error),
+      ui.ButtonSet.OK);
+  }
 }
 
 /** Reads the saved address and token. Clear message if either is missing. */

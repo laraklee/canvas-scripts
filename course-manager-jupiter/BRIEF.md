@@ -23,9 +23,16 @@
 > - **Legacy reorder workflow (keep it in step 4):** Lara sorted the rows however she
 >   liked, numbered the Position cells with `fillSelectedRangeSequentially`, selected
 >   the rows, and pushed. She never changed groups from the sheet.
+> - **Reorder plan, step 3 of 4 written (2026-10-17, not yet tested in the Sheet):**
+>   `canvasWrite_(method, path, payload)` in `CanvasApi.js`; sends only when Script
+>   Property `DRY_RUN` is exactly "false" (unset = dry run ON). Dry-run log shows the
+>   method, the path with numbers as `:id`, and field names only. Menu items "Dry run:
+>   show status", "Dry run: switch on/off" (asks first, extra warning when turning off),
+>   and the temporary "Test dry-run write" (runs only while dry run is ON; remove in
+>   step 4).
 > - **Next (Lara's 4-step reorder plan):**
->   3. `canvasWrite_()` with `DRY_RUN` plus menu items to show and flip it.
 >   4. The visible reorder tool sheet: Preview, then Push one group at a time.
+>      Remove "Test dry-run write" here.
 >   Then `ref_gradingPeriods` and `ref_SectionLookup`.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
@@ -187,7 +194,8 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
     (`Config.js`); startup check and "Check setup" (`SetupCheck.js`, tested);
     "Set Canvas token" (`Credentials.js`); `canvasGet_()` and "Test Canvas connection"
     (`CanvasApi.js`).
-  - to do: `canvasWrite_()` with `DRY_RUN`.
+  - `canvasWrite_()` with `DRY_RUN`, plus "Dry run: show status" and "Dry run: switch
+    on/off" (`CanvasApi.js`): built, not yet tested. Nothing calls it for real yet.
   - The startup check covers the sheets in `SHEETS_BUILT`, not every name in `SHEETS`,
     so unbuilt sheets don't raise alerts.
 - **Step 4 (reference sheets)**, all in `RefSheets.js`:
