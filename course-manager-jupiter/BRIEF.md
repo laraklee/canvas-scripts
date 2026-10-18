@@ -166,8 +166,9 @@
 >   "not built yet". Classic quizzes will keep the quiz ID in the link column (Lara: needed
 >   for adding questions later). Also in this commit: `canvasApiPath_()` in `CanvasApi.js`
 >   (paths starting `/api/` used as-is, for New Quizzes; untested until the NQ step).
-> - **createByRow step 2 (Type D + Published column) written (2026-10-17, not yet
->   tested):** Type D = graded discussion, `POST /courses/:course/discussion_topics` with
+> - **createByRow step 2 (Type D + Published column) done (2026-10-17, tested: Preview
+>   JSON right; a draft discussion posted in Sequence 9 with right points and dates; rerun
+>   skipped; cleaned up; dry run back ON):** Type D = graded discussion, `POST /courses/:course/discussion_topics` with
 >   `title`, `message` (same description builder), `published`, and an `assignment` part
 >   (`grading_type: points`, points, due/unlock/lock). Legacy sent `is_posted` (not a
 >   Canvas setting; ignored by Canvas) and logged the whole request; both dropped.
@@ -176,7 +177,17 @@
 >   = publish, FALSE/unticked = draft; works for every type; Status/Preview say "(A,
 >   draft)". Reason: Sequence 9 still has students, and Canvas's docs don't say whether
 >   creating published items notifies them, so test rows can be drafts.
-> - **Next:** test Type D (drafts in Sequence 9), then CQ, then NQ, one at a time; then pick from Lara's Decision column in `docs/legacy-function-map.md` (the two
+> - **createByRow step 3 (Type CQ) written (2026-10-17, not yet tested):** graded Classic
+>   quiz shell, `POST /courses/:course/quizzes` with `quiz`: title, `quiz_type:
+>   "assignment"`, published, due/unlock/lock. Fixed two legacy problems found in Canvas's
+>   docs: legacy sent `quiz_type: "graded_assignment"` (not an allowed value) and
+>   `points_possible` (not a create parameter; a Classic quiz's points come from its
+>   questions). No description (like legacy; the question tool sets instructions). Canvas
+>   Link = the quiz ID (Lara's choice, for the question sheet); CanvasID = the quiz's
+>   `assignment_id` (docs don't promise it's returned; Status warns if not). Each request
+>   now has `readLink` as well as `readId`.
+> - **Next:** test CQ (a draft in Sequence 9; confirm it's graded and both IDs fill); then
+>   NQ; then pick from Lara's Decision column in `docs/legacy-function-map.md` (the two
 >   Jupiter export tools read `cfg_JupiterCategories`, now in place). Button ideas for later (Lara still deciding): a
 >   "refresh all ref tables" button, buttons on the Assignment Order tab.
 > - **Open questions:**
@@ -387,8 +398,8 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
   - Jupiter categories (`Jupiter.js`, "Refresh Jupiter categories"): built and tested.
   - `ref_Config`: finished for now; hidden by Lara.
   - Groups (`Groups.js`, three `createGroups`-tab buttons): built and tested.
-  - createByRow (`PostRows.js`): Type A built and tested; Type D and the optional
-    Published column built, not yet tested; CQ, NQ to do.
+  - createByRow (`PostRows.js`): Types A and D and the optional Published column built
+    and tested; CQ built, not yet tested; NQ to do.
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).

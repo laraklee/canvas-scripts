@@ -14,12 +14,15 @@
  *   means 11:59 PM on that date. Times are sent with the Sheet's UTC offset
  *   (e.g. 2026-01-28T14:05:00-10:00), so the Payload is readable in Hawaii time.
  *   Optional "Published" column: blank or TRUE publishes; FALSE creates a draft.
- *   Built so far: Type A (assignment), D (graded discussion). NQ and CQ come later.
+ *   Built so far: Type A (assignment), D (graded discussion), CQ (graded Classic quiz
+ *   shell; Canvas Link gets the quiz ID, not a link, for the question sheet; points come
+ *   from questions, so points_possible isn't sent). NQ comes later.
  *   No student data is read or written. Logs counts only.
  * Canvas endpoints called: none directly.
  * Canvas write operations (via canvasWrite_, so DRY_RUN applies):
  *   POST /api/v1/courses/:course/assignments (Type A)
  *   POST /api/v1/courses/:course/discussion_topics with an assignment part (Type D)
+ *   POST /api/v1/courses/:course/quizzes with quiz_type assignment (Type CQ)
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
  *   Script Property DRY_RUN. Named ranges: cfg_CourseID (cfg_CourseName for messages).
  */
@@ -49,7 +52,7 @@ const CREATE_BY_ROW_LABELS = Object.freeze({
 const CREATE_BY_ROW_OPTIONAL_LABELS = Object.freeze({
   PUBLISHED: 'Published',
 });
-const CREATE_BY_ROW_BUILT_TYPES = Object.freeze(['A', 'D']);
+const CREATE_BY_ROW_BUILT_TYPES = Object.freeze(['A', 'D', 'CQ']);
 const CREATE_BY_ROW_KNOWN_TYPES = Object.freeze(['A', 'D', 'NQ', 'CQ']);
 const CREATE_BY_ROW_BLANK_TIME = Object.freeze({ hours: 23, minutes: 59 });
 const CREATE_BY_ROW_TIME_LIMIT_MS = 5 * 60 * 1000;
@@ -150,7 +153,7 @@ function postRows() {
         } else {
           const canvasId = plan.request.readId(result);
           job.write(plan, CREATE_BY_ROW_LABELS.CANVAS_ID, canvasId || '');
-          job.write(plan, CREATE_BY_ROW_LABELS.CANVAS_LINK, result.html_url || '');
+          job.write(plan, CREATE_BY_ROW_LABELS.CANVAS_LINK, plan.request.readLink(result) || '');
           job.write(plan, CREATE_BY_ROW_LABELS.STATUS, canvasId ? `Posted (${plan.label})` :
             `Posted (${plan.label}), but Canvas returned no ID; check it in Canvas`);
         }
@@ -293,17 +296,24 @@ function planCreateByRow_(rowNumber, cell, text, courseId, timeZone) {
 }
 
 /**
- * The request for a built type: { path, payload, readId(result) }. readId picks the ID
- * that goes in the CanvasID column (always the item's assignment ID).
+ * The request for a built type: { path, payload, readId(result), readLink(result) }.
+ * readId picks what goes in CanvasID (always the item's assignment ID); readLink picks
+ * what goes in Canvas Link (the web address, except CQ: the quiz ID, which Lara's
+ * question sheet needs).
  */
 function requestForType_(type, fields, courseId) {
+  const htmlUrl = result => result.html_url;
   if (type === 'A') {
     return { path: `/courses/${courseId}/assignments`, payload: assignmentPayload_(fields),
-      readId: result => result.id };
+      readId: result => result.id, readLink: htmlUrl };
   }
   if (type === 'D') {
     return { path: `/courses/${courseId}/discussion_topics`, payload: discussionPayload_(fields),
-      readId: result => result.assignment_id };
+      readId: result => result.assignment_id, readLink: htmlUrl };
+  }
+  if (type === 'CQ') {
+    return { path: `/courses/${courseId}/quizzes`, payload: classicQuizPayload_(fields),
+      readId: result => result.assignment_id, readLink: result => result.id };
   }
   throw sheetProblem_(`Type ${type} is not built yet`);
 }
@@ -358,6 +368,23 @@ function discussionPayload_(fields) {
     assignment: addDates_({
       grading_type: 'points',
       points_possible: pointsFrom_(fields.points),
+    }, fields),
+  };
+}
+
+/**
+ * The Type CQ request body: a graded Classic quiz shell (legacy postSingleClassicQuiz).
+ * quiz_type "assignment" is Canvas's documented value for a graded quiz (legacy sent
+ * "graded_assignment", which isn't one). No points: Canvas doesn't take points on create;
+ * a Classic quiz's points come from its questions. No description, like legacy (the
+ * question tool sets the instructions).
+ */
+function classicQuizPayload_(fields) {
+  return {
+    quiz: addDates_({
+      title: fields.name,
+      quiz_type: 'assignment',
+      published: fields.published !== false,
     }, fields),
   };
 }
