@@ -26,6 +26,7 @@ function onOpen() {
   addJupiterMenuItems_(menu);
   addGroupsMenuItems_(menu);
   addCreateByRowMenuItems_(menu);
+  addMakeAssignmentMenuItems_(menu);
   menu.addToUi();
 
   // Rebuild ref_Index first (silently), so a new one exists before the setup check.
