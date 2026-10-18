@@ -361,7 +361,9 @@
 >   - Legacy quirks to avoid: types read dates differently (NQ always midnight); descriptions
 >     differ by type (D had none); legacy CQ wrote the quiz ID into O3, over the update
 >     formula; no dry run; errors often only logged.
-> - **Jupiter export (2026-10-18, written; offline checks pass; not yet tested in Google).**
+> - **Jupiter export (2026-10-18, tested in the Biology course: CreateRoster "works fine";
+>   Update Grades filled JupiterExport and "looks fine". Not yet tested: saving as CSV and
+>   importing into Jupiter; Lara will try that later).**
 >   Lara's workflow: on her grading sheet (tab "Comments": A1 "Last Jupiter Sync:", B1
 >   the stamp; row 2 labels; students from row 3; hidden C, D, F–I; Average/% rows below,
 >   kept by hand) she clicks **CreateRoster** (`createActiveSheetRoster`) once per class,
@@ -380,7 +382,7 @@
 >   excused/ungraded stay blank; only student rows with a numeric "(ID)" count; the alert
 >   counts JupiterExport students with no match in F. Reads Canvas only (no writes, so dry
 >   run doesn't apply); no new permissions. Offline check: `scripts/checks/jupiter-export.check.js`.
-> - **Next:** test the Jupiter export in the Biology course; other tools from Lara's
+> - **Next:** Lara tries the CSV import into Jupiter; other tools from Lara's
 >   Decision column in `docs/legacy-function-map.md`. Button ideas for later (Lara still
 >   deciding): a "refresh all ref tables" button, buttons on the Assignment Order tab.
 > - **Open questions:**
