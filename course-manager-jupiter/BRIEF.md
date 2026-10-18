@@ -6,12 +6,12 @@
 >   `ref_CourseIDs` ("Refresh course list"); `ref_peopleList` ("Refresh people list");
 >   token setup ("Set Canvas token", User Properties); the read-only Canvas request
 >   helper `canvasGet_()` ("Test Canvas connection"); the startup check ("Check setup").
+> - **Done 2026-10-17:** `ref_simpleSchedule` and `ref_gradingScale` added to
+>   `SHEETS_BUILT`, so the startup check covers them (not yet tested in the Sheet).
 > - **Next:**
->   1. Add `ref_simpleSchedule` and `ref_gradingScale` to `SHEETS_BUILT`, so the
->      startup check covers them.
->   2. Build `ref_gradingPeriods`.
->   3. `ref_SectionLookup`.
->   4. The assignment reorder tool, with `canvasWrite_()` and `DRY_RUN` built first.
+>   1. Build `ref_gradingPeriods`.
+>   2. `ref_SectionLookup`.
+>   3. The assignment reorder tool, with `canvasWrite_()` and `DRY_RUN` built first.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL in the old `assignmentGroups` data:
 >     which one does the reorder call need? (Answer before the reorder tool.)
@@ -180,8 +180,9 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
     Ported from legacy `createPeopleList`; same nine columns and name formulas; all
     enrollment types; `state[]=active&invited`; now follows every page (legacy read
     only the first 100).
-  - to do: `ref_gradingScale`, `ref_gradingPeriods`, `ref_SectionLookup`,
-    `ref_assignmentGroups`.
+  - `ref_simpleSchedule` (IMPORTRANGE formula) and `ref_gradingScale` (copied as is):
+    in the Sheet and in `SHEETS_BUILT`; no script builds them.
+  - to do: `ref_gradingPeriods`, `ref_SectionLookup`, `ref_assignmentGroups`.
 - **Step 5 (assignment reorder):** not started.
 
 ## Open questions to resolve before or during the steps above
