@@ -42,6 +42,8 @@ vm.runInContext(fs.readFileSync(path.join(PROJECT, 'PostRows.js'), 'utf8') + '\n
   '\nthis.planMakeAssignment_ = planMakeAssignment_; this.overridePath_ = overridePath_;' +
   '\nthis.assignmentPayload_ = assignmentPayload_; this.runMakeAssignment_ = runMakeAssignment_;' +
   '\nthis.describeMakeAllResult_ = describeMakeAllResult_;' +
+  '\nthis.findPeriodTimes_ = findPeriodTimes_; this.dueTimeChoices_ = dueTimeChoices_;' +
+  '\nthis.formatTime24_ = formatTime24_;' +
   '\nthis.cellName_ = cellName_;', context);
 const c = context;
 const HST = 'Pacific/Honolulu';
@@ -311,6 +313,29 @@ r = c.runMakeAssignment_(job, (method, p2) => { sent.push(p2); return { id: 1 };
 check('existing item: only the new override is sent', sent,
   ['/courses/5000/assignments/123456/overrides']);
 check('existing item: no item writes', written(job, 'item', 'Status'), undefined);
+
+// ---- Get Times (createDropdowns1) helpers. Made-up schedule. ----
+check('times padded', [815, '815', '0815', 2200, '2200'].map(c.formatTime24_),
+  ['0815', '0815', '0815', '2200', '2200']);
+check('not times', ['', null, 'noon', 2500, '12345', 875].map(c.formatTime24_),
+  ['', '', '', '', '', '']);
+const schedule = new Map([['2030-01-28', [{ period: '3', start: 815, end: 925 },
+  { period: 'M/L', start: 1130, end: 1215 }, { period: 4, start: '940', end: '1050' }]]]);
+check('period 3 on Jan 28', c.findPeriodTimes_(schedule, '2030-01-28', '3'),
+  { start: '0815', end: '0925' });
+check('period 4 (number in JSON)', c.findPeriodTimes_(schedule, '2030-01-28', 4),
+  { start: '0940', end: '1050' });
+check('M/L period', c.findPeriodTimes_(schedule, '2030-01-28', 'M/L'),
+  { start: '1130', end: '1215' });
+check('period not meeting that day', c.findPeriodTimes_(schedule, '2030-01-28', '7'), null);
+check('day not in schedule', c.findPeriodTimes_(schedule, '2030-01-29', '3'), null);
+const standard = { schoolStart: '0815', schoolEnd: '1500', afterSchool: '1530', night: '2200' };
+check('choices with period', c.dueTimeChoices_({ start: '0815', end: '0925' }, standard),
+  ['Period Start (0815)', 'Period End (0925)', 'School Start (0815)', 'School End (1500)',
+    'After School (1530)', 'Night (2200)']);
+check('choices without period', c.dueTimeChoices_(null, standard).length, 4);
+check('every choice reads as a time', c.dueTimeChoices_({ start: '0815', end: '0925' }, standard)
+  .every(choice => c.parseSheetTime_(choice)), true);
 
 if (failures) {
   console.log(`\n${failures} check(s) failed.`);

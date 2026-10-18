@@ -22,14 +22,19 @@
  *     and each ready override, writing canvasID, Canvas URL, OverrideID, and Status. If
  *     the item isn't created, no overrides are sent. Only creates; never changes or
  *     deletes anything in Canvas.
- *   Still to come: createDropdowns1, clearCreationIDs.
+ *   - createDropdowns1 (Get Times button; legacy name): Due Time dropdowns on every
+ *     override row (Period Start/End for that row's Period and Due Date from
+ *     ref_simpleSchedule, plus the four cfg_Time… choices). Typed times still allowed.
+ *   Still to come: clearCreationIDs.
  *   No student data is read or written. Logs counts only.
  * Canvas endpoints called: none directly.
  * Canvas write operations (via canvasWrite_, so DRY_RUN applies):
  *   POST the item: same requests as createByRow (A, D, CQ, NQ; see PostRows.js)
  *   POST /api/v1/courses/:course/assignments/:assignment_id/overrides (one per section)
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
- *   Script Property DRY_RUN. Named ranges: cfg_CourseID (cfg_CourseName for messages).
+ *   Script Property DRY_RUN. Named ranges: cfg_CourseID (cfg_CourseName for messages);
+ *   cfg_TimeSchoolStart, cfg_TimeSchoolEnd, cfg_TimeAfterSchool, cfg_TimeNight (Get Times).
+ *   Reads ref_simpleSchedule (Get Times).
  */
 
 const MAKE_ASSIGNMENT_TABLES = Object.freeze([
@@ -63,6 +68,7 @@ function addMakeAssignmentMenuItems_(menu) {
   menu.addSeparator();
   menu.addItem('Preview assignment (this tab)', 'previewAssignment');
   menu.addItem('makeAll: create assignment + overrides (this tab)', 'makeAssignmentAll');
+  menu.addItem('Get Times: Due Time dropdowns (this tab)', 'createDropdowns1');
   menu.addItem('Check makeAssignment labels (this tab)', 'checkMakeAssignmentLabels');
 }
 
@@ -234,6 +240,146 @@ function describeMakeAllResult_(result, dryRun, skipped) {
     (result.created ? `\n${result.created} override(s) created.` : '') +
     (result.failed ? `\n${result.failed} override(s) refused by Canvas (see Status).` : '') +
     (skipped ? `\n${skipped} override row(s) skipped (see Status).` : '');
+}
+
+/**
+ * Button / menu: Get Times (legacy name kept). Puts a Due Time dropdown on every override
+ * row: that row's Period Start/End on its Due Date (from ref_simpleSchedule), then School
+ * Start, School End, After School, Night (from the cfg_Time… ranges). Choices read like
+ * "Night (2200)". Typed times are still allowed (Sheets shows a warning only). The Item's
+ * Due Time gets no dropdown (Lara's choice). Changes dropdown rules only, never values.
+ */
+function createDropdowns1() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  try {
+    const sheet = ss.getActiveSheet();
+    const lastRow = sheet.getLastRow();
+    const lastColumn = sheet.getLastColumn();
+    if (!lastRow || !lastColumn) throw sheetProblem_('This tab is empty.');
+    const range = sheet.getRange(1, 1, lastRow, lastColumn);
+    const layout = findMakeAssignmentLayout_(range.getDisplayValues()
+      .map(row => row.map(value => String(value).trim())));
+    if (layout.problemCount) {
+      throw sheetProblem_(`This tab's labels have ${layout.problemCount} problem(s). Use ` +
+        'Course Manager › Check makeAssignment labels (this tab).');
+    }
+    const standard = readStandardTimes_();
+    const timeZone = ss.getSpreadsheetTimeZone();
+    const schedule = readScheduleByDay_(ss, timeZone);
+    const { overrides } = layout.tables;
+    const column = label => overrides.columns.get(label);
+    const values = range.getValues();
+
+    let withPeriod = 0;
+    const missing = [];
+    for (let row = overrides.firstDataRow; row <= overrides.lastDataRow; row++) {
+      const rowValues = values.slice(row - 1, row)[0];
+      const period = String(rowValues.slice(column('Period') - 1, column('Period'))[0]).trim();
+      const date = rowValues.slice(column('Due Date') - 1, column('Due Date'))[0];
+      let times = null;
+      if (period && date instanceof Date) {
+        times = findPeriodTimes_(schedule, Utilities.formatDate(date, timeZone, 'yyyy-MM-dd'),
+          period);
+        if (times) withPeriod++;
+        else missing.push(row);
+      }
+      const rule = SpreadsheetApp.newDataValidation()
+        .requireValueInList(dueTimeChoices_(times, standard))
+        .setAllowInvalid(true)
+        .build();
+      sheet.getRange(row, column('Due Time')).setDataValidation(rule);
+    }
+
+    const rows = overrides.lastDataRow - overrides.firstDataRow + 1;
+    console.log(`Get Times: ${rows} row(s), ${withPeriod} with period times, ` +
+      `${missing.length} period/date not in the schedule.`);
+    ss.toast(`Due Time dropdowns set on ${rows} override row(s); ${withPeriod} include ` +
+      'Period Start/End.' + (missing.length ? ` No schedule found for the Period and Due ` +
+      `Date in row(s) ${missing.join(', ')} (check ref_simpleSchedule).` : ''), 'Get Times', 8);
+  } catch (error) {
+    reportRefreshFailure_('Get Times', 'No dropdowns were changed.', error);
+  }
+}
+
+/** The four cfg_Time… values as 4-digit 24-hour text, e.g. { schoolStart: '0815', … }. */
+function readStandardTimes_() {
+  const read = name => {
+    let value;
+    try {
+      value = getCfg_(name);
+    } catch (error) {
+      throw sheetProblem_(error.message);
+    }
+    const text = formatTime24_(value);
+    if (!text) throw sheetProblem_(`cfg_${name} is not a time like 815 or 2200.`);
+    return text;
+  };
+  return { schoolStart: read('TimeSchoolStart'), schoolEnd: read('TimeSchoolEnd'),
+    afterSchool: read('TimeAfterSchool'), night: read('TimeNight') };
+}
+
+/**
+ * ref_simpleSchedule as a Map from 'yyyy-MM-dd' to that day's period list (column C is
+ * the date; column I is JSON like [{"period":"1","start":815,"end":925}, …]). Days whose
+ * JSON can't be read are left out.
+ */
+function readScheduleByDay_(ss, timeZone) {
+  const sheet = ss.getSheetByName(SHEETS.SIMPLE_SCHEDULE);
+  if (!sheet) throw sheetProblem_(`There is no ${SHEETS.SIMPLE_SCHEDULE} tab.`);
+  const byDay = new Map();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return byDay;
+  let unreadable = 0;
+  sheet.getRange(2, 3, lastRow - 1, 7).getValues().forEach(row => {
+    const date = row.slice(0, 1)[0];
+    const json = row.slice(6, 7)[0];
+    if (!(date instanceof Date) || !json) return;
+    try {
+      const periods = JSON.parse(json);
+      if (Array.isArray(periods)) byDay.set(Utilities.formatDate(date, timeZone, 'yyyy-MM-dd'), periods);
+    } catch {
+      unreadable++;
+    }
+  });
+  if (unreadable) console.log(`Get Times: ${unreadable} schedule row(s) had unreadable JSON.`);
+  return byDay;
+}
+
+/** { start: '0815', end: '0925' } for one period on one day, or null if not found. */
+function findPeriodTimes_(schedule, dayKey, period) {
+  const periods = schedule.get(dayKey);
+  if (!periods) return null;
+  const match = periods.find(entry => entry && String(entry.period).trim() === String(period).trim());
+  if (!match) return null;
+  const start = formatTime24_(match.start);
+  const end = formatTime24_(match.end);
+  return start && end ? { start, end } : null;
+}
+
+/** The dropdown choices for one row, period times first (legacy order and wording). */
+function dueTimeChoices_(periodTimes, standard) {
+  const choices = periodTimes ?
+    [`Period Start (${periodTimes.start})`, `Period End (${periodTimes.end})`] : [];
+  return choices.concat([`School Start (${standard.schoolStart})`,
+    `School End (${standard.schoolEnd})`, `After School (${standard.afterSchool})`,
+    `Night (${standard.night})`]);
+}
+
+/**
+ * 815, "815", "0815", or a time-formatted cell → "0815" (the legacy 09 formatTime, padded
+ * to 4 digits so parseSheetTime_ reads it). '' if it isn't a valid time.
+ */
+function formatTime24_(value) {
+  let digits;
+  if (value instanceof Date) {
+    digits = Utilities.formatDate(value, SpreadsheetApp.getActiveSpreadsheet()
+      .getSpreadsheetTimeZone(), 'HHmm');
+  } else {
+    digits = String(value === null || value === undefined ? '' : value).trim();
+    if (!/^\d{3,4}$/.test(digits)) return '';
+    digits = digits.padStart(4, '0');
+  }
+  return parseSheetTime_(digits) ? digits : '';
 }
 
 /**

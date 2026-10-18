@@ -291,6 +291,15 @@
 >     writes OverrideID, Status. Item not created → no overrides sent. One override
 >     refused → others still go. Token/network-type errors stop everything. Create only;
 >     never updates or deletes. Logic in `runMakeAssignment_` (tested with a fake Canvas).
+>   - **Get Times (`createDropdowns1`) written (2026-10-18, built before makeAll's real
+>     test at Lara's request; offline checks pass; not yet tested in Google):** on every
+>     override row, Due Time gets a dropdown: "Period Start (0815)" / "Period End (0925)"
+>     (legacy wording) when the row's Period and Due Date are found in
+>     `ref_simpleSchedule`, then School Start / School End / After School / Night from
+>     `cfg_Time…` (padded to 4 digits). `setAllowInvalid(true)`: typed times get a warning
+>     only. Rule only; cell values are never changed. Toast lists rows whose Period/date
+>     wasn't in the schedule. Item Due Time untouched (an old rule there stays until Lara
+>     removes it in Data › Data validation).
 >   - **Dates in code** (same as createByRow), with Payload/Status per item and override.
 >     Reuse createByRow's request builders for the four types.
 >   - **No course ID on the tab** (code uses `cfg_CourseID`); optional `=cfg_CourseName`
