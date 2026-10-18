@@ -264,8 +264,8 @@
 >     - Buttons on the tab: Clear IDs (`clearCreationIDs`), Preview (`previewAssignment`),
 >       Get Times (`createDropdowns1`), makeAll (`makeAssignmentAll`); to test live later.
 >     - Duplicate labels in a table stop the run with a clear message.
->   - **Step 1 (label check) written (2026-10-18, offline checks pass; not yet pushed or
->     tested in Google):** new `MakeAssignment.js` with `checkMakeAssignmentLabels` (menu:
+>   - **Step 1 (label check) done (2026-10-18, tested on Lara's makeAssignment tab: all
+>     three tables found, override rows 12–17, Schedule shown as not used):** new `MakeAssignment.js` with `checkMakeAssignmentLabels` (menu:
 >     "Check makeAssignment labels (this tab)"). Reads the label grid of the tab being
 >     viewed; each table's labels are every non-blank cell right of its first label (blank
 >     cells skipped, because a merged "Instructions:" reads blank past its first cell).
