@@ -257,6 +257,43 @@ Read this at the start of every session, together with the repo-level `CLAUDE.md
 (which always wins if the two disagree). Lara is new to the command line: explain each
 command in plain language before running it, and prefer small, reviewable steps.
 
+## How Lara works
+
+Lara set these on 2026-10-17. Follow them in every session, on any computer.
+
+- **Explain, then ask, before every command**, even read-only ones (scan, diff, status).
+  Batch related commands into one ask ("scan, offline check, and diff").
+- **Plan before code.** For each new piece, show what the legacy code does, what will
+  change, and (for Canvas writes) what Canvas's docs say. Wait for her OK.
+- **One step at a time:** edit → (with OK) scan, offline checks, diff → her approval →
+  commit + `git push` → **ask separately** before `clasp push` → she tests in the Sheet →
+  record the result here ("Where we left off" and Status).
+- **Show the whole diff**, including new files. Summarize in plain language: what changed,
+  new Canvas writes, new Google permissions, scan results.
+- **She tests everything herself** in the Sheet: dry run first, then real writes in the
+  test course. Never assume a test passed; ask.
+- **Test course:** "Sequence 9, AI literacy" (last quarter; backed up; students enrolled).
+  `cfg_CourseID` stays on it until the whole port is finished. Turn dry run back ON after
+  each test. Test items can be drafts (Published column) so students don't see them.
+- **She can never push grades** (admin setting). Don't build or attempt grade writes.
+- **Offline checks** use made-up data only: `npm run check-offline`.
+- **Questions:** the multiple-choice pop-up sometimes doesn't reach her; if an answer
+  comes back empty, ask again in plain text.
+
+## Switching computers (PC ↔ Mac)
+
+1. **`git pull` first**, in the `canvas-scripts` folder, before anything else.
+2. **Never `clasp push` before pulling.** An older copy would overwrite Google with old
+   code. (If it happens, pull and push again.)
+3. **Start the session by reading this file.** Claude Code sessions and Claude's private
+   notes stay on the computer where they ran; this file travels through GitHub.
+4. **Line endings:** Windows and Mac end lines differently. If `clasp push` says "Skipping
+   push" about the manifest, compare Google's copy first (read-only `clasp clone` into a
+   temporary folder), then `clasp push --force` only if the sole difference is line
+   endings. (`.gitattributes` is meant to prevent this; see Status.)
+5. Things that are the same on both computers: dry run and the Canvas token (stored in
+   Google), and `cfg_CourseID` (in the Sheet).
+
 ## What this project is
 
 A trimmed-down rebuild of the legacy `course-manager` Apps Script project, for use with
