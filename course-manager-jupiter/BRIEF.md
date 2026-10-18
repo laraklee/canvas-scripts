@@ -382,6 +382,22 @@
 >   excused/ungraded stay blank; only student rows with a numeric "(ID)" count; the alert
 >   counts JupiterExport students with no match in F. Reads Canvas only (no writes, so dry
 >   run doesn't apply); no new permissions. Offline check: `scripts/checks/jupiter-export.check.js`.
+> - **Rubric export (2026-10-18, written; offline checks pass; not yet tested in Google).**
+>   New `Rubrics.js`: `exportRubricToCanvasFormat` (legacy name; menu "Export rubric for
+>   Canvas (this tab)"). Lara's decisions: **CSV import, not a direct Canvas write**
+>   (no write code; she reviews, then Canvas › Rubrics › Import; a direct "create and
+>   attach to assignment" could come later with its own plan); **copy-a-template-tab**
+>   workflow, so legacy `setupRubricUI` is not ported (it never ran: its Yes check
+>   compared against ButtonSet); an **empty criterion is skipped silently**. Reads labels
+>   in column A of the tab being viewed: "Rubric Title" (title in the cell below),
+>   "Criterion Description" (names in the row above), "Rating N Name/Description/
+>   Points". All criteria columns and rating groups, with rating descriptions (legacy
+>   read fixed cells that don't match the template). Problems (rating with no points,
+>   points with no name, ratings with no criterion name) stop it with cell names; the
+>   export tab is then unchanged. Writes `rubricCanvasExport` (Rubric Name, Criteria
+>   Name, Criteria Description, Criteria Enable Range = FALSE, then Rating Name/
+>   Description/Points per rating). Lara is reviving rubrics to use Canvas's built-in
+>   grading. Offline check: `scripts/checks/rubric.check.js`.
 > - **Next:** Lara tries the CSV import into Jupiter; other tools from Lara's
 >   Decision column in `docs/legacy-function-map.md`. Button ideas for later (Lara still
 >   deciding): a "refresh all ref tables" button, buttons on the Assignment Order tab.
