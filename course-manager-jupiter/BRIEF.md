@@ -158,7 +158,9 @@
 >   dates in code (`buildCanvasTime_`, Sheet time zone, sent with offset e.g.
 >   `-10:00`), drop the O–R formula columns and the custom function, and show the exact
 >   JSON in a new **Payload** column; new **Unlock Time** / **Lock Time** columns; a
->   blank time means 11:59 PM on that date. Tab `createByRow` (`TOOL_SHEETS.CREATE_BY_ROW`):
+>   blank time means 11:59 PM on that date (changed 2026-10-18: a blank **Unlock** Time
+>   means 12:00 AM, the start of that day; Due and Lock stay 11:59 PM; Lara's choice,
+>   shared by makeAssignment). Tab `createByRow` (`TOOL_SHEETS.CREATE_BY_ROW`):
 >   labels in row 3 (`CREATE_BY_ROW_LABELS`, found by label; checked before every run and
 >   by "Check createByRow labels"), rows from 4; selection-based like legacy. Functions:
 >   `postRows` (button name kept), `previewRows` (fills Payload/Status, never sends),
@@ -213,8 +215,26 @@
 >   - **Creation only.** Don't port load/edit/update (`fetchAssignment`,
 >     `updateAssignmentInCanvas`, F1 anchor, `populateEditSheetWithAssignmentData`). Could
 >     come back later as a separate tool if wanted.
->   - **Two tabs:** one for A, D, and NQ (with a Type cell), and a CQ tab with the same top
->     section plus a Questions table (CQ keeps questions after creation). Same code for both.
+>   - **Any number of copies, never a tab name (Lara, 2026-10-18).** Lara keeps several
+>     copies with different names and per-copy defaults (e.g. an AI reading quiz copy with
+>     `online_text_entry`; a prelab copy whose Lock Time is a formula, Due + 5 minutes).
+>     Every button/menu item works on **the tab being viewed**, recognized by its tables'
+>     labels; stop with a clear message if the Item table isn't there. A Questions table
+>     turns on the CQ features (no separate CQ tab name). Read each copy's defaults from
+>     its cells; never overwrite them (Clear's exact keep-list is decided in that step).
+>     Replaces the earlier "two tabs" idea.
+>   - **Buttons keep their legacy names:** `makeAssignmentAll` (create item + overrides),
+>     `clearCreationIDs` (clear for the next assignment), `createDropdowns1` (time
+>     dropdowns); plus a new `previewAssignment` (fill Payloads, send nothing).
+>   - **`createDropdowns1` (2026-10-18):** dropdowns only on the Overrides table's **Due
+>     Time** cells. Choices: Period Start/End for that row's period on that date (from
+>     `ref_simpleSchedule`: date in column C, column I is JSON like
+>     `[{"period":"1","start":815,"end":925}, …]`; match the date in the Sheet's time zone)
+>     plus School Start / School End / After School / Night from the `cfg_Time…` ranges.
+>     Write every choice as "Label (0815)" (the 09 `formatTime` that pads to 4 digits, not
+>     the 01 "8:15 AM" one), which `parseSheetTime_` reads. **Typed times are allowed**
+>     (warning only), so formulas like the prelab Lock Time still work. An override row's
+>     Period cell always holds one period (no "1,2").
 >   - **Label-based mini-tables, not named ranges** (named ranges are workbook-wide, so two
 >     tabs would need ~50 prefixed names). Each table is found by its first label, so tables
 >     can sit anywhere and repeat labels like "Due Date". Proposed: **Item** (Type, name,
@@ -232,9 +252,9 @@
 >   - **Build order:** (1) layout + label check; (2) create item + overrides for A, D, NQ,
 >     CQ with Preview and dry run; (3) CQ questions + instructions; (4) Clear/reset.
 >   - **Lara is redesigning the tab layout herself first** (next session).
->   - **Still to decide:** tab names; one description style for both tools (the editor's
->     bold directions + green button for non-Google links, or createByRow's simpler one);
->     how many override rows.
+>   - **Still to decide:** one description style for both tools (the editor's bold
+>     directions + green button for non-Google links, or createByRow's simpler one); how
+>     many override rows. Lara is rebuilding the tab layout now (2026-10-18).
 >   - Legacy quirks to avoid: types read dates differently (NQ always midnight); descriptions
 >     differ by type (D had none); legacy CQ wrote the quiz ID into O3, over the update
 >     formula; no dry run; errors often only logged.
@@ -246,8 +266,8 @@
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
 >     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
 >     after step 2, using IDs and URL paths only (no names).
->   - Time dropdowns: answered for createByRow (the Due Time cell shows "Label (0815)";
->     `parseSheetTime_` reads it). Still check other tabs when porting them.
+>   - Time dropdowns: answered. The values read back are "Label (0815)" (the 09
+>     `formatTime` copy ran); `parseSheetTime_` reads them. See `createDropdowns1` above.
 >   - What are Period Pairs for? (Seating chart: yes, Lara uses it; ported.)
 >   - Should reference sheets be hidden automatically when built?
 >   - Limit `script.external_request` with a `urlFetchWhitelist` for the school's
@@ -439,11 +459,12 @@ Legacy file load order is by file name, later copy wins (assumed from an empty
 - `getNextUrlLocal`: the copies are identical. Build one into the shared Canvas request
   helper's paging.
 - `getPeriodNameFromId`: identical. Port the 01 copy into the shared helpers.
-- `formatTime`, `getPeriodTimesForDate`: **not decided.** The older 09 copies are the ones
-  that actually ran; the 01 copies are probably the intended ones. Decide when the
-  time-dropdown tool is ported, after answering: what reads the dropdown values back, and
-  what format do they expect? Port `createDropdowns1()` (01), not `createDropdowns()` (09).
-  The 01 `getPeriodTimesForDate` calls a `logToSystem()` that doesn't exist; fix on port.
+- `formatTime`, `getPeriodTimesForDate`: **decided 2026-10-18.** `formatTime`: port the
+  09 behavior (pad to "0815"), because the values are read back as "Label (0815)" by the
+  date code. `getPeriodTimesForDate`: port the 01 approach (match the date in the Sheet's
+  time zone), without its missing `logToSystem()` call and without the "1,2" handling (a
+  Period cell always holds one period). Port `createDropdowns1()` (01), not
+  `createDropdowns()` (09).
 
 ## Build order
 

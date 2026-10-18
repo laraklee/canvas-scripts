@@ -10,8 +10,9 @@
  *   - previewRows: fills Payload and Status for the selected rows; never sends anything.
  *   - checkCreateByRowLabels: checks the row 3 labels.
  *   Columns are found by their row 3 labels (CREATE_BY_ROW_LABELS), so their order can
- *   change. Rows that already have a CanvasID are skipped (no duplicates). A blank time
- *   means 11:59 PM on that date. Times are sent with the Sheet's UTC offset
+ *   change. Rows that already have a CanvasID are skipped (no duplicates). A blank Due or
+ *   Lock Time means 11:59 PM on that date; a blank Unlock Time means 12:00 AM (the start
+ *   of that day). Times are sent with the Sheet's UTC offset
  *   (e.g. 2026-01-28T14:05:00-10:00), so the Payload is readable in Hawaii time.
  *   Optional "Published" column: blank or TRUE publishes; FALSE creates a draft.
  *   Built so far: Type A (assignment), D (graded discussion), CQ (graded Classic quiz
@@ -58,7 +59,9 @@ const CREATE_BY_ROW_OPTIONAL_LABELS = Object.freeze({
 });
 const CREATE_BY_ROW_BUILT_TYPES = Object.freeze(['A', 'D', 'CQ', 'NQ']);
 const CREATE_BY_ROW_KNOWN_TYPES = Object.freeze(['A', 'D', 'NQ', 'CQ']);
-const CREATE_BY_ROW_BLANK_TIME = Object.freeze({ hours: 23, minutes: 59 });
+// A blank time cell: Due and Lock mean the end of that day; Unlock means the start of it.
+const BLANK_TIME_END_OF_DAY = Object.freeze({ hours: 23, minutes: 59 });
+const BLANK_TIME_START_OF_DAY = Object.freeze({ hours: 0, minutes: 0 });
 const CREATE_BY_ROW_TIME_LIMIT_MS = 5 * 60 * 1000;
 
 /** Adds this file's menu items. Called by onOpen. */
@@ -279,14 +282,17 @@ function planCreateByRow_(rowNumber, cell, text, courseId, timeZone) {
     return Object.assign(plan, { message: `Skipped: Type ${type} is not built yet` });
   }
   try {
-    const time = (dateLabel, timeLabel, what) => buildCanvasTime_(cell(dateLabel),
-      text(timeLabel), timeZone, what);
+    const time = (dateLabel, timeLabel, what, blankTime) => buildCanvasTime_(cell(dateLabel),
+      text(timeLabel), timeZone, what, blankTime);
     const fields = {
       name,
       points: cell(CREATE_BY_ROW_LABELS.POINTS),
-      dueAt: time(CREATE_BY_ROW_LABELS.DUE_DATE, CREATE_BY_ROW_LABELS.DUE_TIME, 'Due'),
-      unlockAt: time(CREATE_BY_ROW_LABELS.UNLOCK_DATE, CREATE_BY_ROW_LABELS.UNLOCK_TIME, 'Unlock'),
-      lockAt: time(CREATE_BY_ROW_LABELS.LOCK_DATE, CREATE_BY_ROW_LABELS.LOCK_TIME, 'Lock'),
+      dueAt: time(CREATE_BY_ROW_LABELS.DUE_DATE, CREATE_BY_ROW_LABELS.DUE_TIME, 'Due',
+        BLANK_TIME_END_OF_DAY),
+      unlockAt: time(CREATE_BY_ROW_LABELS.UNLOCK_DATE, CREATE_BY_ROW_LABELS.UNLOCK_TIME, 'Unlock',
+        BLANK_TIME_START_OF_DAY),
+      lockAt: time(CREATE_BY_ROW_LABELS.LOCK_DATE, CREATE_BY_ROW_LABELS.LOCK_TIME, 'Lock',
+        BLANK_TIME_END_OF_DAY),
       description: buildDescription_(text(CREATE_BY_ROW_LABELS.DESCRIPTION),
         text(CREATE_BY_ROW_LABELS.DOC_LINK), text(CREATE_BY_ROW_LABELS.LINK_TEXT)),
       published: parsePublished_(cell(CREATE_BY_ROW_OPTIONAL_LABELS.PUBLISHED)),
@@ -422,15 +428,17 @@ function newQuizPayload_(fields) {
 
 /**
  * A Canvas date-time from a date cell and a time's displayed text, in the Sheet's time
- * zone, e.g. "2026-01-28T14:05:00-10:00". '' when the date is blank. A blank time means
- * 11:59 PM. Replaces the legacy convertToUTC custom function.
+ * zone, e.g. "2026-01-28T14:05:00-10:00". '' when the date is blank. A blank time uses
+ * blankTime (11:59 PM unless given; Unlock passes 12:00 AM). Replaces the legacy
+ * convertToUTC custom function.
  */
-function buildCanvasTime_(dateValue, timeText, timeZone, what) {
+function buildCanvasTime_(dateValue, timeText, timeZone, what,
+  blankTime = BLANK_TIME_END_OF_DAY) {
   if (isBlank_(dateValue)) return '';
   if (!(dateValue instanceof Date) || isNaN(dateValue.getTime())) {
     throw sheetProblem_(`${what} Date is not a date`);
   }
-  const time = timeText ? parseSheetTime_(timeText) : CREATE_BY_ROW_BLANK_TIME;
+  const time = timeText ? parseSheetTime_(timeText) : blankTime;
   if (!time) throw sheetProblem_(`${what} Time "${timeText}" is not a time I understand`);
   const day = Utilities.formatDate(dateValue, timeZone, 'yyyy-MM-dd');
   const offset = Utilities.formatDate(dateValue, timeZone, 'Z').replace(/(\d{2})(\d{2})$/, '$1:$2');

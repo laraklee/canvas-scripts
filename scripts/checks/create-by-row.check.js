@@ -189,5 +189,17 @@ check('NQ with Published FALSE: label says ignored, nothing about publishing sen
     return [p.label, 'published' in p.request.payload.quiz];
   })(), ['NQ, Published ignored', false]);
 
+// Blank times: Unlock = start of the day; Due and Lock = end of the day.
+const jan26 = vm.runInContext("new Date('2026-01-26T10:00:00Z')", context);
+const blankTimes = plan({ [L.UNLOCK_DATE]: jan26, [L.DUE_DATE]: jan28, [L.LOCK_DATE]: jan28 },
+  { [L.NAME]: 'Lab 5', [L.TYPE]: 'A' }).request.payload.assignment;
+check('blank Unlock Time = 12:00 AM that day; blank Due and Lock = 11:59 PM',
+  [blankTimes.unlock_at, blankTimes.due_at, blankTimes.lock_at],
+  ['2026-01-26T00:00:00-10:00', '2026-01-28T23:59:00-10:00', '2026-01-28T23:59:00-10:00']);
+check('a typed Unlock Time still wins over the blank default',
+  plan({ [L.UNLOCK_DATE]: jan26 }, { [L.NAME]: 'Lab 6', [L.TYPE]: 'A',
+    [L.UNLOCK_TIME]: 'School start (0815)' }).request.payload.assignment.unlock_at,
+  '2026-01-26T08:15:00-10:00');
+
 console.log(failures ? `\n${failures} check(s) failed.` : '\nAll checks passed.');
 process.exitCode = failures ? 1 : 0;
