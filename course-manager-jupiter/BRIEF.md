@@ -243,6 +243,27 @@
 >     replaces F4/H4/H5); **Overrides** (Period, Due/Unlock/Lock Date+Time, Override ID,
 >     Payload, Status; Period → section in code from `ref_SectionLookup`, refreshed first);
 >     **Questions** (CQ only, later). Extra display columns (e.g. Schedule) are fine.
+>   - **Lara's layout (final, 2026-10-18; supersedes the "Proposed" tables above).** Labels
+>     are matched by name, so positions below are only where Lara put them:
+>     - **Item**, two label rows read as one table (Lara keeps it narrow on purpose).
+>       Row 3: `canvasID`, `name`, `points_possible`, `Due Date`, `Schedule` (display),
+>       `Due Time`, `Unlock At`, `Unlock Time`, `Lock At`, `Lock Time`; values in row 4.
+>       Row 6: `Canvas URL`, `Type of Submission`, `Type`, `Published` (checkbox),
+>       `Google Link Text:`, `Document URL:`, `Instructions:`, `Status`, `Payload`; values
+>       in row 7. (Description table = Google Link Text / Document URL / Instructions.)
+>     - **Overrides**, labels in row 11: `OverrideID`, `Section ID`, `Period`, `Due Date`,
+>       `Schedule` (display), `Due Time`, `Unlock At`, `Unlock Time`, `Lock At`, `Lock Time`,
+>       `Status`, `Payload`; 6 rows (12–17). Rows with no Section ID and no Due Date are
+>       skipped.
+>     - **Code reads `Section ID`, not Period** (changed from "Period → section in code").
+>       Lara's sheet fills it with a lookup from Period (`ref_SectionLookup`) so she can see
+>       it, and she types over it for a small special section (one or a few students).
+>       Period is still used for the Due Time dropdown choices.
+>     - **Get Times dropdowns: Overrides Due Time only.** The Item's Due Time (row 4) gets
+>       none (Lara, 2026-10-18).
+>     - Buttons on the tab: Clear IDs (`clearCreationIDs`), Preview (`previewAssignment`),
+>       Get Times (`createDropdowns1`), makeAll (`makeAssignmentAll`); to test live later.
+>     - Duplicate labels in a table stop the run with a clear message.
 >   - **Dates in code** (same as createByRow), with Payload/Status per item and override.
 >     Reuse createByRow's request builders for the four types.
 >   - **No course ID on the tab** (code uses `cfg_CourseID`); optional `=cfg_CourseName`
@@ -251,10 +272,8 @@
 >     starts fresh.
 >   - **Build order:** (1) layout + label check; (2) create item + overrides for A, D, NQ,
 >     CQ with Preview and dry run; (3) CQ questions + instructions; (4) Clear/reset.
->   - **Lara is redesigning the tab layout herself first** (next session).
 >   - **Still to decide:** one description style for both tools (the editor's bold
->     directions + green button for non-Google links, or createByRow's simpler one); how
->     many override rows. Lara is rebuilding the tab layout now (2026-10-18).
+>     directions + green button for non-Google links, or createByRow's simpler one).
 >   - Legacy quirks to avoid: types read dates differently (NQ always midnight); descriptions
 >     differ by type (D had none); legacy CQ wrote the quiz ID into O3, over the update
 >     formula; no dry run; errors often only logged.
