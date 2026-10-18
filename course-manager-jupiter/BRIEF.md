@@ -105,15 +105,26 @@
 >   `=ARRAYFORMULA(IF(ref_Index!C4:C="", "", HYPERLINK("#gid=" & ref_Index!C4:C, ref_Index!A4:A)))`.
 >   Buttons: Insert › Drawing, ⋮ › Assign script, type a public function name (no
 >   trailing `_`); drawings don't work in the Sheets phone app.
-> - **Next:** pick the next tool to port from Lara's Decision column in
->   `docs/legacy-function-map.md` (port / later / leave behind); Lara is adding Home
->   buttons as tools are built.
+> - **Seating chart written (2026-10-17, not yet tested):** `SeatingChart.js`,
+>   `buildSeatingChart` (menu item at the bottom after a separator; Home button). Ported
+>   from legacy `createStudentTextBoxes`: same box look (first name bold 21 pt over last
+>   name 15 pt, Palatino, centered, period color, sorted by last name); rows wrap at the
+>   deck's real width. Lara chose: add boxes like legacy (never remove; re-running
+>   doubles them; the confirm pop-up says so). Refreshes `ref_peopleList` and
+>   `ref_SectionLookup` first (design rule 2), via new silent `writePeopleListSheet_()`
+>   and `writeSectionLookupSheet_()`. Settings: named ranges `cfg_SeatingDeckID` (legacy
+>   B7) and `cfg_SeatingPeriods` (legacy A8:C11, period | color | slide), which Lara
+>   creates; the tool explains if they're missing (not in `CFG_NAMES`). New scope
+>   `presentations` (Lara approved). Student names go only into her own deck (Lara
+>   approved); logs and pop-ups show periods and counts only.
+> - **Next:** test the seating chart; then pick the next tool from Lara's Decision column
+>   in `docs/legacy-function-map.md`; Lara is adding Home buttons as tools are built.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
 >     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
 >     after step 2, using IDs and URL paths only (no names).
 >   - What reads the time-dropdown values back, and in what format?
->   - Does Lara use the seating chart? What are Period Pairs for?
+>   - What are Period Pairs for? (Seating chart: yes, Lara uses it; ported.)
 >   - Should reference sheets be hidden automatically when built?
 >   - Limit `script.external_request` with a `urlFetchWhitelist` for the school's
 >     Canvas address?
@@ -227,8 +238,8 @@ Other items:
 - **Jupiter categories** stay on `ref_Config` as `cfg_JupiterCategories` (G:I; H = Lara's
   checkboxes, I = group IDs; rebuilt from Canvas by `refreshJupiterCategories`, which
   preserves the checkmarks).
-- **Seating chart** (legacy B7 and A8:C11). Port only if Lara confirms she uses it; B7 is
-  empty in the current workbook.
+- **Seating chart** (legacy B7 and A8:C11): Lara uses it; ported. Same cells, named
+  `cfg_SeatingDeckID` (B7) and `cfg_SeatingPeriods` (A8:C11).
 - **Period Pairs** (legacy F2:F5). No reader found in code or formulas. Ask Lara.
 - **Dropped:** Encyclopedia ID (B12) unless a Find for `Config` across the Sheet shows a
   formula using it; the column E checkboxes (nothing reads them).
@@ -311,6 +322,7 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
     built and tested.
   - `ref_Index` ("Refresh sheet index", also on open; `SheetIndex.js`): built and tested.
   - Design rules for reference sheets: recorded (see that section).
+  - Seating chart (`SeatingChart.js`, "Build seating chart"): built, not yet tested.
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).
@@ -321,4 +333,4 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
   the Canvas URL on the same row. Find out which one the reorder call needs before
   step 5, and why they differ.
 - What consumes the time-dropdown values (see duplicates above)?
-- Does Lara use the seating-chart tool? What are Period Pairs for?
+- What are Period Pairs for? (Seating chart: Lara uses it; ported.)

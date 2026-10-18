@@ -104,56 +104,66 @@ function refreshCourseList() {
 function refreshPeopleList() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   try {
-    const courseId = getCourseIdForRefresh_();
-    const existing = ss.getSheetByName(SHEETS.PEOPLE_LIST);
-    if (existing) checkHeaderLayout_(existing, PEOPLE_LIST_HEADERS);
-
-    const course = canvasStep_('course request', () => canvasGet_('/courses/' + courseId));
-    const enrollments = canvasStep_('roster request', () =>
-      canvasGet_('/courses/' + courseId + '/enrollments', { 'state[]': ['active', 'invited'] }));
-    if (!Array.isArray(enrollments)) {
-      throw sheetProblem_('Canvas did not return a roster list for the roster request.');
-    }
-
-    const courseName = (course && course.name) || 'N/A';
-    const rows = enrollments
-      .filter(enrollment => enrollment.user && enrollment.user.id)
-      .map(enrollment => [
-        enrollment.course_id || Number(courseId),
-        courseName,
-        enrollment.course_section_id || '',
-        enrollment.user.id,
-        enrollment.user.sortable_name || '',
-        enrollment.type || '',
-        enrollment.user.login_id || '',
-        '',
-        '',
-      ])
-      .sort((a, b) => String(a[4]).localeCompare(String(b[4])));
-
-    const sheet = existing || createRefSheet_(ss, SHEETS.PEOPLE_LIST);
-    const existingFilter = sheet.getFilter();
-    if (existingFilter) existingFilter.remove();
-    sheet.getRange(1, 1, 1, PEOPLE_LIST_HEADERS.length)
-      .setValues([PEOPLE_LIST_HEADERS.slice()])
-      .setFontWeight('bold')
-      .setBackground(PEOPLE_LIST_HEADER_COLOR);
-    replaceDataRows_(sheet, rows, PEOPLE_LIST_HEADERS.length);
-    if (rows.length) {
-      sheet.getRange(2, 8, rows.length, 1).setFormula(PEOPLE_LIST_LAST_NAME_FORMULA);
-      sheet.getRange(2, 9, rows.length, 1).setFormula(PEOPLE_LIST_FIRST_NAME_FORMULA);
-      sheet.getRange(1, 1, rows.length + 1, PEOPLE_LIST_HEADERS.length).createFilter();
-    }
-    sheet.setFrozenRows(1);
-    sheet.autoResizeColumns(1, PEOPLE_LIST_HEADERS.length);
-    getRefreshedCell_(ss, sheet, PEOPLE_LIST_REFRESHED).setValue(new Date());
-
-    console.log(`Refresh people list: ${rows.length} enrollment row(s) written.`);
-    ss.toast(`${rows.length} enrollment row(s) listed on ${SHEETS.PEOPLE_LIST}.`,
+    const count = writePeopleListSheet_(ss);
+    ss.toast(`${count} enrollment row(s) listed on ${SHEETS.PEOPLE_LIST}.`,
       'Refresh people list', 5);
   } catch (error) {
     reportRefreshFailure_('Refresh people list', 'The people list was not changed.', error);
   }
+}
+
+/**
+ * Does the work of Refresh people list without any pop-up, so other tools (e.g. the
+ * seating chart) can refresh it before use. Returns the number of enrollment rows.
+ * Throws on any problem, before the sheet is touched if Canvas fails.
+ */
+function writePeopleListSheet_(ss) {
+  const courseId = getCourseIdForRefresh_();
+  const existing = ss.getSheetByName(SHEETS.PEOPLE_LIST);
+  if (existing) checkHeaderLayout_(existing, PEOPLE_LIST_HEADERS);
+
+  const course = canvasStep_('course request', () => canvasGet_('/courses/' + courseId));
+  const enrollments = canvasStep_('roster request', () =>
+    canvasGet_('/courses/' + courseId + '/enrollments', { 'state[]': ['active', 'invited'] }));
+  if (!Array.isArray(enrollments)) {
+    throw sheetProblem_('Canvas did not return a roster list for the roster request.');
+  }
+
+  const courseName = (course && course.name) || 'N/A';
+  const rows = enrollments
+    .filter(enrollment => enrollment.user && enrollment.user.id)
+    .map(enrollment => [
+      enrollment.course_id || Number(courseId),
+      courseName,
+      enrollment.course_section_id || '',
+      enrollment.user.id,
+      enrollment.user.sortable_name || '',
+      enrollment.type || '',
+      enrollment.user.login_id || '',
+      '',
+      '',
+    ])
+    .sort((a, b) => String(a[4]).localeCompare(String(b[4])));
+
+  const sheet = existing || createRefSheet_(ss, SHEETS.PEOPLE_LIST);
+  const existingFilter = sheet.getFilter();
+  if (existingFilter) existingFilter.remove();
+  sheet.getRange(1, 1, 1, PEOPLE_LIST_HEADERS.length)
+    .setValues([PEOPLE_LIST_HEADERS.slice()])
+    .setFontWeight('bold')
+    .setBackground(PEOPLE_LIST_HEADER_COLOR);
+  replaceDataRows_(sheet, rows, PEOPLE_LIST_HEADERS.length);
+  if (rows.length) {
+    sheet.getRange(2, 8, rows.length, 1).setFormula(PEOPLE_LIST_LAST_NAME_FORMULA);
+    sheet.getRange(2, 9, rows.length, 1).setFormula(PEOPLE_LIST_FIRST_NAME_FORMULA);
+    sheet.getRange(1, 1, rows.length + 1, PEOPLE_LIST_HEADERS.length).createFilter();
+  }
+  sheet.setFrozenRows(1);
+  sheet.autoResizeColumns(1, PEOPLE_LIST_HEADERS.length);
+  getRefreshedCell_(ss, sheet, PEOPLE_LIST_REFRESHED).setValue(new Date());
+
+  console.log(`Refresh people list: ${rows.length} enrollment row(s) written.`);
+  return rows.length;
 }
 
 /**
@@ -284,37 +294,48 @@ function readAssignmentGroups_() {
 function refreshSectionList() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   try {
-    const courseId = getCourseIdForRefresh_();
-    const existing = ss.getSheetByName(SHEETS.SECTION_LOOKUP);
-    if (existing) checkHeaderLayout_(existing, SECTION_LOOKUP_HEADERS);
-
-    const sections = canvasStep_('section list request', () =>
-      canvasGet_('/courses/' + courseId + '/sections'));
-    if (!Array.isArray(sections)) {
-      throw sheetProblem_('Canvas did not return a list for the section list request.');
-    }
-
-    const rows = sections
-      .map(section => [section.id, section.name || '', periodFromSectionName_(section.name),
-        section.id])
-      .sort((a, b) => periodSortKey_(a[2]) - periodSortKey_(b[2]) ||
-        String(a[1]).localeCompare(String(b[1])));
-
-    const sheet = existing || createRefSheet_(ss, SHEETS.SECTION_LOOKUP);
-    sheet.getRange(1, 1, 1, SECTION_LOOKUP_HEADERS.length)
-      .setValues([SECTION_LOOKUP_HEADERS.slice()]).setFontWeight('bold');
-    replaceDataRows_(sheet, rows, SECTION_LOOKUP_HEADERS.length);
-    sheet.setFrozenRows(1);
-    sheet.autoResizeColumns(1, SECTION_LOOKUP_HEADERS.length);
-    getRefreshedCell_(ss, sheet, SECTION_LOOKUP_REFRESHED).setValue(new Date());
-
-    const withPeriod = rows.filter(row => row[2] !== '').length;
-    const summary = `${rows.length} section(s), ${withPeriod} with a period`;
-    console.log(`Refresh section list: ${summary} written.`);
-    ss.toast(`${summary}, listed on ${SHEETS.SECTION_LOOKUP}.`, 'Refresh section list', 5);
+    const counts = writeSectionLookupSheet_(ss);
+    ss.toast(`${counts.sections} section(s), ${counts.withPeriod} with a period, listed on ` +
+      `${SHEETS.SECTION_LOOKUP}.`, 'Refresh section list', 5);
   } catch (error) {
     reportRefreshFailure_('Refresh section list', 'The section list was not changed.', error);
   }
+}
+
+/**
+ * Does the work of Refresh section list without any pop-up, so other tools (e.g. the
+ * seating chart) can refresh it before use. Returns { sections, withPeriod } counts.
+ * Throws on any problem, before the sheet is touched if Canvas fails.
+ */
+function writeSectionLookupSheet_(ss) {
+  const courseId = getCourseIdForRefresh_();
+  const existing = ss.getSheetByName(SHEETS.SECTION_LOOKUP);
+  if (existing) checkHeaderLayout_(existing, SECTION_LOOKUP_HEADERS);
+
+  const sections = canvasStep_('section list request', () =>
+    canvasGet_('/courses/' + courseId + '/sections'));
+  if (!Array.isArray(sections)) {
+    throw sheetProblem_('Canvas did not return a list for the section list request.');
+  }
+
+  const rows = sections
+    .map(section => [section.id, section.name || '', periodFromSectionName_(section.name),
+      section.id])
+    .sort((a, b) => periodSortKey_(a[2]) - periodSortKey_(b[2]) ||
+      String(a[1]).localeCompare(String(b[1])));
+
+  const sheet = existing || createRefSheet_(ss, SHEETS.SECTION_LOOKUP);
+  sheet.getRange(1, 1, 1, SECTION_LOOKUP_HEADERS.length)
+    .setValues([SECTION_LOOKUP_HEADERS.slice()]).setFontWeight('bold');
+  replaceDataRows_(sheet, rows, SECTION_LOOKUP_HEADERS.length);
+  sheet.setFrozenRows(1);
+  sheet.autoResizeColumns(1, SECTION_LOOKUP_HEADERS.length);
+  getRefreshedCell_(ss, sheet, SECTION_LOOKUP_REFRESHED).setValue(new Date());
+
+  const withPeriod = rows.filter(row => row[2] !== '').length;
+  console.log(`Refresh section list: ${rows.length} section(s), ${withPeriod} with a period ` +
+    'written.');
+  return { sections: rows.length, withPeriod };
 }
 
 /** The period number from a section name like "Chemistry (P3)", or '' if there is none. */
