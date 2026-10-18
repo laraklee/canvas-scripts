@@ -105,7 +105,8 @@
 >   `=ARRAYFORMULA(IF(ref_Index!C4:C="", "", HYPERLINK("#gid=" & ref_Index!C4:C, ref_Index!A4:A)))`.
 >   Buttons: Insert › Drawing, ⋮ › Assign script, type a public function name (no
 >   trailing `_`); drawings don't work in the Sheets phone app.
-> - **Seating chart written (2026-10-17, not yet tested):** `SeatingChart.js`,
+> - **Seating chart done (2026-10-17, tested: boxes look right for Lara's test period):**
+>   `SeatingChart.js`,
 >   `buildSeatingChart` (menu item at the bottom after a separator; Home button). Ported
 >   from legacy `createStudentTextBoxes`: same box look (first name bold 21 pt over last
 >   name 15 pt, Palatino, centered, period color, sorted by last name); rows wrap at the
@@ -117,8 +118,8 @@
 >   creates; the tool explains if they're missing (not in `CFG_NAMES`). New scope
 >   `presentations` (Lara approved). Student names go only into her own deck (Lara
 >   approved); logs and pop-ups show periods and counts only.
-> - **Next:** test the seating chart; then pick the next tool from Lara's Decision column
->   in `docs/legacy-function-map.md`; Lara is adding Home buttons as tools are built.
+> - **Next:** pick the next tool from Lara's Decision column in
+>   `docs/legacy-function-map.md`; Lara is adding Home buttons as tools are built.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
 >     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
@@ -322,7 +323,7 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
     built and tested.
   - `ref_Index` ("Refresh sheet index", also on open; `SheetIndex.js`): built and tested.
   - Design rules for reference sheets: recorded (see that section).
-  - Seating chart (`SeatingChart.js`, "Build seating chart"): built, not yet tested.
+  - Seating chart (`SeatingChart.js`, "Build seating chart"): built and tested.
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).
