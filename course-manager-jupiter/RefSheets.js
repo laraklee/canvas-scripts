@@ -9,12 +9,15 @@
  *   - ref_assignmentGroups ("Refresh assignment groups"): every assignment in the
  *     cfg_CourseID course, same seven columns as the legacy tab, sorted by group order
  *     and then position. readAssignmentGroups_() reads it back by header name.
+ *   - ref_SectionLookup ("Refresh section list"): every section in the cfg_CourseID course,
+ *     same four columns as the legacy tab (Period comes from "(P3)" in the section name).
  * Canvas endpoints called (all GET, via canvasGet_):
  *   /api/v1/courses?enrollment_type=teacher&enrollment_state=active
  *     &state[]=available&state[]=unpublished
  *   /api/v1/courses/:course
  *   /api/v1/courses/:course/enrollments?state[]=active&state[]=invited
  *   /api/v1/courses/:course/assignment_groups?include[]=assignments&include[]=all_dates
+ *   /api/v1/courses/:course/sections
  * Canvas write operations: none.
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN
  *   (read by canvasGet_).
@@ -30,6 +33,9 @@ const PEOPLE_LIST_REFRESHED = Object.freeze({ name: 'PeopleList_LastRefreshed', 
 const ASSIGNMENT_GROUPS_REFRESHED = Object.freeze({
   name: 'AssignmentGroups_LastRefreshed', label: 'I1', home: 'J1',
 });
+const SECTION_LOOKUP_REFRESHED = Object.freeze({
+  name: 'SectionLookup_LastRefreshed', label: 'F1', home: 'G1',
+});
 
 const COURSE_IDS_HEADERS = Object.freeze(['Course ID', 'Course name']);
 const PEOPLE_LIST_HEADERS = Object.freeze(['Course ID', 'Course Name', 'Section ID', 'User ID',
@@ -40,12 +46,17 @@ const PEOPLE_LIST_LAST_NAME_FORMULA = '=IFERROR(LEFT(E2, FIND(",", E2) - 1), E2)
 const PEOPLE_LIST_FIRST_NAME_FORMULA = '=IFERROR(TRIM(RIGHT(E2, LEN(E2) - FIND(",", E2))), "")';
 const ASSIGNMENT_GROUPS_HEADERS = Object.freeze(['Assignment ID', 'Assignment Name', 'Group ID',
   'Group Name', 'Position', 'Due Date (ISO)', 'Canvas URL']);
+// Same columns as the legacy tab. Sheet formulas match Period (C) and return the ID (A);
+// D repeats the ID so lookups can find it to the right of the other columns.
+const SECTION_LOOKUP_HEADERS = Object.freeze(['Section ID', 'Section Name', 'Period',
+  'Section ID Copy']);
 
 /** Adds this file's menu items. Called by onOpen. */
 function addRefSheetsMenuItems_(menu) {
   menu.addItem('Refresh course list', 'refreshCourseList');
   menu.addItem('Refresh people list', 'refreshPeopleList');
   menu.addItem('Refresh assignment groups', 'refreshAssignmentGroups');
+  menu.addItem('Refresh section list', 'refreshSectionList');
 }
 
 /**
@@ -260,6 +271,61 @@ function readAssignmentGroups_() {
       position: Number(row[col.position]),
       dueAt: row[col.dueAt],
     }));
+}
+
+/**
+ * Menu: Course Manager › Refresh section list.
+ * Replaces ref_SectionLookup columns A:D with every section in the cfg_CourseID course
+ * (ported from legacy createSectionLookup, which asked for each section one at a time
+ * and only listed sections that had people in them). Sorted by period, then name;
+ * sections without "(P#)" in their name come last with a blank Period.
+ * Stamps SectionLookup_LastRefreshed. Nothing changes unless Canvas answers successfully.
+ */
+function refreshSectionList() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  try {
+    const courseId = getCourseIdForRefresh_();
+    const existing = ss.getSheetByName(SHEETS.SECTION_LOOKUP);
+    if (existing) checkHeaderLayout_(existing, SECTION_LOOKUP_HEADERS);
+
+    const sections = canvasStep_('section list request', () =>
+      canvasGet_('/courses/' + courseId + '/sections'));
+    if (!Array.isArray(sections)) {
+      throw sheetProblem_('Canvas did not return a list for the section list request.');
+    }
+
+    const rows = sections
+      .map(section => [section.id, section.name || '', periodFromSectionName_(section.name),
+        section.id])
+      .sort((a, b) => periodSortKey_(a[2]) - periodSortKey_(b[2]) ||
+        String(a[1]).localeCompare(String(b[1])));
+
+    const sheet = existing || createRefSheet_(ss, SHEETS.SECTION_LOOKUP);
+    sheet.getRange(1, 1, 1, SECTION_LOOKUP_HEADERS.length)
+      .setValues([SECTION_LOOKUP_HEADERS.slice()]).setFontWeight('bold');
+    replaceDataRows_(sheet, rows, SECTION_LOOKUP_HEADERS.length);
+    sheet.setFrozenRows(1);
+    sheet.autoResizeColumns(1, SECTION_LOOKUP_HEADERS.length);
+    getRefreshedCell_(ss, sheet, SECTION_LOOKUP_REFRESHED).setValue(new Date());
+
+    const withPeriod = rows.filter(row => row[2] !== '').length;
+    const summary = `${rows.length} section(s), ${withPeriod} with a period`;
+    console.log(`Refresh section list: ${summary} written.`);
+    ss.toast(`${summary}, listed on ${SHEETS.SECTION_LOOKUP}.`, 'Refresh section list', 5);
+  } catch (error) {
+    reportRefreshFailure_('Refresh section list', 'The section list was not changed.', error);
+  }
+}
+
+/** The period number from a section name like "Chemistry (P3)", or '' if there is none. */
+function periodFromSectionName_(name) {
+  const match = String(name || '').match(/\(P(\d+)\)/);
+  return match ? Number(match[1]) : '';
+}
+
+/** Sorts blank periods after numbered ones. */
+function periodSortKey_(period) {
+  return period === '' ? Infinity : period;
 }
 
 /** Reads cfg_CourseID and checks it is a Canvas course number. */
