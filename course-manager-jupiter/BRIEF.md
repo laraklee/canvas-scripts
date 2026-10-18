@@ -283,8 +283,9 @@
 >     numeric Section ID and a Due Date; a section used twice is Not ready (Canvas allows
 >     one override per section); payload `assignment_override` with `course_section_id`
 >     and due/unlock/lock (blank dates left out).
->   - **Step 2b (makeAll) done for Type A (2026-10-18, Lara approved the writes; real build
->     of a Type A item + overrides in Sequence 9 worked; D, CQ, NQ being tested next):** `makeAssignmentAll` (makeAll button + menu). Asks
+>   - **Step 2b (makeAll) done for Types A and D (2026-10-18, Lara approved the writes; real build
+>     of a Type A item + overrides in Sequence 9 worked; Type D + overrides also worked;
+>     CQ, NQ being tested next):** `makeAssignmentAll` (makeAll button + menu). Asks
 >     first (course, counts, dry-run state). Sends through `canvasWrite_`: (1) the item,
 >     same request as createByRow, unless canvasID is filled; writes canvasID, Canvas URL,
 >     Status; (2) each ready override, `POST /courses/:course/assignments/:id/overrides`;
