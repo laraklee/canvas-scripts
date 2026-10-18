@@ -132,7 +132,9 @@
 > - **`ref_Config` finished (2026-10-17):** Lara is hiding it. Still on it but unused:
 >   legacy B2 (old base URL), Period Pairs F2:F5 (open question), Encyclopedia ID B12 and
 >   the column E checkboxes (dropped); tidy these when Config is rearranged at the end.
-> - **Groups written (2026-10-17, not yet tested):** new `Groups.js`; same function names
+> - **Groups done (2026-10-17, tested: dry run sent nothing; real run in Sequence 9 created
+>   the category and groups; reruns refused duplicates; cleaned up; dry run back ON):**
+>   new `Groups.js`; same function names
 >   as legacy (`clearGroupData`, `createGroupCategory`, `createGroups`) so the three
 >   buttons on Lara's copied `createGroups` tab (`TOOL_SHEETS.CREATE_GROUPS`) keep
 >   working; also menu items after a separator. Tab layout kept: A2 `=cfg_CourseID`
@@ -145,9 +147,9 @@
 >   if D2 already has an ID; Create groups skips rows with a GroupID and writes each ID as
 >   it goes; refused rows listed by row number; 5-minute stop. `CANVAS_STOP_ALL_TYPES`
 >   moved from `ReorderTool.js` to `CanvasApi.js` so both tools share it.
-> - **Next:** test groups (dry run ON first, then Sequence 9 with dry run OFF; delete the
->   test groups in Canvas after); then pick the next tool from Lara's Decision column in
->   `docs/legacy-function-map.md`. Button ideas for later (Lara still deciding): a
+> - **Next:** pick the next tool from Lara's Decision column in
+>   `docs/legacy-function-map.md` (the two Jupiter export tools read
+>   `cfg_JupiterCategories`, now in place). Button ideas for later (Lara still deciding): a
 >   "refresh all ref tables" button, buttons on the Assignment Order tab.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
@@ -355,7 +357,7 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
   - Seating chart (`SeatingChart.js`, "Build seating chart"): built and tested.
   - Jupiter categories (`Jupiter.js`, "Refresh Jupiter categories"): built and tested.
   - `ref_Config`: finished for now; hidden by Lara.
-  - Groups (`Groups.js`, three `createGroups`-tab buttons): built, not yet tested.
+  - Groups (`Groups.js`, three `createGroups`-tab buttons): built and tested.
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).
