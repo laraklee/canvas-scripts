@@ -272,6 +272,17 @@
 >     Override rows run from below the OverrideID labels to the tab's last used row.
 >     Labels match exactly, including capitals and colons. Offline check:
 >     `scripts/checks/make-assignment.check.js`.
+>   - **Step 2a (Preview) written (2026-10-18, offline checks pass; not yet tested in
+>     Google):** `previewAssignment` (button + menu "Preview assignment (this tab)") fills
+>     the item's and each override's Payload/Status; never sends. Item planned with
+>     createByRow's builders; **Type of Submission** (multi-choice, comma-separated) sets
+>     `submission_types` for Type A only (blank → `online_upload`; unknown values → Not
+>     ready); `assignmentPayload_` now takes `fields.submissionTypes` (createByRow
+>     unchanged). An item with a canvasID isn't created again: only overrides without an
+>     OverrideID are planned (lets Lara add an override later). Override row: needs a
+>     numeric Section ID and a Due Date; a section used twice is Not ready (Canvas allows
+>     one override per section); payload `assignment_override` with `course_section_id`
+>     and due/unlock/lock (blank dates left out). Step 2b (makeAll, the Canvas writes) next.
 >   - **Dates in code** (same as createByRow), with Payload/Status per item and override.
 >     Reuse createByRow's request builders for the four types.
 >   - **No course ID on the tab** (code uses `cfg_CourseID`); optional `=cfg_CourseName`

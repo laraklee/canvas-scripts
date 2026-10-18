@@ -360,14 +360,17 @@ function addDates_(target, fields) {
   return target;
 }
 
-/** The Type A request body (same fields as legacy postSingleAssignment). */
+/**
+ * The Type A request body (same fields as legacy postSingleAssignment). Submission types
+ * default to online_upload; makeAssignment passes its Type of Submission choices.
+ */
 function assignmentPayload_(fields) {
   return {
     assignment: addDates_({
       name: fields.name,
       points_possible: pointsFrom_(fields.points),
       description: fields.description,
-      submission_types: ['online_upload'],
+      submission_types: fields.submissionTypes || ['online_upload'],
       published: fields.published !== false,
     }, fields),
   };
