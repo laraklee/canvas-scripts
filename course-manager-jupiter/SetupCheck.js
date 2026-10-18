@@ -23,6 +23,7 @@ function onOpen() {
   addReorderToolMenuItems_(menu);
   addSheetIndexMenuItems_(menu);
   addSeatingChartMenuItems_(menu);
+  addJupiterMenuItems_(menu);
   menu.addToUi();
 
   // Rebuild ref_Index first (silently), so a new one exists before the setup check.

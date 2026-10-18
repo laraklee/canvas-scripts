@@ -118,8 +118,19 @@
 >   creates; the tool explains if they're missing (not in `CFG_NAMES`). New scope
 >   `presentations` (Lara approved). Student names go only into her own deck (Lara
 >   approved); logs and pop-ups show periods and counts only.
-> - **Next:** pick the next tool from Lara's Decision column in
->   `docs/legacy-function-map.md`; Lara is adding Home buttons as tools are built.
+> - **Jupiter categories written (2026-10-17, not yet tested):** new `Jupiter.js`,
+>   `refreshJupiterCategories` (same name as legacy, so a copied Config button still
+>   works; menu item at the bottom after a separator). Ported from legacy
+>   `refreshJupiterCategories` + `getJupiterGroupMap_`: rebuilds `cfg_JupiterCategories`
+>   (G | H | I = Canvas category | Export to Jupiter? checkbox | Canvas group ID) from one
+>   read-only `GET /courses/:course/assignment_groups`; keeps checkmarks by group ID, or
+>   by name for rows without an ID; new groups unchecked; refuses if column I holds
+>   something else; changes nothing unless Canvas returns groups. New: the summary counts
+>   checked categories that dropped off. No stamp cell (Config cells stay put for now).
+>   Readers still to port: `getJupiterAllowedCategories_` in the two Jupiter export tools.
+> - **Next:** test Jupiter categories; then pick the next tool from Lara's Decision column
+>   in `docs/legacy-function-map.md`. Button ideas for later (Lara still deciding): a
+>   "refresh all ref tables" button, buttons on the Assignment Order tab.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
 >     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
@@ -324,6 +335,7 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
   - `ref_Index` ("Refresh sheet index", also on open; `SheetIndex.js`): built and tested.
   - Design rules for reference sheets: recorded (see that section).
   - Seating chart (`SeatingChart.js`, "Build seating chart"): built and tested.
+  - Jupiter categories (`Jupiter.js`, "Refresh Jupiter categories"): built, not yet tested.
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).
