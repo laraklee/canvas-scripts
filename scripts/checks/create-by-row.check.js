@@ -156,10 +156,10 @@ check('CQ payload: graded quiz type, title, published, due; no points', readyCQ.
   quiz: { title: 'Quiz 1', quiz_type: 'assignment', published: true,
     due_at: '2026-01-28T08:15:00-10:00' },
 });
-check('CQ row: quizzes path; CanvasID = assignment ID; Canvas Link = quiz ID',
+check('CQ row: quizzes path; CanvasID = assignment ID; Canvas Link = the quiz link',
   [readyCQ.request.path, readyCQ.request.readId({ id: 55, assignment_id: 88, html_url: 'u' }),
     readyCQ.request.readLink({ id: 55, assignment_id: 88, html_url: 'u' })],
-  ['/courses/999/quizzes', 88, 55]);
+  ['/courses/999/quizzes', 88, 'u']);
 const draftCQ = plan({ [P]: false }, { [L.NAME]: 'Quiz 2', [L.TYPE]: 'CQ' });
 check('draft CQ row: unpublished, label says draft',
   [draftCQ.request.payload.quiz.published, draftCQ.label], [false, 'CQ, draft']);

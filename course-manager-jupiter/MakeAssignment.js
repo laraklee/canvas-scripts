@@ -7,7 +7,10 @@
  *   and repeat labels like "Due Date". Columns within a table are found by label.
  *   - Item: two label rows read as one table ("canvasID" row and "Canvas URL" row); each
  *     row's values are in the row just below it.
- *   - Overrides ("OverrideID" row): one override per row below it, to the last row used.
+ *   - Overrides ("OverrideID" row): one override per row below it, ending above the next
+ *     table's labels or above a row whose OverrideID cell holds words (a section title).
+ *   - Questions ("Question Type" row; optional, CQ copies only): one Classic quiz question
+ *     per row below it, to the last row used (see QuizQuestions.js).
  *   Labels are every non-blank cell from the first label to the right edge of that row
  *   (blank cells, e.g. a merged label's extra cells, are skipped), so don't put another
  *   table beside one; labels the code doesn't use (e.g. Schedule) are ignored.
@@ -19,20 +22,22 @@
  *     are planned. An override row needs a numeric Section ID and a Due Date; blank rows
  *     are skipped. Blank times: Due and Lock 11:59 PM, Unlock 12:00 AM.
  *   - makeAssignmentAll (makeAll button; legacy name): asks first, then creates the item
- *     and each ready override, writing canvasID, Canvas URL, OverrideID, and Status. If
- *     the item isn't created, no overrides are sent. Only creates; never changes or
- *     deletes anything in Canvas.
+ *     and each ready override, then (Type CQ only) each ready question, writing
+ *     canvasID, Canvas URL, OverrideID, QuestionID, and Status. If the item isn't created,
+ *     nothing else is sent. A CQ's Instructions go in the request that creates it. Stops
+ *     cleanly near the time limit. Only creates; never changes or deletes anything.
  *   - createDropdowns1 (Get Times button; legacy name): Due Time dropdowns on every
  *     override row (Period Start/End for that row's Period and Due Date from
  *     ref_simpleSchedule, plus the four cfg_Time… choices). Typed times still allowed.
  *   - clearCreationIDs (Clear IDs button; legacy name): clears canvasID, Canvas URL,
- *     OverrideIDs, and every Status and Payload cell for the next assignment; keeps
+ *     OverrideIDs, QuestionIDs, and every Status and Payload cell; keeps
  *     everything else. Asks first if any ID is filled in. Sheet only; Canvas unchanged.
  *   No student data is read or written. Logs counts only.
  * Canvas endpoints called: none directly.
  * Canvas write operations (via canvasWrite_, so DRY_RUN applies):
  *   POST the item: same requests as createByRow (A, D, CQ, NQ; see PostRows.js)
  *   POST /api/v1/courses/:course/assignments/:assignment_id/overrides (one per section)
+ *   POST /api/v1/courses/:course/quizzes/:quiz/questions (CQ only; one per question)
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
  *   Script Property DRY_RUN. Named ranges: cfg_CourseID (cfg_CourseName for messages);
  *   cfg_TimeSchoolStart, cfg_TimeSchoolEnd, cfg_TimeAfterSchool, cfg_TimeNight (Get Times).
@@ -58,6 +63,14 @@ const MAKE_ASSIGNMENT_TABLES = Object.freeze([
     labels: ['OverrideID', 'Section ID', 'Period', 'Due Date', 'Due Time', 'Unlock At',
       'Unlock Time', 'Lock At', 'Lock Time', 'Status', 'Payload'],
   },
+  {
+    // Optional: only CQ copies of the tab have it (see QuizQuestions.js).
+    key: 'questions',
+    name: 'Questions',
+    optional: true,
+    labels: ['Question Type', 'Points', 'Question', 'Answer', 'Opt 1', 'Opt 2', 'Opt 3',
+      'Opt 4', 'Opt 5', 'Status', 'Payload', 'QuestionID'],
+  },
 ].map(table => Object.freeze(table)));
 
 // Canvas's allowed submission_types (Type A only; D, CQ, and NQ set their own).
@@ -69,43 +82,47 @@ const MAKE_ASSIGNMENT_SUBMISSION_TYPES = Object.freeze(['online_upload', 'online
 function addMakeAssignmentMenuItems_(menu) {
   menu.addSeparator();
   menu.addItem('Preview assignment (this tab)', 'previewAssignment');
-  menu.addItem('makeAll: create assignment + overrides (this tab)', 'makeAssignmentAll');
+  menu.addItem('makeAll: create assignment, overrides, questions (this tab)',
+    'makeAssignmentAll');
   menu.addItem('Get Times: Due Time dropdowns (this tab)', 'createDropdowns1');
   menu.addItem('Clear IDs, Status, Payload (this tab)', 'clearCreationIDs');
   menu.addItem('Check makeAssignment labels (this tab)', 'checkMakeAssignmentLabels');
 }
 
 /**
- * Button / menu: Preview. Fills Payload and Status for the item and each override row
- * with what makeAll would send. Never sends anything, whatever the dry-run setting.
+ * Button / menu: Preview. Fills Payload and Status for the item, each override row, and
+ * each question row with what makeAll would send. Never sends anything, whatever the
+ * dry-run setting.
  */
 function previewAssignment() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   try {
     const job = readMakeAssignment_(ss);
-    const { item, overrides } = job.plan;
+    const { item, overrides, questions } = job.plan;
     if (item.request) {
       job.writeItem('Payload', JSON.stringify(item.request.payload));
       job.writeItem('Status', `Preview (${item.label}): not sent`);
     } else {
       job.writeItem('Status', item.message);
     }
-    const target = item.canvasId || 'new item';
-    let ready = 0;
-    overrides.forEach(plan => {
+    const previewRows = (plans, write, target) => plans.filter(plan => {
       if (plan.payload) {
-        ready++;
-        job.writeOverride(plan, 'Payload', JSON.stringify(plan.payload));
-        job.writeOverride(plan, 'Status', `Preview: not sent (for ${target})`);
+        write(plan, 'Payload', JSON.stringify(plan.payload));
+        write(plan, 'Status', `Preview: not sent (for ${target})`);
       } else {
-        job.writeOverride(plan, 'Status', plan.message);
+        write(plan, 'Status', plan.message);
       }
-    });
+      return plan.payload;
+    }).length;
+    const overridesReady = previewRows(overrides, job.writeOverride, item.canvasId || 'new item');
+    const questionsReady = previewRows(questions, job.writeQuestion,
+      item.quizId ? `quiz ${item.quizId}` : 'new quiz');
     console.log(`Preview assignment: item ${item.request ? 'ready' : 'not ready'}, ` +
-      `${ready} of ${overrides.length} override(s) ready.`);
-    ss.toast(`Item: ${item.request ? 'ready' : 'see Status'}. Overrides: ${ready} ready, ` +
-      `${overrides.length - ready} skipped or with a problem. Nothing was sent.`,
-      'Preview assignment', 8);
+      `${overridesReady} of ${overrides.length} override(s) and ${questionsReady} of ` +
+      `${questions.length} question(s) ready.`);
+    ss.toast(`Item: ${item.request ? 'ready' : 'see Status'}. Overrides: ${overridesReady} ` +
+      `ready of ${overrides.length}.` + (questions.length ? ` Questions: ${questionsReady} ` +
+      `ready of ${questions.length}.` : '') + ' Nothing was sent.', 'Preview assignment', 8);
   } catch (error) {
     reportRefreshFailure_('Preview assignment', 'Nothing was sent.', error);
   }
@@ -114,42 +131,52 @@ function previewAssignment() {
 /**
  * Button / menu: makeAll (legacy name kept, so the button works). Asks first (showing the
  * course, counts, and the dry-run state), then creates the item (unless it already has a
- * canvasID) and each ready override through canvasWrite_, writing IDs and Status.
+ * canvasID), each ready override, and (CQ only) each ready question through canvasWrite_,
+ * writing IDs and Status.
  */
 function makeAssignmentAll() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
   try {
+    const started = Date.now();
     const job = readMakeAssignment_(ss);
-    const { item, overrides } = job.plan;
-    const ready = overrides.filter(plan => plan.payload);
+    const { item, overrides, questions } = job.plan;
+    const readyOverrides = overrides.filter(plan => plan.payload);
+    const readyQuestions = questions.filter(plan => plan.payload);
     overrides.filter(plan => !plan.payload)
       .forEach(plan => job.writeOverride(plan, 'Status', plan.message));
+    questions.filter(plan => !plan.payload)
+      .forEach(plan => job.writeQuestion(plan, 'Status', plan.message));
     if (!item.request && !item.canvasId) {
       job.writeItem('Status', item.message);
       ui.alert('makeAll', `The item isn't ready, so nothing was sent.\n\n${item.message}`,
         ui.ButtonSet.OK);
       return;
     }
-    if (item.canvasId && !ready.length) {
+    if (item.canvasId && !readyOverrides.length && !readyQuestions.length) {
       ui.alert('makeAll', 'Nothing to send: the item already has a canvasID and no override ' +
-        'row is ready (see Status).', ui.ButtonSet.OK);
+        'or question row is ready (see Status).', ui.ButtonSet.OK);
       return;
     }
 
     const dryRun = isDryRun_();
-    const skipped = overrides.length - ready.length;
+    const skipped = overrides.length - readyOverrides.length +
+      questions.length - readyQuestions.length;
+    const parts = [`${readyOverrides.length} override(s)`]
+      .concat(readyQuestions.length ? [`${readyQuestions.length} question(s)`] : []);
     const answer = ui.alert('makeAll',
-      (item.request ? `Create 1 item (${item.label}) and ` : 'The item already exists. Create ') +
-      `${ready.length} override(s) in ${courseLabel_()}?` +
-      (skipped ? `\n${skipped} override row(s) will be skipped (see Status).` : '') +
+      (item.request ? `Create 1 item (${item.label}), ` : 'The item already exists. Create ') +
+      `${parts.join(' and ')} in ${courseLabel_()}?` +
+      (skipped ? `\n${skipped} row(s) will be skipped (see Status).` : '') +
       '\n\n' + (dryRun ? 'Dry run is ON: nothing will be sent.' :
         'Dry run is OFF: this creates them in Canvas.'), ui.ButtonSet.YES_NO);
     if (answer !== ui.Button.YES) return;
 
-    const result = runMakeAssignment_(job, canvasWrite_);
+    const result = runMakeAssignment_(job, canvasWrite_, started);
     console.log(`makeAll${dryRun ? ' (dry run)' : ''}: item ${result.itemOutcome}, ` +
-      `${result.created} override(s) sent, ${result.failed} refused.`);
+      `${result.created} override(s) sent, ${result.failed} refused, ` +
+      `${result.questionsCreated} question(s) sent, ${result.questionsFailed} refused` +
+      (result.timedOut ? ', stopped at time limit.' : '.'));
     ui.alert('makeAll', describeMakeAllResult_(result, dryRun, skipped), ui.ButtonSet.OK);
   } catch (error) {
     reportRefreshFailure_('makeAll', 'Anything already created has its ID filled in; see ' +
@@ -158,15 +185,20 @@ function makeAssignmentAll() {
 }
 
 /**
- * Sends the item (if new) and then each ready override with send (canvasWrite_), writing
- * results as it goes. Overrides wait for the item: if it isn't created, none are sent.
- * Returns { itemOutcome: 'existing' | 'dry run' | 'created' | 'no ID' | 'refused',
- * created, failed, itemMessage? }. Errors that would hit every request are thrown.
+ * Sends the item (if new), then each ready override, then each ready question, with send
+ * (canvasWrite_), writing results as it goes. Overrides and questions wait for the item:
+ * if it isn't created, none are sent. Stops cleanly near the time limit (rows not sent
+ * say so; clicking makeAll again continues, since sent rows have IDs). Returns
+ * { itemOutcome: 'existing' | 'dry run' | 'created' | 'no ID' | 'refused', created,
+ * failed, questionsCreated, questionsFailed, timedOut, itemMessage? }. Errors that would
+ * hit every request are thrown.
  */
-function runMakeAssignment_(job, send) {
-  const { item, overrides } = job.plan;
-  const result = { itemOutcome: 'existing', created: 0, failed: 0 };
+function runMakeAssignment_(job, send, started = Date.now()) {
+  const { item, overrides, questions } = job.plan;
+  const result = { itemOutcome: 'existing', created: 0, failed: 0, questionsCreated: 0,
+    questionsFailed: 0, timedOut: false };
   let assignmentId = item.canvasId;
+  let quizId = item.quizId;
   let dryRun = false;
 
   if (item.request) {
@@ -179,8 +211,10 @@ function runMakeAssignment_(job, send) {
         job.writeItem('Status', `Dry run (${item.label}): not sent`);
       } else {
         assignmentId = item.request.readId(reply);
+        const link = item.request.readLink(reply) || '';
+        if (item.type === 'CQ') quizId = String(reply.id || quizIdFromLink_(link));
         job.writeItem('canvasID', assignmentId || '');
-        job.writeItem('Canvas URL', item.request.readLink(reply) || '');
+        job.writeItem('Canvas URL', link);
         result.itemOutcome = assignmentId ? 'created' : 'no ID';
         job.writeItem('Status', assignmentId ? `Created (${item.label})` :
           `Created (${item.label}), but Canvas returned no ID; check it in Canvas`);
@@ -196,53 +230,81 @@ function runMakeAssignment_(job, send) {
     }
   }
 
-  const ready = overrides.filter(plan => plan.payload);
+  const readyOverrides = overrides.filter(plan => plan.payload);
+  const readyQuestions = questions.filter(plan => plan.payload);
   if (!dryRun && !assignmentId) {
-    ready.forEach(plan => job.writeOverride(plan, 'Status', 'Not sent: the item was not created'));
+    readyOverrides.forEach(plan =>
+      job.writeOverride(plan, 'Status', 'Not sent: the item was not created'));
+    readyQuestions.forEach(plan =>
+      job.writeQuestion(plan, 'Status', 'Not sent: the item was not created'));
     return result;
   }
-  for (const plan of ready) {
-    job.writeOverride(plan, 'Payload', JSON.stringify(plan.payload));
+
+  // One row at a time: write Payload, send, write the ID and Status.
+  const sendRow = (plan, path, write, idLabel, onCreated, onFailed) => {
+    if (result.timedOut || Date.now() - started > CREATE_BY_ROW_TIME_LIMIT_MS) {
+      result.timedOut = true;
+      write(plan, 'Status', 'Not sent: stopped near the time limit; click makeAll again');
+      return;
+    }
+    write(plan, 'Payload', JSON.stringify(plan.payload));
     try {
-      // In a dry run the item has no ID yet; canvasWrite_ only logs the path.
-      const reply = send('POST', overridePath_(job.courseId, assignmentId || 'new'), plan.payload);
+      const reply = send('POST', path, plan.payload);
       if (reply.dryRun) {
-        job.writeOverride(plan, 'Status', 'Dry run: not sent');
+        write(plan, 'Status', 'Dry run: not sent');
       } else {
-        job.writeOverride(plan, 'OverrideID', reply.id || '');
-        job.writeOverride(plan, 'Status', reply.id ? 'Created' :
+        write(plan, idLabel, reply.id || '');
+        write(plan, 'Status', reply.id ? 'Created' :
           'Created, but Canvas returned no ID; check it in Canvas');
       }
-      result.created++;
+      onCreated();
     } catch (error) {
       if (!error.canvasType || CANVAS_STOP_ALL_TYPES.includes(error.canvasType)) {
-        job.writeOverride(plan, 'Status', 'Stopped: ' + describeCanvasError_(error));
+        write(plan, 'Status', 'Stopped: ' + describeCanvasError_(error));
         throw error;
       }
-      job.writeOverride(plan, 'Status', 'Not created: ' + error.message);
-      result.failed++;
+      write(plan, 'Status', 'Not created: ' + error.message);
+      onFailed();
     }
+  };
+
+  // In a dry run the item has no ID yet; canvasWrite_ only logs the path.
+  readyOverrides.forEach(plan => sendRow(plan, overridePath_(job.courseId, assignmentId || 'new'),
+    job.writeOverride, 'OverrideID', () => result.created++, () => result.failed++));
+  if (readyQuestions.length && !dryRun && !quizId) {
+    readyQuestions.forEach(plan => job.writeQuestion(plan, 'Status',
+      'Not sent: no quiz ID (Canvas URL should be the quiz link)'));
+    return result;
   }
+  readyQuestions.forEach(plan => sendRow(plan, questionsPath_(job.courseId, quizId || 'new'),
+    job.writeQuestion, 'QuestionID', () => result.questionsCreated++,
+    () => result.questionsFailed++));
   return result;
 }
 
 /** The pop-up after makeAll. */
 function describeMakeAllResult_(result, dryRun, skipped) {
+  const timeNote = result.timedOut ?
+    '\n\nStopped near the time limit; click makeAll again to send the rest.' : '';
   if (dryRun || result.itemOutcome === 'dry run') {
-    return `Dry run: the item${result.itemOutcome === 'existing' ? ' (already created)' : ''} ` +
-      `and ${result.created} override(s) would have been sent. Nothing was sent.`;
+    return `Dry run: the item${result.itemOutcome === 'existing' ? ' (already created)' : ''}, ` +
+      `${result.created} override(s), and ${result.questionsCreated} question(s) would have ` +
+      'been sent. Nothing was sent.' + timeNote;
   }
   const itemLine = {
     existing: 'The item already existed.',
     created: 'Item created.',
-    'no ID': 'Item created, but Canvas returned no ID, so no overrides were sent. Check it ' +
-      'in Canvas.',
-    refused: 'Canvas refused the item, so no overrides were sent (see Status).',
+    'no ID': 'Item created, but Canvas returned no ID, so no overrides or questions were ' +
+      'sent. Check it in Canvas.',
+    refused: 'Canvas refused the item, so no overrides or questions were sent (see Status).',
   }[result.itemOutcome];
   return itemLine +
     (result.created ? `\n${result.created} override(s) created.` : '') +
     (result.failed ? `\n${result.failed} override(s) refused by Canvas (see Status).` : '') +
-    (skipped ? `\n${skipped} override row(s) skipped (see Status).` : '');
+    (result.questionsCreated ? `\n${result.questionsCreated} question(s) added.` : '') +
+    (result.questionsFailed ? `\n${result.questionsFailed} question(s) refused by Canvas ` +
+      '(see Status).' : '') +
+    (skipped ? `\n${skipped} row(s) skipped (see Status).` : '') + timeNote;
 }
 
 /**
@@ -346,10 +408,11 @@ function clearCreationIDs() {
 
 /**
  * The cells Clear IDs empties: [{ row, column, isId }]. Item: canvasID, Canvas URL,
- * Status, Payload. Each override row: OverrideID, Status, Payload.
+ * Status, Payload. Each override row: OverrideID, Status, Payload. Each question row (if
+ * the tab has a Questions table): QuestionID, Status, Payload.
  */
 function clearCreationCells_(layout) {
-  const { item, itemMore, overrides } = layout.tables;
+  const { item, itemMore, overrides, questions } = layout.tables;
   const cells = [
     { row: item.headerRow + 1, column: item.columns.get('canvasID'), isId: true },
   ].concat(['Canvas URL', 'Status', 'Payload'].map(label =>
@@ -358,6 +421,12 @@ function clearCreationCells_(layout) {
     cells.push({ row, column: overrides.columns.get('OverrideID'), isId: true });
     ['Status', 'Payload'].forEach(label =>
       cells.push({ row, column: overrides.columns.get(label), isId: false }));
+  }
+  for (let row = questions.firstDataRow; questions.headerRow && row <= questions.lastDataRow;
+    row++) {
+    cells.push({ row, column: questions.columns.get('QuestionID'), isId: true });
+    ['Status', 'Payload'].forEach(label =>
+      cells.push({ row, column: questions.columns.get(label), isId: false }));
   }
   return cells;
 }
@@ -444,8 +513,9 @@ function formatTime24_(value) {
 }
 
 /**
- * Reads the tab being viewed and plans the item and its overrides:
- * { plan: { item, overrides }, writeItem(label, value), writeOverride(plan, label, value) }.
+ * Reads the tab being viewed and plans the item, its overrides, and its questions:
+ * { plan: { item, overrides, questions }, courseId, writeItem(label, value),
+ * writeOverride(plan, label, value), writeQuestion(plan, label, value) }.
  */
 function readMakeAssignment_(ss) {
   const sheet = ss.getActiveSheet();
@@ -463,7 +533,7 @@ function readMakeAssignment_(ss) {
   const courseId = getCourseIdForRefresh_();
   const plan = planMakeAssignment_(layout, values, shown, courseId,
     ss.getSpreadsheetTimeZone());
-  const { item, itemMore, overrides } = layout.tables;
+  const { item, itemMore, overrides, questions } = layout.tables;
   return {
     plan,
     courseId,
@@ -474,19 +544,24 @@ function readMakeAssignment_(ss) {
     },
     writeOverride: (overridePlan, label, value) => sheet.getRange(overridePlan.rowNumber,
       overrides.columns.get(label)).setValue(value),
+    writeQuestion: (questionPlan, label, value) => sheet.getRange(questionPlan.rowNumber,
+      questions.columns.get(label)).setValue(value),
   };
 }
 
 /**
- * Plans the item and every override row from the tab's values (cells) and displayed text
- * (shown), both full-tab grids. Returns { item, overrides }:
- * - item: { type, label, request? (createByRow's request for its type), canvasId? (when
- *   already created), message? (when not sending) }.
+ * Plans the item, every override row, and every question row from the tab's values
+ * (cells) and displayed text (shown), both full-tab grids. Returns
+ * { item, overrides, questions }:
+ * - item: { type, label, request? (createByRow's request for its type), canvasId? and
+ *   quizId? (when already created; quizId for CQ, from Canvas URL), message? }.
  * - overrides: [{ rowNumber, sectionId, payload?, message? }], blank rows left out.
  *   Each override is sent to overridePath_(courseId, the item's canvasID).
+ * - questions: [{ rowNumber, payload?, message? }], rows with no Question left out;
+ *   only sent for Type CQ, to questionsPath_(courseId, the quiz ID).
  */
 function planMakeAssignment_(layout, values, shown, courseId, timeZone) {
-  const { item, itemMore, overrides } = layout.tables;
+  const { item, itemMore, overrides, questions } = layout.tables;
   const at = (grid, row, column) => grid.slice(row - 1, row)[0].slice(column - 1, column)[0];
   const itemTable = label => (item.columns.has(label) ? item : itemMore);
   const itemCell = label => {
@@ -506,8 +581,25 @@ function planMakeAssignment_(layout, values, shown, courseId, timeZone) {
     const plan = planOverride_(row, cell, text, timeZone, seenSections);
     if (plan) overridePlans.push(plan);
   }
-  return { item: planMakeAssignmentItem_(itemCell, itemText, courseId, timeZone),
-    overrides: overridePlans };
+  const itemPlan = planMakeAssignmentItem_(itemCell, itemText, courseId, timeZone);
+
+  const questionPlans = [];
+  for (let row = questions.firstDataRow; questions.headerRow && row <= questions.lastDataRow;
+    row++) {
+    const cell = label => at(values, row, questions.columns.get(label));
+    const text = label => at(shown, row, questions.columns.get(label));
+    const plan = planQuestion_(row, cell, text);
+    if (!plan) continue;
+    if (plan.payload && itemPlan.type !== 'CQ') {
+      delete plan.payload;
+      plan.message = 'Not sent: questions are only for Type CQ';
+    } else if (plan.payload && itemPlan.canvasId && !itemPlan.quizId) {
+      delete plan.payload;
+      plan.message = 'Not ready: no quiz ID (Canvas URL should be the quiz link)';
+    }
+    questionPlans.push(plan);
+  }
+  return { item: itemPlan, overrides: overridePlans, questions: questionPlans };
 }
 
 /** Plans the item, the same way as a createByRow row, plus Type of Submission for A. */
@@ -517,8 +609,8 @@ function planMakeAssignmentItem_(cell, text, courseId, timeZone) {
   const plan = { type: type || '?', label: type || '?' };
   const canvasId = text('canvasID');
   if (canvasId) {
-    return Object.assign(plan, { canvasId,
-      message: 'Already created; only overrides without an OverrideID will be made' });
+    return Object.assign(plan, { canvasId, quizId: quizIdFromLink_(text('Canvas URL')),
+      message: 'Already created; only rows without an ID will be made' });
   }
   if (!name) return Object.assign(plan, { message: 'Not ready: no name' });
   if (!CREATE_BY_ROW_KNOWN_TYPES.includes(type)) {
@@ -540,7 +632,10 @@ function planMakeAssignmentItem_(cell, text, courseId, timeZone) {
     };
     if (type === 'A') fields.submissionTypes = parseSubmissionTypes_(text('Type of Submission'));
     if (!fields.published) plan.label = type === 'NQ' ? 'NQ, Published ignored' : `${type}, draft`;
-    return Object.assign(plan, { request: requestForType_(type, fields, courseId) });
+    const request = requestForType_(type, fields, courseId);
+    // CQ: the instructions go in the create request (legacy sent a second update).
+    if (type === 'CQ') request.payload.quiz.description = fields.description;
+    return Object.assign(plan, { request });
   } catch (error) {
     if (!error.isSheetProblem) throw error;
     return Object.assign(plan, { message: 'Not ready: ' + error.message });
@@ -643,14 +738,30 @@ function findMakeAssignmentLayout_(grid) {
     tables[spec.key] = table;
   });
 
+  // Overrides end at the row above the next table's labels, or above a row whose
+  // OverrideID cell holds words (e.g. a "Questions" title), whichever comes first.
   const overrides = tables.overrides;
   if (overrides.headerRow) {
     overrides.firstDataRow = overrides.headerRow + 1;
-    overrides.lastDataRow = grid.length;
+    const below = Object.values(tables).map(table => table.headerRow)
+      .filter(row => row > overrides.headerRow);
+    let last = below.length ? Math.min(...below) - 1 : grid.length;
+    const idColumn = overrides.columns.get('OverrideID');
+    for (let row = overrides.firstDataRow; idColumn && row <= last; row++) {
+      const idText = grid.slice(row - 1, row)[0].slice(idColumn - 1, idColumn)[0];
+      if (idText && !/^\d+$/.test(idText)) last = row - 1;
+    }
+    overrides.lastDataRow = last;
     if (overrides.lastDataRow < overrides.firstDataRow) {
       overrides.problems.push('there are no rows below the Overrides labels.');
       problemCount++;
     }
+  }
+  // Questions run from below their labels to the last row used.
+  const questions = tables.questions;
+  if (questions.headerRow) {
+    questions.firstDataRow = questions.headerRow + 1;
+    questions.lastDataRow = grid.length;
   }
   [tables.item, tables.itemMore].forEach(table => {
     if (table.headerRow && table.headerRow >= grid.length) {
@@ -672,7 +783,7 @@ function findLabelRow_(grid, spec) {
     if (value === firstLabel) hits.push({ row: r, column: c });
   }));
   if (!hits.length) {
-    table.problems.push(`no cell says "${firstLabel}".`);
+    if (!spec.optional) table.problems.push(`no cell says "${firstLabel}".`);
     return table;
   }
   if (hits.length > 1) {
@@ -711,6 +822,10 @@ function findLabelRow_(grid, spec) {
 function describeMakeAssignmentLayout_(layout) {
   const lines = MAKE_ASSIGNMENT_TABLES.map(spec => {
     const table = layout.tables[spec.key];
+    if (spec.optional && !table.headerRow && !table.problems.length) {
+      return `– ${table.name}: not on this tab (optional; add a "${table.firstLabel}" table ` +
+        'for Classic quiz questions).';
+    }
     if (table.problems.length && !table.headerRow) {
       return `✗ ${table.name}: ${table.problems.join(' ')}`;
     }
@@ -719,7 +834,8 @@ function describeMakeAssignmentLayout_(layout) {
     if (table.problems.length) line += `; ${table.problems.join(' ')}`;
     else line += `, all ${spec.labels.length} found.`;
     if (table.firstDataRow && table.lastDataRow >= table.firstDataRow) {
-      line += `\n   Override rows: ${table.firstDataRow}–${table.lastDataRow}.`;
+      line += `\n   ${spec.key === 'questions' ? 'Question' : 'Override'} rows: ` +
+        `${table.firstDataRow}–${table.lastDataRow}.`;
     }
     if (table.ignored.length) line += `\n   Not used by the code: ${table.ignored.join(', ')}.`;
     return line;

@@ -36,7 +36,8 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(PROJECT, 'PostRows.js'), 'utf8') + '\n' +
-  fs.readFileSync(path.join(PROJECT, 'MakeAssignment.js'), 'utf8') +
+  fs.readFileSync(path.join(PROJECT, 'MakeAssignment.js'), 'utf8') + '\n' +
+  fs.readFileSync(path.join(PROJECT, 'QuizQuestions.js'), 'utf8') +
   '\nthis.findMakeAssignmentLayout_ = findMakeAssignmentLayout_;' +
   '\nthis.describeMakeAssignmentLayout_ = describeMakeAssignmentLayout_;' +
   '\nthis.planMakeAssignment_ = planMakeAssignment_; this.overridePath_ = overridePath_;' +
@@ -251,7 +252,7 @@ check('dry run: statuses', [written(job, 'item', 'Status'), written(job, 12, 'St
 check('dry run: no IDs written', [written(job, 'item', 'canvasID'), written(job, 12, 'OverrideID')],
   [undefined, undefined]);
 check('dry run message', c.describeMakeAllResult_(r, true, 0),
-  'Dry run: the item and 2 override(s) would have been sent. Nothing was sent.');
+  'Dry run: the item, 2 override(s), and 0 question(s) would have been sent. Nothing was sent.');
 
 // Real run: item gets ID 777; overrides 9001, 9002.
 job = makeJob();
@@ -270,7 +271,7 @@ check('real: IDs written', [written(job, 'item', 'canvasID'), written(job, 'item
   [777, 'https://canvas.example/courses/5000/assignments/777', 9001, 9002]);
 check('real: result', [r.itemOutcome, r.created, r.failed], ['created', 2, 0]);
 check('real message', c.describeMakeAllResult_(r, false, 1),
-  'Item created.\n2 override(s) created.\n1 override row(s) skipped (see Status).');
+  'Item created.\n2 override(s) created.\n1 row(s) skipped (see Status).');
 
 // Item refused: no overrides sent.
 job = makeJob();
@@ -345,6 +346,154 @@ check('Clear IDs never touches name, dates, Type, or Published',
 
 check('every choice reads as a time', c.dueTimeChoices_({ start: '0815', end: '0925' }, standard)
   .every(choice => c.parseSheetTime_(choice)), true);
+
+// ---- Classic quiz questions (QuizQuestions.js). Made-up questions. ----
+// Lara's CQ tab: a "Questions" title in A20, labels in row 21, questions from row 22.
+// Columns: A Question Type, B Notes (Ignored), C Points, D Question, E Answer,
+// F–J Opt 1–5, K Status, L Payload, M QuestionID.
+function cqTab(questionRows, changes = {}) {
+  const tab = filledTab(Object.assign({ C7: 'CQ', G7: 'Read carefully.' }, changes));
+  const widen = grid => grid.map(row => row.concat(['']));
+  const shown = widen(tab.shown);
+  const values = widen(tab.values);
+  const addRow = cells => {
+    const row = Array(13).fill('');
+    cells.forEach((v, i) => { row[i] = v; });
+    shown.push(row.map(v => String(v)));
+    values.push(row.slice());
+  };
+  addRow([]); addRow([]); // rows 18–19
+  addRow(['Questions']); // row 20
+  addRow(['Question Type', 'Notes (Ignored)', 'Points', 'Question', 'Answer', 'Opt 1', 'Opt 2',
+    'Opt 3', 'Opt 4', 'Opt 5', 'Status', 'Payload', 'QuestionID']); // row 21
+  questionRows.forEach(addRow);
+  const layout = c.findMakeAssignmentLayout_(shown);
+  return { shown, values, layout,
+    plan: () => c.planMakeAssignment_(layout, values, shown, '5000', HST) };
+}
+const QUESTIONS = [
+  ['essay_question', 'lab purpose', 2, 'In your own words, what is the purpose of this lab?'],
+  ['multiple_choice_question', '', 1, 'Which is the acid?', 1, 'HCl', 'NaOH'],
+  ['multiple_answers_question', '', 1, 'Which are bases?', '2,3', 'HCl', 'NaOH', 'KOH'],
+  ['true_false_question', '', 1, 'Is pH < 7 acidic?', 'True'],
+  ['essay_question', '', 1, ''], // default type only: skipped silently
+  ['', '', '', ''],
+];
+let tab = cqTab(QUESTIONS);
+check('CQ tab: labels OK', tab.layout.problemCount, 0);
+check('overrides stop at the "Questions" title', [tab.layout.tables.overrides.firstDataRow,
+  tab.layout.tables.overrides.lastDataRow], [12, 19]);
+check('question rows 22–27', [tab.layout.tables.questions.firstDataRow,
+  tab.layout.tables.questions.lastDataRow], [22, 27]);
+check('summary lists question rows',
+  /Question rows: 22–27/.test(c.describeMakeAssignmentLayout_(tab.layout)), true);
+check('tab without Questions: optional line',
+  /– Questions: not on this tab/.test(c.describeMakeAssignmentLayout_(
+    c.findMakeAssignmentLayout_(labGrid()))), true);
+// No title: overrides stop just above the labels.
+const noTitle = cqTab(QUESTIONS);
+noTitle.shown[19][0] = '';
+check('no title: overrides stop above the labels',
+  c.findMakeAssignmentLayout_(noTitle.shown).tables.overrides.lastDataRow, 20);
+
+p = tab.plan();
+check('CQ item: instructions sent as the quiz description',
+  p.item.request.payload.quiz.description, '<p>Read carefully.</p>\n<p><br></p>\n');
+check('questions planned (blank-question rows skipped)', p.questions.map(q => q.rowNumber),
+  [22, 23, 24, 25]);
+check('essay payload', p.questions[0].payload, { question: {
+  question_text: 'In your own words, what is the purpose of this lab?',
+  question_type: 'essay_question', points_possible: 2 } });
+check('multiple choice payload', p.questions[1].payload.question.answers, [
+  { answer_text: 'HCl', answer_weight: 100 }, { answer_text: 'NaOH', answer_weight: 0 }]);
+check('multiple answers payload', p.questions[2].payload.question.answers, [
+  { answer_text: 'HCl', answer_weight: 0 }, { answer_text: 'NaOH', answer_weight: 100 },
+  { answer_text: 'KOH', answer_weight: 100 }]);
+check('true/false payload and < escaped', [p.questions[3].payload.question.question_text,
+  p.questions[3].payload.question.answers], ['Is pH &lt; 7 acidic?', [
+  { answer_text: 'True', answer_weight: 100 }, { answer_text: 'False', answer_weight: 0 }]]);
+check('Notes column not sent', JSON.stringify(p.questions[0].payload).includes('lab purpose'),
+  false);
+
+const qMessage = row => cqTab([row]).plan().questions[0].message;
+check('bad type', qMessage(['short_answer_question', '', 1, 'Q?']),
+  'Not ready: Question Type "short_answer_question" is not one of the four');
+check('no type', qMessage(['', '', 1, 'Q?']), 'Not ready: no Question Type');
+check('no points', qMessage(['essay_question', '', '', 'Q?']), 'Not ready: no Points');
+check('MC answer out of range', qMessage(['multiple_choice_question', '', 1, 'Q?', 7, 'a', 'b']),
+  'Not ready: Answer must be option numbers 1 to 5, e.g. 2 or 1,3');
+check('MC two answers', qMessage(['multiple_choice_question', '', 1, 'Q?', '1,2', 'a', 'b']),
+  'Not ready: multiple choice has one correct option; use multiple_answers_question');
+check('MC answer points at blank option',
+  qMessage(['multiple_choice_question', '', 1, 'Q?', 3, 'a', 'b']), 'Not ready: Opt 3 is blank');
+check('MC one option', qMessage(['multiple_choice_question', '', 1, 'Q?', 1, 'a']),
+  'Not ready: needs at least 2 options');
+check('TF bad answer', qMessage(['true_false_question', '', 1, 'Q?', 'yes']),
+  'Not ready: Answer must be True or False');
+check('QuestionID skips', qMessage(['essay_question', '', 1, 'Q?', '', '', '', '', '', '', '',
+  '', '555']), 'Skipped: already has a QuestionID');
+check('questions only for CQ', cqTab([QUESTIONS[0]], { C7: 'A' }).plan().questions[0].message,
+  'Not sent: questions are only for Type CQ');
+p = cqTab([QUESTIONS[0]], { A4: '777', A7: 'https://canvas.example/courses/5000/quizzes/4321' })
+  .plan();
+check('existing quiz: quiz ID from Canvas URL', [p.item.quizId, Boolean(p.questions[0].payload)],
+  ['4321', true]);
+p = cqTab([QUESTIONS[0]], { A4: '777', A7: '' }).plan();
+check('existing quiz without link', p.questions[0].message,
+  'Not ready: no quiz ID (Canvas URL should be the quiz link)');
+check('quiz IDs from links', ['https://x/courses/1/quizzes/42', 'https://x/courses/1/quizzes/42/',
+  'https://x/courses/1/assignments/9', ''].map(c.quizIdFromLink_), ['42', '42', '', '']);
+
+// makeAll with questions, fake Canvas.
+const questionJob = (changes, started) => {
+  const writes = [];
+  const qTab = cqTab(QUESTIONS.slice(0, 2), changes);
+  return { plan: qTab.plan(), courseId: '5000', writes,
+    writeItem: (label, value) => writes.push(['item', label, value]),
+    writeOverride: (o, label, value) => writes.push([o.rowNumber, label, value]),
+    writeQuestion: (q, label, value) => writes.push(['q' + q.rowNumber, label, value]) };
+};
+job = questionJob();
+sent = [];
+r = c.runMakeAssignment_(job, (method, p2) => { sent.push(p2); return { dryRun: true }; });
+check('dry run: questions go to the new quiz', sent.slice(3),
+  ['/courses/5000/quizzes/new/questions', '/courses/5000/quizzes/new/questions']);
+check('dry run: question status', written(job, 'q22', 'Status'), 'Dry run: not sent');
+job = questionJob();
+sent = [];
+let nextId = 9001;
+r = c.runMakeAssignment_(job, (method, p2) => {
+  sent.push(p2);
+  if (p2.endsWith('/quizzes')) {
+    return { id: 4321, assignment_id: 777, html_url: 'https://canvas.example/courses/5000/quizzes/4321' };
+  }
+  return { id: nextId++ };
+});
+check('real: questions go to the quiz ID', sent.slice(3),
+  ['/courses/5000/quizzes/4321/questions', '/courses/5000/quizzes/4321/questions']);
+check('real: CQ link and IDs written', [written(job, 'item', 'canvasID'),
+  written(job, 'item', 'Canvas URL'), written(job, 'q22', 'QuestionID'),
+  written(job, 'q23', 'QuestionID')],
+  [777, 'https://canvas.example/courses/5000/quizzes/4321', 9003, 9004]);
+check('real: counts', [r.created, r.questionsCreated, r.questionsFailed], [2, 2, 0]);
+check('real message', c.describeMakeAllResult_(r, false, 0),
+  'Item created.\n2 override(s) created.\n2 question(s) added.');
+// Time limit: started 6 minutes ago, so nothing after the item is sent.
+job = questionJob();
+sent = [];
+r = c.runMakeAssignment_(job, (method, p2) => {
+  sent.push(p2);
+  return { id: 4321, assignment_id: 777, html_url: 'u/quizzes/4321' };
+}, Date.now() - 6 * 60 * 1000);
+check('time limit: only the item sent', [sent.length, r.timedOut], [1, true]);
+check('time limit: rows say so', written(job, 'q23', 'Status'),
+  'Not sent: stopped near the time limit; click makeAll again');
+
+// Clear IDs on a CQ tab: question rows too, never the "Questions" title in A20.
+const clearedCq = c.clearCreationCells_(cqTab(QUESTIONS).layout)
+  .map(cell => c.cellName_(cell.row, cell.column));
+check('Clear IDs: question cells', clearedCq.slice(-3), ['M27', 'K27', 'L27']);
+check('Clear IDs: not the Questions title', clearedCq.includes('A20'), false);
 
 if (failures) {
   console.log(`\n${failures} check(s) failed.`);

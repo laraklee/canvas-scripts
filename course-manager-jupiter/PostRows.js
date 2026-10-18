@@ -16,7 +16,7 @@
  *   (e.g. 2026-01-28T14:05:00-10:00), so the Payload is readable in Hawaii time.
  *   Optional "Published" column: blank or TRUE publishes; FALSE creates a draft.
  *   Built so far: Type A (assignment), D (graded discussion), CQ (graded Classic quiz
- *   shell; Canvas Link gets the quiz ID, not a link, for the question sheet; points come
+ *   shell; Canvas Link gets its link, which ends in the quiz ID; points come
  *   from questions, so points_possible isn't sent), NQ (New Quiz, through the New Quizzes
  *   API; needs points above 0; the description becomes its instructions; Canvas decides
  *   whether it starts published, so the Published column doesn't apply; the API returns no
@@ -309,8 +309,8 @@ function planCreateByRow_(rowNumber, cell, text, courseId, timeZone) {
 /**
  * The request for a built type: { path, payload, readId(result), readLink(result) }.
  * readId picks what goes in CanvasID (always the item's assignment ID); readLink picks
- * what goes in Canvas Link (the web address, except CQ: the quiz ID, which Lara's
- * question sheet needs).
+ * what goes in Canvas Link (the web address; for CQ it holds the quiz ID, which
+ * makeAssignment's questions read from it with quizIdFromLink_).
  */
 function requestForType_(type, fields, courseId) {
   const htmlUrl = result => result.html_url;
@@ -324,7 +324,7 @@ function requestForType_(type, fields, courseId) {
   }
   if (type === 'CQ') {
     return { path: `/courses/${courseId}/quizzes`, payload: classicQuizPayload_(fields),
-      readId: result => result.assignment_id, readLink: result => result.id };
+      readId: result => result.assignment_id, readLink: htmlUrl };
   }
   if (type === 'NQ') {
     // A New Quiz's ID is its assignment ID; the API returns no web address, so build one.

@@ -306,6 +306,24 @@
 >     only. Rule only; cell values are never changed. Toast lists rows whose Period/date
 >     wasn't in the schedule. Item Due Time untouched (an old rule there stays until Lara
 >     removes it in Data › Data validation).
+>   - **Step 3 (CQ questions) written (2026-10-18, Lara approved the question POSTs;
+>     offline checks pass; not yet tested in Google):** new `QuizQuestions.js`. Optional
+>     **Questions** table (first label `Question Type`; also `Notes (Ignored)` (not read),
+>     `Points`, `Question`, `Answer`, `Opt 1`–`Opt 5`, `Status`, `Payload`, `QuestionID`),
+>     rows from below the labels to the end of the tab. Lara's decisions: four types only
+>     (`multiple_choice_question`, `multiple_answers_question`, `true_false_question`,
+>     `essay_question`; full names in a dropdown); Answer = option number(s) (`2`,
+>     `1,3`) or True/False; a row with a blank **Question** is skipped silently (a default
+>     type in column A alone is not a question); no `question_name` sent ("Notes" column
+>     stays the user's). makeAll sends questions after the overrides, Type CQ only, to
+>     `POST /courses/:course/quizzes/:quiz/questions`; Preview and Clear IDs cover them.
+>     Stops cleanly near the 6-minute limit (rerun continues; sent rows have IDs).
+>     **Instructions:** the CQ create request now includes `description` (legacy sent a
+>     second PUT; dropped). **CQ Canvas URL / Canvas Link is now the quiz's real link**
+>     in both tools (Lara, 2026-10-18; was the bare quiz ID); the quiz ID is read from the
+>     link (`quizIdFromLink_`), so the tab needs no Quiz ID cell. Overrides now end above
+>     the next table's labels or a row whose OverrideID cell holds words (the "Questions"
+>     title in A20), so Clear IDs never erases the title.
 >   - **Clear IDs (`clearCreationIDs`) done (2026-10-18, tested on Lara's tab):** Lara's keep-list decision: clear the item's canvasID, Canvas
 >     URL, Status, Payload and every override row's OverrideID, Status, Payload (legacy
 >     cleared only the IDs); keep everything else (name, dates, the copy's defaults and
