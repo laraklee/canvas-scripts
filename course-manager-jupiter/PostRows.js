@@ -16,13 +16,17 @@
  *   Optional "Published" column: blank or TRUE publishes; FALSE creates a draft.
  *   Built so far: Type A (assignment), D (graded discussion), CQ (graded Classic quiz
  *   shell; Canvas Link gets the quiz ID, not a link, for the question sheet; points come
- *   from questions, so points_possible isn't sent). NQ comes later.
+ *   from questions, so points_possible isn't sent), NQ (New Quiz, through the New Quizzes
+ *   API; needs points above 0; the description becomes its instructions; Canvas decides
+ *   whether it starts published, so the Published column doesn't apply; the API returns no
+ *   link, so Canvas Link is built from the quiz ID, which is also its assignment ID).
  *   No student data is read or written. Logs counts only.
  * Canvas endpoints called: none directly.
  * Canvas write operations (via canvasWrite_, so DRY_RUN applies):
  *   POST /api/v1/courses/:course/assignments (Type A)
  *   POST /api/v1/courses/:course/discussion_topics with an assignment part (Type D)
  *   POST /api/v1/courses/:course/quizzes with quiz_type assignment (Type CQ)
+ *   POST /api/quiz/v1/courses/:course/quizzes (Type NQ, New Quizzes API)
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
  *   Script Property DRY_RUN. Named ranges: cfg_CourseID (cfg_CourseName for messages).
  */
@@ -52,7 +56,7 @@ const CREATE_BY_ROW_LABELS = Object.freeze({
 const CREATE_BY_ROW_OPTIONAL_LABELS = Object.freeze({
   PUBLISHED: 'Published',
 });
-const CREATE_BY_ROW_BUILT_TYPES = Object.freeze(['A', 'D', 'CQ']);
+const CREATE_BY_ROW_BUILT_TYPES = Object.freeze(['A', 'D', 'CQ', 'NQ']);
 const CREATE_BY_ROW_KNOWN_TYPES = Object.freeze(['A', 'D', 'NQ', 'CQ']);
 const CREATE_BY_ROW_BLANK_TIME = Object.freeze({ hours: 23, minutes: 59 });
 const CREATE_BY_ROW_TIME_LIMIT_MS = 5 * 60 * 1000;
@@ -287,7 +291,8 @@ function planCreateByRow_(rowNumber, cell, text, courseId, timeZone) {
         text(CREATE_BY_ROW_LABELS.DOC_LINK), text(CREATE_BY_ROW_LABELS.LINK_TEXT)),
       published: parsePublished_(cell(CREATE_BY_ROW_OPTIONAL_LABELS.PUBLISHED)),
     };
-    if (!fields.published) plan.label = `${type}, draft`;
+    // NQ can't be set to draft on create (Canvas decides), so say the column was ignored.
+    if (!fields.published) plan.label = type === 'NQ' ? 'NQ, Published ignored' : `${type}, draft`;
     return Object.assign(plan, { request: requestForType_(type, fields, courseId) });
   } catch (error) {
     if (!error.isSheetProblem) throw error;
@@ -314,6 +319,13 @@ function requestForType_(type, fields, courseId) {
   if (type === 'CQ') {
     return { path: `/courses/${courseId}/quizzes`, payload: classicQuizPayload_(fields),
       readId: result => result.assignment_id, readLink: result => result.id };
+  }
+  if (type === 'NQ') {
+    // A New Quiz's ID is its assignment ID; the API returns no web address, so build one.
+    return { path: `/api/quiz/v1/courses/${courseId}/quizzes`, payload: newQuizPayload_(fields),
+      readId: result => result.id,
+      readLink: result => (result.id ?
+        `${getCanvasCredentials_().baseUrl}/courses/${courseId}/assignments/${result.id}` : '') };
   }
   throw sheetProblem_(`Type ${type} is not built yet`);
 }
@@ -385,6 +397,25 @@ function classicQuizPayload_(fields) {
       title: fields.name,
       quiz_type: 'assignment',
       published: fields.published !== false,
+    }, fields),
+  };
+}
+
+/**
+ * The Type NQ request body: a New Quiz (legacy postSingleNewQuiz), sent to the New Quizzes
+ * API. Points must be above 0 there. The description becomes the instructions (Lara's
+ * choice; legacy sent none). No quiz_type (not a New Quizzes setting; legacy sent one) and
+ * no published (the API has none; Canvas decides).
+ */
+function newQuizPayload_(fields) {
+  const points = pointsFrom_(fields.points);
+  if (points <= 0) throw sheetProblem_('NQ needs points_possible above 0');
+  return {
+    quiz: addDates_({
+      title: fields.name,
+      points_possible: points,
+      grading_type: 'points',
+      instructions: fields.description,
     }, fields),
   };
 }

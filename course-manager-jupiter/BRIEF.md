@@ -187,8 +187,19 @@
 >   Link = the quiz ID (Lara's choice, for the question sheet); CanvasID = the quiz's
 >   `assignment_id` (docs don't promise it's returned; Status warns if not). Each request
 >   now has `readLink` as well as `readId`.
-> - **Next:** createByRow Type NQ (New Quizzes API, `/api/quiz/v1`; check its docs first); then pick from Lara's Decision column in `docs/legacy-function-map.md` (the two
->   Jupiter export tools read `cfg_JupiterCategories`, now in place). Button ideas for later (Lara still deciding): a
+> - **createByRow step 4 (Type NQ) written (2026-10-17, not yet tested):** New Quiz,
+>   `POST /api/quiz/v1/courses/:course/quizzes` (first real use of `canvasApiPath_`) with
+>   `quiz`: title, `points_possible` (must be above 0; else "Not ready"), `grading_type:
+>   points`, `instructions` (description builder; Lara's choice), due/unlock/lock.
+>   Per the New Quizzes docs: no `quiz_type` (legacy sent one), no `published` setting
+>   (Lara chose to leave Canvas's default; rows with Published FALSE say "(NQ, Published
+>   ignored)"), and the response has `id` (= the assignment ID) but no `assignment_id` or
+>   `html_url`, so legacy likely left CanvasID/link blank. Now CanvasID = `id`; Canvas
+>   Link = `<base>/courses/:course/assignments/:id`. Learn the default publish state in
+>   the test.
+> - **Next:** test NQ (Sequence 9); then pick from Lara's Decision column in
+>   `docs/legacy-function-map.md` (the two Jupiter export tools read
+>   `cfg_JupiterCategories`, now in place). Button ideas for later (Lara still deciding): a
 >   "refresh all ref tables" button, buttons on the Assignment Order tab.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
@@ -399,7 +410,7 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
   - `ref_Config`: finished for now; hidden by Lara.
   - Groups (`Groups.js`, three `createGroups`-tab buttons): built and tested.
   - createByRow (`PostRows.js`): Types A, D, CQ and the optional Published column built
-    and tested; NQ to do.
+    and tested; NQ built, not yet tested.
   - Shelved: `ref_gradingPeriods` (not needed for Jupiter).
 - **Step 5 (assignment reorder):** 4a (tool sheet, numbering, Preview) built and
   tested; 4b (Push) built and tested (real Push in the test course).
