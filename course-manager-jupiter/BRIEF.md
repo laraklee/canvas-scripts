@@ -272,8 +272,8 @@
 >     Override rows run from below the OverrideID labels to the tab's last used row.
 >     Labels match exactly, including capitals and colons. Offline check:
 >     `scripts/checks/make-assignment.check.js`.
->   - **Step 2a (Preview) written (2026-10-18, offline checks pass; not yet tested in
->     Google):** `previewAssignment` (button + menu "Preview assignment (this tab)") fills
+>   - **Step 2a (Preview) done (2026-10-18, tested on Lara's tab: item A draft with
+>     `online_text_entry, online_upload`; two overrides with Night (2200) = 22:00):** `previewAssignment` (button + menu "Preview assignment (this tab)") fills
 >     the item's and each override's Payload/Status; never sends. Item planned with
 >     createByRow's builders; **Type of Submission** (multi-choice, comma-separated) sets
 >     `submission_types` for Type A only (blank → `online_upload`; unknown values → Not
@@ -282,7 +282,15 @@
 >     OverrideID are planned (lets Lara add an override later). Override row: needs a
 >     numeric Section ID and a Due Date; a section used twice is Not ready (Canvas allows
 >     one override per section); payload `assignment_override` with `course_section_id`
->     and due/unlock/lock (blank dates left out). Step 2b (makeAll, the Canvas writes) next.
+>     and due/unlock/lock (blank dates left out).
+>   - **Step 2b (makeAll) written (2026-10-18, Lara approved the writes; offline checks
+>     pass; not yet tested in Google):** `makeAssignmentAll` (makeAll button + menu). Asks
+>     first (course, counts, dry-run state). Sends through `canvasWrite_`: (1) the item,
+>     same request as createByRow, unless canvasID is filled; writes canvasID, Canvas URL,
+>     Status; (2) each ready override, `POST /courses/:course/assignments/:id/overrides`;
+>     writes OverrideID, Status. Item not created → no overrides sent. One override
+>     refused → others still go. Token/network-type errors stop everything. Create only;
+>     never updates or deletes. Logic in `runMakeAssignment_` (tested with a fake Canvas).
 >   - **Dates in code** (same as createByRow), with Payload/Status per item and override.
 >     Reuse createByRow's request builders for the four types.
 >   - **No course ID on the tab** (code uses `cfg_CourseID`); optional `=cfg_CourseName`

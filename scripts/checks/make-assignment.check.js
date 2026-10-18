@@ -16,6 +16,9 @@ const PROJECT = path.join(__dirname, '..', '..', 'course-manager-jupiter');
 const context = {
   isBlank_: value => value === '' || value === null || value === undefined,
   sheetProblem_: message => Object.assign(new Error(message), { isSheetProblem: true }),
+  CANVAS_STOP_ALL_TYPES: ['NOT_SET_UP', 'TOKEN_REJECTED', 'UNREACHABLE', 'RATE_LIMITED',
+    'BAD_RESPONSE', 'BAD_METHOD'],
+  describeCanvasError_: error => `(${error.canvasType})`,
   Utilities: {
     formatDate(date, timeZone, pattern) {
       if (pattern === 'yyyy-MM-dd') {
@@ -37,7 +40,8 @@ vm.runInContext(fs.readFileSync(path.join(PROJECT, 'PostRows.js'), 'utf8') + '\n
   '\nthis.findMakeAssignmentLayout_ = findMakeAssignmentLayout_;' +
   '\nthis.describeMakeAssignmentLayout_ = describeMakeAssignmentLayout_;' +
   '\nthis.planMakeAssignment_ = planMakeAssignment_; this.overridePath_ = overridePath_;' +
-  '\nthis.assignmentPayload_ = assignmentPayload_;' +
+  '\nthis.assignmentPayload_ = assignmentPayload_; this.runMakeAssignment_ = runMakeAssignment_;' +
+  '\nthis.describeMakeAllResult_ = describeMakeAllResult_;' +
   '\nthis.cellName_ = cellName_;', context);
 const c = context;
 const HST = 'Pacific/Honolulu';
@@ -219,6 +223,94 @@ p = plan({ B13: '#N/A' });
 check('section not a number', p.overrides[1].message, 'Not ready: Section ID must be a number');
 p = plan({ D13: '' });
 check('section but no due date', p.overrides[1].message, 'Not ready: no Due Date');
+
+// ---- makeAll (runMakeAssignment_) with a fake Canvas; nothing is sent anywhere. ----
+// The job records every cell write; send(method, path, payload) is the fake canvasWrite_.
+function makeJob(changes) {
+  const writes = [];
+  return {
+    plan: plan(changes), courseId: '5000', writes,
+    writeItem: (label, value) => writes.push(['item', label, value]),
+    writeOverride: (o, label, value) => writes.push([o.rowNumber, label, value]),
+  };
+}
+const written = (job, where, label) => job.writes
+  .filter(w => w[0] === where && w[1] === label).map(w => w[2]).pop();
+const canvasError = (type, message) => Object.assign(new Error(message), { canvasType: type });
+
+// Dry run.
+let job = makeJob();
+let sent = [];
+let r = c.runMakeAssignment_(job, (method, p2) => { sent.push(p2); return { dryRun: true }; });
+check('dry run: item + 2 overrides go to canvasWrite_', sent, ['/courses/5000/assignments',
+  '/courses/5000/assignments/new/overrides', '/courses/5000/assignments/new/overrides']);
+check('dry run: statuses', [written(job, 'item', 'Status'), written(job, 12, 'Status')],
+  ['Dry run (A, draft): not sent', 'Dry run: not sent']);
+check('dry run: no IDs written', [written(job, 'item', 'canvasID'), written(job, 12, 'OverrideID')],
+  [undefined, undefined]);
+check('dry run message', c.describeMakeAllResult_(r, true, 0),
+  'Dry run: the item and 2 override(s) would have been sent. Nothing was sent.');
+
+// Real run: item gets ID 777; overrides 9001, 9002.
+job = makeJob();
+sent = [];
+let nextOverride = 9001;
+const fakeCanvas = (method, p2, payload) => {
+  sent.push(p2);
+  if (p2.endsWith('/overrides')) return { id: nextOverride++ };
+  return { id: 777, html_url: 'https://canvas.example/courses/5000/assignments/777' };
+};
+r = c.runMakeAssignment_(job, fakeCanvas);
+check('real: overrides use the new ID', sent.slice(1),
+  ['/courses/5000/assignments/777/overrides', '/courses/5000/assignments/777/overrides']);
+check('real: IDs written', [written(job, 'item', 'canvasID'), written(job, 'item', 'Canvas URL'),
+  written(job, 12, 'OverrideID'), written(job, 13, 'OverrideID')],
+  [777, 'https://canvas.example/courses/5000/assignments/777', 9001, 9002]);
+check('real: result', [r.itemOutcome, r.created, r.failed], ['created', 2, 0]);
+check('real message', c.describeMakeAllResult_(r, false, 1),
+  'Item created.\n2 override(s) created.\n1 override row(s) skipped (see Status).');
+
+// Item refused: no overrides sent.
+job = makeJob();
+sent = [];
+r = c.runMakeAssignment_(job, (method, p2) => {
+  sent.push(p2);
+  throw canvasError('REFUSED', 'Canvas said the name is too long');
+});
+check('item refused: only the item was tried', sent.length, 1);
+check('item refused: overrides marked', written(job, 13, 'Status'),
+  'Not sent: the item was not created');
+check('item refused: outcome', r.itemOutcome, 'refused');
+
+// One override refused, the other still created.
+job = makeJob();
+nextOverride = 9001;
+r = c.runMakeAssignment_(job, (method, p2, payload) => {
+  if (p2.endsWith('/overrides') && payload.assignment_override.course_section_id === 1001) {
+    throw canvasError('REFUSED', 'section not in course');
+  }
+  return fakeCanvas(method, p2, payload);
+});
+check('one override refused', [written(job, 12, 'Status'), written(job, 13, 'Status'),
+  r.created, r.failed], ['Not created: section not in course', 'Created', 1, 1]);
+
+// Token rejected: stop everything.
+job = makeJob();
+check('token rejected stops the run', (() => {
+  try {
+    c.runMakeAssignment_(job, () => { throw canvasError('TOKEN_REJECTED', 'x'); });
+    return 'no error';
+  } catch (e) { return e.canvasType; }
+})(), 'TOKEN_REJECTED');
+check('token rejected: item status', written(job, 'item', 'Status'), 'Stopped: (TOKEN_REJECTED)');
+
+// Item already exists: only overrides are sent, to its canvasID.
+job = makeJob({ A4: '123456', A12: '8000' });
+sent = [];
+r = c.runMakeAssignment_(job, (method, p2) => { sent.push(p2); return { id: 1 }; });
+check('existing item: only the new override is sent', sent,
+  ['/courses/5000/assignments/123456/overrides']);
+check('existing item: no item writes', written(job, 'item', 'Status'), undefined);
 
 if (failures) {
   console.log(`\n${failures} check(s) failed.`);

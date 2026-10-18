@@ -18,10 +18,18 @@
  *     An item with a canvasID isn't created again; only overrides without an OverrideID
  *     are planned. An override row needs a numeric Section ID and a Due Date; blank rows
  *     are skipped. Blank times: Due and Lock 11:59 PM, Unlock 12:00 AM.
- *   Still to come: makeAssignmentAll, createDropdowns1, clearCreationIDs.
+ *   - makeAssignmentAll (makeAll button; legacy name): asks first, then creates the item
+ *     and each ready override, writing canvasID, Canvas URL, OverrideID, and Status. If
+ *     the item isn't created, no overrides are sent. Only creates; never changes or
+ *     deletes anything in Canvas.
+ *   Still to come: createDropdowns1, clearCreationIDs.
  *   No student data is read or written. Logs counts only.
- * Canvas endpoints called: none. Canvas write operations: none (so far).
- * Required User/Script Properties: none so far. Named ranges: cfg_CourseID.
+ * Canvas endpoints called: none directly.
+ * Canvas write operations (via canvasWrite_, so DRY_RUN applies):
+ *   POST the item: same requests as createByRow (A, D, CQ, NQ; see PostRows.js)
+ *   POST /api/v1/courses/:course/assignments/:assignment_id/overrides (one per section)
+ * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
+ *   Script Property DRY_RUN. Named ranges: cfg_CourseID (cfg_CourseName for messages).
  */
 
 const MAKE_ASSIGNMENT_TABLES = Object.freeze([
@@ -54,6 +62,7 @@ const MAKE_ASSIGNMENT_SUBMISSION_TYPES = Object.freeze(['online_upload', 'online
 function addMakeAssignmentMenuItems_(menu) {
   menu.addSeparator();
   menu.addItem('Preview assignment (this tab)', 'previewAssignment');
+  menu.addItem('makeAll: create assignment + overrides (this tab)', 'makeAssignmentAll');
   menu.addItem('Check makeAssignment labels (this tab)', 'checkMakeAssignmentLabels');
 }
 
@@ -94,6 +103,140 @@ function previewAssignment() {
 }
 
 /**
+ * Button / menu: makeAll (legacy name kept, so the button works). Asks first (showing the
+ * course, counts, and the dry-run state), then creates the item (unless it already has a
+ * canvasID) and each ready override through canvasWrite_, writing IDs and Status.
+ */
+function makeAssignmentAll() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const job = readMakeAssignment_(ss);
+    const { item, overrides } = job.plan;
+    const ready = overrides.filter(plan => plan.payload);
+    overrides.filter(plan => !plan.payload)
+      .forEach(plan => job.writeOverride(plan, 'Status', plan.message));
+    if (!item.request && !item.canvasId) {
+      job.writeItem('Status', item.message);
+      ui.alert('makeAll', `The item isn't ready, so nothing was sent.\n\n${item.message}`,
+        ui.ButtonSet.OK);
+      return;
+    }
+    if (item.canvasId && !ready.length) {
+      ui.alert('makeAll', 'Nothing to send: the item already has a canvasID and no override ' +
+        'row is ready (see Status).', ui.ButtonSet.OK);
+      return;
+    }
+
+    const dryRun = isDryRun_();
+    const skipped = overrides.length - ready.length;
+    const answer = ui.alert('makeAll',
+      (item.request ? `Create 1 item (${item.label}) and ` : 'The item already exists. Create ') +
+      `${ready.length} override(s) in ${courseLabel_()}?` +
+      (skipped ? `\n${skipped} override row(s) will be skipped (see Status).` : '') +
+      '\n\n' + (dryRun ? 'Dry run is ON: nothing will be sent.' :
+        'Dry run is OFF: this creates them in Canvas.'), ui.ButtonSet.YES_NO);
+    if (answer !== ui.Button.YES) return;
+
+    const result = runMakeAssignment_(job, canvasWrite_);
+    console.log(`makeAll${dryRun ? ' (dry run)' : ''}: item ${result.itemOutcome}, ` +
+      `${result.created} override(s) sent, ${result.failed} refused.`);
+    ui.alert('makeAll', describeMakeAllResult_(result, dryRun, skipped), ui.ButtonSet.OK);
+  } catch (error) {
+    reportRefreshFailure_('makeAll', 'Anything already created has its ID filled in; see ' +
+      'the Status cells.', error);
+  }
+}
+
+/**
+ * Sends the item (if new) and then each ready override with send (canvasWrite_), writing
+ * results as it goes. Overrides wait for the item: if it isn't created, none are sent.
+ * Returns { itemOutcome: 'existing' | 'dry run' | 'created' | 'no ID' | 'refused',
+ * created, failed, itemMessage? }. Errors that would hit every request are thrown.
+ */
+function runMakeAssignment_(job, send) {
+  const { item, overrides } = job.plan;
+  const result = { itemOutcome: 'existing', created: 0, failed: 0 };
+  let assignmentId = item.canvasId;
+  let dryRun = false;
+
+  if (item.request) {
+    job.writeItem('Payload', JSON.stringify(item.request.payload));
+    try {
+      const reply = send('POST', item.request.path, item.request.payload);
+      if (reply.dryRun) {
+        dryRun = true;
+        result.itemOutcome = 'dry run';
+        job.writeItem('Status', `Dry run (${item.label}): not sent`);
+      } else {
+        assignmentId = item.request.readId(reply);
+        job.writeItem('canvasID', assignmentId || '');
+        job.writeItem('Canvas URL', item.request.readLink(reply) || '');
+        result.itemOutcome = assignmentId ? 'created' : 'no ID';
+        job.writeItem('Status', assignmentId ? `Created (${item.label})` :
+          `Created (${item.label}), but Canvas returned no ID; check it in Canvas`);
+      }
+    } catch (error) {
+      if (!error.canvasType || CANVAS_STOP_ALL_TYPES.includes(error.canvasType)) {
+        job.writeItem('Status', 'Stopped: ' + describeCanvasError_(error));
+        throw error;
+      }
+      result.itemOutcome = 'refused';
+      result.itemMessage = error.message;
+      job.writeItem('Status', 'Not created: ' + error.message);
+    }
+  }
+
+  const ready = overrides.filter(plan => plan.payload);
+  if (!dryRun && !assignmentId) {
+    ready.forEach(plan => job.writeOverride(plan, 'Status', 'Not sent: the item was not created'));
+    return result;
+  }
+  for (const plan of ready) {
+    job.writeOverride(plan, 'Payload', JSON.stringify(plan.payload));
+    try {
+      // In a dry run the item has no ID yet; canvasWrite_ only logs the path.
+      const reply = send('POST', overridePath_(job.courseId, assignmentId || 'new'), plan.payload);
+      if (reply.dryRun) {
+        job.writeOverride(plan, 'Status', 'Dry run: not sent');
+      } else {
+        job.writeOverride(plan, 'OverrideID', reply.id || '');
+        job.writeOverride(plan, 'Status', reply.id ? 'Created' :
+          'Created, but Canvas returned no ID; check it in Canvas');
+      }
+      result.created++;
+    } catch (error) {
+      if (!error.canvasType || CANVAS_STOP_ALL_TYPES.includes(error.canvasType)) {
+        job.writeOverride(plan, 'Status', 'Stopped: ' + describeCanvasError_(error));
+        throw error;
+      }
+      job.writeOverride(plan, 'Status', 'Not created: ' + error.message);
+      result.failed++;
+    }
+  }
+  return result;
+}
+
+/** The pop-up after makeAll. */
+function describeMakeAllResult_(result, dryRun, skipped) {
+  if (dryRun || result.itemOutcome === 'dry run') {
+    return `Dry run: the item${result.itemOutcome === 'existing' ? ' (already created)' : ''} ` +
+      `and ${result.created} override(s) would have been sent. Nothing was sent.`;
+  }
+  const itemLine = {
+    existing: 'The item already existed.',
+    created: 'Item created.',
+    'no ID': 'Item created, but Canvas returned no ID, so no overrides were sent. Check it ' +
+      'in Canvas.',
+    refused: 'Canvas refused the item, so no overrides were sent (see Status).',
+  }[result.itemOutcome];
+  return itemLine +
+    (result.created ? `\n${result.created} override(s) created.` : '') +
+    (result.failed ? `\n${result.failed} override(s) refused by Canvas (see Status).` : '') +
+    (skipped ? `\n${skipped} override row(s) skipped (see Status).` : '');
+}
+
+/**
  * Reads the tab being viewed and plans the item and its overrides:
  * { plan: { item, overrides }, writeItem(label, value), writeOverride(plan, label, value) }.
  */
@@ -110,14 +253,18 @@ function readMakeAssignment_(ss) {
     throw sheetProblem_(`This tab's labels have ${layout.problemCount} problem(s). Use ` +
       'Course Manager › Check makeAssignment labels (this tab).');
   }
-  const plan = planMakeAssignment_(layout, values, shown, getCourseIdForRefresh_(),
+  const courseId = getCourseIdForRefresh_();
+  const plan = planMakeAssignment_(layout, values, shown, courseId,
     ss.getSpreadsheetTimeZone());
-  const { itemMore, overrides } = layout.tables;
+  const { item, itemMore, overrides } = layout.tables;
   return {
     plan,
-    // Status and Payload for the item are in the second item row.
-    writeItem: (label, value) => sheet.getRange(itemMore.headerRow + 1,
-      itemMore.columns.get(label)).setValue(value),
+    courseId,
+    // canvasID is in the first item row; Canvas URL, Status, Payload in the second.
+    writeItem: (label, value) => {
+      const table = item.columns.has(label) ? item : itemMore;
+      sheet.getRange(table.headerRow + 1, table.columns.get(label)).setValue(value);
+    },
     writeOverride: (overridePlan, label, value) => sheet.getRange(overridePlan.rowNumber,
       overrides.columns.get(label)).setValue(value),
   };
