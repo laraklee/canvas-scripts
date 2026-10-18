@@ -203,9 +203,42 @@
 >   add a Published column filled with checkboxes: new checkboxes start unticked = draft,
 >   ticked = publish, so each row is chosen explicitly. A cell with no checkbox still
 >   means publish; offered to make blank = draft too (one-line change) if she wants.
-> - **Next:** pick from Lara's Decision column in
->   `docs/legacy-function-map.md` (the two Jupiter export tools read
->   `cfg_JupiterCategories`, now in place). Button ideas for later (Lara still deciding): a
+> - **makeAssignment redesign: decisions so far (2026-10-17, nothing built yet).** Legacy
+>   (03a/03b/03c) had one tab per type with fixed cells (row 3 main item, F4/H4/H5
+>   description bits, rows 7–11 overrides, K–O `convertToUTC`/JSON formulas, F1 edit
+>   "anchor", CQ questions from row 15). Lara uses these tabs only to **create items that
+>   need overrides** (createByRow covers the rest), so:
+>   - **Creation only.** Don't port load/edit/update (`fetchAssignment`,
+>     `updateAssignmentInCanvas`, F1 anchor, `populateEditSheetWithAssignmentData`). Could
+>     come back later as a separate tool if wanted.
+>   - **Two tabs:** one for A, D, and NQ (with a Type cell), and a CQ tab with the same top
+>     section plus a Questions table (CQ keeps questions after creation). Same code for both.
+>   - **Label-based mini-tables, not named ranges** (named ranges are workbook-wide, so two
+>     tabs would need ~50 prefixed names). Each table is found by its first label, so tables
+>     can sit anywhere and repeat labels like "Due Date". Proposed: **Item** (Type, name,
+>     points_possible, Submission Types, Due/Unlock/Lock Date+Time, Published, CanvasID,
+>     Canvas Link, Payload, Status); **Description** (Description Text, Doc Link, Link Text;
+>     replaces F4/H4/H5); **Overrides** (Period, Due/Unlock/Lock Date+Time, Override ID,
+>     Payload, Status; Period → section in code from `ref_SectionLookup`, refreshed first);
+>     **Questions** (CQ only, later). Extra display columns (e.g. Schedule) are fine.
+>   - **Dates in code** (same as createByRow), with Payload/Status per item and override.
+>     Reuse createByRow's request builders for the four types.
+>   - **No course ID on the tab** (code uses `cfg_CourseID`); optional `=cfg_CourseName`
+>     display so Lara can see which course she's creating in.
+>   - Duplicate protection like createByRow: a CanvasID means "already created"; Clear
+>     starts fresh.
+>   - **Build order:** (1) layout + label check; (2) create item + overrides for A, D, NQ,
+>     CQ with Preview and dry run; (3) CQ questions + instructions; (4) Clear/reset.
+>   - **Lara is redesigning the tab layout herself first** (next session).
+>   - **Still to decide:** tab names; one description style for both tools (the editor's
+>     bold directions + green button for non-Google links, or createByRow's simpler one);
+>     how many override rows.
+>   - Legacy quirks to avoid: types read dates differently (NQ always midnight); descriptions
+>     differ by type (D had none); legacy CQ wrote the quiz ID into O3, over the update
+>     formula; no dry run; errors often only logged.
+> - **Next:** the makeAssignment redesign (above), starting from Lara's new tab layout; other
+>   tools from Lara's Decision column in `docs/legacy-function-map.md` (the two Jupiter
+>   export tools read `cfg_JupiterCategories`, now in place). Button ideas for later (Lara still deciding): a
 >   "refresh all ref tables" button, buttons on the Assignment Order tab.
 > - **Open questions:**
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
