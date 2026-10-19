@@ -418,6 +418,27 @@
 >   creating items). She will report anything that fails; start any fix by asking what
 >   she clicked and the exact message (no student data). Everything on this Mac, GitHub,
 >   and Google matched at the end of 2026-10-18.
+> - **Template archive (2026-10-18).** Lara is copying this workbook (File › Make a
+>   copy) as a template archive and keeps using the **original** for Biology. Facts:
+>   the copy gets its **own** bound script; **clasp stays linked to the original**
+>   (`.clasp.json`), so the archive freezes at that day's code. No **libraries** (shut
+>   off by school admin), so every workbook carries its own copy of the code. The copy
+>   has no Canvas token (User Properties are per user per script) and dry run counts as
+>   ON when unset. In the **archive only**, clear student data (ref_peopleList; Comments
+>   student rows A–F and score/comment columns; JupiterExport student rows; any group or
+>   seating lists) and blank `cfg_CourseID` (or set it to Sequence 9). Don't share the
+>   copy with the same people. Hand-typed Home links may hold the original workbook's
+>   full address; the ref_Index links are relative (`#gid=`), so they're fine.
+> - **Other courses (proposed 2026-10-18, not decided):** Biology runs on the new code
+>   first; Sequence 9 (new quarter) and Gastronomy stay on the old code for now and move
+>   over in the next several weeks. Proposal: **one workbook per course**, each a copy of
+>   the current workbook (student data cleared, `cfg_CourseID` set, tables refreshed,
+>   course tabs such as makeAssignment copies and rubric templates brought over), and
+>   **one code folder in Git pushed to every workbook's script** (one clasp target per
+>   workbook; the exact clasp setup to be checked when built). Changes go to Biology
+>   first, then to the others after Lara's OK. Each workbook needs Set Canvas token once
+>   and its own authorization. Retire each old legacy workbook (keep as archive) once its
+>   course is live on the new one, so two workbooks never write to the same course.
 > - **Next:** fixes from the field test; Lara tries the CSV import into Jupiter; other tools from Lara's
 >   Decision column in `docs/legacy-function-map.md`. Button ideas for later (Lara still
 >   deciding): a "refresh all ref tables" button, buttons on the Assignment Order tab.
