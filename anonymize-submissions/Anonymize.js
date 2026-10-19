@@ -32,6 +32,7 @@ const IGNORED_ENTRY_RE = /(^|\/)(__MACOSX\/|\.DS_Store$)/;
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Anonymize')
     .addItem('Anonymize submissions…', 'anonymizeSubmissions')
+    .addItem('Match AI results…', 'matchAiResults')
     .addSeparator()
     .addItem('Set passphrase', 'setPassphrase')
     .addItem('Check passphrase', 'checkPassphrase')
@@ -251,7 +252,8 @@ function writeFlagged_(sheet, flagged) {
  * "=" must not become a formula, and long IDs must not turn into 1.2E+13.
  */
 function asText_(value) {
-  return "'" + String(value);
+  const text = String(value);
+  return text === '' ? '' : "'" + text;
 }
 
 function getOrCreateSheet_(name, headers) {

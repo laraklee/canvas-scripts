@@ -18,6 +18,24 @@ reviewed without names. A script bound to a Google Sheet; menu **Anonymize**.
 6. Adds one row per file to the **Key** tab: Name, Canvas user ID, Assignment ID, Code,
    Original filename, Late, Anonymized filename.
 
+## Matching AI results back to students (MatchResults.js)
+
+The AI step happens outside this script: Lara uploads the anonymized files to an
+approved AI tool by hand. The script never calls an AI service.
+
+1. Ask the AI for one table row per file with columns **Code, Score, Feedback,
+   Confidence, Notes**, copying the code from the filename.
+2. Paste the table into the **AI Results** tab (header row included). A normal pasted
+   table and a Markdown table that lands as `| a | b |` lines in column A both work.
+   Columns are found by header name, in any order.
+3. **Anonymize › Match AI results…**, enter the assignment ID. Rebuilds the **Review**
+   tab: Name, Code, Score, Feedback, Confidence, Notes, Problem, Reviewed (checkbox).
+   Problem rows sort to the top: not a valid code, code not in the Key for this
+   assignment, code listed twice, or a student missing from the AI results. A code with
+   a `-2` suffix or an extension (`S-9C1E4B-2.pdf`) matches the same student.
+4. Asks before rebuilding if any Reviewed boxes are checked.
+5. Grades are entered in Canvas by hand. Numeric scores stay numbers so they copy cleanly.
+
 ## Decisions
 
 - **Passphrase lives in User Properties (`ANON_PASSPHRASE`), not Script Properties.**
