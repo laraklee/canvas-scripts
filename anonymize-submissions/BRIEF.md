@@ -79,6 +79,15 @@ approved AI tool by hand. The script never calls an AI service.
 - **Re-runs are safe.** A file already in the Key tab (same assignment, user ID, original
   filename) is skipped. A run stops itself at 5 minutes; run it again to continue.
   The Flagged tab is replaced on every run.
+- **Typed answers become PDFs.** Text-entry submissions arrive as
+  `name[_LATE]_userID_text.html` (one number, no submission ID). They're converted to
+  PDF with Google's own `getAs('application/pdf')`, because many AI tools refuse `.html`.
+  The Key's original filename is `text.html`. Not yet checked: whether Canvas puts the
+  student's name inside that HTML.
+- **Files with no extension get one from their first bytes.** Seen 10/19: an upload
+  named just `file` that was a PNG screenshot. Recognized: PDF, JPEG, PNG, GIF, HEIC,
+  and Office files (by the zip's `word/`, `ppt/`, `xl/` folders). Anything else is
+  flagged, not guessed.
 - **Strip nothing else for now.** File contents and document metadata (for example a
   PDF's author field, or a name typed on the first page) are not changed.
 

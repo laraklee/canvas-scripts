@@ -7,7 +7,10 @@
  *   the first 6 hex characters of HMAC-SHA256(userID + ":" + assignmentID), keyed with
  *   the passphrase. Writes the code-to-student key to the assignment's "<name> Key" tab
  *   and files it could not parse to "<name> Flagged" (see Assignments.js for names).
- *   Only filenames change; file contents are copied as is.
+ *   Only filenames change; file contents are copied as is, with two exceptions: typed
+ *   (text entry) submissions, name[_LATE]_userID_text.html, are converted to PDF by
+ *   Google so AI tools accept them; and a file with no extension gets one from its
+ *   first bytes (PDF, JPEG, PNG, GIF, HEIC, Word/PowerPoint/Excel) or is flagged.
  *   Originals are only read, never changed, moved, or renamed.
  *   Re-running is safe: files already in the Key tab for that assignment are skipped,
  *   so a run that stops at the time limit can simply be run again.
@@ -27,6 +30,8 @@ const TIME_BUDGET_MS = 5 * 60 * 1000;
 
 // Canvas bulk download: name[_LATE]_userID_submissionID_originalFilename
 const CANVAS_FILENAME_RE = /^([^_]+)(_LATE)?_(\d+)_(\d+)_(.+)$/;
+// Typed (online text entry) submissions: name[_LATE]_userID_text.html
+const CANVAS_TEXT_RE = /^([^_]+)(_LATE)?_(\d+)_(text\.html?)$/i;
 // Zip clutter added by macOS; skipped silently.
 const IGNORED_ENTRY_RE = /(^|\/)(__MACOSX\/|\.DS_Store$)/;
 
@@ -74,12 +79,12 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
         stoppedEarly = true;
         break;
       }
-      const match = CANVAS_FILENAME_RE.exec(source.name);
-      if (!match) {
+      const parsed = parseCanvasName_(source.name);
+      if (!parsed) {
         flagged.push([assignmentId, source.label, 'Does not match the Canvas filename pattern; not copied']);
         continue;
       }
-      const [, studentName, lateTag, userId, , originalName] = match;
+      const { studentName, lateTag, userId, originalName, isText } = parsed;
       const doneKey = userId + '|' + originalName;
       if (state.done.has(doneKey)) {
         skipped++;
@@ -94,10 +99,25 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
         continue;
       }
 
+      let extension = isText ? '.pdf' : extensionOf_(originalName);
+      if (!extension) {
+        try {
+          extension = sniffExtension_(source.getBlob());
+        } catch {
+          extension = '';
+        }
+        if (!extension) {
+          flagged.push([assignmentId, source.label,
+            'No file extension, and the file type was not recognized; not copied']);
+          continue;
+        }
+      }
+
       const count = (state.codeCount.get(code) || 0) + 1;
-      const outName = (count === 1 ? code : code + '-' + count) + extensionOf_(originalName);
+      const outName = (count === 1 ? code : code + '-' + count) + extension;
       try {
-        source.copyTo(outFolder, outName);
+        if (isText) outFolder.createFile(htmlToPdf_(source.getBlob(), outName));
+        else source.copyTo(outFolder, outName);
       } catch (err) {
         flagged.push([assignmentId, source.label, 'Copy failed: ' + err.message]);
         continue;
@@ -140,7 +160,7 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
 /**
  * Lists every file to process, sorted by name so "-2", "-3" suffixes come out the same
  * on every run. Each source has a name (the bare filename), a label (where it came
- * from, for the Flagged tab), and copyTo(folder, newName).
+ * from, for the Flagged tab), getBlob(), and copyTo(folder, newName).
  */
 function listSources_(folder, flagged) {
   const sources = [];
@@ -163,6 +183,7 @@ function listSources_(folder, flagged) {
         sources.push({
           name: entryPath.split('/').pop(),
           label: fileName + ' › ' + entryPath,
+          getBlob: () => blob,
           copyTo: (outFolder, newName) => outFolder.createFile(blob.setName(newName)),
         });
       }
@@ -170,6 +191,7 @@ function listSources_(folder, flagged) {
       sources.push({
         name: fileName,
         label: fileName,
+        getBlob: () => file.getBlob(),
         copyTo: (outFolder, newName) => file.makeCopy(newName, outFolder),
       });
     }
@@ -187,6 +209,55 @@ function makeCode_(userId, assignmentId, passphrase) {
     userId + ':' + assignmentId, passphrase, Utilities.Charset.UTF_8);
   const hex = bytes.map((b) => (b & 0xff).toString(16).padStart(2, '0')).join('');
   return 'S-' + hex.slice(0, 6).toUpperCase();
+}
+
+/**
+ * Splits a Canvas download filename into its parts, or returns null if it doesn't fit.
+ * Uploads: name[_LATE]_userID_submissionID_originalFilename.
+ * Typed answers: name[_LATE]_userID_text.html (isText: true).
+ */
+function parseCanvasName_(fileName) {
+  const upload = CANVAS_FILENAME_RE.exec(fileName);
+  if (upload) {
+    const [, studentName, lateTag, userId, , originalName] = upload;
+    return { studentName, lateTag, userId, originalName, isText: false };
+  }
+  const text = CANVAS_TEXT_RE.exec(fileName);
+  if (text) {
+    const [, studentName, lateTag, userId, originalName] = text;
+    return { studentName, lateTag, userId, originalName, isText: true };
+  }
+  return null;
+}
+
+/** A typed Canvas answer (HTML) as a PDF named newName. Google does the conversion. */
+function htmlToPdf_(htmlBlob, newName) {
+  return htmlBlob.setContentType('text/html').getAs('application/pdf').setName(newName);
+}
+
+/**
+ * The extension that matches a file's first bytes, or '' if unrecognized.
+ * Office files are zips; their inner folder names tell Word, PowerPoint, and Excel apart.
+ */
+function sniffExtension_(blob) {
+  const bytes = blob.getBytes().slice(0, 16).map((b) => b & 0xff);
+  const startsWith = (sig, offset = 0) => sig.every((b, i) => bytes.at(offset + i) === b);
+  const ascii = (text) => Array.from(text, (c) => c.charCodeAt(0));
+  if (startsWith(ascii('%PDF'))) return '.pdf';
+  if (startsWith([0xff, 0xd8, 0xff])) return '.jpg';
+  if (startsWith([0x89, 0x50, 0x4e, 0x47])) return '.png';
+  if (startsWith(ascii('GIF8'))) return '.gif';
+  if (startsWith(ascii('ftyp'), 4) && /^(heic|heix|mif1)$/.test(String.fromCharCode(...bytes.slice(8, 12)))) {
+    return '.heic';
+  }
+  if (startsWith([0x50, 0x4b, 0x03, 0x04])) {
+    const names = Utilities.unzip(blob.copyBlob().setContentType('application/zip'))
+      .map((entry) => entry.getName());
+    if (names.some((n) => n.startsWith('word/'))) return '.docx';
+    if (names.some((n) => n.startsWith('ppt/'))) return '.pptx';
+    if (names.some((n) => n.startsWith('xl/'))) return '.xlsx';
+  }
+  return '';
 }
 
 /** ".pdf" from "Lab Report.pdf"; "" when there is no extension. */
