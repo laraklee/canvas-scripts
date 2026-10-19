@@ -399,7 +399,7 @@
 >   Name, Criteria Description, Criteria Enable Range = FALSE, then Rating Name/
 >   Description/Points per rating). Lara is reviving rubrics to use Canvas's built-in
 >   grading. Offline check: `scripts/checks/rubric.check.js`.
-> - **Menus rebuilt (2026-10-18, written; offline checks pass; not yet tested in Google).** Lara's decisions:
+> - **Menus rebuilt (2026-10-18, pushed to Google; Lara: "the menus look fine").** Lara's decisions:
 >   **two menus** (like legacy's "Canvas Tools" / "Setup & Admin"): **Canvas Tools**
 >   (🏠 Go to Home page; Create in Canvas; Assignment order; Groups; Rubrics; Jupiter;
 >   Build seating chart) and **Setup & Data** (Refresh all tables; each refresh; Refresh
@@ -413,7 +413,12 @@
 >   finds the tab whose name is "Home" ignoring emoji ("🏠 Home"). Function names
 >   unchanged, so buttons keep working. Offline check `scripts/checks/menus.check.js`
 >   also confirms every menu item names a real function.
-> - **Next:** Lara tries the CSV import into Jupiter; other tools from Lara's
+> - **Field test (from 2026-10-18):** Lara considers the port ready for a full field
+>   test in real use (`cfg_CourseID` on Biology; dry run ON except when deliberately
+>   creating items). She will report anything that fails; start any fix by asking what
+>   she clicked and the exact message (no student data). Everything on this Mac, GitHub,
+>   and Google matched at the end of 2026-10-18.
+> - **Next:** fixes from the field test; Lara tries the CSV import into Jupiter; other tools from Lara's
 >   Decision column in `docs/legacy-function-map.md`. Button ideas for later (Lara still
 >   deciding): a "refresh all ref tables" button, buttons on the Assignment Order tab.
 > - **Open questions:**
