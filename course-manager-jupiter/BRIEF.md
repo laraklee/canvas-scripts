@@ -362,16 +362,17 @@
 >     differ by type (D had none); legacy CQ wrote the quiz ID into O3, over the update
 >     formula; no dry run; errors often only logged.
 > - **Jupiter export (2026-10-18, tested in the Biology course: CreateRoster "works fine";
->   Update Grades filled JupiterExport and "looks fine". Not yet tested: saving as CSV and
->   importing into Jupiter; Lara will try that later).**
+>   Update Grades filled JupiterExport and "looks fine"; the paste into Jupiter is a
+>   plain text copy/paste, so Lara expects it to work and will report back once the new
+>   quarter has work to grade).**
 >   Lara's workflow: on her grading sheet (tab "Comments": A1 "Last Jupiter Sync:", B1
 >   the stamp; row 2 labels; students from row 3; hidden C, D, F–I; Average/% rows below,
 >   kept by hand) she clicks **CreateRoster** (`createActiveSheetRoster`) once per class,
 >   types Jupiter IDs into **F** from a Jupiter export, then uses **Update Grades**
 >   (`buildJupiterExportFromRecentCanvasGrades`) to fill **JupiterExport** (Jupiter's
 >   template: instructions rows 1–3, `Class:` row 6, `Assignment:`, `Date:`, `Possible:`,
->   `Score:`/`Comment:` row 10, students "Name (JupiterID)" from row 11), then saves it as
->   CSV and imports it into Jupiter by hand. Both tabs were copied into the new workbook.
+>   `Score:`/`Comment:` row 10, students "Name (JupiterID)" from row 11), then **copies
+>   and pastes** it into Jupiter by hand (Jupiter takes a text paste, not a file upload). Both tabs were copied into the new workbook.
 >   Decisions: CreateRoster writes **only A–E** (User ID, Name, Period, Section Name,
 >   Email) from ref_peopleList + ref_SectionLookup; never touches F, other columns,
 >   formatting, or Average rows (asks if the roster would cover one; clears A–E only on
@@ -439,7 +440,8 @@
 >   first, then to the others after Lara's OK. Each workbook needs Set Canvas token once
 >   and its own authorization. Retire each old legacy workbook (keep as archive) once its
 >   course is live on the new one, so two workbooks never write to the same course.
-> - **Next:** fixes from the field test; Lara tries the CSV import into Jupiter; other tools from Lara's
+> - **Next:** fixes from the field test; Lara reports on the first real Jupiter paste;
+>   other tools from Lara's
 >   Decision column in `docs/legacy-function-map.md`. Button ideas for later (Lara still
 >   deciding): a "refresh all ref tables" button, buttons on the Assignment Order tab.
 > - **Open questions:**

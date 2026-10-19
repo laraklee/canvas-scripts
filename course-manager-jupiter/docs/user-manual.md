@@ -133,7 +133,7 @@ Groups are created empty (no students are added).
    ticked on ref_Config. Scores are Canvas's final scores (after any late penalty).
 4. If the summary says some students have no matching Jupiter ID, fix column F and run
    it again.
-5. Open **JupiterExport** › File › Download › CSV, and import it into Jupiter.
+5. Open **JupiterExport**, copy it, and paste it into Jupiter.
 
 ### Seating chart
 **Canvas Tools › Build seating chart.**
