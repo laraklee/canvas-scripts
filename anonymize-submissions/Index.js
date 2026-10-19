@@ -5,7 +5,9 @@
  *   download) gets a row: Folder, Short name, Assignment ID, Anonymized, Matched,
  *   Folder ID. Lara clicks a row, then "Anonymize selected row" or "Match AI results
  *   for selected row" (menu items, or buttons drawn on the Index assigned to
- *   anonymizeSelectedRow / matchSelectedRow / refreshFolderList).
+ *   anonymizeSelectedRow / matchSelectedRow / refreshFolderList). "Archive selected
+ *   row…" deletes that assignment's Key, AI, and Flagged tabs (after asking), keeps
+ *   Review but hides it, and marks the row Archived so it can't be re-run by mistake.
  * Canvas endpoints called: none.
  * Canvas write operations: none.
  * Required User/Script Properties: none here (see Passphrase.js, Assignments.js).
@@ -16,6 +18,7 @@ const INDEX_HEADERS = ['Folder', 'Short name', 'Assignment ID', 'Anonymized', 'M
   'Folder ID'];
 const INDEX_HEADER_ROW = 3;
 const INDEX_FIRST_ROW = INDEX_HEADER_ROW + 1;
+const ARCHIVED_PREFIX = 'Archived: ';
 const COL = { FOLDER: 1, SHORT_NAME: 2, ASSIGNMENT_ID: 3, ANONYMIZED: 4, MATCHED: 5, FOLDER_ID: 6 };
 
 function onOpen() {
@@ -23,6 +26,7 @@ function onOpen() {
     .addItem('Refresh folder list', 'refreshFolderList')
     .addItem('Anonymize selected row', 'anonymizeSelectedRow')
     .addItem('Match AI results for selected row', 'matchSelectedRow')
+    .addItem('Archive selected row…', 'archiveSelectedRow')
     .addSeparator()
     .addItem('Set passphrase', 'setPassphrase')
     .addItem('Check passphrase', 'checkPassphrase')
@@ -95,7 +99,7 @@ function refreshFolderList() {
 function anonymizeSelectedRow() {
   const ui = SpreadsheetApp.getUi();
   const job = selectedJob_(ui);
-  if (!job) return;
+  if (!job || isArchived_(ui, job)) return;
   const status = runAnonymize_(ui, job.folderId, job.assignmentId, job.shortName);
   if (status) writeStatus_(job, COL.ANONYMIZED, status);
 }
@@ -104,9 +108,70 @@ function anonymizeSelectedRow() {
 function matchSelectedRow() {
   const ui = SpreadsheetApp.getUi();
   const job = selectedJob_(ui);
-  if (!job) return;
+  if (!job || isArchived_(ui, job)) return;
   const status = runMatch_(ui, job.assignmentId, job.shortName);
   if (status) writeStatus_(job, COL.MATCHED, status);
+}
+
+/**
+ * Menu: deletes the selected assignment's Key, AI, and Flagged tabs once grades are in
+ * Canvas, keeping Review (which has each name, code, score, and comment) but hiding it.
+ * Asks first,
+ * refuses if there is no Review tab, and marks the row Archived so it isn't re-run.
+ */
+function archiveSelectedRow() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const job = selectedJob_(ui);
+    if (!job || isArchived_(ui, job)) return;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const review = ss.getSheetByName(tabName_(job.shortName, 'Review'));
+    if (!review || review.getLastRow() < 2) {
+      ui.alert('"' + job.shortName + '" has no Review tab yet, so archiving would delete ' +
+        'the only record of which code is which student. Run Match AI results first.');
+      return;
+    }
+    const toDelete = ['Key', 'AI', 'Flagged']
+      .map((kind) => ss.getSheetByName(tabName_(job.shortName, kind)))
+      .filter(Boolean);
+    const unreviewed = review.getRange(2, REVIEW_HEADERS.length, review.getLastRow() - 1, 1)
+      .getValues().filter(([checked]) => checked !== true).length;
+
+    const confirm = ui.alert('Archive "' + job.shortName + '"?',
+      'This deletes: ' + (toDelete.map((sheet) => sheet.getName()).join(', ') || 'nothing') +
+      '.\nThis keeps and hides: ' + review.getName() +
+      ' (names, codes, scores, comments).\n\n' +
+      (unreviewed ? unreviewed + ' row(s) in Review are not checked as reviewed.\n\n' : '') +
+      'Only do this once the grades are in Canvas. After archiving, this row can\'t be ' +
+      'anonymized or matched again. (File › Version history can bring the tabs back.)',
+      ui.ButtonSet.YES_NO);
+    if (confirm !== ui.Button.YES) return;
+
+    for (const sheet of toDelete) ss.deleteSheet(sheet);
+    review.hideSheet();
+    // Counts and IDs only: no student data in logs.
+    console.log('archive: assignment ' + job.assignmentId + ' tabsDeleted=' + toDelete.length);
+    writeStatus_(job, COL.ANONYMIZED, ARCHIVED_PREFIX + 'Key and AI tabs deleted');
+    ui.alert('Archived. "' + review.getName() + '" is kept but hidden. To see it, use ' +
+      'View › Hidden sheets.');
+  } catch (err) {
+    console.error('archiveSelectedRow failed: ' + err.message);
+    ui.alert('Something went wrong while archiving. Check which tabs are left; ' +
+      'File › Version history can restore anything deleted.');
+  }
+}
+
+/**
+ * True (after telling Lara why) if the row was archived. Its Key is gone, so
+ * anonymizing again would copy every file a second time.
+ */
+function isArchived_(ui, job) {
+  const status = job.sheet.getRange(job.row, COL.ANONYMIZED).getDisplayValue();
+  if (!status.startsWith(ARCHIVED_PREFIX)) return false;
+  ui.alert('"' + job.shortName + '" is archived: its Key tab was deleted.\n\n' +
+    'To start it over, delete its "anonymized" folder in Drive and clear the Anonymized ' +
+    'cell on this row.');
+  return true;
 }
 
 /**

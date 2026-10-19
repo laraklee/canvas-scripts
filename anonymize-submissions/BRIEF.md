@@ -16,6 +16,13 @@ row**: no prompts. The same three functions can be assigned to drawn buttons:
 `refreshFolderList`, `anonymizeSelectedRow`, `matchSelectedRow`. Checks: row is on the
 Index, assignment ID is digits and on one row only, short name not used by another ID.
 
+**Archive selected row…** (after grades are in Canvas): deletes that assignment's Key,
+AI, and Flagged tabs, keeps Review (names, codes, scores, comments) and hides it
+(View › Hidden sheets), and sets the Anonymized cell to "Archived: …". Refuses if
+there is no Review tab. Asks first, saying how many Review rows aren't checked.
+Anonymize and Match refuse an archived row, because with no Key a re-run would copy
+every file again. To start over: delete the `anonymized` folder and clear that cell.
+
 ## What it does
 
 1. Takes the folder, assignment ID, and short name from the selected Index row.
