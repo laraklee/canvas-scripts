@@ -5,8 +5,9 @@
  *   Canvas filename (name[_LATE]_userID_submissionID_originalFilename), and saves a
  *   renamed copy (for example S-9C1E4B.pdf) into an "anonymized" subfolder. The code is
  *   the first 6 hex characters of HMAC-SHA256(userID + ":" + assignmentID), keyed with
- *   the passphrase. Writes the code-to-student key to the "Key" tab and files it could
- *   not parse to the "Flagged" tab. Only filenames change; file contents are copied as is.
+ *   the passphrase. Writes the code-to-student key to the assignment's "<name> Key" tab
+ *   and files it could not parse to "<name> Flagged" (see Assignments.js for names).
+ *   Only filenames change; file contents are copied as is.
  *   Originals are only read, never changed, moved, or renamed.
  *   Re-running is safe: files already in the Key tab for that assignment are skipped,
  *   so a run that stops at the time limit can simply be run again.
@@ -16,8 +17,6 @@
  */
 
 const ANON_FOLDER_NAME = 'anonymized';
-const KEY_SHEET_NAME = 'Key';
-const FLAGGED_SHEET_NAME = 'Flagged';
 const KEY_HEADERS = ['Name', 'Canvas user ID', 'Assignment ID', 'Code',
   'Original filename', 'Late', 'Anonymized filename'];
 const FLAGGED_HEADERS = ['Assignment ID', 'File', 'Reason'];
@@ -61,7 +60,7 @@ function anonymizeSubmissions() {
       return;
     }
 
-    const assignmentText = promptText_(ui, 'Anonymize (2 of 2)',
+    const assignmentText = promptText_(ui, 'Anonymize (2 of 3)',
       'Enter the Canvas assignment ID (the number after /assignments/ in the ' +
       'assignment\'s address).');
     if (assignmentText === null) return;
@@ -70,6 +69,9 @@ function anonymizeSubmissions() {
       ui.alert('The assignment ID should be digits only.');
       return;
     }
+
+    const shortName = promptAssignmentName_(ui, 'Anonymize (3 of 3)', assignmentId);
+    if (!shortName) return;
 
     stage = 'opening the folder';
     let folder;
@@ -81,8 +83,8 @@ function anonymizeSubmissions() {
       return;
     }
     const outFolder = getOrCreateSubfolder_(folder, ANON_FOLDER_NAME);
-    const keySheet = getOrCreateSheet_(KEY_SHEET_NAME, KEY_HEADERS);
-    const flaggedSheet = getOrCreateSheet_(FLAGGED_SHEET_NAME, FLAGGED_HEADERS);
+    const keySheet = getOrCreateSheet_(tabName_(shortName, 'Key'), KEY_HEADERS);
+    const flaggedSheet = getOrCreateSheet_(tabName_(shortName, 'Flagged'), FLAGGED_HEADERS);
 
     stage = 'reading the Key tab';
     const state = readKeyState_(keySheet, assignmentId);
@@ -147,7 +149,8 @@ function anonymizeSubmissions() {
     ui.alert(stoppedEarly ? 'Paused at the time limit' : 'Done',
       'Copied: ' + copied + '\n' +
       'Already done before (skipped): ' + skipped + '\n' +
-      'Flagged: ' + flagged.length + (flagged.length ? ' (see the Flagged tab)' : '') +
+      'Flagged: ' + flagged.length +
+      (flagged.length ? ' (see the "' + flaggedSheet.getName() + '" tab)' : '') +
       (stoppedEarly ? '\n\nNot finished yet. Run Anonymize submissions again with the ' +
         'same folder and assignment ID to continue.' : '') +
       '\n\nOnly filenames were changed. Names written inside the files themselves ' +

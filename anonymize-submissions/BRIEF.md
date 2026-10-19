@@ -9,14 +9,25 @@ reviewed without names. A script bound to a Google Sheet; menu **Anonymize**.
 2. Reads every file directly in that folder. Zips are unzipped in memory with
    `Utilities.unzip`; loose files are used as they are. Both can be in the folder.
 3. Parses each filename as `name[_LATE]_userID_submissionID_originalFilename`.
-   Anything that doesn't match goes to the **Flagged** tab and is not copied. Nothing
+   Anything that doesn't match goes to the assignment's **`<name> Flagged`** tab and is not copied. Nothing
    is guessed.
 4. Code = `S-` + the first 6 hex characters (uppercase) of
    HMAC-SHA256(`userID:assignmentID`, passphrase), for example `S-9C1E4B`.
 5. Saves a renamed copy into an `anonymized` subfolder, keeping the original extension.
    If a student has several files: `S-9C1E4B.pdf`, `S-9C1E4B-2.docx`, … (in filename order).
-6. Adds one row per file to the **Key** tab: Name, Canvas user ID, Assignment ID, Code,
+6. Adds one row per file to the **`<name> Key`** tab: Name, Canvas user ID, Assignment ID, Code,
    Original filename, Late, Anonymized filename.
+
+## One set of tabs per assignment (Assignments.js)
+
+"Anonymize submissions…" asks for a short name for each assignment ID (asked once;
+offered again with "leave blank to keep it"). That name prefixes four tabs:
+`<name> Key`, `<name> Flagged`, `<name> AI` (paste the AI table here), `<name> Review`.
+Typing a new name renames the existing tabs. Two assignments can't share a name.
+The ID-to-name list is in Document Properties (`ASSIGNMENT_NAME_<id>`), not in a tab.
+The short name is typed, not fetched from Canvas, so this project needs no Canvas
+token or external-request permission. Old tabs are kept: Drive is where Lara keeps
+student academic records anyway. Deleting them is optional.
 
 ## Matching AI results back to students (MatchResults.js)
 
@@ -25,10 +36,10 @@ approved AI tool by hand. The script never calls an AI service.
 
 1. Ask the AI for one table row per file with columns **Code, Score, Feedback,
    Confidence, Notes**, copying the code from the filename.
-2. Paste the table into the **AI Results** tab (header row included). A normal pasted
+2. Paste the table into the assignment's **`<name> AI`** tab (header row included). A normal pasted
    table and a Markdown table that lands as `| a | b |` lines in column A both work.
    Columns are found by header name, in any order.
-3. **Anonymize › Match AI results…**, enter the assignment ID. Rebuilds the **Review**
+3. **Anonymize › Match AI results…**, pick the assignment ID. Rebuilds **`<name> Review`**
    tab: Name, Code, Score, Feedback, Confidence, Notes, Problem, Reviewed (checkbox).
    Problem rows sort to the top: not a valid code, code not in the Key for this
    assignment, code listed twice, or a student missing from the AI results. A code with

@@ -1,9 +1,9 @@
 /**
  * MatchResults.js
- * Purpose: the "Match AI results" menu item. Reads an AI-graded table pasted into the
- *   "AI Results" tab (columns Code, Score, Feedback, Confidence, Notes, matched by header
- *   name, any order), looks each code up in the "Key" tab for one assignment, and
- *   rebuilds the "Review" tab with the student's name next to each result. Flags codes
+ * Purpose: the "Match AI results" menu item. For one assignment, reads the AI-graded
+ *   table pasted into its "<name> AI" tab (columns Code, Score, Feedback, Confidence,
+ *   Notes, matched by header name, any order), looks each code up in "<name> Key", and
+ *   rebuilds "<name> Review" with the student's name next to each result. Flags codes
  *   that are not in the key, codes listed twice, and students the AI left out.
  *   The pasted table is untrusted text: it is written back as plain text only and is
  *   never treated as instructions or formulas.
@@ -12,8 +12,6 @@
  * Required User/Script Properties: none.
  */
 
-const RESULTS_SHEET_NAME = 'AI Results';
-const REVIEW_SHEET_NAME = 'Review';
 const RESULTS_HEADERS = ['Code', 'Score', 'Feedback', 'Confidence', 'Notes'];
 const REVIEW_HEADERS = ['Name', 'Code', 'Score', 'Feedback', 'Confidence', 'Notes',
   'Problem', 'Reviewed'];
@@ -24,31 +22,27 @@ function matchAiResults() {
   const ui = SpreadsheetApp.getUi();
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const resultsSheet = ss.getSheetByName(RESULTS_SHEET_NAME);
+    const assignment = promptSavedAssignment_(ui, 'Match AI results');
+    if (!assignment) return;
+    const assignmentId = assignment.id;
+    const resultsName = tabName_(assignment.name, 'AI');
+    const keyName = tabName_(assignment.name, 'Key');
+    const reviewName = tabName_(assignment.name, 'Review');
+
+    const resultsSheet = ss.getSheetByName(resultsName);
     if (!resultsSheet || resultsSheet.getLastRow() < 2) {
-      getOrCreateSheet_(RESULTS_SHEET_NAME, RESULTS_HEADERS);
-      ui.alert('Paste the AI\'s table into the "' + RESULTS_SHEET_NAME + '" tab first ' +
+      getOrCreateSheet_(resultsName, RESULTS_HEADERS).activate();
+      ui.alert('Paste the AI\'s table into the "' + resultsName + '" tab first ' +
         '(include its header row), then run this again.');
       return;
     }
-    const keySheet = ss.getSheetByName(KEY_SHEET_NAME);
+    const keySheet = ss.getSheetByName(keyName);
     if (!keySheet || keySheet.getLastRow() < 2) {
-      ui.alert('The Key tab is empty. Run "Anonymize submissions…" first.');
+      ui.alert('The "' + keyName + '" tab is missing or empty. Run "Anonymize submissions…" first.');
       return;
     }
-
     const keyRows = keySheet.getRange(2, 1, keySheet.getLastRow() - 1, KEY_HEADERS.length)
       .getDisplayValues();
-    const assignmentIds = [...new Set(keyRows.map((row) => row[2]).filter(Boolean))];
-    const assignmentText = promptText_(ui, 'Match AI results',
-      'Enter the Canvas assignment ID these results are for.\n\n' +
-      'Assignment IDs in the Key tab: ' + assignmentIds.join(', '));
-    if (assignmentText === null) return;
-    const assignmentId = assignmentText.trim();
-    if (!assignmentIds.includes(assignmentId)) {
-      ui.alert('Assignment ' + assignmentId + ' is not in the Key tab.');
-      return;
-    }
 
     const parsed = parseResultsTable_(resultsSheet.getDataRange().getDisplayValues());
     if (parsed.error) {
@@ -56,10 +50,10 @@ function matchAiResults() {
       return;
     }
 
-    const reviewSheet = getOrCreateSheet_(REVIEW_SHEET_NAME, REVIEW_HEADERS);
+    const reviewSheet = getOrCreateSheet_(reviewName, REVIEW_HEADERS);
     if (hasCheckedReviews_(reviewSheet)) {
-      const confirm = ui.alert('Replace the Review tab?',
-        'Some rows in the Review tab are already checked as reviewed. Rebuilding it ' +
+      const confirm = ui.alert('Replace the review tab?',
+        'Some rows in "' + reviewName + '" are already checked as reviewed. Rebuilding it ' +
         'clears those checkmarks.\n\nReplace it?', ui.ButtonSet.YES_NO);
       if (confirm !== ui.Button.YES) return;
     }
@@ -71,15 +65,15 @@ function matchAiResults() {
     console.log('matchAiResults: assignment ' + assignmentId + ' matched=' +
       review.matched + ' problems=' + review.problems);
     reviewSheet.activate();
-    ui.alert('Review tab ready',
+    ui.alert('"' + reviewName + '" is ready',
       'Matched: ' + review.matched + '\n' +
       'Needing a look: ' + review.problems +
       (review.problems ? ' (these are at the top, with the reason in the Problem column)' : ''),
       ui.ButtonSet.OK);
   } catch (err) {
     console.error('matchAiResults failed: ' + err.message);
-    ui.alert('Something went wrong while matching results. The Key and AI Results ' +
-      'tabs were not changed.');
+    ui.alert('Something went wrong while matching results. The Key and AI tabs were ' +
+      'not changed.');
   }
 }
 
@@ -97,7 +91,7 @@ function parseResultsTable_(values) {
   const headerIndex = grid.findIndex((cells) =>
     cells.some((cell) => cell.toLowerCase() === 'code'));
   if (headerIndex === -1) {
-    return { error: 'Could not find a header row with a "Code" column in the AI Results tab.' };
+    return { error: 'Could not find a header row with a "Code" column in the AI tab.' };
   }
   const header = grid.at(headerIndex).map((cell) => cell.toLowerCase());
   const [code, score, feedback, confidence, notes] =
