@@ -61,7 +61,9 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
     }
     const outFolder = getOrCreateSubfolder_(folder, ANON_FOLDER_NAME);
     const keySheet = getOrCreateSheet_(tabName_(shortName, 'Key'), KEY_HEADERS);
-    const flaggedSheet = getOrCreateSheet_(tabName_(shortName, 'Flagged'), FLAGGED_HEADERS);
+    // The AI tab is made now, ready for pasting. Flagged is only made if something is.
+    getOrCreateSheet_(tabName_(shortName, 'AI'), RESULTS_HEADERS);
+    const flaggedName = tabName_(shortName, 'Flagged');
 
     stage = 'reading the Key tab';
     const state = readKeyState_(keySheet, assignmentId);
@@ -132,7 +134,10 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
     }
 
     stage = 'writing the Flagged tab';
-    writeFlagged_(flaggedSheet, flagged);
+    const flaggedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(flaggedName);
+    if (flagged.length || flaggedSheet) {
+      writeFlagged_(flaggedSheet || getOrCreateSheet_(flaggedName, FLAGGED_HEADERS), flagged);
+    }
 
     // Counts and IDs only: no student data in logs.
     console.log('anonymize: assignment ' + assignmentId + ' copied=' + copied +
@@ -142,7 +147,7 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
       'Copied: ' + copied + '\n' +
       'Already done before (skipped): ' + skipped + '\n' +
       'Flagged: ' + flagged.length +
-      (flagged.length ? ' (see the "' + flaggedSheet.getName() + '" tab)' : '') +
+      (flagged.length ? ' (see the "' + flaggedName + '" tab)' : '') +
       (stoppedEarly ? '\n\nNot finished yet. Run Anonymize this row again to continue.' : '') +
       '\n\nOnly filenames were changed. Names written inside the files themselves ' +
       'are still there.',

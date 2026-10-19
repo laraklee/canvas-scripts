@@ -58,6 +58,12 @@ approved AI tool by hand. The script never calls an AI service.
    assignment, code listed twice, or a student missing from the AI results. A code with
    a `-2` suffix or an extension (`S-9C1E4B-2.pdf`) matches the same student.
 4. Asks before rebuilding if any Reviewed boxes are checked.
+   Codes are cleaned before matching: spaces and invisible characters removed, any
+   dash read as "-", letters O read as 0 and I/L as 1 (codes only use 0-9 and A-F).
+   Fixed 10/19: a code that is all digits (S-014852) used to be rejected as invalid.
+   The AI tab is created (with headers) when the assignment is anonymized; a repeated
+   header row is skipped and resets the column order, so pasting over or under it
+   works. Flagged is only created when something is flagged.
 5. Grades are entered in Canvas by hand. Numeric scores stay numbers so they copy cleanly.
 
 ## Decisions

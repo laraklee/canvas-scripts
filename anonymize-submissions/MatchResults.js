@@ -81,8 +81,8 @@ function runMatch_(ui, assignmentId, shortName) {
 
 /**
  * Reads the pasted table. Accepts a normal pasted table, or a Markdown table that landed
- * as "| a | b |" lines in column A. Finds the header row (the first row with a "Code"
- * cell) and returns rows as objects with the RESULTS_HEADERS fields.
+ * as "| a | b |" lines in column A. Returns rows as objects with the RESULTS_HEADERS
+ * fields; rows above the first header row are ignored.
  */
 function parseResultsTable_(values) {
   const grid = values
@@ -90,23 +90,32 @@ function parseResultsTable_(values) {
     .filter((cells) => cells.some((cell) => cell !== ''))
     .filter((cells) => !cells.every((cell) => cell === '' || /^:?-{3,}:?$/.test(cell)));
 
-  const headerIndex = grid.findIndex((cells) =>
-    cells.some((cell) => cell.toLowerCase() === 'code'));
-  if (headerIndex === -1) {
+  // Every row with a "Code" cell is a header and sets the column order for the rows
+  // under it, so pasting below the script's header row, or pasting several batches,
+  // works even if the AI ordered its columns differently.
+  const isHeader = (cells) => cells.some((cell) => cell.toLowerCase() === 'code');
+  if (!grid.some(isHeader)) {
     return { error: 'Could not find a header row with a "Code" column in the AI tab.' };
   }
-  const header = grid.at(headerIndex).map((cell) => cell.toLowerCase());
-  const [code, score, feedback, confidence, notes] =
-    RESULTS_HEADERS.map((name) => header.indexOf(name.toLowerCase()));
   const cellAt = (cells, index) => (index === -1 ? '' : String(cells.at(index) || '').trim());
-
-  const rows = grid.slice(headerIndex + 1).map((cells) => ({
-    Code: cellAt(cells, code),
-    Score: cellAt(cells, score),
-    Feedback: cellAt(cells, feedback),
-    Confidence: cellAt(cells, confidence),
-    Notes: cellAt(cells, notes),
-  }));
+  let columns = null;
+  const rows = [];
+  for (const cells of grid) {
+    if (isHeader(cells)) {
+      const header = cells.map((cell) => cell.toLowerCase());
+      columns = RESULTS_HEADERS.map((name) => header.indexOf(name.toLowerCase()));
+      continue;
+    }
+    if (!columns) continue;
+    const [code, score, feedback, confidence, notes] = columns;
+    rows.push({
+      Code: cellAt(cells, code),
+      Score: cellAt(cells, score),
+      Feedback: cellAt(cells, feedback),
+      Confidence: cellAt(cells, confidence),
+      Notes: cellAt(cells, notes),
+    });
+  }
   return { rows };
 }
 
@@ -120,12 +129,31 @@ function splitMarkdownRow_(row) {
   return cells;
 }
 
-/** "s-9c1e4b-2.pdf" → "S-9C1E4B". Returns '' if it isn't a code. */
+/**
+ * Cleans up a code as the AI typed it: "s‑O14852-2.pdf" → "S-014852-2". Removes spaces
+ * and invisible characters, turns any dash into "-", drops a file extension, and, since
+ * codes only use 0-9 and A-F, reads the letters O as 0 and I or L as 1.
+ * Returns '' if it still isn't a code.
+ */
+function normalizeCode_(text) {
+  const cleaned = String(text).normalize('NFKC')
+    .replace(/[\s\u200B-\u200D\u2060\uFEFF]/g, '')
+    .toUpperCase()
+    .replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')
+    .replace(/\.[A-Z0-9]+$/, '');
+  const match = /^S-([0-9A-Z]{6})(-\d+)?$/.exec(cleaned);
+  if (!match) return '';
+  const body = match[1].replace(/O/g, '0').replace(/[IL]/g, '1');
+  return CODE_RE.test('S-' + body) ? 'S-' + body + (match[2] || '') : '';
+}
+
+/**
+ * "s-9c1e4b-2.pdf" → "S-9C1E4B" (the student's code, without a file number). Keeps the
+ * first 8 characters rather than stripping "-digits", because a code can be all digits
+ * (S-014852) and must not lose its own digits.
+ */
 function baseCode_(text) {
-  const upper = String(text).trim().toUpperCase()
-    .replace(/\.[A-Z0-9]+$/, '')
-    .replace(/-\d+$/, '');
-  return CODE_RE.test(upper) ? upper : '';
+  return normalizeCode_(text).slice(0, 8);
 }
 
 /** Code → student name, for one assignment's rows in the Key tab. */
@@ -143,21 +171,21 @@ function studentsByCode_(keyRows, assignmentId) {
  */
 function buildReview_(resultRows, studentByCode) {
   const rows = [];
-  const seenRawCodes = new Set();
+  const seenFullCodes = new Set();
   const seenBaseCodes = new Set();
   let matched = 0;
   let problems = 0;
 
   for (const result of resultRows) {
-    const rawCode = result.Code.toUpperCase();
+    const fullCode = normalizeCode_(result.Code);
     const code = baseCode_(result.Code);
     let problem = '';
     if (!code) problem = 'Not a valid code';
     else if (!studentByCode.has(code)) problem = 'Code not in the Key for this assignment';
-    else if (seenRawCodes.has(rawCode)) problem = 'Code listed more than once';
+    else if (seenFullCodes.has(fullCode)) problem = 'Code listed more than once';
     const studentName = studentByCode.get(code) || '';
     if (code) seenBaseCodes.add(code);
-    seenRawCodes.add(rawCode);
+    if (fullCode) seenFullCodes.add(fullCode);
     if (problem) problems++; else matched++;
     rows.push([studentName, result.Code, result.Score, result.Feedback, result.Confidence,
       result.Notes, problem]);
