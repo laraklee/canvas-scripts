@@ -7,7 +7,7 @@
  *     she types into F, which don't move with the roster.
  *   - buildJupiterExportFromRecentCanvasGrades (Update Grades button): fills the
  *     JupiterExport tab (Jupiter's import template) with scores for assignments graded
- *     recently in the checked categories; Lara saves it as CSV for Jupiter. Sends the
+ *     recently in the checked categories; Lara copies and pastes it into Jupiter. Sends the
  *     final score (after any late penalty; legacy sent the score before it).
  *   Student names, IDs, and scores stay in the sheet: never logged or shown in messages.
  *   - refreshJupiterCategories (menu item, and the legacy Config button's script name).
@@ -256,7 +256,8 @@ function readRefTable_(ss, sheetName, headers) {
  * Run from the grading sheet. Asks how many days back to look (default: since the B1
  * "Last Jupiter Sync" stamp, or 7 days), finds Canvas assignments graded since then in
  * the categories checked in cfg_JupiterCategories, reads every student's score for
- * them, and fills JupiterExport (Jupiter's import template) for you to save as CSV.
+ * them, and fills JupiterExport (Jupiter's import template) for you to copy and paste
+ * into Jupiter.
  * Students are matched by Jupiter ID: grading sheet A (Canvas User ID) and F (Jupiter
  * ID), and "(Jupiter ID)" at the end of each JupiterExport student label. Reads Canvas
  * only; logs counts only.
@@ -340,7 +341,7 @@ function buildJupiterExportFromRecentCanvasGrades() {
       'student(s).' + (result.unmatched ? `\n\n${result.unmatched} student row(s) in ` +
       `${TOOL_SHEETS.JUPITER_EXPORT} have no matching Jupiter ID in column F of this sheet, ` +
       'so their scores are blank. Check column F.' : '') +
-      '\n\nNext: save JupiterExport as CSV and import it into Jupiter.', ui.ButtonSet.OK);
+      '\n\nNext: copy JupiterExport and paste it into Jupiter.', ui.ButtonSet.OK);
   } catch (error) {
     reportRefreshFailure_('Update Grades', 'The last sync time (B1) was not changed.', error);
   }
