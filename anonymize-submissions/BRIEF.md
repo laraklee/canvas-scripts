@@ -2,10 +2,23 @@
 
 Pseudonymizes a Canvas "Download Submissions" set so student work can be shared or
 reviewed without names. A script bound to a Google Sheet; menu **Anonymize**.
+One Sheet per course: copy a clean template (Instructions tab only) for each course,
+then set the passphrase once in each copy (User Properties belong to one script copy).
+
+## Index tab (Index.js)
+
+B1 holds the link to the course's AI grading folder. Each assignment's Canvas download
+goes in its own subfolder. **Refresh folder list** adds a row per new subfolder:
+Folder (linked name), Short name (defaults to the folder name), Assignment ID (Lara
+types it), Anonymized and Matched (status + time, written by the script), Folder ID.
+Lara clicks a row, then **Anonymize selected row** or **Match AI results for selected
+row**: no prompts. The same three functions can be assigned to drawn buttons:
+`refreshFolderList`, `anonymizeSelectedRow`, `matchSelectedRow`. Checks: row is on the
+Index, assignment ID is digits and on one row only, short name not used by another ID.
 
 ## What it does
 
-1. Asks for a Drive folder (link or ID) and the Canvas assignment ID (once per run).
+1. Takes the folder, assignment ID, and short name from the selected Index row.
 2. Reads every file directly in that folder. Zips are unzipped in memory with
    `Utilities.unzip`; loose files are used as they are. Both can be in the folder.
 3. Parses each filename as `name[_LATE]_userID_submissionID_originalFilename`.
@@ -20,11 +33,11 @@ reviewed without names. A script bound to a Google Sheet; menu **Anonymize**.
 
 ## One set of tabs per assignment (Assignments.js)
 
-"Anonymize submissions…" asks for a short name for each assignment ID (asked once;
-offered again with "leave blank to keep it"). That name prefixes four tabs:
+The Index row's short name prefixes four tabs:
 `<name> Key`, `<name> Flagged`, `<name> AI` (paste the AI table here), `<name> Review`.
-Typing a new name renames the existing tabs. Two assignments can't share a name.
-The ID-to-name list is in Document Properties (`ASSIGNMENT_NAME_<id>`), not in a tab.
+Changing a short name on the Index renames that assignment's tabs on the next run.
+Two assignments can't share a name. The last name used per ID is kept in Document
+Properties (`ASSIGNMENT_NAME_<id>`) so renames can be detected.
 The short name is typed, not fetched from Canvas, so this project needs no Canvas
 token or external-request permission. Old tabs are kept: Drive is where Lara keeps
 student academic records anyway. Deleting them is optional.
@@ -39,8 +52,8 @@ approved AI tool by hand. The script never calls an AI service.
 2. Paste the table into the assignment's **`<name> AI`** tab (header row included). A normal pasted
    table and a Markdown table that lands as `| a | b |` lines in column A both work.
    Columns are found by header name, in any order.
-3. **Anonymize › Match AI results…**, pick the assignment ID. Rebuilds **`<name> Review`**
-   tab: Name, Code, Score, Feedback, Confidence, Notes, Problem, Reviewed (checkbox).
+3. Click the assignment's Index row, **Match AI results for selected row**. Rebuilds
+   **`<name> Review`**: Name, Code, Score, Feedback, Confidence, Notes, Problem, Reviewed (checkbox).
    Problem rows sort to the top: not a valid code, code not in the Key for this
    assignment, code listed twice, or a student missing from the AI results. A code with
    a `-2` suffix or an extension (`S-9C1E4B-2.pdf`) matches the same student.
@@ -78,7 +91,8 @@ approved AI tool by hand. The script never calls an AI service.
 
 ## Not yet verified
 
-- Not yet run in Google. The filename pattern follows Canvas's usual bulk-download
-  format; check the Flagged tab on the first real download.
+- Tested in Google with made-up files (10/18) before the Index tab existed. The Index
+  version is tested offline only. The filename pattern follows Canvas's usual
+  bulk-download format; check the Flagged tab on the first real download.
 - The second number in Canvas filenames is treated as the submission ID but isn't
   stored or used. Only the user ID goes into the code.

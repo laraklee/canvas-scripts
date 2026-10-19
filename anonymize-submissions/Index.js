@@ -1,0 +1,184 @@
+/**
+ * Index.js
+ * Purpose: the Index tab and the Anonymize menu. B1 holds the link to this course's AI
+ *   grading folder; each subfolder of it (one per assignment, holding the Canvas
+ *   download) gets a row: Folder, Short name, Assignment ID, Anonymized, Matched,
+ *   Folder ID. Lara clicks a row, then "Anonymize selected row" or "Match AI results
+ *   for selected row" (menu items, or buttons drawn on the Index assigned to
+ *   anonymizeSelectedRow / matchSelectedRow / refreshFolderList).
+ * Canvas endpoints called: none.
+ * Canvas write operations: none.
+ * Required User/Script Properties: none here (see Passphrase.js, Assignments.js).
+ */
+
+const INDEX_SHEET_NAME = 'Index';
+const INDEX_HEADERS = ['Folder', 'Short name', 'Assignment ID', 'Anonymized', 'Matched',
+  'Folder ID'];
+const INDEX_HEADER_ROW = 3;
+const INDEX_FIRST_ROW = INDEX_HEADER_ROW + 1;
+const COL = { FOLDER: 1, SHORT_NAME: 2, ASSIGNMENT_ID: 3, ANONYMIZED: 4, MATCHED: 5, FOLDER_ID: 6 };
+
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('Anonymize')
+    .addItem('Refresh folder list', 'refreshFolderList')
+    .addItem('Anonymize selected row', 'anonymizeSelectedRow')
+    .addItem('Match AI results for selected row', 'matchSelectedRow')
+    .addSeparator()
+    .addItem('Set passphrase', 'setPassphrase')
+    .addItem('Check passphrase', 'checkPassphrase')
+    .addToUi();
+}
+
+/** Menu/button: adds a row for each assignment subfolder not already on the Index. */
+function refreshFolderList() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const sheet = getOrCreateIndex_();
+    sheet.activate();
+    // A pasted link may show as the folder's title; the URL is then behind the text.
+    const linkCell = sheet.getRange('B1');
+    const rich = linkCell.getRichTextValue();
+    let folderText = (rich && rich.getLinkUrl()) || linkCell.getDisplayValue();
+    if (!folderText) {
+      folderText = promptText_(ui, 'Course folder',
+        'Paste the link to this course\'s AI grading folder. Put each assignment\'s ' +
+        'Canvas download in its own subfolder inside it.');
+      if (folderText === null) return;
+      sheet.getRange('B1').setValue(asText_(folderText.trim()));
+    }
+    const folderId = parseFolderId_(folderText);
+    if (!folderId) {
+      ui.alert('B1 does not look like a Drive folder link. Paste the course folder\'s link there.');
+      return;
+    }
+    let courseFolder;
+    try {
+      courseFolder = DriveApp.getFolderById(folderId);
+    } catch {
+      ui.alert('Could not open the folder in B1. Check the link, and that your account can see it.');
+      return;
+    }
+
+    const lastRow = sheet.getLastRow();
+    const known = new Set(lastRow < INDEX_FIRST_ROW ? [] : sheet
+      .getRange(INDEX_FIRST_ROW, COL.FOLDER_ID, lastRow - INDEX_HEADER_ROW, 1)
+      .getDisplayValues().map(([id]) => id));
+
+    const found = [];
+    const folders = courseFolder.getFolders();
+    while (folders.hasNext()) {
+      const folder = folders.next();
+      if (folder.getName() === ANON_FOLDER_NAME || known.has(folder.getId())) continue;
+      found.push(folder);
+    }
+    found.sort((a, b) => a.getName().localeCompare(b.getName()));
+
+    let row = Math.max(lastRow, INDEX_HEADER_ROW) + 1;
+    for (const folder of found) {
+      const link = SpreadsheetApp.newRichTextValue().setText(folder.getName())
+        .setLinkUrl(folder.getUrl()).build();
+      sheet.getRange(row, COL.FOLDER).setRichTextValue(link);
+      sheet.getRange(row, COL.SHORT_NAME, 1, 5).setValues([[
+        asText_(cleanShortName_(folder.getName())), '', '', '', asText_(folder.getId())]]);
+      row++;
+    }
+    ui.alert(found.length
+      ? 'Added ' + found.length + ' folder(s). Type the Canvas assignment ID on each new row.'
+      : 'No new folders. Make a subfolder for each assignment inside the course folder.');
+  } catch (err) {
+    console.error('refreshFolderList failed: ' + err.message);
+    ui.alert('Something went wrong while refreshing the folder list.');
+  }
+}
+
+/** Menu/button: anonymizes the assignment on the selected Index row. */
+function anonymizeSelectedRow() {
+  const ui = SpreadsheetApp.getUi();
+  const job = selectedJob_(ui);
+  if (!job) return;
+  const status = runAnonymize_(ui, job.folderId, job.assignmentId, job.shortName);
+  if (status) writeStatus_(job, COL.ANONYMIZED, status);
+}
+
+/** Menu/button: matches AI results for the assignment on the selected Index row. */
+function matchSelectedRow() {
+  const ui = SpreadsheetApp.getUi();
+  const job = selectedJob_(ui);
+  if (!job) return;
+  const status = runMatch_(ui, job.assignmentId, job.shortName);
+  if (status) writeStatus_(job, COL.MATCHED, status);
+}
+
+/**
+ * Reads and checks the selected Index row. Returns {sheet, row, folderId, assignmentId,
+ * shortName}, or null after telling Lara what to fix.
+ */
+function selectedJob_(ui) {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  if (sheet.getName() !== INDEX_SHEET_NAME) {
+    ui.alert('Go to the Index tab and click the assignment\'s row first.');
+    return null;
+  }
+  const row = sheet.getActiveRange().getRow();
+  const lastRow = sheet.getLastRow();
+  if (row < INDEX_FIRST_ROW || row > lastRow) {
+    ui.alert('Click a cell in an assignment\'s row (row ' + INDEX_FIRST_ROW + ' or below) first.');
+    return null;
+  }
+  const [folderName, shortText, assignmentText, , , folderId] =
+    sheet.getRange(row, 1, 1, INDEX_HEADERS.length).getDisplayValues()[0];
+
+  const assignmentId = assignmentText.trim();
+  if (!/^\d+$/.test(assignmentId)) {
+    ui.alert('Type the Canvas assignment ID (digits only) in column C of row ' + row + '.\n\n' +
+      'It\'s the number after /assignments/ in the assignment\'s address.');
+    return null;
+  }
+  if (!folderId) {
+    ui.alert('Row ' + row + ' has no Folder ID. Use Refresh folder list to add folders.');
+    return null;
+  }
+  const otherRows = sheet.getRange(INDEX_FIRST_ROW, COL.ASSIGNMENT_ID,
+    lastRow - INDEX_HEADER_ROW, 1).getDisplayValues()
+    .map(([id], i) => ({ id: id.trim(), row: INDEX_FIRST_ROW + i }))
+    .filter((r) => r.id === assignmentId && r.row !== row);
+  if (otherRows.length) {
+    ui.alert('Assignment ' + assignmentId + ' is also on row ' + otherRows[0].row +
+      '. Each assignment ID should be on one row only.');
+    return null;
+  }
+
+  const shortName = cleanShortName_(shortText) || cleanShortName_(folderName);
+  if (!shortName) {
+    ui.alert('Type a short name in column B of row ' + row + '.');
+    return null;
+  }
+  if (shortName !== shortText) sheet.getRange(row, COL.SHORT_NAME).setValue(asText_(shortName));
+  if (!applyAssignmentName_(ui, assignmentId, shortName)) return null;
+  return { sheet, row, folderId, assignmentId, shortName };
+}
+
+/** "12 files, 1 flagged · 10/19 9:40 AM" in the row's status column. */
+function writeStatus_(job, column, status) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const when = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'M/d h:mm a');
+  job.sheet.getRange(job.row, column).setValue(asText_(status + ' · ' + when));
+}
+
+function getOrCreateIndex_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(INDEX_SHEET_NAME);
+  if (sheet) return sheet;
+  sheet = ss.insertSheet(INDEX_SHEET_NAME, 0);
+  sheet.getRange('A1').setValue('Course folder link:').setFontWeight('bold');
+  sheet.getRange('A2').setValue('Click an assignment\'s row, then use the Anonymize menu.')
+    .setFontStyle('italic');
+  sheet.getRange(INDEX_HEADER_ROW, 1, 1, INDEX_HEADERS.length).setValues([INDEX_HEADERS])
+    .setFontWeight('bold');
+  sheet.setFrozenRows(INDEX_HEADER_ROW);
+  sheet.getRange(1, COL.FOLDER_ID, sheet.getMaxRows(), 1).setFontColor('#999999');
+  sheet.setColumnWidth(COL.FOLDER, 220);
+  sheet.setColumnWidth(COL.SHORT_NAME, 180);
+  sheet.setColumnWidths(COL.ANONYMIZED, 2, 200);
+  return sheet;
+}

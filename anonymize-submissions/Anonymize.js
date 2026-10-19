@@ -11,6 +11,8 @@
  *   Originals are only read, never changed, moved, or renamed.
  *   Re-running is safe: files already in the Key tab for that assignment are skipped,
  *   so a run that stops at the time limit can simply be run again.
+ *   Started from a row of the Index tab (Index.js), which supplies the folder,
+ *   assignment ID, and short name.
  * Canvas endpoints called: none (works on files already downloaded to Drive).
  * Canvas write operations: none.
  * Required User/Script Properties: User Property ANON_PASSPHRASE (see Passphrase.js).
@@ -28,59 +30,29 @@ const CANVAS_FILENAME_RE = /^([^_]+)(_LATE)?_(\d+)_(\d+)_(.+)$/;
 // Zip clutter added by macOS; skipped silently.
 const IGNORED_ENTRY_RE = /(^|\/)(__MACOSX\/|\.DS_Store$)/;
 
-function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Anonymize')
-    .addItem('Anonymize submissions…', 'anonymizeSubmissions')
-    .addItem('Match AI results…', 'matchAiResults')
-    .addSeparator()
-    .addItem('Set passphrase', 'setPassphrase')
-    .addItem('Check passphrase', 'checkPassphrase')
-    .addToUi();
-}
-
-/** Menu: Anonymize › Anonymize submissions… */
-function anonymizeSubmissions() {
-  const ui = SpreadsheetApp.getUi();
+/**
+ * Anonymizes one assignment's folder. Called from the Index tab (see Index.js).
+ * Shows a summary alert and returns a short status line for the Index, or null if it
+ * stopped before copying anything (after telling Lara why).
+ */
+function runAnonymize_(ui, folderId, assignmentId, shortName) {
   const started = Date.now();
   let stage = 'setup';
   try {
     const passphrase = getPassphrase_();
     if (!passphrase) {
       ui.alert('No passphrase is saved yet. Use Anonymize › Set passphrase first.');
-      return;
+      return null;
     }
-
-    const folderText = promptText_(ui, 'Anonymize (1 of 2)',
-      'Paste the Google Drive folder link or ID that holds the Canvas download ' +
-      '(the zip, the unzipped files, or both).');
-    if (folderText === null) return;
-    const folderId = parseFolderId_(folderText);
-    if (!folderId) {
-      ui.alert('That does not look like a Drive folder link or ID.');
-      return;
-    }
-
-    const assignmentText = promptText_(ui, 'Anonymize (2 of 3)',
-      'Enter the Canvas assignment ID (the number after /assignments/ in the ' +
-      'assignment\'s address).');
-    if (assignmentText === null) return;
-    const assignmentId = assignmentText.trim();
-    if (!/^\d+$/.test(assignmentId)) {
-      ui.alert('The assignment ID should be digits only.');
-      return;
-    }
-
-    const shortName = promptAssignmentName_(ui, 'Anonymize (3 of 3)', assignmentId);
-    if (!shortName) return;
 
     stage = 'opening the folder';
     let folder;
     try {
       folder = DriveApp.getFolderById(folderId);
     } catch {
-      ui.alert('Could not open that folder. Check the link, and that your account ' +
-        'can see it.');
-      return;
+      ui.alert('Could not open that folder. Use Refresh folder list, and check that your ' +
+        'account can see the folder.');
+      return null;
     }
     const outFolder = getOrCreateSubfolder_(folder, ANON_FOLDER_NAME);
     const keySheet = getOrCreateSheet_(tabName_(shortName, 'Key'), KEY_HEADERS);
@@ -151,15 +123,17 @@ function anonymizeSubmissions() {
       'Already done before (skipped): ' + skipped + '\n' +
       'Flagged: ' + flagged.length +
       (flagged.length ? ' (see the "' + flaggedSheet.getName() + '" tab)' : '') +
-      (stoppedEarly ? '\n\nNot finished yet. Run Anonymize submissions again with the ' +
-        'same folder and assignment ID to continue.' : '') +
+      (stoppedEarly ? '\n\nNot finished yet. Run Anonymize this row again to continue.' : '') +
       '\n\nOnly filenames were changed. Names written inside the files themselves ' +
       'are still there.',
       ui.ButtonSet.OK);
+    return (stoppedEarly ? 'Paused: ' : '') + (copied + skipped) + ' files, ' +
+      flagged.length + ' flagged';
   } catch (err) {
     console.error('anonymize failed while ' + stage + ': ' + err.message);
     ui.alert('Something went wrong while ' + stage + '. Nothing in the original ' +
       'folder was changed. Run it again; files already done will be skipped.');
+    return null;
   }
 }
 

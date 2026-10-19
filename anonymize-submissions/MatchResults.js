@@ -1,6 +1,6 @@
 /**
  * MatchResults.js
- * Purpose: the "Match AI results" menu item. For one assignment, reads the AI-graded
+ * Purpose: matches AI results for one assignment (started from an Index row). Reads the AI-graded
  *   table pasted into its "<name> AI" tab (columns Code, Score, Feedback, Confidence,
  *   Notes, matched by header name, any order), looks each code up in "<name> Key", and
  *   rebuilds "<name> Review" with the student's name next to each result. Flags codes
@@ -17,29 +17,29 @@ const REVIEW_HEADERS = ['Name', 'Code', 'Score', 'Feedback', 'Confidence', 'Note
   'Problem', 'Reviewed'];
 const CODE_RE = /^S-[0-9A-F]{6}$/;
 
-/** Menu: Anonymize › Match AI results… */
-function matchAiResults() {
-  const ui = SpreadsheetApp.getUi();
+/**
+ * Matches one assignment's AI results. Called from the Index tab (see Index.js).
+ * Shows a summary alert and returns a short status line for the Index, or null if it
+ * stopped early (after telling Lara why).
+ */
+function runMatch_(ui, assignmentId, shortName) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const assignment = promptSavedAssignment_(ui, 'Match AI results');
-    if (!assignment) return;
-    const assignmentId = assignment.id;
-    const resultsName = tabName_(assignment.name, 'AI');
-    const keyName = tabName_(assignment.name, 'Key');
-    const reviewName = tabName_(assignment.name, 'Review');
+    const resultsName = tabName_(shortName, 'AI');
+    const keyName = tabName_(shortName, 'Key');
+    const reviewName = tabName_(shortName, 'Review');
 
     const resultsSheet = ss.getSheetByName(resultsName);
     if (!resultsSheet || resultsSheet.getLastRow() < 2) {
       getOrCreateSheet_(resultsName, RESULTS_HEADERS).activate();
       ui.alert('Paste the AI\'s table into the "' + resultsName + '" tab first ' +
         '(include its header row), then run this again.');
-      return;
+      return null;
     }
     const keySheet = ss.getSheetByName(keyName);
     if (!keySheet || keySheet.getLastRow() < 2) {
-      ui.alert('The "' + keyName + '" tab is missing or empty. Run "Anonymize submissions…" first.');
-      return;
+      ui.alert('The "' + keyName + '" tab is missing or empty. Anonymize this row first.');
+      return null;
     }
     const keyRows = keySheet.getRange(2, 1, keySheet.getLastRow() - 1, KEY_HEADERS.length)
       .getDisplayValues();
@@ -47,7 +47,7 @@ function matchAiResults() {
     const parsed = parseResultsTable_(resultsSheet.getDataRange().getDisplayValues());
     if (parsed.error) {
       ui.alert(parsed.error);
-      return;
+      return null;
     }
 
     const reviewSheet = getOrCreateSheet_(reviewName, REVIEW_HEADERS);
@@ -55,7 +55,7 @@ function matchAiResults() {
       const confirm = ui.alert('Replace the review tab?',
         'Some rows in "' + reviewName + '" are already checked as reviewed. Rebuilding it ' +
         'clears those checkmarks.\n\nReplace it?', ui.ButtonSet.YES_NO);
-      if (confirm !== ui.Button.YES) return;
+      if (confirm !== ui.Button.YES) return null;
     }
 
     const review = buildReview_(parsed.rows, studentsByCode_(keyRows, assignmentId));
@@ -70,10 +70,12 @@ function matchAiResults() {
       'Needing a look: ' + review.problems +
       (review.problems ? ' (these are at the top, with the reason in the Problem column)' : ''),
       ui.ButtonSet.OK);
+    return review.matched + ' matched, ' + review.problems + ' to check';
   } catch (err) {
     console.error('matchAiResults failed: ' + err.message);
     ui.alert('Something went wrong while matching results. The Key and AI tabs were ' +
       'not changed.');
+    return null;
   }
 }
 
