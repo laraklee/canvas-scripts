@@ -28,13 +28,6 @@ const PROP_DRY_RUN = 'DRY_RUN';
 const CANVAS_STOP_ALL_TYPES = Object.freeze(['NOT_SET_UP', 'TOKEN_REJECTED', 'UNREACHABLE',
   'RATE_LIMITED', 'BAD_RESPONSE', 'BAD_METHOD']);
 
-/** Adds this file's menu items. Called by onOpen. */
-function addCanvasApiMenuItems_(menu) {
-  menu.addItem('Test Canvas connection', 'testCanvasConnection');
-  menu.addItem('Dry run: show status', 'showDryRunStatus');
-  menu.addItem('Dry run: switch on/off', 'toggleDryRun');
-}
-
 /**
  * Menu: Course Manager › Test Canvas connection.
  * Reads the user's own Canvas profile and reports only "Connected" or the error type.

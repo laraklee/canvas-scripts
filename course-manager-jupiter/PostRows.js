@@ -64,14 +64,6 @@ const BLANK_TIME_END_OF_DAY = Object.freeze({ hours: 23, minutes: 59 });
 const BLANK_TIME_START_OF_DAY = Object.freeze({ hours: 0, minutes: 0 });
 const CREATE_BY_ROW_TIME_LIMIT_MS = 5 * 60 * 1000;
 
-/** Adds this file's menu items. Called by onOpen. */
-function addCreateByRowMenuItems_(menu) {
-  menu.addSeparator();
-  menu.addItem('Preview selected rows', 'previewRows');
-  menu.addItem('Post selected rows', 'postRows');
-  menu.addItem('Check createByRow labels', 'checkCreateByRowLabels');
-}
-
 /** Button / menu: Check createByRow labels. Lists any row 3 labels that are missing. */
 function checkCreateByRowLabels() {
   const ui = SpreadsheetApp.getUi();

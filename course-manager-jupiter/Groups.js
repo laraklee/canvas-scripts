@@ -34,14 +34,6 @@ const GROUPS_ID_HEADER = 'GroupID';
 const GROUPS_NAME_HEADER = 'Group Names';
 const GROUPS_TIME_LIMIT_MS = 5 * 60 * 1000;
 
-/** Adds this file's menu items. Called by onOpen. */
-function addGroupsMenuItems_(menu) {
-  menu.addSeparator();
-  menu.addItem('Create group category', 'createGroupCategory');
-  menu.addItem('Create groups', 'createGroups');
-  menu.addItem('Clear group data', 'clearGroupData');
-}
-
 /**
  * Button / menu: Clear group data. Clears the category ID and link (D2, E2) and every
  * GroupID below the header, so the tab is ready for a new set. Changes nothing in Canvas;

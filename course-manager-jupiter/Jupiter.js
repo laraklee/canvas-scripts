@@ -33,15 +33,6 @@ const JUPITER_CATEGORY_RANGE = 'cfg_JupiterCategories';
 const JUPITER_CATEGORY_HEADERS = Object.freeze(['Canvas category', 'Export to Jupiter?',
   'Canvas group ID']);
 
-/** Adds this file's menu items. Called by onOpen. */
-function addJupiterMenuItems_(menu) {
-  menu.addSeparator();
-  menu.addItem('Refresh Jupiter categories', 'refreshJupiterCategories');
-  menu.addItem('CreateRoster (grading sheet)', 'createActiveSheetRoster');
-  menu.addItem('Update Grades → JupiterExport (grading sheet)',
-    'buildJupiterExportFromRecentCanvasGrades');
-}
-
 /**
  * Menu (and Config button): Course Manager › Refresh Jupiter categories.
  * Nothing changes unless Canvas answers with at least one assignment group.

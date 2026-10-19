@@ -11,11 +11,6 @@
 const PROP_TOKEN = 'CANVAS_TOKEN';
 const PROP_BASE_URL = 'CANVAS_BASE_URL';
 
-/** Adds this file's menu items. Called by onOpen. */
-function addCredentialsMenuItems_(menu) {
-  menu.addItem('Set Canvas token', 'setCanvasCredentials');
-}
-
 /**
  * Menu: Course Manager › Set Canvas token.
  * Asks for the Canvas address, then the token. Saves nothing unless both steps finish.

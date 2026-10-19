@@ -382,7 +382,8 @@
 >   excused/ungraded stay blank; only student rows with a numeric "(ID)" count; the alert
 >   counts JupiterExport students with no match in F. Reads Canvas only (no writes, so dry
 >   run doesn't apply); no new permissions. Offline check: `scripts/checks/jupiter-export.check.js`.
-> - **Rubric export (2026-10-18, written; offline checks pass; not yet tested in Google).**
+> - **Rubric export (2026-10-18, tested: exported from Lara's template tab and imported
+>   into Canvas, "worked great"; she put a button on the template tab).**
 >   New `Rubrics.js`: `exportRubricToCanvasFormat` (legacy name; menu "Export rubric for
 >   Canvas (this tab)"). Lara's decisions: **CSV import, not a direct Canvas write**
 >   (no write code; she reviews, then Canvas › Rubrics › Import; a direct "create and
@@ -398,6 +399,20 @@
 >   Name, Criteria Description, Criteria Enable Range = FALSE, then Rating Name/
 >   Description/Points per rating). Lara is reviving rubrics to use Canvas's built-in
 >   grading. Offline check: `scripts/checks/rubric.check.js`.
+> - **Menus rebuilt (2026-10-18, written; offline checks pass; not yet tested in Google).** Lara's decisions:
+>   **two menus** (like legacy's "Canvas Tools" / "Setup & Admin"): **Canvas Tools**
+>   (🏠 Go to Home page; Create in Canvas; Assignment order; Groups; Rubrics; Jupiter;
+>   Build seating chart) and **Setup & Data** (Refresh all tables; each refresh; Refresh
+>   Jupiter categories, kept separate and manual; Setup & safety: token, connection, dry
+>   run, Check setup, the two label checks). The Home page buttons stay the everyday way
+>   in. New `Menus.js` builds both (onOpen calls `buildMenus_()`); the twelve per-file
+>   `add…MenuItems_` helpers were removed. **Refresh all tables** = course list, people
+>   list, assignment groups, section list, sheet index (not Jupiter categories); one
+>   failing doesn't stop the rest; one summary. `refreshCourseList`'s work moved into
+>   `writeCourseListSheet_` (same behavior) so it can be shared. **Go to Home page**
+>   finds the tab whose name is "Home" ignoring emoji ("🏠 Home"). Function names
+>   unchanged, so buttons keep working. Offline check `scripts/checks/menus.check.js`
+>   also confirms every menu item names a real function.
 > - **Next:** Lara tries the CSV import into Jupiter; other tools from Lara's
 >   Decision column in `docs/legacy-function-map.md`. Button ideas for later (Lara still
 >   deciding): a "refresh all ref tables" button, buttons on the Assignment Order tab.

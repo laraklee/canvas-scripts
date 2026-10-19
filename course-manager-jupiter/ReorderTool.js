@@ -37,15 +37,6 @@ const ORDER_PREVIEW_LINES = 10;
 // Apps Script stops a run at 6 minutes; Push stops sending before then.
 const PUSH_TIME_LIMIT_MS = 5 * 60 * 1000;
 
-/** Adds this file's menu items. Called by onOpen. */
-function addReorderToolMenuItems_(menu) {
-  menu.addSeparator();
-  menu.addItem('Open reorder tool', 'openReorderTool');
-  menu.addItem('Number selected rows 1, 2, 3…', 'numberSelectedRows');
-  menu.addItem('Preview reorder', 'previewReorder');
-  menu.addItem('Push reorder', 'pushReorder');
-}
-
 /**
  * Menu: Course Manager › Open reorder tool.
  * Refreshes ref_assignmentGroups from Canvas, then rebuilds Assignment Order with one row

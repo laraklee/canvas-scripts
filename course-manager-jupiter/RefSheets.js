@@ -51,14 +51,6 @@ const ASSIGNMENT_GROUPS_HEADERS = Object.freeze(['Assignment ID', 'Assignment Na
 const SECTION_LOOKUP_HEADERS = Object.freeze(['Section ID', 'Section Name', 'Period',
   'Section ID Copy']);
 
-/** Adds this file's menu items. Called by onOpen. */
-function addRefSheetsMenuItems_(menu) {
-  menu.addItem('Refresh course list', 'refreshCourseList');
-  menu.addItem('Refresh people list', 'refreshPeopleList');
-  menu.addItem('Refresh assignment groups', 'refreshAssignmentGroups');
-  menu.addItem('Refresh section list', 'refreshSectionList');
-}
-
 /**
  * Menu: Course Manager › Refresh course list.
  * Replaces ref_CourseIDs columns A:B with your active teacher courses from Canvas,
@@ -68,30 +60,40 @@ function addRefSheetsMenuItems_(menu) {
 function refreshCourseList() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   try {
-    const existing = ss.getSheetByName(SHEETS.COURSE_IDS);
-    if (existing) checkHeaderLayout_(existing, COURSE_IDS_HEADERS);
-
-    const courses = canvasGet_('/courses', {
-      enrollment_type: 'teacher',
-      enrollment_state: 'active',
-      'state[]': ['available', 'unpublished'],
-    });
-    if (!Array.isArray(courses)) throw sheetProblem_('Canvas did not return a course list.');
-    const rows = courses
-      .map(course => [course.id, course.name || ''])
-      .sort((a, b) => String(a[1]).localeCompare(String(b[1])));
-
-    const sheet = existing || createRefSheet_(ss, SHEETS.COURSE_IDS);
-    sheet.getRange(1, 1, 1, COURSE_IDS_HEADERS.length)
-      .setValues([COURSE_IDS_HEADERS.slice()]).setFontWeight('bold');
-    replaceDataRows_(sheet, rows, COURSE_IDS_HEADERS.length);
-    getRefreshedCell_(ss, sheet, COURSE_IDS_REFRESHED).setValue(new Date());
-
-    console.log(`Refresh course list: ${rows.length} course(s) written.`);
-    ss.toast(`${rows.length} course(s) listed on ${SHEETS.COURSE_IDS}.`, 'Refresh course list', 5);
+    const count = writeCourseListSheet_(ss);
+    ss.toast(`${count} course(s) listed on ${SHEETS.COURSE_IDS}.`, 'Refresh course list', 5);
   } catch (error) {
     reportRefreshFailure_('Refresh course list', 'The course list was not changed.', error);
   }
+}
+
+/**
+ * Does the work of Refresh course list without any pop-up, so Refresh all tables can
+ * call it too. Returns the number of courses. Throws on any problem, before the sheet is
+ * touched if Canvas fails.
+ */
+function writeCourseListSheet_(ss) {
+  const existing = ss.getSheetByName(SHEETS.COURSE_IDS);
+  if (existing) checkHeaderLayout_(existing, COURSE_IDS_HEADERS);
+
+  const courses = canvasGet_('/courses', {
+    enrollment_type: 'teacher',
+    enrollment_state: 'active',
+    'state[]': ['available', 'unpublished'],
+  });
+  if (!Array.isArray(courses)) throw sheetProblem_('Canvas did not return a course list.');
+  const rows = courses
+    .map(course => [course.id, course.name || ''])
+    .sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+
+  const sheet = existing || createRefSheet_(ss, SHEETS.COURSE_IDS);
+  sheet.getRange(1, 1, 1, COURSE_IDS_HEADERS.length)
+    .setValues([COURSE_IDS_HEADERS.slice()]).setFontWeight('bold');
+  replaceDataRows_(sheet, rows, COURSE_IDS_HEADERS.length);
+  getRefreshedCell_(ss, sheet, COURSE_IDS_REFRESHED).setValue(new Date());
+
+  console.log(`Refresh course list: ${rows.length} course(s) written.`);
+  return rows.length;
 }
 
 /**

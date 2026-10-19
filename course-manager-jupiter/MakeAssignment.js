@@ -79,17 +79,6 @@ const MAKE_ASSIGNMENT_SUBMISSION_TYPES = Object.freeze(['online_upload', 'online
   'online_url', 'media_recording', 'student_annotation', 'on_paper', 'none',
   'external_tool']);
 
-/** Adds this file's menu items. Called by onOpen. */
-function addMakeAssignmentMenuItems_(menu) {
-  menu.addSeparator();
-  menu.addItem('Preview assignment (this tab)', 'previewAssignment');
-  menu.addItem('makeAll: create assignment, overrides, questions (this tab)',
-    'makeAssignmentAll');
-  menu.addItem('Get Times: Due Time dropdowns (this tab)', 'createDropdowns1');
-  menu.addItem('Clear IDs, Status, Payload (this tab)', 'clearCreationIDs');
-  menu.addItem('Check makeAssignment labels (this tab)', 'checkMakeAssignmentLabels');
-}
-
 /**
  * Button / menu: Preview. Fills Payload and Status for the item, each override row, and
  * each question row with what makeAll would send. Never sends anything, whatever the

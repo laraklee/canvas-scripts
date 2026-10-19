@@ -10,25 +10,12 @@
  */
 
 /**
- * This is the project's only onOpen. Other files add their menu items through
- * helper functions that onOpen calls; never add a second onOpen.
+ * This is the project's only onOpen; never add a second one. Both menus are built in
+ * Menus.js (add new menu items there).
  * Runs automatically when the spreadsheet opens. Silent when setup is complete.
  */
 function onOpen() {
-  const menu = SpreadsheetApp.getUi().createMenu('Course Manager');
-  addSetupMenuItems_(menu);
-  addCredentialsMenuItems_(menu);
-  addCanvasApiMenuItems_(menu);
-  addRefSheetsMenuItems_(menu);
-  addReorderToolMenuItems_(menu);
-  addSheetIndexMenuItems_(menu);
-  addSeatingChartMenuItems_(menu);
-  addJupiterMenuItems_(menu);
-  addGroupsMenuItems_(menu);
-  addCreateByRowMenuItems_(menu);
-  addMakeAssignmentMenuItems_(menu);
-  addRubricMenuItems_(menu);
-  menu.addToUi();
+  buildMenus_();
 
   // Rebuild ref_Index first (silently), so a new one exists before the setup check.
   try {
@@ -51,11 +38,6 @@ function onOpen() {
       console.error('Could not show the setup alert: ' + alertError.message);
     }
   }
-}
-
-/** Adds this file's menu items. onOpen calls one helper like this per file. */
-function addSetupMenuItems_(menu) {
-  menu.addItem('Check setup', 'checkSetup');
 }
 
 /** Menu: Course Manager › Check setup. Says "Setup OK" when nothing is missing. */

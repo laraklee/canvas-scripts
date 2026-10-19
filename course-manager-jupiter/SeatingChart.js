@@ -27,12 +27,6 @@ const SEATING_FONT = 'Palatino';
 const SEATING_FIRST_NAME_SIZE = 21;
 const SEATING_LAST_NAME_SIZE = 15;
 
-/** Adds this file's menu items. Called by onOpen. */
-function addSeatingChartMenuItems_(menu) {
-  menu.addSeparator();
-  menu.addItem('Build seating chart', 'buildSeatingChart');
-}
-
 /**
  * Menu (and Home button): Course Manager › Build seating chart.
  * Asks first, refreshes the roster and sections from Canvas, then adds the boxes.

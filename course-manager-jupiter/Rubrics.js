@@ -31,12 +31,6 @@ const RUBRIC_EXPORT_HEADERS = Object.freeze(['Rubric Name', 'Criteria Name',
 const RUBRIC_RATING_HEADERS = Object.freeze(['Rating Name', 'Rating Description',
   'Rating Points']);
 
-/** Adds this file's menu items. Called by onOpen. */
-function addRubricMenuItems_(menu) {
-  menu.addSeparator();
-  menu.addItem('Export rubric for Canvas (this tab)', 'exportRubricToCanvasFormat');
-}
-
 /**
  * Button / menu: Export rubric for Canvas. Reads the rubric tab being viewed and replaces
  * the rubricCanvasExport tab (created if missing) with Canvas's import layout.

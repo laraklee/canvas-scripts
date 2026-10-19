@@ -19,12 +19,6 @@ const INDEX_HEADER_COLOR = '#FFEB9C';
 const INDEX_STRIPE_EVEN = '#FFFFFF';
 const INDEX_STRIPE_ODD = '#FFF2CC';
 
-/** Adds this file's menu items. Called by onOpen. */
-function addSheetIndexMenuItems_(menu) {
-  menu.addSeparator();
-  menu.addItem('Refresh sheet index', 'refreshSheetIndex');
-}
-
 /**
  * Menu (and Home button): Course Manager › Refresh sheet index.
  * Rebuilds ref_Index and updates cfg_ThisSheetID.
