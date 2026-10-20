@@ -19,8 +19,9 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 > - **Pushed to Gastronomy and AI9** too (see "Other sheets using this code"); token set
 >   and a dry run checked in each.
 > - **Dry run is OFF on all three sheets**, by Lara's choice, for everyday posting.
-> - **Next (step 3a):** add a "Post selected rows to Canvas" menu item (`00_Config.js`).
-> - **Then (step 3b):** as a separate careful change, an explicit narrow `oauthScopes`
+> - **Step 3a done, pushed to all three sheets:** **📤 Post selected rows to Canvas** is
+>   the first item in the Canvas Tools menu (same function as the drawn button).
+> - **Next (step 3b):** as a separate careful change, an explicit narrow `oauthScopes`
 >   list in `appsscript.json` (it needs full `spreadsheets` if the master sheet is
 >   opened by ID; check first). Each sheet re-authorizes once afterward.
 
