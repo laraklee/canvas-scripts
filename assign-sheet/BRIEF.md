@@ -20,6 +20,16 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 >   separate careful change, an explicit narrow `oauthScopes` list in `appsscript.json`
 >   (it needs full `spreadsheets` if the master sheet is opened by ID; check first).
 
+## Other sheets using this code
+
+Gastronomy and AI9 Assignment sheets run the same code (checked identical to commit
+`8d4fe03` on 2026-10-19). Settings files: `.clasp-gastronomy.json`, `.clasp-ai9.json`.
+Push from `assign-sheet/` after pushing Biology:
+`clasp push -P 'C:\Users\lalee\Code\canvas-scripts\assign-sheet\.clasp-gastronomy.json'`
+(same for `-ai9`). On Windows, clasp 3.4.1 needs the full backslash path (relative paths
+and `/` fail its security check). On the Mac, use the full path. After the first push to
+each sheet: reload, **Set Canvas token**, check dry run is ON, one dry run.
+
 ## Post selected rows (03_Content_Sync.js)
 
 calendarEvents sheet: header row 2, data from row 3. Columns: A Calendar ☐, B
