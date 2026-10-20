@@ -5,8 +5,10 @@
  * Creates the custom menu for tools.
  */
 function onOpen() {
-  var ui = SpreadsheetApp.getUi();
+  const ui = SpreadsheetApp.getUi();
   ui.createMenu('Canvas Tools')
+    .addItem('📤 Post selected rows to Canvas', 'processUnifiedSheetForCanvasWithLinks') // 03_Content_Sync.js
+    .addSeparator()
     .addItem('Set Canvas token', 'setCanvasCredentials')       // 06_Credentials.js
     .addItem('Test Canvas connection', 'testCanvasConnection') // 05_CanvasApi.js
     .addItem('Dry run: show status', 'showDryRunStatus')
