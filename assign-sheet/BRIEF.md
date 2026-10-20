@@ -21,9 +21,13 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 > - **Dry run is OFF on all three sheets**, by Lara's choice, for everyday posting.
 > - **Step 3a done, pushed to all three sheets:** **📤 Post selected rows to Canvas** is
 >   the first item in the Canvas Tools menu (same function as the drawn button).
-> - **Next (step 3b):** as a separate careful change, an explicit narrow `oauthScopes`
->   list in `appsscript.json` (it needs full `spreadsheets` if the master sheet is
->   opened by ID; check first). Each sheet re-authorizes once afterward.
+> - **Step 3b done, pushed to all three sheets, tested:** `appsscript.json` lists
+>   `spreadsheets.currentonly`, `script.container.ui`, `script.external_request`. Full
+>   `spreadsheets` is not needed: the master calendar comes in by `IMPORTRANGE` in the
+>   sheet, and the script never opens it by ID (`MASTER_SHEET_ID` is read but unused).
+>   All three sheets re-authorized; no old broad access left.
+> - **Next:** nothing planned. A new Google service in the code (e.g. `MailApp`,
+>   `openById`) needs its scope added here, or that item fails with a permission error.
 
 ## Other sheets using this code
 
@@ -34,6 +38,8 @@ Push from `assign-sheet/` after pushing Biology:
 (same for `-ai9`). On Windows, clasp 3.4.1 needs the full backslash path (relative paths
 and `/` fail its security check). On the Mac, use the full path. After the first push to
 each sheet: reload, **Set Canvas token**, check dry run is ON, one dry run.
+If `appsscript.json` changed, clasp says "Skipping push": that's its manifest question
+answered no. Confirm the change is intended, then add `--force`.
 
 ## Post selected rows (03_Content_Sync.js)
 
