@@ -11,14 +11,18 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 >   Properties `CANVAS_BASE_URL` and `CANVAS_TOKEN`), adapted from course-manager-jupiter.
 >   Menu items Set Canvas token, Test Canvas connection, Dry run: show status / switch
 >   on/off all work. The old "Set API Key" item (showed part of the token) is gone.
-> - **Step 2 done, pushed, NOT yet tested:** `processUnifiedSheetForCanvasWithLinks`
+> - **Step 2 done, pushed, tested:** `processUnifiedSheetForCanvasWithLinks`
 >   (name kept; the drawn **Post selected rows to Canvas** button calls it) now sends
->   through `canvasWrite_`. See "Post selected rows" below.
-> - **Next:** run the step 2 tests with dry run ON (dry run, already-posted skip,
->   missing date, wrong sheet), then one real post with dry run OFF and turn it back ON.
-> - **Step 3 (later):** add a "Post selected rows to Canvas" menu item; then, as a
->   separate careful change, an explicit narrow `oauthScopes` list in `appsscript.json`
->   (it needs full `spreadsheets` if the master sheet is opened by ID; check first).
+>   through `canvasWrite_`. See "Post selected rows" below. Tested in sandbox course 4573
+>   (dry run, real post, already-posted skip, missing date, wrong sheet: all pass);
+>   Biology `*Config*` B4 set back to the real course afterward.
+> - **Pushed to Gastronomy and AI9** too (see "Other sheets using this code"); token set
+>   and a dry run checked in each.
+> - **Dry run is OFF on all three sheets**, by Lara's choice, for everyday posting.
+> - **Next (step 3a):** add a "Post selected rows to Canvas" menu item (`00_Config.js`).
+> - **Then (step 3b):** as a separate careful change, an explicit narrow `oauthScopes`
+>   list in `appsscript.json` (it needs full `spreadsheets` if the master sheet is
+>   opened by ID; check first). Each sheet re-authorizes once afterward.
 
 ## Other sheets using this code
 
