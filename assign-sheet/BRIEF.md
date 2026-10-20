@@ -26,8 +26,17 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 >   `spreadsheets` is not needed: the master calendar comes in by `IMPORTRANGE` in the
 >   sheet, and the script never opens it by ID (`MASTER_SHEET_ID` is read but unused).
 >   All three sheets re-authorized; no old broad access left.
-> - **Next:** nothing planned. A new Google service in the code (e.g. `MailApp`,
->   `openById`) needs its scope added here, or that item fails with a permission error.
+> - **Next:** port the bulk assignment dates tool (`fetchCanvasAssignmentDates` →
+>   `pushAssignmentDatesToCanvas`, legacy `course-manager/03d.AssignmentDates.js`) into
+>   assign-sheet. Lara decided it belongs here, not in course-manager-jupiter. Start with
+>   a read-only plan: what it reads and writes (`PUT /courses/:course/assignments/:id`
+>   changes existing assignments students see; send only changed rows via
+>   `canvasWrite_`), and whether its schedule info depends on Course Manager sheets.
+>   Test in sandbox 4573 (dry run is OFF). Also update
+>   `course-manager-jupiter/docs/still-in-legacy.md`: calendar events and announcements
+>   now live in assign-sheet.
+> - A new Google service in the code (e.g. `MailApp`, `openById`) needs its scope added
+>   to `appsscript.json`, or that item fails with a permission error.
 
 ## Other sheets using this code
 
