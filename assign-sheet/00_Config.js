@@ -7,7 +7,10 @@
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('Canvas Tools')
-    .addItem('Set API Key', 'setUserProperties')
+    .addItem('Set Canvas token', 'setCanvasCredentials')       // 06_Credentials.js
+    .addItem('Test Canvas connection', 'testCanvasConnection') // 05_CanvasApi.js
+    .addItem('Dry run: show status', 'showDryRunStatus')
+    .addItem('Dry run: switch on/off', 'toggleDryRun')
     .addSeparator()
     .addItem('🔄 Update Data from Master', 'runFullScheduleUpdate')   // Runs the Builder (Steps 1-4)
     .addItem('🔗 Reset Master Connection', 'updateMasterConnection') // Restores the IMPORTRANGE (Source)
@@ -66,27 +69,4 @@ function getConfiguredPeriodPairs() {
   return selectedPairs.length > 0 ? selectedPairs : ['1,2', '3,4', '5,6', '7,8'];
 }
 
-/**
- * Securely sets the Canvas API Key in User Properties.
- */
-function setUserProperties() {
-  var ui = SpreadsheetApp.getUi();
-  var userProperties = PropertiesService.getUserProperties();
-  var config = getConfig();
-
-  var currentApiKey = userProperties.getProperty('CANVAS_API_KEY') || '[No API Key set]';
-  var displayKey = currentApiKey === '[No API Key set]' ? currentApiKey : currentApiKey.substring(0, 5) + '...';
-
-  var response = ui.prompt('Set API Key', 
-    'Current Base URL: ' + config.BASE_URL + '\n' +
-    'Current Key: ' + displayKey + '\n\n' +
-    'Enter new Canvas API Key:', ui.ButtonSet.OK_CANCEL);
-
-  if (response.getSelectedButton() == ui.Button.OK) {
-    var newKey = response.getResponseText().trim();
-    if (newKey) {
-      userProperties.setProperty('CANVAS_API_KEY', newKey);
-      ui.alert('Success', 'API Key saved securely.', ui.ButtonSet.OK);
-    }
-  }
-}
+// The Canvas token is now set with Canvas Tools › Set Canvas token (06_Credentials.js).
