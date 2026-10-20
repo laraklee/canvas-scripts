@@ -31,6 +31,9 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 
 ## Other sheets using this code
 
+**Rule:** all three sheets always have identical code. Test every change on Biology
+first, then push to Gastronomy and AI9.
+
 Gastronomy and AI9 Assignment sheets run the same code (checked identical to commit
 `8d4fe03` on 2026-10-19). Settings files: `.clasp-gastronomy.json`, `.clasp-ai9.json`.
 Push from `assign-sheet/` after pushing Biology:
