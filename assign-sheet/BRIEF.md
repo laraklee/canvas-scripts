@@ -4,7 +4,7 @@ The Biology course Assignment sheet (script ID `145GSzd8oPIJ…`). Menu **Canvas
 Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
-> **Where we left off (2026-10-19)**
+> **Where we left off (2026-10-20)**
 >
 > - **Step 1 done, pushed, tested:** `05_CanvasApi.js` (`canvasGet_`, `canvasWrite_`,
 >   DRY_RUN, retries/back-off) and `06_Credentials.js` (**Set Canvas token**: User
@@ -19,8 +19,9 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 > - **Pushed to Gastronomy and AI9** too (see "Other sheets using this code"); token set
 >   and a dry run checked in each.
 > - **Dry run is OFF on all three sheets**, by Lara's choice, for everyday posting.
-> - **Step 3a done, pushed to all three sheets:** **📤 Post selected rows to Canvas** is
->   the first item in the Canvas Tools menu (same function as the drawn button).
+> - **Step 3a done, pushed to all three sheets:** Post selected rows is on the Canvas
+>   Tools menu (same function as the drawn button); since step 5 it is under
+>   **📅 Calendar & announcements**.
 > - **Step 3b done, pushed to all three sheets, tested:** `appsscript.json` lists
 >   `spreadsheets.currentonly`, `script.container.ui`, `script.external_request`. Full
 >   `spreadsheets` is not needed: the master calendar comes in by `IMPORTRANGE` in the
@@ -36,8 +37,11 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 >   Biology `*Config*` B4 back to the real course.
 > - **Steps 4 and 5 pushed to Gastronomy and AI9 and tested** (2026-10-20). All three
 >   sheets match commit `b918fff`; Lara ran live tests in all three: everything fine.
-> - **Next:** update `course-manager-jupiter/docs/still-in-legacy.md`: calendar events,
->   announcements, and assignment dates now live in assign-sheet.
+> - **Docs updated:** `course-manager-jupiter/docs/still-in-legacy.md`, the function map,
+>   and the porting summary record that calendar events, announcements, and assignment
+>   dates now live here.
+> - **Next:** nothing planned. Shelved ideas: per-section (override) dates in Assignment
+>   Dates (no overrides this year); sending name/points from Assignment Dates.
 > - A new Google service in the code (e.g. `MailApp`, `openById`) needs its scope added
 >   to `appsscript.json`, or that item fails with a permission error.
 
