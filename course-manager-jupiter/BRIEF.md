@@ -373,7 +373,8 @@
 >   template: instructions rows 1–3, `Class:` row 6, `Assignment:`, `Date:`, `Possible:`,
 >   `Score:`/`Comment:` row 10, students "Name (JupiterID)" from row 11), then **copies
 >   and pastes** it into Jupiter by hand (Jupiter takes a text paste, not a file upload). Both tabs were copied into the new workbook.
->   Decisions: CreateRoster writes **only A–E** (User ID, Name, Period, Section Name,
+>   Decisions (first version; since 2026-10-21 later runs keep whole rows lined up, see
+>   "CreateRoster keeps rows lined up" below): CreateRoster writes **only A–E** (User ID, Name, Period, Section Name,
 >   Email) from ref_peopleList + ref_SectionLookup; never touches F, other columns,
 >   formatting, or Average rows (asks if the roster would cover one; clears A–E only on
 >   old student rows past the new roster); ends with a **reminder to check the Jupiter IDs
@@ -440,7 +441,15 @@
 >   first, then to the others after Lara's OK. Each workbook needs Set Canvas token once
 >   and its own authorization. Retire each old legacy workbook (keep as archive) once its
 >   course is live on the new one, so two workbooks never write to the same course.
-> - **Next step being planned (2026-10-20): CreateRoster keeps rows lined up.** Problem:
+> - **CreateRoster keeps rows lined up: done (2026-10-21, commit 193413a; pushed to
+>   Google and tested by Lara on a copy of the Biology Comments tab, "worked perfectly
+>   on all counts"):** no-change rerun; pretend dropped row highlighted, No changed
+>   nothing, Yes deleted it; a deleted student came back in sorted place with F blank;
+>   new row's formatting matched. For multi-section sheets made by the old code (sorted
+>   by name only), Lara chose to **re-sort once by Period, then name** rather than have
+>   the tool recognize name-only order; until then, new students go after the last
+>   student in their period. Planning notes below kept for the record.
+> - **Planned (2026-10-20): CreateRoster keeps rows lined up.** Problem:
 >   CreateRoster rewrites A–E sorted by name and leaves F onward (Jupiter IDs, test
 >   scores) in place, so after an add or drop the other columns no longer match the names.
 >   Since it now always refreshes first, a rerun picks up every enrollment change. Lara's
@@ -776,6 +785,8 @@ Update this list as each piece lands. "Tested" means Lara confirmed it in the Sh
   - Design rules for reference sheets: recorded (see that section).
   - Seating chart (`SeatingChart.js`, "Build seating chart"): built and tested.
   - Jupiter categories (`Jupiter.js`, "Refresh Jupiter categories"): built and tested.
+  - CreateRoster (`Jupiter.js`): refreshes first, keeps rows lined up on reruns (match by
+    User ID; insert/delete whole rows, delete after highlight + Yes): built and tested.
   - `ref_Config`: finished for now; hidden by Lara.
   - Groups (`Groups.js`, three `createGroups`-tab buttons): built and tested.
   - createByRow (`PostRows.js`): all four types (A, D, CQ, NQ) and the optional Published

@@ -41,7 +41,7 @@
 | `formatDisplayDateTime_` | 03d.AssignmentDates.js | formatDisplayDateTime_ (assign-sheet/07_AssignmentDates.js) |
 | `mergeDateAndTimeIso_` | 03d.AssignmentDates.js | parseSheetDateTime_ (assign-sheet/07_AssignmentDates.js): also rejects bad dates and a date with no time |
 | `getNextPageUrl_` | 03d.AssignmentDates.js | getCanvasNextUrl_ (CanvasApi.js), the one shared paging helper |
-| `createActiveSheetRoster` | 04_CommTools.js | createActiveSheetRoster (Jupiter.js): writes A–E only (legacy cleared A–J); reminds to check Jupiter IDs in F |
+| `createActiveSheetRoster` | 04_CommTools.js | createActiveSheetRoster (Jupiter.js): writes A–E (legacy cleared A–J); reruns keep whole rows lined up by User ID (adds inserted, drops deleted after Yes) |
 | `runFullDataRefresh` | 05_DataSync.js | refreshAllTables (Menus.js): course list, people, assignment groups, sections, sheet index; not Jupiter categories |
 | `createPeopleList` | 06_DataSetup.js | refreshPeopleList + writePeopleListSheet_ (RefSheets.js) |
 | `createAssignmentGroupsList` | 06_DataSetup.js | refreshAssignmentGroups + writeAssignmentGroupsSheet_ (RefSheets.js) |

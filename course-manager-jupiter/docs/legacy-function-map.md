@@ -113,7 +113,7 @@ All of these read the assignment builder layout on the active sheet (row 3 = ite
 
 | Function | Purpose | Menu item | Sheets | Canvas endpoints | Writes? | Notes | Decision |
 |---|---|---|---|---|---|---|---|
-| `createActiveSheetRoster` | Writes a student roster table onto the active sheet | CT › 1. Roster & Data Sync › Create Roster Table | active, `*peopleList*`, `*SectionLookup*` | — | no | | ported → createActiveSheetRoster (Jupiter.js): writes A–E only (legacy cleared A–J); reminds to check Jupiter IDs in F |
+| `createActiveSheetRoster` | Writes a student roster table onto the active sheet | CT › 1. Roster & Data Sync › Create Roster Table | active, `*peopleList*`, `*SectionLookup*` | — | no | | ported → createActiveSheetRoster (Jupiter.js): writes A–E (legacy cleared A–J); reruns keep whole rows lined up by User ID (adds inserted, drops deleted after Yes) |
 | `sendEmailsToSelected` | Sends one Gmail message, BCC to the selected people | SA › Email & Dev Tools › Send Emails (BCC Selected) | active | — | no | **Sends email** (Gmail, not Canvas) | later: wait and see if anyone misses the email tools (Lara) |
 | `generateEmailList` | Writes an email list table at the active cell | SA › Email & Dev Tools › Generate Email List | active, `*peopleList*`, `*SectionLookup*` | — | no | | later: wait and see if anyone misses the email tools (Lara) |
 

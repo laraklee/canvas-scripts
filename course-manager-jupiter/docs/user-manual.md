@@ -124,10 +124,16 @@ Groups are created empty (no students are added).
    in Canvas.
 
 ### Jupiter grades
-1. On your grading sheet (e.g. **Comments**), click **CreateRoster** once per class.
-   It fills columns A–E only.
-2. Type each student's **Jupiter ID** into column F (from a Jupiter export). The IDs
-   don't move if the roster changes; re-check them whenever students are added/dropped.
+1. On your grading sheet (e.g. **Comments**), click **CreateRoster**. The first time,
+   it fills columns A–E, sorted by Period, then name.
+2. Type each student's **Jupiter ID** into column F (from a Jupiter export).
+   - **After adds and drops, click CreateRoster again.** Each row stays with its student.
+     A new student gets a whole new row (type their Jupiter ID in F; the pop-up gives
+     the row number). A dropped student's row turns light red and you're asked before
+     it's deleted (No changes nothing).
+   - If a student changed period, the pop-up gives the row; re-sort by Period, then
+     name, if you want them grouped. Keep multi-section sheets sorted that way so new
+     students land in the right spot.
 3. Click **Update Grades**. Choose how many days back to look (default: since the last
    sync in B1). It fills **JupiterExport** with recently graded work from the categories
    ticked on ref_Config. Scores are Canvas's final scores (after any late penalty).
