@@ -476,7 +476,8 @@
 > - **Next:** fixes from the field test; Lara reports on the first real Jupiter paste;
 >   other tools from Lara's
 >   Decision column in `docs/legacy-function-map.md`. Button ideas for later (Lara still
->   deciding): a "refresh all ref tables" button, buttons on the Assignment Order tab.
+>   deciding): buttons on the Assignment Order tab. (Done 2026-10-21: Lara added a Home
+>   button assigned to `refreshAllTables`; no code change.)
 > - **Legacy review finished (2026-10-20):** every legacy function now has a decision
 >   (see `docs/still-in-legacy.md`). Left behind: API Batch runner, grade PDFs (Jupiter's
 >   reports replace them), unused helpers. Later, if needed: email tools (wait and see),
