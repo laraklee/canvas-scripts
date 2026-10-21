@@ -34,8 +34,8 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 >   submenus (see "Menu" below), and date pickers on the Assignment Dates date cells
 >   (commit `b918fff`). Lara confirmed Send with a live course assignment, then set
 >   Biology `*Config*` B4 back to the real course.
-> - **Steps 4 and 5 pushed to Gastronomy and AI9** (2026-10-20). All three sheets match
->   commit `b918fff`.
+> - **Steps 4 and 5 pushed to Gastronomy and AI9 and tested** (2026-10-20). All three
+>   sheets match commit `b918fff`; Lara ran live tests in all three: everything fine.
 > - **Next:** update `course-manager-jupiter/docs/still-in-legacy.md`: calendar events,
 >   announcements, and assignment dates now live in assign-sheet.
 > - A new Google service in the code (e.g. `MailApp`, `openById`) needs its scope added
