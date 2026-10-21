@@ -3,9 +3,11 @@
  * Purpose: Jupiter Grades tools (button and menu names match legacy):
  *   - createActiveSheetRoster (CreateRoster button on the grading sheet, e.g. Comments):
  *     refreshes ref_peopleList and ref_SectionLookup first (design rule: refresh before
- *     use), then writes the students into A–E (row 2 labels,
- *     students from row 3). Nothing else changes; reminds Lara to check the Jupiter IDs
- *     she types into F, which don't move with the roster.
+ *     use). On a sheet with no students yet, writes them into A–E (row 2 labels, students
+ *     from row 3, Period then name). On a sheet with students, matches them by User ID in
+ *     A so every row stays lined up: refreshes A–E in place, inserts a whole row for each
+ *     new student, and deletes the whole row of each dropped student after highlighting
+ *     those rows and asking (row numbers only in the message).
  *   - buildJupiterExportFromRecentCanvasGrades (Update Grades button): fills the
  *     JupiterExport tab (Jupiter's import template) with scores for assignments graded
  *     recently in the checked categories; Lara copies and pastes it into Jupiter. Sends the
@@ -124,11 +126,11 @@ const JUPITER_DEFAULT_DAYS = 7;
 
 /**
  * Button / menu: CreateRoster (legacy name createActiveSheetRoster). Refreshes
- * ref_peopleList and ref_SectionLookup from Canvas, then writes the course's students into columns
- * A–E of the sheet being viewed: row 2 labels, students from row 3, sorted by name.
- * Nothing else on the sheet changes: not the Jupiter IDs in F, score or comment
- * columns, formatting, or rows like Average (asks first if the roster would cover one).
- * Ends with a reminder to check the Jupiter IDs, which don't move with the roster.
+ * ref_peopleList and ref_SectionLookup from Canvas, then fills columns A–E of the sheet
+ * being viewed (row 2 labels, students from row 3, sorted by Period, then name).
+ * First run (no students on the sheet): writes the roster; nothing else changes (asks
+ * first if the roster would cover a row like Average). Later runs: applyRosterPlan_ keeps
+ * each whole row with its student (adds and drops move every column together).
  */
 function createActiveSheetRoster() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -147,12 +149,18 @@ function createActiveSheetRoster() {
       throw sheetProblem_(`${SHEETS.PEOPLE_LIST} has no students. Run Refresh people list.`);
     }
 
-    // Old student rows (a numeric User ID in A) beyond the new roster are cleared in A–E
-    // only. Rows with other content in A–E (e.g. Average) are never cleared, and covering
-    // one with the new roster needs a Yes.
     const lastRow = Math.max(sheet.getLastRow(), ROSTER_FIRST_ROW + rows.length - 1);
     const current = sheet.getRange(ROSTER_FIRST_ROW, 1, lastRow - ROSTER_FIRST_ROW + 1,
       ROSTER_HEADERS.length).getDisplayValues();
+    // A sheet that already has students: keep every row lined up with its student.
+    const plan = planRosterUpdate_(current, rows, ROSTER_FIRST_ROW);
+    if (plan) {
+      applyRosterPlan_(sheet, plan);
+      return;
+    }
+
+    // First run (no students yet). Rows with other content in A–E (e.g. Average) are
+    // never cleared, and covering one with the new roster needs a Yes.
     const { covered, staleRows } = rosterRowsToChange_(current, rows.length, ROSTER_FIRST_ROW);
     if (covered.length) {
       const answer = ui.alert('CreateRoster', `The new roster (${rows.length} students) would ` +
@@ -172,18 +180,91 @@ function createActiveSheetRoster() {
       `${ROSTER_FIRST_ROW}–${ROSTER_FIRST_ROW + rows.length - 1}).` +
       (staleRows.length ? `\n${staleRows.length} old student row(s) below were cleared in A–E.` :
         '') +
-      '\n\nPlease check the Jupiter IDs in column F. They don\'t move with the roster, so if ' +
-      'students were added, dropped, or reordered, update column F (and any typed-in ' +
-      'columns, like comments) by hand before using Update Grades.', ui.ButtonSet.OK);
+      '\n\nType each student\'s Jupiter ID in column F before using Update Grades. Later ' +
+      'runs keep each row with its student.', ui.ButtonSet.OK);
   } catch (error) {
     reportRefreshFailure_('CreateRoster', 'The sheet was not changed.', error);
   }
 }
 
+// Background for rows CreateRoster is asking to delete (light red).
+const ROSTER_DROP_HIGHLIGHT = '#f4cccc';
+
+/**
+ * Carries out planRosterUpdate_'s plan on the grading sheet. Asks before deleting any
+ * row (No changes nothing). Then refreshes kept students' A–E in place and deletes and
+ * inserts whole rows, from the bottom up so the planned row numbers stay right.
+ * Messages give counts and row numbers only.
+ */
+function applyRosterPlan_(sheet, plan) {
+  const ui = SpreadsheetApp.getUi();
+  if (plan.drops.length && !confirmRosterDrops_(sheet, plan.drops)) {
+    ui.alert('CreateRoster', 'Nothing was changed.', ui.ButtonSet.OK);
+    return;
+  }
+
+  sheet.getRange(ROSTER_HEADER_ROW, 1, 1, ROSTER_HEADERS.length)
+    .setValues([ROSTER_HEADERS.slice()]);
+  plan.updates.forEach(update =>
+    sheet.getRange(update.row, 1, 1, ROSTER_HEADERS.length).setValues([update.values]));
+
+  const insertsAt = new Map(); // row number -> new students going just before it
+  plan.inserts.forEach(insert =>
+    insertsAt.set(insert.before, (insertsAt.get(insert.before) || []).concat([insert.values])));
+  const rowsToChange = [...new Set(plan.drops.concat([...insertsAt.keys()]))].sort((a, b) => b - a);
+  rowsToChange.forEach(row => {
+    // At the same row, delete first, so the new rows aren't the ones deleted.
+    if (plan.drops.includes(row)) sheet.deleteRow(row);
+    const added = insertsAt.get(row);
+    if (!added) return;
+    // Inserting after the row above copies a student row's formatting (not the labels').
+    if (row - 1 >= ROSTER_FIRST_ROW) sheet.insertRowsAfter(row - 1, added.length);
+    else sheet.insertRowsBefore(row, added.length);
+    sheet.getRange(row, 1, added.length, ROSTER_HEADERS.length).setValues(added);
+  });
+
+  console.log(`CreateRoster update: ${plan.keptCount} kept, ${plan.updates.length} refreshed, ` +
+    `${plan.inserts.length} added, ${plan.drops.length} deleted, ` +
+    `${plan.periodChangedRows.length} changed period.`);
+  ui.alert('CreateRoster', `Roster updated: ${plan.keptCount} student row(s) kept ` +
+    `(${plan.updates.length} with changes in A–E), ${plan.inserts.length} added, ` +
+    `${plan.drops.length} deleted.` +
+    (plan.addedRows.length ? `\n\nNew student row(s): ${plan.addedRows.join(', ')}. Type ` +
+      'their Jupiter IDs in column F before using Update Grades.' : '') +
+    (plan.periodChangedRows.length ? `\n\nRow(s) ${plan.periodChangedRows.join(', ')} changed ` +
+      'period. Re-sort if you want students grouped by section.' : ''), ui.ButtonSet.OK);
+}
+
+/**
+ * Highlights the rows to delete, scrolls to them, and asks (row numbers only, so names
+ * are seen in the sheet, never in the message). Unless the answer is Yes, the rows get
+ * their colors back. Returns true for Yes.
+ */
+function confirmRosterDrops_(sheet, drops) {
+  const ui = SpreadsheetApp.getUi();
+  const ranges = drops.map(row => sheet.getRange(row, 1, 1, sheet.getLastColumn()));
+  const saved = ranges.map(range => ({ range, colors: range.getBackgrounds() }));
+  let answer = ui.Button.NO;
+  try {
+    ranges.forEach(range => range.setBackground(ROSTER_DROP_HIGHLIGHT));
+    sheet.setActiveRange(ranges[0]);
+    SpreadsheetApp.flush();
+    answer = ui.alert('CreateRoster', `${drops.length} student(s) on this sheet are no longer ` +
+      `in the Canvas course: the highlighted row(s) ${drops.join(', ')}.\n\nDelete these ` +
+      'whole rows? Their Jupiter ID, scores, and comments on this sheet are deleted too ' +
+      '(Canvas keeps their records).\n\nYes: update the roster and delete them.\nNo: change ' +
+      'nothing.', ui.ButtonSet.YES_NO);
+  } finally {
+    if (answer !== ui.Button.YES) saved.forEach(s => s.range.setBackgrounds(s.colors));
+  }
+  return answer === ui.Button.YES;
+}
+
 /**
  * Roster rows [User ID, Name, Period, Section Name, Email] for each student (Role
  * StudentEnrollment), once each (a student in two sections keeps the first), sorted by
- * name. Section name and period come from the sections table ('N/A' if not found).
+ * Period, then name. Section name and period come from the sections table ('N/A' if not
+ * found).
  */
 function buildRosterRows_(people, sections) {
   const sectionById = new Map(sections.map(section =>
@@ -203,7 +284,84 @@ function buildRosterRows_(people, sections) {
         section ? section.Period : 'N/A', section ? section['Section Name'] : 'N/A',
         person.Email];
     })
-    .sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+    .sort(compareRosterRows_);
+}
+
+/** Roster order: Period (3 before 10; 'N/A' after numbers), then name. */
+function compareRosterRows_(a, b) {
+  return String(a[2]).localeCompare(String(b[2]), undefined, { numeric: true }) ||
+    String(a[1]).localeCompare(String(b[1]));
+}
+
+/**
+ * How to update a sheet that already has students, from the current A–E text starting at
+ * firstRow and the new roster rows (in roster order). Students are matched by the User ID
+ * in A. Returns null if the sheet has no students yet (first run). Otherwise, with row
+ * numbers as they are now:
+ *   updates: kept students whose A–E text changes ({ row, values });
+ *   drops: rows of students no longer in the roster (whole rows to delete);
+ *   inserts: new students ({ before, values }), each a whole row going just before that
+ *     row number (in roster order when several share one);
+ * and, as they will be after the changes, for the final message: addedRows (the new
+ * students) and periodChangedRows (kept students whose period changed; not moved).
+ * Stops if one User ID is on two rows, or if more than half the sheet's students would be
+ * deleted (most likely a short list from Canvas).
+ */
+function planRosterUpdate_(current, rows, firstRow) {
+  const sheetRows = new Map(); // User ID -> row number, in sheet order
+  current.forEach((row, i) => {
+    const id = String(row[0]).trim();
+    if (!/^\d+$/.test(id)) return;
+    if (sheetRows.has(id)) {
+      throw sheetProblem_(`Rows ${sheetRows.get(id)} and ${firstRow + i} have the same User ID ` +
+        'in column A. Delete one of them, then run CreateRoster again.');
+    }
+    sheetRows.set(id, firstRow + i);
+  });
+  if (!sheetRows.size) return null;
+
+  const rosterById = new Map(rows.map(row => [row[0], row]));
+  const drops = [];
+  const kept = [];
+  sheetRows.forEach((row, id) => {
+    if (rosterById.has(id)) kept.push({ row, values: rosterById.get(id) });
+    else drops.push(row);
+  });
+  if (drops.length * 2 > sheetRows.size) {
+    throw sheetProblem_(`${drops.length} of the ${sheetRows.size} students on this sheet are ` +
+      `not in the ${rows.length} students Canvas sent. That is more than half, which usually ` +
+      'means Canvas sent an incomplete list or cfg_CourseID points to another course. Check ' +
+      'cfg_CourseID and try again in a few minutes.');
+  }
+
+  const text = values => values.map(value => String(value).trim());
+  const currentText = row => text(current[row - firstRow]);
+  const updates = kept.filter(k => JSON.stringify(currentText(k.row)) !== JSON.stringify(text(k.values)));
+  const periodChanged = kept.filter(k => currentText(k.row)[2] !== text(k.values)[2]);
+
+  // New students: in place if the sheet is in roster order; otherwise after the last
+  // student with the same period; otherwise after the last student.
+  const inOrder = kept.every((k, i) => i === 0 || compareRosterRows_(kept[i - 1].values, k.values) <= 0);
+  const afterLast = kept[kept.length - 1].row + 1;
+  const inserts = rows.filter(row => !sheetRows.has(row[0])).map(values => {
+    if (inOrder) {
+      const next = kept.find(k => compareRosterRows_(k.values, values) > 0);
+      return { before: next ? next.row : afterLast, values };
+    }
+    const samePeriod = kept.filter(k => String(k.values[2]) === String(values[2]));
+    return { before: samePeriod.length ? samePeriod[samePeriod.length - 1].row + 1 : afterLast,
+      values };
+  });
+
+  // Row numbers after the changes: rows deleted above move a row up, rows inserted at or
+  // above move it down.
+  const countBelow = (list, row) => list.filter(r => r < row).length;
+  const insertRows = inserts.map(insert => insert.before);
+  const newRow = row => row - countBelow(drops, row) + countBelow(insertRows, row + 1);
+  const addedRows = inserts.map((insert, i) => insert.before - countBelow(drops, insert.before) +
+    countBelow(insertRows, insert.before) + insertRows.slice(0, i).filter(r => r === insert.before).length);
+  return { updates, drops, inserts, keptCount: kept.length, addedRows,
+    periodChangedRows: periodChanged.map(k => newRow(k.row)) };
 }
 
 /**

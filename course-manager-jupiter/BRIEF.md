@@ -447,10 +447,21 @@
 >   chosen approach: match students by Canvas User ID in A; existing students keep their
 >   whole row (A–E refreshed in place); each new student gets a **whole inserted row** in
 >   alphabetical position (all columns move together); first run on an empty sheet
->   unchanged; pop-up gives counts and row numbers only. To decide when planning: how to
->   mark dropped students (keep their rows, never delete; e.g. gray the row or "dropped"
->   in B); what to do if the rows aren't in name order (e.g. new students at the bottom).
->   Check: Average-row formulas may not stretch for a row inserted after the last student.
+>   unchanged; pop-up gives counts and row numbers only.
+>   **Decided 2026-10-21 (building):** sort order is **Period, then name** (first run
+>   too), which equals name order in a one-section course. **Dropped students' whole rows
+>   are deleted** (Canvas keeps their records; the sheet's Jupiter ID, scores, and
+>   comments for them go). Before deleting, the tool **highlights those rows and scrolls
+>   to them**, then asks Yes/No giving row numbers only, so Lara sees the names in the
+>   sheet, never in the message (her choice over names in the pop-up). No = nothing
+>   changes and the highlight comes off. **Safety stop:** if more than half of the
+>   sheet's students would be deleted, change nothing and say why (guards against a
+>   short list from Canvas). New student: if the rows are in Period-then-name order,
+>   insert in place; otherwise after the last student with the same period; otherwise
+>   after the last student. A student who **changed period** is refreshed in place and
+>   the final pop-up gives the row number with a suggestion to resort (the row is not
+>   moved). The same User ID twice on the sheet stops the tool. Average formulas: not a
+>   concern (Lara adds them by hand when wanted).
 >   Build with offline checks (made-up students), then test on a **copy** of the Comments
 >   tab. Low urgency in Biology this year.
 > - **Next:** fixes from the field test; Lara reports on the first real Jupiter paste;

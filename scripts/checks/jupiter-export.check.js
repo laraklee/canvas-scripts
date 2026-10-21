@@ -41,12 +41,14 @@ const sections = [
   { 'Section ID': 11, 'Section Name': 'Made-up (P3)', Period: '3' },
   { 'Section ID': 12, 'Section Name': 'Made-up (P4)', Period: '4' },
 ];
-check('roster: students only, once each, sorted, section looked up',
+check('roster: students only, once each, sorted by Period then name, section looked up',
   c.buildRosterRows_(people, sections), [
+    ['103', 'Student, Charlie', '3', 'Made-up (P3)', 'c@example.test'],
     ['101', 'Student, Alpha', '4', 'Made-up (P4)', 'a@example.test'],
     ['102', 'Student, Bravo', 'N/A', 'N/A', 'b@example.test'],
-    ['103', 'Student, Charlie', '3', 'Made-up (P3)', 'c@example.test'],
   ]);
+check('period 10 sorts after period 3', [['1', 'B', '10'], ['2', 'A', '3']].sort(c.compareRosterRows_)
+  .map(row => row[0]), ['2', '1']);
 
 // Current A–E from row 3: two old students, then an Average row, then blank.
 const current = [['101', 'x', '', '', ''], ['102', 'y', '', '', ''], ['', 'Average', '', '', ''],
@@ -57,6 +59,124 @@ check('bigger roster covers the Average row (asks first)', c.rosterRowsToChange_
   { covered: [5], staleRows: [] });
 check('smaller roster clears the old student row only',
   c.rosterRowsToChange_(current, 1, 3), { covered: [], staleRows: [4] });
+
+// ---- CreateRoster on a sheet that already has students (rows stay lined up) ----
+const st = (id, name, period) => [id, `Student, ${name}`, period, `Made-up (P${period})`,
+  `${id}@example.test`];
+const alpha = st('201', 'Alpha', '3');
+const delta = st('202', 'Delta', '3');
+const golf = st('203', 'Golf', '3');
+const bravo = st('204', 'Bravo', '4');
+const echo = st('205', 'Echo', '4');
+const zulu = st('206', 'Zulu', '4');
+const charlie = st('209', 'Charlie', '3');
+const blankRow = ['', '', '', '', ''];
+const averageRow = ['', 'Average', '', '', ''];
+
+// A pretend sheet: each row is A–E plus F (a made-up Jupiter ID), and a background color.
+function fakeSheet(rowsAE, answer) {
+  const cells = [['Last Jupiter Sync:', ''], ['labels']].concat(rowsAE.map((row, i) =>
+    row.concat([row[0] ? `J${row[0]}` : `extra${i}`])));
+  const colors = cells.map(() => 'white');
+  const alerts = [];
+  const sheet = {
+    cells, colors, alerts,
+    getLastColumn: () => 6,
+    getRange: (row, col, numRows = 1, numCols = 1) => ({
+      setValues: values => values.forEach((v, i) => v.forEach((value, j) => {
+        cells[row - 1 + i] = cells[row - 1 + i] || [];
+        cells[row - 1 + i][col - 1 + j] = value;
+      })),
+      getBackgrounds: () => [[colors[row - 1]]],
+      setBackground: color => { colors[row - 1] = color; },
+      setBackgrounds: values => { colors[row - 1] = values[0][0]; },
+      numRows, numCols,
+    }),
+    setActiveRange: () => {},
+    deleteRow: row => { cells.splice(row - 1, 1); colors.splice(row - 1, 1); },
+    insertRowsAfter: (row, n) => {
+      cells.splice(row, 0, ...Array.from({ length: n }, () => []));
+      colors.splice(row, 0, ...Array(n).fill('white'));
+    },
+    insertRowsBefore: (row, n) => sheet.insertRowsAfter(row - 1, n),
+  };
+  context.SpreadsheetApp = {
+    flush: () => {},
+    getUi: () => ({
+      Button: { YES: 'YES', NO: 'NO' }, ButtonSet: { OK: 'OK', YES_NO: 'YES_NO' },
+      alert: (title, message, buttons) => {
+        alerts.push({ message, colors: colors.slice() });
+        return buttons === 'YES_NO' ? answer : 'OK';
+      },
+    }),
+  };
+  return sheet;
+}
+const idsAndJupiter = sheet => sheet.cells.slice(2).map(row => `${row[0] || row[1] || ''}|${row[5] || ''}`);
+context.console = { log: () => {} };
+
+// Sorted sheet: Charlie dropped; Delta (P3) and Zulu (P4, last) added; Alpha's email changed.
+const sortedNow = [alpha.slice(0, 4).concat(['old@example.test']), charlie, golf, bravo, echo,
+  averageRow, blankRow];
+const sortedRoster = [alpha, delta, golf, bravo, echo, zulu];
+const sortedPlan = c.planRosterUpdate_(sortedNow, sortedRoster, 3);
+check('sorted: drop, inserts, and in-place update planned',
+  [sortedPlan.drops, sortedPlan.inserts.map(i => [i.values[0], i.before]),
+    sortedPlan.updates.map(u => u.row), sortedPlan.keptCount],
+  [[4], [['202', 5], ['206', 8]], [3], 4]);
+check('sorted: new rows reported where they end up', sortedPlan.addedRows, [4, 8]);
+const sortedSheet = fakeSheet(sortedNow, 'YES');
+c.applyRosterPlan_(sortedSheet, sortedPlan);
+check('sorted: every Jupiter ID stays with its student; new rows blank in F; Average after',
+  idsAndJupiter(sortedSheet), ['201|J201', '202|', '203|J203', '204|J204', '205|J205', '206|',
+    'Average|extra5', '|extra6']);
+check('sorted: email refreshed in place', sortedSheet.cells[2][4], '201@example.test');
+check('sorted: dropped row highlighted while asking (no names in the message)',
+  [sortedSheet.alerts[0].colors[3], /Charlie/.test(sortedSheet.alerts[0].message),
+    /row\(s\) 4\./.test(sortedSheet.alerts[0].message)], ['#f4cccc', false, true]);
+check('sorted: final message has row numbers, no names',
+  [/rows?\(s\): 4, 8/.test(sortedSheet.alerts[1].message), /Student,/.test(sortedSheet.alerts[1].message)],
+  [true, false]);
+
+// Same sheet, but Lara answers No: nothing changes and the highlight comes off.
+const noSheet = fakeSheet(sortedNow, 'NO');
+const before = JSON.stringify(noSheet.cells);
+c.applyRosterPlan_(noSheet, c.planRosterUpdate_(sortedNow, sortedRoster, 3));
+check('answer No: sheet unchanged, colors restored',
+  [JSON.stringify(noSheet.cells) === before, noSheet.colors.every(color => color === 'white')],
+  [true, true]);
+
+// Name-only order (multi-section): Echo moved to P3 in Canvas; Delta (P3) and Foxtrot (new
+// P5) added. Not in Period order, so Delta goes after the last P3 student, Foxtrot at the end.
+const foxtrot = st('207', 'Foxtrot', '5');
+const echoP3 = st('205', 'Echo', '3');
+const mixedNow = [alpha, bravo, echo, golf];
+const mixedPlan = c.planRosterUpdate_(mixedNow, [alpha, delta, echoP3, golf, bravo, foxtrot], 3);
+check('not in order: after last same-period student, else at the end',
+  mixedPlan.inserts.map(i => [i.values[0], i.before]), [['202', 7], ['207', 7]]);
+check('not in order: added rows and period-change notice',
+  [mixedPlan.addedRows, mixedPlan.periodChangedRows, mixedPlan.drops], [[7, 8], [5], []]);
+const mixedSheet = fakeSheet(mixedNow, 'YES');
+c.applyRosterPlan_(mixedSheet, mixedPlan);
+check('not in order: rows stay lined up; no delete question asked',
+  [idsAndJupiter(mixedSheet), mixedSheet.alerts.length],
+  [['201|J201', '204|J204', '205|J205', '203|J203', '202|', '207|'], 1]);
+
+// Drop and add at the same spot (Charlie's row replaced by Delta, right before Golf).
+const swapPlan = c.planRosterUpdate_([alpha, charlie, golf], [alpha, delta, golf], 3);
+const swapSheet = fakeSheet([alpha, charlie, golf], 'YES');
+c.applyRosterPlan_(swapSheet, swapPlan);
+check('drop and add at the same row', [idsAndJupiter(swapSheet), swapPlan.addedRows],
+  [['201|J201', '202|', '203|J203'], [4]]);
+
+check('first run: no students on the sheet', c.planRosterUpdate_([averageRow, blankRow],
+  sortedRoster, 3), null);
+let stopped = '';
+try { c.planRosterUpdate_([alpha, charlie, golf], [alpha, delta], 3); } catch (e) { stopped = e.message; }
+check('safety stop: more than half would be deleted', /more than half/.test(stopped), true);
+stopped = '';
+try { c.planRosterUpdate_([alpha, golf, alpha], sortedRoster, 3); } catch (e) { stopped = e.message; }
+check('same User ID twice stops', /Rows 3 and 5 have the same User ID/.test(stopped), true);
 
 let thrown = '';
 try { c.checkGradingSheet_({ getName: () => 'ref_peopleList' }); } catch (e) { thrown = e.message; }
