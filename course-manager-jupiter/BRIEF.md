@@ -444,7 +444,21 @@
 >   other tools from Lara's
 >   Decision column in `docs/legacy-function-map.md`. Button ideas for later (Lara still
 >   deciding): a "refresh all ref tables" button, buttons on the Assignment Order tab.
+> - **Legacy review finished (2026-10-20):** every legacy function now has a decision
+>   (see `docs/still-in-legacy.md`). Left behind: API Batch runner, grade PDFs (Jupiter's
+>   reports replace them), unused helpers. Later, if needed: email tools (wait and see),
+>   comment posting + read scores into a column + assignment dropdowns (only if
+>   commenting moves into Canvas).
 > - **Open questions:**
+>   - **Jupiter comments (Lara will test once there's work to grade):** Update Grades
+>     clears JupiterExport, Comment columns included, so a rerun (e.g. for late work)
+>     brings back every score but leaves earlier typed comments blank. Unknown: does a
+>     blank Comment cell pasted into Jupiter erase a comment already there? Test with
+>     one student who has a Jupiter comment and a blank cell. If blanks are ignored:
+>     nothing to do. If they erase: either make Update Grades keep typed comments
+>     (matched by assignment and Jupiter ID), or move commenting into Canvas (port the
+>     comment tools; Update Grades also pulls comments). For now Lara keeps comments
+>     out of Jupiter except tests, which are curved by hand and not sent by this tool.
 >   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
 >     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
 >     after step 2, using IDs and URL paths only (no names).

@@ -3,7 +3,7 @@
 > **Generated** from the Decision column of `legacy-function-map.md` by
 > `npm run porting-summary`. Don't edit this file by hand: change the map, then rerun.
 
-**103 legacy functions:** 59 ported · 0 planned for later · 21 left behind on purpose · 23 not yet reviewed.
+**103 legacy functions:** 59 ported · 10 planned for later · 34 left behind on purpose · 0 not yet reviewed.
 
 ## Ported (59)
 
@@ -69,16 +69,35 @@
 | `writeJupiterExport_` | 10_Jupiter.gs.js | fillJupiterExport_ (Jupiter.js); counts unmatched students |
 | `buildJupiterExportFromRecentCanvasGrades` | 10_Jupiter.gs.js | buildJupiterExportFromRecentCanvasGrades (Jupiter.js): sends the final score (after any late penalty; legacy sent entered_score) |
 
-## Planned for later (0)
+## Planned for later (10)
 
-_None._
+| Legacy function | Legacy file | When / why |
+|---|---|---|
+| `toggleSelectedCheckboxes` | 01_Utilities.js | with the email tools, if anyone misses them (Lara) |
+| `convertRichTextToHtml` | 01_Utilities.js | with the email tools, if anyone misses them (Lara) |
+| `sendEmailsToSelected` | 04_CommTools.js | wait and see if anyone misses the email tools (Lara) |
+| `generateEmailList` | 04_CommTools.js | wait and see if anyone misses the email tools (Lara) |
+| `postBatchCommentsForAssignmentActiveColumn` | 07_BatchActions.js | only if commenting moves into Canvas (see the Jupiter comments open item in BRIEF.md) |
+| `promptAndConfirmBatchCommentToAllStudents` | 07_BatchActions.js | only if commenting moves into Canvas (see the Jupiter comments open item in BRIEF.md) |
+| `syncGradesAndStatusForAssignmentActiveColumn` | 07_BatchActions.js | only if commenting moves into Canvas (see the Jupiter comments open item in BRIEF.md) |
+| `setupAssignmentFilterAndDropdown` | 09_MiscTools.js | only if the score pull into a column comes back (Lara) |
+| `createAssignmentSelector` | 09_MiscTools.js | only if the score pull into a column comes back (Lara) |
+| `createAssignmentSelectorBelow` | 09_MiscTools.js | only if the score pull into a column comes back (Lara) |
 
-## Left behind on purpose (21)
+## Left behind on purpose (34)
 
 | Legacy function | Legacy file | Reason |
 |---|---|---|
 | `getPeriodTimesForDate` | 01_Utilities.js | shadowed copy (the 09 copy was ported) |
 | `formatTime` | 01_Utilities.js | shadowed copy (the 09 copy was ported) |
+| `checkGlobalScriptProperties` | 01_Utilities.js | not called anywhere |
+| `getPeriodNameFromId` | 01_Utilities.js | ported tools get the period from ref_SectionLookup (periodFromSectionName_) |
+| `getCanvasTimestamp` | 01_Utilities.js | not called anywhere; dates are built by buildCanvasTime_ |
+| `logResponse` | 01_Utilities.js | only used by the API Batch runner (left behind) |
+| `getPeriodTimes` | 01_Utilities.js | not called anywhere |
+| `parseTimeValue` | 01_Utilities.js | not called anywhere |
+| `performCanvasApiOperation` | 02_APIRunner.js | sends any request with no dry run; a call that's needed gets built as its own tool (Lara) |
+| `parseCombinedJsonToSheet` | 02_APIRunner.js | only used by the API Batch runner (left behind) |
 | `getCanvasQuizId` | 03b_Assign_UI.js | CQ's Canvas URL is now the quiz link; quizIdFromLink_ (QuizQuestions.js) reads the ID from it |
 | `updateQuizInstructions` | 03b_Assign_UI.js | instructions now go in the create request, so no update write (Lara) |
 | `fetchAssignment` | 03c_Assign_Misc.js | makeAssignment is creation only; no load/edit/update (Lara) |
@@ -88,41 +107,22 @@ _None._
 | `updateCanvasEntity` | 03c_Assign_Misc.js | makeAssignment is creation only; no load/edit/update (Lara) |
 | `updateOverridesFromColO` | 03c_Assign_Misc.js | makeAssignment is creation only; no load/edit/update (Lara) |
 | `populateEditSheetWithAssignmentData` | 03c_Assign_Misc.js | makeAssignment is creation only; no load/edit/update (Lara) |
+| `getPeriodNameFromId` | 03c_Assign_Misc.js | ported tools get the period from ref_SectionLookup (periodFromSectionName_) |
 | `fetchAssignmentFromCanvas` | 03c_Assign_Misc.js | makeAssignment is creation only; no load/edit/update (Lara) |
 | `fetchAssignmentOverrides` | 03c_Assign_Misc.js | makeAssignment is creation only; no load/edit/update (Lara) |
 | `parseSubmissionTypesArray_` | 03d.AssignmentDates.js | assign-sheet no longer sends submission types (dates only) |
 | `extractNameFromCell_` | 03d.AssignmentDates.js | assign-sheet no longer sends assignment names (dates only) |
+| `runFullScheduleUpdate` | 05_DataSync.js | placeholder that does nothing |
+| `updateMasterConnection` | 05_DataSync.js | placeholder that does nothing |
 | `getUniqueSectionIds` | 06_DataSetup.js | refreshSectionList gets every section in one request |
 | `fetchSectionNames` | 06_DataSetup.js | refreshSectionList gets every section in one request |
 | `fillGradesForSelectedGradingPeriodInActiveColumn` | 07_BatchActions.js | past-quarter gradebook scores not needed for Jupiter (Lara) |
+| `batchExportAllStudentGrades` | 07_BatchActions.js | Jupiter's reports replace it (Lara); broken in legacy |
 | `setupRubricUI` | 09_MiscTools.js | Lara copies a rubric template tab instead |
 | `createDropdowns` | 09_MiscTools.js | older copy; clashes with Config cells (port createDropdowns1 instead) |
+| `parseJsonToSheet` | 09_MiscTools.js | goes with the API Batch runner (left behind) |
 | `mapMultipleCanvasAssignmentsToJupiterExport` | 10_Jupiter.gs.js | not in Lara's workflow (she uses CreateRoster + Update Grades) |
 
-## Not yet reviewed (23)
+## Not yet reviewed (0)
 
-| Legacy function | Legacy file | What it does |
-|---|---|---|
-| `checkGlobalScriptProperties` | 01_Utilities.js | Logs which keys exist in Script Properties |
-| `getPeriodNameFromId` | 01_Utilities.js | Looks up a period name from a section ID |
-| `getCanvasTimestamp` | 01_Utilities.js | Validates a date, then calls `convertToUTC` |
-| `logResponse` | 01_Utilities.js | Writes an API response code and body to columns D–E of a row |
-| `getPeriodTimes` | 01_Utilities.js | Finds period times by schedule name |
-| `parseTimeValue` | 01_Utilities.js | Turns a time cell into a Date |
-| `toggleSelectedCheckboxes` | 01_Utilities.js | Checks or unchecks every checkbox in the selection |
-| `convertRichTextToHtml` | 01_Utilities.js | Turns a rich-text cell into simple HTML for email |
-| `performCanvasApiOperation` | 02_APIRunner.js | Runs any GET/POST/PUT/DELETE typed in the sheet, follows paging, can write results to a named sheet |
-| `parseCombinedJsonToSheet` | 02_APIRunner.js | Turns JSON pages into a table on a sheet |
-| `getPeriodNameFromId` | 03c_Assign_Misc.js | Looks up a period name from a section ID |
-| `sendEmailsToSelected` | 04_CommTools.js | Sends one Gmail message, BCC to the selected people |
-| `generateEmailList` | 04_CommTools.js | Writes an email list table at the active cell |
-| `runFullScheduleUpdate` | 05_DataSync.js | Placeholder: only shows toasts |
-| `updateMasterConnection` | 05_DataSync.js | Placeholder: only shows a toast |
-| `postBatchCommentsForAssignmentActiveColumn` | 07_BatchActions.js | Posts the comments in the active column to each student's submission |
-| `promptAndConfirmBatchCommentToAllStudents` | 07_BatchActions.js | Posts one typed comment to every student's submission |
-| `syncGradesAndStatusForAssignmentActiveColumn` | 07_BatchActions.js | Reads each student's score for the assignment into the active column |
-| `batchExportAllStudentGrades` | 07_BatchActions.js | For each student, fills a report sheet and saves a PDF |
-| `setupAssignmentFilterAndDropdown` | 09_MiscTools.js | Adds a search box and filtered assignment dropdown |
-| `createAssignmentSelector` | 09_MiscTools.js | Adds an assignment-name dropdown to the active cell |
-| `createAssignmentSelectorBelow` | 09_MiscTools.js | Same, plus an ID lookup formula in the cell below |
-| `parseJsonToSheet` | 09_MiscTools.js | Turns JSON in the selected rows into a table on the sheet named in column F |
+_None._

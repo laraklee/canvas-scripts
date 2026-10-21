@@ -31,24 +31,26 @@ These were reviewed and deliberately not ported. Each has a reason.
 | Jupiter "highlighted columns" export | Exported score columns selected on the grading sheet (`mapMultipleCanvasAssignmentsToJupiterExport`) | Not in Lara's workflow; she uses CreateRoster + Update Grades. |
 | Grading-period scores | Read past-quarter course scores into a column (`fillGradesForSelectedGradingPeriodInActiveColumn`) | Not needed for Jupiter (Lara). |
 | Old/duplicate helpers | An older due-time dropdown, shadowed duplicates, a one-call-per-section lookup, editor formula reset | Replaced by newer code or not needed. |
+| Student grade PDFs | Filled a report sheet per student and saved PDFs (`batchExportAllStudentGrades`) | Jupiter's reports do this now (Lara). Also broken in legacy (missing helper functions). |
+| API Batch runner | Sent any request typed into the `API Batch` sheet; turned JSON replies into tables (`performCanvasApiOperation`, `parseJsonToSheet`, and helpers) | Sent anything, writes included, with no dry run. A call that's needed gets built as its own tool instead (Lara, 2026-10-20). |
+| Unused helpers and placeholders | Functions nothing calls, a period-name lookup, and two placeholders that did nothing (`runFullScheduleUpdate`, `updateMasterConnection`) | Not needed. |
 
 **Rubrics:** creating a rubric directly in Canvas (and attaching it to an assignment) was
 discussed and set aside; the CSV import is used instead. It could be added later.
 
-## Not reviewed yet (still only in legacy)
+## Later, if needed
 
-Nobody has decided about these yet. If you need one, it's a candidate to port next.
+Reviewed 2026-10-20 and not ported for now. Each comes back only if the condition is met.
 Items marked **writes to Canvas** would need dry run and a test-course check when ported.
 
-| Area | What legacy does | Notes |
+| Area | What legacy does | Comes back if |
 |---|---|---|
-| Assignment comments | Post the comments in a column to each student's submission; post one message to every student (`postBatchCommentsForAssignmentActiveColumn`, `promptAndConfirmBatchCommentToAllStudents`) | **Writes to Canvas** (comments only). Involves student data. |
-| Read scores into a column | Read each student's score for one assignment into the active column (`syncGradesAndStatusForAssignmentActiveColumn`) | Read-only; one request per student. Involves student data. |
-| Student grade PDFs | Fill a report sheet per student and save PDFs (`batchExportAllStudentGrades`) | **Broken in legacy** (missing helper functions). |
-| Email tools | Build an email list; send one Gmail message BCC to selected people; toggle checkboxes; rich text to HTML (`generateEmailList`, `sendEmailsToSelected`, …) | Sends **Gmail**, not Canvas. Involves student emails. Would need a Gmail permission. |
-| API Batch runner | Send any request typed into the `API Batch` sheet; turn JSON replies into tables (`performCanvasApiOperation`, `parseJsonToSheet`, …) | **Writes to Canvas** (anything typed). A developer tool; risky to port as-is. |
-| Assignment selector dropdowns | Searchable assignment-name dropdowns and ID lookups in a cell (`setupAssignmentFilterAndDropdown`, `createAssignmentSelector`, …) | Sheet only. |
-| Unused helpers and placeholders | Functions nothing calls, and two placeholders that did nothing (`runFullScheduleUpdate`, `updateMasterConnection`) | Probably leave behind; listed for completeness. |
+| Email tools | Build an email list; send one Gmail message BCC to selected people; toggle checkboxes; rich text to HTML (`generateEmailList`, `sendEmailsToSelected`, …) | Someone misses them (Lara: wait and see). Sends **Gmail**, not Canvas; would need a Gmail permission. Involves student emails. |
+| Assignment comments | Post the comments in a column to each student's submission; post one message to every student (`postBatchCommentsForAssignmentActiveColumn`, `promptAndConfirmBatchCommentToAllStudents`) | Commenting moves into Canvas (see the Jupiter comments open item in `BRIEF.md`). **Writes to Canvas** (comments only). Involves student data. |
+| Read scores into a column | Read each student's score for one assignment into the active column (`syncGradesAndStatusForAssignmentActiveColumn`) | Same as comments. Read-only. Update Grades already reads scores by assignment for Jupiter. |
+| Assignment selector dropdowns | Searchable assignment-name dropdowns and ID lookups in a cell (`setupAssignmentFilterAndDropdown`, `createAssignmentSelector`, …) | The score pull into a column comes back (they pick its assignment). Sheet only. |
+
+Nothing is left unreviewed: every legacy function has a decision in `legacy-function-map.md`.
 
 ## How to bring one over
 

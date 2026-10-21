@@ -29,15 +29,15 @@ A read-only map of every function in the legacy `course-manager` project (tag
 | `createDropdowns1` | Builds due-time dropdowns (F7:F11) from Config B14:B17 and the day's period times | — | active, `*Config*`, `*simpleSchedule*` | — | no | Newer version; see duplicates in BRIEF | ported → createDropdowns1 (MakeAssignment.js): Overrides Due Time only, typed times allowed |
 | `getPeriodTimesForDate` | Finds a period's start/end time for a date in `*simpleSchedule*` | — | `*simpleSchedule*` | — | no | **Shadowed** by the 09 copy; calls missing `logToSystem` | leave behind: shadowed copy (the 09 copy was ported) |
 | `formatTime` | Formats 815 / Date as "8:15 AM" | — | — | — | no | **Shadowed** by the 09 copy | leave behind: shadowed copy (the 09 copy was ported) |
-| `checkGlobalScriptProperties` | Logs which keys exist in Script Properties | — | — | — | no | Not called anywhere | |
-| `getPeriodNameFromId` | Looks up a period name from a section ID | — | `*SectionLookup*` | — | no | Duplicate of the 03c copy (identical) | |
-| `getCanvasTimestamp` | Validates a date, then calls `convertToUTC` | — | — | — | no | Not called anywhere | |
-| `logResponse` | Writes an API response code and body to columns D–E of a row | — | active (`API Batch`) | — | no | Used by `performCanvasApiOperation` | |
-| `getPeriodTimes` | Finds period times by schedule name | — | `*simpleSchedule*` | — | no | Not called anywhere | |
-| `parseTimeValue` | Turns a time cell into a Date | — | — | — | no | Not called anywhere | |
+| `checkGlobalScriptProperties` | Logs which keys exist in Script Properties | — | — | — | no | Not called anywhere | leave behind: not called anywhere |
+| `getPeriodNameFromId` | Looks up a period name from a section ID | — | `*SectionLookup*` | — | no | Duplicate of the 03c copy (identical) | leave behind: ported tools get the period from ref_SectionLookup (periodFromSectionName_) |
+| `getCanvasTimestamp` | Validates a date, then calls `convertToUTC` | — | — | — | no | Not called anywhere | leave behind: not called anywhere; dates are built by buildCanvasTime_ |
+| `logResponse` | Writes an API response code and body to columns D–E of a row | — | active (`API Batch`) | — | no | Used by `performCanvasApiOperation` | leave behind: only used by the API Batch runner (left behind) |
+| `getPeriodTimes` | Finds period times by schedule name | — | `*simpleSchedule*` | — | no | Not called anywhere | leave behind: not called anywhere |
+| `parseTimeValue` | Turns a time cell into a Date | — | — | — | no | Not called anywhere | leave behind: not called anywhere |
 | `convertToUTC` | Turns a sheet date + HHMM time into a Canvas UTC timestamp (Hawaii-safe) | — | — | — | no | Logs the times it builds | ported → buildCanvasTime_ + parseSheetTime_ (PostRows.js); code, no longer a custom function |
-| `toggleSelectedCheckboxes` | Checks or unchecks every checkbox in the selection | SA › Email & Dev Tools › Toggle Selected Checkboxes | active | — | no | | |
-| `convertRichTextToHtml` | Turns a rich-text cell into simple HTML for email | — | active | — | no | Used by `sendEmailsToSelected` | |
+| `toggleSelectedCheckboxes` | Checks or unchecks every checkbox in the selection | SA › Email & Dev Tools › Toggle Selected Checkboxes | active | — | no | | later: with the email tools, if anyone misses them (Lara) |
+| `convertRichTextToHtml` | Turns a rich-text cell into simple HTML for email | — | active | — | no | Used by `sendEmailsToSelected` | later: with the email tools, if anyone misses them (Lara) |
 | `writeCurrentSpreadsheetIdToConfig` | Writes this spreadsheet's ID to Config B6 and a label to A6 | — | `*Config*` | — | no | Step 1 of Full Data Refresh | ported → buildSheetIndex_ writes cfg_ThisSheetID (SheetIndex.js) |
 
 ## 02_APIRunner.js: batch requests
@@ -46,8 +46,8 @@ A read-only map of every function in the legacy `course-manager` project (tag
 |---|---|---|---|---|---|---|---|
 | `sendCanvasRequest` | Sends one POST and puts a link or error in a status cell | — | active | (whatever URL it is given) | **YES** | Helper for the function below | ported → canvasWrite_ (assign-sheet/05_CanvasApi.js) + sendEventJobs_ (assign-sheet/03_Content_Sync.js) |
 | `processUnifiedSheetForCanvasWithLinks` | For selected rows, creates calendar events and/or announcements | CT › 4. Rubric Layouts › Batch Calendar/Announce (Selected Rows) | active | `POST /calendar_events`, `POST /courses/:course/discussion_topics` (announcement) | **YES** | | ported → processUnifiedSheetForCanvasWithLinks (assign-sheet/03_Content_Sync.js), not this workbook |
-| `performCanvasApiOperation` | Runs any GET/POST/PUT/DELETE typed in the sheet, follows paging, can write results to a named sheet | — | `API Batch`, sheet named in column F (created if missing) | any endpoint typed in the row | **YES** (any) | Must be run on `API Batch`; sends whatever is typed | |
-| `parseCombinedJsonToSheet` | Turns JSON pages into a table on a sheet | — | target sheet | — | no | | |
+| `performCanvasApiOperation` | Runs any GET/POST/PUT/DELETE typed in the sheet, follows paging, can write results to a named sheet | — | `API Batch`, sheet named in column F (created if missing) | any endpoint typed in the row | **YES** (any) | Must be run on `API Batch`; sends whatever is typed | leave behind: sends any request with no dry run; a call that's needed gets built as its own tool (Lara) |
+| `parseCombinedJsonToSheet` | Turns JSON pages into a table on a sheet | — | target sheet | — | no | | leave behind: only used by the API Batch runner (left behind) |
 | `getNextUrl` | Reads the next-page URL from the `Link` header | — | — | — | no | A third copy of the paging helper | ported → getCanvasNextUrl_ (CanvasApi.js), the one shared paging helper |
 
 ## 03a_Assign_Core.js: create assignments, quizzes, discussions
@@ -92,7 +92,7 @@ All of these read the assignment builder layout on the active sheet (row 3 = ite
 | `updateCanvasEntity` | Updates one assignment | — | — | `PUT /courses/:course/assignments/:id` | **YES** | | leave behind: makeAssignment is creation only; no load/edit/update (Lara) |
 | `updateOverridesFromColO` | Creates or updates overrides from column O | — | active | `POST` or `PUT /courses/:course/assignments/:id/overrides[/:override]` | **YES** | | leave behind: makeAssignment is creation only; no load/edit/update (Lara) |
 | `populateEditSheetWithAssignmentData` | Writes a loaded assignment and its overrides into the editor | — | active, `*SectionLookup*` | (via `fetchAssignmentOverrides`) | no | | leave behind: makeAssignment is creation only; no load/edit/update (Lara) |
-| `getPeriodNameFromId` | Looks up a period name from a section ID | — | `*SectionLookup*` | — | no | The copy that runs (identical to 01) | |
+| `getPeriodNameFromId` | Looks up a period name from a section ID | — | `*SectionLookup*` | — | no | The copy that runs (identical to 01) | leave behind: ported tools get the period from ref_SectionLookup (periodFromSectionName_) |
 | `fetchAssignmentFromCanvas` | Gets one assignment | — | — | `GET /courses/:course/assignments/:id` | no | | leave behind: makeAssignment is creation only; no load/edit/update (Lara) |
 | `fetchAssignmentOverrides` | Gets an assignment's overrides | — | — | `GET /courses/:course/assignments/:id/overrides` | no | | leave behind: makeAssignment is creation only; no load/edit/update (Lara) |
 | `clearCreationIDs` | Clears A3 and the override IDs in A7:A11 | — | active | — | no | Not on a menu (button?) | ported → clearCreationIDs (MakeAssignment.js); also clears Canvas URL, Status, Payload, QuestionIDs |
@@ -114,16 +114,16 @@ All of these read the assignment builder layout on the active sheet (row 3 = ite
 | Function | Purpose | Menu item | Sheets | Canvas endpoints | Writes? | Notes | Decision |
 |---|---|---|---|---|---|---|---|
 | `createActiveSheetRoster` | Writes a student roster table onto the active sheet | CT › 1. Roster & Data Sync › Create Roster Table | active, `*peopleList*`, `*SectionLookup*` | — | no | | ported → createActiveSheetRoster (Jupiter.js): writes A–E only (legacy cleared A–J); reminds to check Jupiter IDs in F |
-| `sendEmailsToSelected` | Sends one Gmail message, BCC to the selected people | SA › Email & Dev Tools › Send Emails (BCC Selected) | active | — | no | **Sends email** (Gmail, not Canvas) | |
-| `generateEmailList` | Writes an email list table at the active cell | SA › Email & Dev Tools › Generate Email List | active, `*peopleList*`, `*SectionLookup*` | — | no | | |
+| `sendEmailsToSelected` | Sends one Gmail message, BCC to the selected people | SA › Email & Dev Tools › Send Emails (BCC Selected) | active | — | no | **Sends email** (Gmail, not Canvas) | later: wait and see if anyone misses the email tools (Lara) |
+| `generateEmailList` | Writes an email list table at the active cell | SA › Email & Dev Tools › Generate Email List | active, `*peopleList*`, `*SectionLookup*` | — | no | | later: wait and see if anyone misses the email tools (Lara) |
 
 ## 05_DataSync.js: full refresh
 
 | Function | Purpose | Menu item | Sheets | Canvas endpoints | Writes? | Notes | Decision |
 |---|---|---|---|---|---|---|---|
 | `runFullDataRefresh` | Runs the ID write, roster, assignment groups, sections, and schedule steps in order | SA › 2. Run FULL Data Refresh | (via the steps) | (via the steps) | no | | ported → refreshAllTables (Menus.js): course list, people, assignment groups, sections, sheet index; not Jupiter categories |
-| `runFullScheduleUpdate` | Placeholder: only shows toasts | — | — | — | no | Does nothing; its real call is commented out | |
-| `updateMasterConnection` | Placeholder: only shows a toast | — | — | — | no | Does nothing | |
+| `runFullScheduleUpdate` | Placeholder: only shows toasts | — | — | — | no | Does nothing; its real call is commented out | leave behind: placeholder that does nothing |
+| `updateMasterConnection` | Placeholder: only shows a toast | — | — | — | no | Does nothing | leave behind: placeholder that does nothing |
 
 ## 06_DataSetup.js: reference sheets
 
@@ -140,13 +140,13 @@ All of these read the assignment builder layout on the active sheet (row 3 = ite
 
 | Function | Purpose | Menu item | Sheets | Canvas endpoints | Writes? | Notes | Decision |
 |---|---|---|---|---|---|---|---|
-| `postBatchCommentsForAssignmentActiveColumn` | Posts the comments in the active column to each student's submission | CT › 2. Batch Text Comments › Post Comments to Canvas Portals | active | `PUT /courses/:course/assignments/:id/submissions/:user` | **YES** (comment only) | | |
-| `promptAndConfirmBatchCommentToAllStudents` | Posts one typed comment to every student's submission | CT › 2. Batch Text Comments › Post Single Message Comment to ALL | active | `PUT /courses/:course/assignments/:id/submissions/:user` | **YES** (comment only) | | |
-| `syncGradesAndStatusForAssignmentActiveColumn` | Reads each student's score for the assignment into the active column | — | active | `GET /courses/:course/assignments/:id/submissions/:user` | no | Not on a menu; one call per student | |
+| `postBatchCommentsForAssignmentActiveColumn` | Posts the comments in the active column to each student's submission | CT › 2. Batch Text Comments › Post Comments to Canvas Portals | active | `PUT /courses/:course/assignments/:id/submissions/:user` | **YES** (comment only) | | later: only if commenting moves into Canvas (see the Jupiter comments open item in BRIEF.md) |
+| `promptAndConfirmBatchCommentToAllStudents` | Posts one typed comment to every student's submission | CT › 2. Batch Text Comments › Post Single Message Comment to ALL | active | `PUT /courses/:course/assignments/:id/submissions/:user` | **YES** (comment only) | | later: only if commenting moves into Canvas (see the Jupiter comments open item in BRIEF.md) |
+| `syncGradesAndStatusForAssignmentActiveColumn` | Reads each student's score for the assignment into the active column | — | active | `GET /courses/:course/assignments/:id/submissions/:user` | no | Not on a menu; one call per student | later: only if commenting moves into Canvas (see the Jupiter comments open item in BRIEF.md) |
 | `fillGradesForSelectedGradingPeriodInActiveColumn` | Reads grading-period course scores into the active column | — | active, `*gradingPeriods*` | `GET /courses/:course/enrollments?type[]=StudentEnrollment&grading_period_id=…` | no | Not on a menu; nothing refreshes `*gradingPeriods*` any more | leave behind: past-quarter gradebook scores not needed for Jupiter (Lara) |
 | `getNextUrlLocal` (line 420) | Reads the next-page URL from the `Link` header | — | — | — | no | Identical copy, replaced by line 436 | ported → getCanvasNextUrl_ (CanvasApi.js), the one shared paging helper |
 | `getNextUrlLocal` (line 436) | Same | — | — | — | no | The copy that runs; also used by 10_Jupiter | ported → getCanvasNextUrl_ (CanvasApi.js), the one shared paging helper |
-| `batchExportAllStudentGrades` | For each student, fills a report sheet and saves a PDF | — | active, report sheet named in B2, roster sheet named in B4 | — | no | **Broken:** calls `getStudentGradesLocal` and `exportSheetAsPDF`, which don't exist | |
+| `batchExportAllStudentGrades` | For each student, fills a report sheet and saves a PDF | — | active, report sheet named in B2, roster sheet named in B4 | — | no | **Broken:** calls `getStudentGradesLocal` and `exportSheetAsPDF`, which don't exist | leave behind: Jupiter's reports replace it (Lara); broken in legacy |
 
 ## 09_MiscTools.js: miscellaneous tools
 
@@ -158,13 +158,13 @@ All of these read the assignment builder layout on the active sheet (row 3 = ite
 | `createGroups` | Creates groups in that set from the listed names | SA › Group Management › 3. Create Groups List | active | `POST /group_categories/:category/groups` | **YES** | | ported → createGroups (Groups.js) |
 | `setupRubricUI` | Lays out a rubric template on the active sheet | CT › 4. Rubric Layouts › Setup Rubric Template | active | — | no | Never ran: its Yes check compared against ButtonSet | leave behind: Lara copies a rubric template tab instead |
 | `exportRubricToCanvasFormat` | Converts the rubric into Canvas's import layout | CT › 4. Rubric Layouts › Export for Canvas | active, `rubricCanvasExport` (created if missing) | — | no | Read fixed cells that no longer match the template | ported → exportRubricToCanvasFormat (Rubrics.js): reads column A labels, includes rating descriptions; CSV import, no Canvas write (direct create/attach could come later) |
-| `setupAssignmentFilterAndDropdown` | Adds a search box and filtered assignment dropdown | — | active, `*assignmentGroups*` | — | no | Not on a menu (button?) | |
-| `createAssignmentSelector` | Adds an assignment-name dropdown to the active cell | — | active, `*assignmentGroups*` | — | no | Not on a menu (button?) | |
-| `createAssignmentSelectorBelow` | Same, plus an ID lookup formula in the cell below | — | active, `*assignmentGroups*` | — | no | Not on a menu (button?) | |
+| `setupAssignmentFilterAndDropdown` | Adds a search box and filtered assignment dropdown | — | active, `*assignmentGroups*` | — | no | Not on a menu (button?) | later: only if the score pull into a column comes back (Lara) |
+| `createAssignmentSelector` | Adds an assignment-name dropdown to the active cell | — | active, `*assignmentGroups*` | — | no | Not on a menu (button?) | later: only if the score pull into a column comes back (Lara) |
+| `createAssignmentSelectorBelow` | Same, plus an ID lookup formula in the cell below | — | active, `*assignmentGroups*` | — | no | Not on a menu (button?) | later: only if the score pull into a column comes back (Lara) |
 | `formatTime` | Pads 815 to "0815" | — | — | — | no | **The copy that runs** (replaces 01) | ported → formatTime24_ (MakeAssignment.js) |
 | `getPeriodTimesForDate` | Finds a period's times for a date | — | `*simpleSchedule*` | — | no | **The copy that runs** (replaces 01) | ported → readScheduleByDay_ + findPeriodTimes_ (MakeAssignment.js) |
 | `createDropdowns` | Older due-time dropdowns using Config B6:B9 | — | active, `*Config*`, `*simpleSchedule*` | — | no | Do not port (Config cell clash; see BRIEF) | leave behind: older copy; clashes with Config cells (port createDropdowns1 instead) |
-| `parseJsonToSheet` | Turns JSON in the selected rows into a table on the sheet named in column F | SA › Email & Dev Tools › Parse JSON Response to Sheet | active, named target (created if missing) | — | no | | |
+| `parseJsonToSheet` | Turns JSON in the selected rows into a table on the sheet named in column F | SA › Email & Dev Tools › Parse JSON Response to Sheet | active, named target (created if missing) | — | no | | leave behind: goes with the API Batch runner (left behind) |
 | `fillSelectedRangeSequentially` | Fills the selection with 1, 2, 3, … | SA › Roster & Utility Tools › A. Fill Selected Cells Sequentially | active | — | no | | ported → numberSelectedRows (ReorderTool.js) |
 | `updateAssignmentPositionsFromSelectedRows` | Sends each selected row's group and position (reorders assignments) | SA › Roster & Utility Tools › B. Push Position to Canvas | active | `PUT /courses/:course/assignments/:id` | **YES** (order only) | Brief step 5 replaces this | ported → previewReorder + pushReorder (ReorderTool.js) |
 | `createStudentTextBoxes` | Builds seating-chart text boxes in a Slides deck | SA › Roster & Utility Tools › Create Seating Chart Slides | `*Config*` (B7, A8:C11), `*peopleList*`, `*SectionLookup*` | — | no | Opens a Slides deck by ID (needs a Slides permission) | ported → buildSeatingChart (SeatingChart.js) |
