@@ -9,6 +9,9 @@ function onOpen() {
   ui.createMenu('Canvas Tools')
     .addItem('📤 Post selected rows to Canvas', 'processUnifiedSheetForCanvasWithLinks') // 03_Content_Sync.js
     .addSeparator()
+    .addItem('📥 Fetch assignment dates', 'fetchCanvasAssignmentDates') // 07_AssignmentDates.js
+    .addItem('📅 Push assignment dates', 'pushAssignmentDatesToCanvas')
+    .addSeparator()
     .addItem('Set Canvas token', 'setCanvasCredentials')       // 06_Credentials.js
     .addItem('Test Canvas connection', 'testCanvasConnection') // 05_CanvasApi.js
     .addItem('Dry run: show status', 'showDryRunStatus')

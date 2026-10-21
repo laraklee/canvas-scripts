@@ -26,15 +26,12 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 >   `spreadsheets` is not needed: the master calendar comes in by `IMPORTRANGE` in the
 >   sheet, and the script never opens it by ID (`MASTER_SHEET_ID` is read but unused).
 >   All three sheets re-authorized; no old broad access left.
-> - **Next:** port the bulk assignment dates tool (`fetchCanvasAssignmentDates` →
->   `pushAssignmentDatesToCanvas`, legacy `course-manager/03d.AssignmentDates.js`) into
->   assign-sheet. Lara decided it belongs here, not in course-manager-jupiter. Start with
->   a read-only plan: what it reads and writes (`PUT /courses/:course/assignments/:id`
->   changes existing assignments students see; send only changed rows via
->   `canvasWrite_`), and whether its schedule info depends on Course Manager sheets.
->   Test in sandbox 4573 (dry run is OFF). Also update
->   `course-manager-jupiter/docs/still-in-legacy.md`: calendar events and announcements
->   now live in assign-sheet.
+> - **Step 4 written (2026-10-20), not yet pushed or tested:** bulk assignment dates
+>   tool in `07_AssignmentDates.js`, ported from legacy `course-manager/03d.AssignmentDates.js`.
+>   See "Assignment Dates" below. **Next:** test on Biology in sandbox 4573 with dry run
+>   switched ON first, then real pushes, then Gastronomy and AI9. Also update
+>   `course-manager-jupiter/docs/still-in-legacy.md`: calendar events, announcements, and
+>   assignment dates now live in assign-sheet.
 > - A new Google service in the code (e.g. `MailApp`, `openById`) needs its scope added
 >   to `appsscript.json`, or that item fails with a permission error.
 
@@ -69,5 +66,23 @@ H event link, I announcement link.
   checked with no date. Asks before sending; dry run writes "Dry run OK".
 - Replies? sends `lock_comment: true` when unchecked. (The old code sent
   `allow_student_to_reply`, which Canvas ignores.)
+## Assignment Dates (07_AssignmentDates.js)
+
+Menu items **📥 Fetch assignment dates** and **📅 Push assignment dates** (function names
+kept from legacy, so drawn buttons on row 1 can call them too). Sheet "Assignment Dates":
+header row 2, data from row 3. Columns: A Update? ☐, B ID, C Name (link), D Sub. Type(s),
+E Points, F/G Open date/time, H Schedule Info (VLOOKUP on `*simpleSchedule*` C:F by due
+date), I/J Due, K/L Lock, M Sync Status.
+
+- Fetch rebuilds row 2 down (row 1 is left for buttons). Read-only.
+- Push (Lara's decision 2026-10-20): **dates and times only**. Name, points, and submission
+  type are gray reference columns and are never sent. Push re-reads Canvas, then sends
+  `PUT /courses/:course/assignments/:id` via `canvasWrite_` with only the `unlock_at` /
+  `due_at` / `lock_at` that differ (to the minute). Asks before sending.
+- A date needs a time (no accidental midnight). Clear both to remove a date. 11:59 pm is
+  sent as 11:59:59 pm.
+- Section-specific dates (`has_overrides`) are marked and skipped. Per-section editing is
+  shelved: Lara has no overrides this year.
+
 - The rest of the project's older code still uses `var`; it works, so update it only
   when a file is being changed anyway.
