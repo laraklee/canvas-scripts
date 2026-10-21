@@ -599,8 +599,9 @@ name; your active teacher courses). The time of the last refresh is in the named
 `CourseIDs_LastRefreshed`. The `cfg_CourseName` formula (C4) must look up `ref_CourseIDs`.
 
 User-facing tool sheets keep their names. Known so far: `JupiterExport`,
-`Assignment Dates`, `rubricCanvasExport`, `API Batch` (a function checks the active
-sheet's name, so keep it exactly).
+`rubricCanvasExport`, `API Batch` (a function checks the active sheet's name, so keep it
+exactly). `Assignment Dates` is not in this workbook: it moved to assign-sheet
+(2026-10-20; see `docs/still-in-legacy.md`).
 
 ## Config contents
 
