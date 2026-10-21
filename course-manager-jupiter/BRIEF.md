@@ -440,6 +440,19 @@
 >   first, then to the others after Lara's OK. Each workbook needs Set Canvas token once
 >   and its own authorization. Retire each old legacy workbook (keep as archive) once its
 >   course is live on the new one, so two workbooks never write to the same course.
+> - **Next step being planned (2026-10-20): CreateRoster keeps rows lined up.** Problem:
+>   CreateRoster rewrites A–E sorted by name and leaves F onward (Jupiter IDs, test
+>   scores) in place, so after an add or drop the other columns no longer match the names.
+>   Since it now always refreshes first, a rerun picks up every enrollment change. Lara's
+>   chosen approach: match students by Canvas User ID in A; existing students keep their
+>   whole row (A–E refreshed in place); each new student gets a **whole inserted row** in
+>   alphabetical position (all columns move together); first run on an empty sheet
+>   unchanged; pop-up gives counts and row numbers only. To decide when planning: how to
+>   mark dropped students (keep their rows, never delete; e.g. gray the row or "dropped"
+>   in B); what to do if the rows aren't in name order (e.g. new students at the bottom).
+>   Check: Average-row formulas may not stretch for a row inserted after the last student.
+>   Build with offline checks (made-up students), then test on a **copy** of the Comments
+>   tab. Low urgency in Biology this year.
 > - **Next:** fixes from the field test; Lara reports on the first real Jupiter paste;
 >   other tools from Lara's
 >   Decision column in `docs/legacy-function-map.md`. Button ideas for later (Lara still
