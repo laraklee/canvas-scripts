@@ -134,6 +134,13 @@ Groups are created empty (no students are added).
    - If a student changed period, the pop-up gives the row; re-sort by Period, then
      name, if you want them grouped. Keep multi-section sheets sorted that way so new
      students land in the right spot.
+   - **One-time step for older sheets:** a multi-section grading sheet made before
+     2026-10-21 is sorted by name only. Before the next CreateRoster, sort its student
+     rows once (not the label row or Average rows) by **Period (column C), then Name
+     (column B)**: select the student rows by their row numbers (so every column moves
+     together), then **Data › Sort range › Advanced range sorting options**, sort by
+     Column C, then add another sort column, Column B. This works even while C is
+     hidden. Until then, new students go after the last student in their period.
 3. Click **Update Grades**. Choose how many days back to look (default: since the last
    sync in B1). It fills **JupiterExport** with recently graded work from the categories
    ticked on ref_Config. Scores are Canvas's final scores (after any late penalty).
