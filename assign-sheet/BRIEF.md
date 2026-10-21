@@ -30,11 +30,13 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 >   `07_AssignmentDates.js` (commit `5b4a143`), ported from legacy
 >   `course-manager/03d.AssignmentDates.js`. Tested in sandbox 4573: Lara reports it
 >   worked. See "Assignment Dates" below. No drawn buttons: Lara uses the menu.
-> - **Step 5 written, not yet pushed or tested:** Canvas Tools menu regrouped into
->   submenus (see "Menu" below), and date pickers on the Assignment Dates date cells.
-> - **Next:** push step 5 to Biology and test, then push to Gastronomy and AI9 (they
->   don't have step 4 yet). Check Biology `*Config*` B4 is back on the real course. Also
->   update `course-manager-jupiter/docs/still-in-legacy.md`: calendar events,
+> - **Step 5 done, tested on Biology (2026-10-20):** Canvas Tools menu regrouped into
+>   submenus (see "Menu" below), and date pickers on the Assignment Dates date cells
+>   (commit `b918fff`). Lara confirmed Send with a live course assignment, then set
+>   Biology `*Config*` B4 back to the real course.
+> - **Steps 4 and 5 pushed to Gastronomy and AI9** (2026-10-20). All three sheets match
+>   commit `b918fff`.
+> - **Next:** update `course-manager-jupiter/docs/still-in-legacy.md`: calendar events,
 >   announcements, and assignment dates now live in assign-sheet.
 > - A new Google service in the code (e.g. `MailApp`, `openById`) needs its scope added
 >   to `appsscript.json`, or that item fails with a permission error.
@@ -44,8 +46,8 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 **Rule:** all three sheets always have identical code. Test every change on Biology
 first, then push to Gastronomy and AI9.
 
-Gastronomy and AI9 Assignment sheets run the same code (checked identical to commit
-`8d4fe03` on 2026-10-19). Settings files: `.clasp-gastronomy.json`, `.clasp-ai9.json`.
+Gastronomy and AI9 Assignment sheets run the same code (pushed from commit `b918fff`
+on 2026-10-20). Settings files: `.clasp-gastronomy.json`, `.clasp-ai9.json`.
 Push from `assign-sheet/` after pushing Biology:
 `clasp push -P 'C:\Users\lalee\Code\canvas-scripts\assign-sheet\.clasp-gastronomy.json'`
 (same for `-ai9`). On Windows, clasp 3.4.1 needs the full backslash path (relative paths
