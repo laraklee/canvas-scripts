@@ -449,7 +449,9 @@
 >   reports replace them), unused helpers. Later, if needed: email tools (wait and see),
 >   comment posting + read scores into a column + assignment dropdowns (only if
 >   commenting moves into Canvas).
-> - **CreateRoster refreshes first (2026-10-20, built; not yet tested):** it now refreshes
+> - **CreateRoster refreshes first (2026-10-20, pushed to Google and tested by Lara in
+>   Biology: on the grading sheet and from the menu on a blank sheet, data right; a blank
+>   sheet gets no formatting, as expected):** it now refreshes
 >   ref_peopleList and ref_SectionLookup before building the roster (design rule 2), like
 >   the seating chart, so adds and drops are included. Same read-only requests; no new
 >   permissions. Found while checking which tables could go stale. Lara chose this over
