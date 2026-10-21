@@ -449,7 +449,22 @@
 >   reports replace them), unused helpers. Later, if needed: email tools (wait and see),
 >   comment posting + read scores into a column + assignment dropdowns (only if
 >   commenting moves into Canvas).
+> - **CreateRoster refreshes first (2026-10-20, built; not yet tested):** it now refreshes
+>   ref_peopleList and ref_SectionLookup before building the roster (design rule 2), like
+>   the seating chart, so adds and drops are included. Same read-only requests; no new
+>   permissions. Found while checking which tables could go stale. Lara chose this over
+>   an onOpen "last refreshed" reminder (onOpen can't contact Canvas; she doesn't want
+>   installable or timed triggers that other users would have to set up). Every tool that
+>   reads a Canvas-built table now refreshes it first, except sheet formulas (the
+>   makeAssignment Section ID lookup and `cfg_CourseName`).
 > - **Open questions:**
+>   - **Course check report (idea, 2026-10-20; Lara is deciding which mistakes to
+>     catch):** a read-only button that lists likely course-setup mistakes. Ideas so far:
+>     missing due dates; unpublished items; due dates on no-school days (from
+>     `ref_simpleSchedule`); assignments in groups not checked for Jupiter; probable
+>     override typos (dates out of order, far from the main date, a deleted section,
+>     overrides covering every section). Overrides are *meant* to differ from the main
+>     dates. Plan in a later session.
 >   - **Jupiter comments (Lara will test once there's work to grade):** Update Grades
 >     clears JupiterExport, Comment columns included, so a rerun (e.g. for late work)
 >     brings back every score but leaves earlier typed comments blank. Unknown: does a

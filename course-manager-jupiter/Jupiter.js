@@ -2,7 +2,8 @@
  * Jupiter.js
  * Purpose: Jupiter Grades tools (button and menu names match legacy):
  *   - createActiveSheetRoster (CreateRoster button on the grading sheet, e.g. Comments):
- *     writes the students from ref_peopleList/ref_SectionLookup into A–E (row 2 labels,
+ *     refreshes ref_peopleList and ref_SectionLookup first (design rule: refresh before
+ *     use), then writes the students into A–E (row 2 labels,
  *     students from row 3). Nothing else changes; reminds Lara to check the Jupiter IDs
  *     she types into F, which don't move with the roster.
  *   - buildJupiterExportFromRecentCanvasGrades (Update Grades button): fills the
@@ -19,6 +20,8 @@
  *   Update Grades exports only the checked groups, so the column order must stay the
  *   same. Logs counts only.
  * Canvas endpoints called (all GET, via canvasGet_):
+ *   /api/v1/courses/:course, /api/v1/courses/:course/enrollments,
+ *   /api/v1/courses/:course/sections (CreateRoster, through the refresh helpers in RefSheets.js)
  *   /api/v1/courses/:course/assignment_groups
  *   /api/v1/courses/:course/students/submissions?student_ids[]=all&graded_since=…
  *     &include[]=assignment
@@ -120,8 +123,8 @@ const JUPITER_SYNC_LABEL = 'Last Jupiter Sync:';
 const JUPITER_DEFAULT_DAYS = 7;
 
 /**
- * Button / menu: CreateRoster (legacy name createActiveSheetRoster). Writes the course's
- * students (from ref_peopleList and ref_SectionLookup; refresh those first) into columns
+ * Button / menu: CreateRoster (legacy name createActiveSheetRoster). Refreshes
+ * ref_peopleList and ref_SectionLookup from Canvas, then writes the course's students into columns
  * A–E of the sheet being viewed: row 2 labels, students from row 3, sorted by name.
  * Nothing else on the sheet changes: not the Jupiter IDs in F, score or comment
  * columns, formatting, or rows like Average (asks first if the roster would cover one).
@@ -133,6 +136,10 @@ function createActiveSheetRoster() {
   try {
     const sheet = ss.getActiveSheet();
     checkGradingSheet_(sheet);
+    // Refresh before use, so adds and drops since the last refresh are included.
+    writePeopleListSheet_(ss);
+    writeSectionLookupSheet_(ss);
+    SpreadsheetApp.flush(); // so the people list's formula columns are calculated
     const rows = buildRosterRows_(readRefTable_(ss, SHEETS.PEOPLE_LIST,
       ['Section ID', 'User ID', 'Sorted Name', 'Role', 'Email']),
     readRefTable_(ss, SHEETS.SECTION_LOOKUP, ['Section ID', 'Section Name', 'Period']));
