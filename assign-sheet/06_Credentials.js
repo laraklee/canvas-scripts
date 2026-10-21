@@ -13,7 +13,7 @@ const PROP_TOKEN = 'CANVAS_TOKEN';
 const PROP_BASE_URL = 'CANVAS_BASE_URL';
 
 /**
- * Menu: Canvas Tools › Set Canvas token.
+ * Menu: Canvas Tools › ⚙️ Setup › Set Canvas token.
  * Asks for the Canvas address, then the token. Saves nothing unless both steps finish.
  */
 function setCanvasCredentials() {

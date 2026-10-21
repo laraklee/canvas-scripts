@@ -2,25 +2,27 @@
 
 /**
  * Runs automatically when the spreadsheet is opened.
- * Creates the custom menu for tools.
+ * Creates the custom menu for tools, grouped by what each item works on.
+ * Labels can change freely; the function names cannot (drawn buttons call them).
  */
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('Canvas Tools')
-    .addItem('📤 Post selected rows to Canvas', 'processUnifiedSheetForCanvasWithLinks') // 03_Content_Sync.js
+    .addSubMenu(ui.createMenu('📅 Calendar & announcements')
+      .addItem('Post selected calendarEvents rows to Canvas', 'processUnifiedSheetForCanvasWithLinks')) // 03_Content_Sync.js
+    .addSubMenu(ui.createMenu('📝 Assignment dates')
+      .addItem('Load assignment dates from Canvas', 'fetchCanvasAssignmentDates') // 07_AssignmentDates.js
+      .addItem('Send changed dates to Canvas', 'pushAssignmentDatesToCanvas'))
     .addSeparator()
-    .addItem('📥 Fetch assignment dates', 'fetchCanvasAssignmentDates') // 07_AssignmentDates.js
-    .addItem('📅 Push assignment dates', 'pushAssignmentDatesToCanvas')
+    .addItem('🔄 Update schedule from Master', 'runFullScheduleUpdate') // 02_Master_Builder.js (Steps 1-4)
+    .addItem('🔗 Reset Master connection', 'updateMasterConnection')    // 01_Utilities.js (restores the IMPORTRANGE)
+    .addItem('☑️ Toggle checkboxes', 'toggleSelectedCheckboxes')        // 01_Utilities.js
     .addSeparator()
-    .addItem('Set Canvas token', 'setCanvasCredentials')       // 06_Credentials.js
-    .addItem('Test Canvas connection', 'testCanvasConnection') // 05_CanvasApi.js
-    .addItem('Dry run: show status', 'showDryRunStatus')
-    .addItem('Dry run: switch on/off', 'toggleDryRun')
-    .addSeparator()
-    .addItem('🔄 Update Data from Master', 'runFullScheduleUpdate')   // Runs the Builder (Steps 1-4)
-    .addItem('🔗 Reset Master Connection', 'updateMasterConnection') // Restores the IMPORTRANGE (Source)
-    .addSeparator()
-    .addItem('Toggle Checkboxes', 'toggleSelectedCheckboxes')
+    .addSubMenu(ui.createMenu('⚙️ Setup')
+      .addItem('Set Canvas token', 'setCanvasCredentials')       // 06_Credentials.js
+      .addItem('Test Canvas connection', 'testCanvasConnection') // 05_CanvasApi.js
+      .addItem('Dry run: show status', 'showDryRunStatus')
+      .addItem('Dry run: switch on/off', 'toggleDryRun'))
     .addToUi();
 }
 
@@ -74,4 +76,4 @@ function getConfiguredPeriodPairs() {
   return selectedPairs.length > 0 ? selectedPairs : ['1,2', '3,4', '5,6', '7,8'];
 }
 
-// The Canvas token is now set with Canvas Tools › Set Canvas token (06_Credentials.js).
+// The Canvas token is now set with Canvas Tools › ⚙️ Setup › Set Canvas token (06_Credentials.js).

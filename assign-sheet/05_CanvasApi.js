@@ -28,7 +28,7 @@ const CANVAS_WRITE_METHODS = Object.freeze(['POST', 'PUT', 'PATCH', 'DELETE']);
 const PROP_DRY_RUN = 'DRY_RUN';
 
 /**
- * Menu: Canvas Tools › Test Canvas connection.
+ * Menu: Canvas Tools › ⚙️ Setup › Test Canvas connection.
  * Reads the user's own Canvas profile and reports only "Connected" or the error type.
  */
 function testCanvasConnection() {
@@ -125,7 +125,7 @@ function describeFields_(payload, prefix) {
     describeFields_(value, prefix ? `${prefix}[${key}]` : key));
 }
 
-/** Menu: Canvas Tools › Dry run: show status. */
+/** Menu: Canvas Tools › ⚙️ Setup › Dry run: show status. */
 function showDryRunStatus() {
   const ui = SpreadsheetApp.getUi();
   try {
@@ -136,7 +136,7 @@ function showDryRunStatus() {
   }
 }
 
-/** Menu: Canvas Tools › Dry run: switch on/off. Asks first, then confirms the result. */
+/** Menu: Canvas Tools › ⚙️ Setup › Dry run: switch on/off. Asks first, then confirms the result. */
 function toggleDryRun() {
   const ui = SpreadsheetApp.getUi();
   try {
@@ -174,7 +174,7 @@ function getCanvasCredentials_() {
   const baseUrl = props.getProperty(PROP_BASE_URL);
   if (!token || !baseUrl) {
     throw canvasError_('NOT_SET_UP',
-      'Your Canvas address or token is not saved yet. Run Canvas Tools › Set Canvas token.');
+      'Your Canvas address or token is not saved yet. Run Canvas Tools › ⚙️ Setup › Set Canvas token.');
   }
   return { token, baseUrl };
 }
@@ -229,7 +229,7 @@ function checkCanvasResponse_(code, throttled) {
   }
   if (code === 401) {
     throw canvasError_('TOKEN_REJECTED', 'Canvas did not accept your token (401). ' +
-      'It may be expired or mistyped. Run Canvas Tools › Set Canvas token.');
+      'It may be expired or mistyped. Run Canvas Tools › ⚙️ Setup › Set Canvas token.');
   }
   if (code === 403) {
     throw canvasError_('NOT_ALLOWED',

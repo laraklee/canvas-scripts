@@ -1,8 +1,9 @@
 /**
  * 07_AssignmentDates.js
- * Purpose: the bulk assignment dates tool. "Fetch assignment dates" fills the
- *   Assignment Dates sheet with every assignment in the course; edit the open, due, and
- *   lock dates/times there, check Update?, then "Push assignment dates" sends the changes.
+ * Purpose: the bulk assignment dates tool (menu Canvas Tools › 📝 Assignment dates).
+ *   "Load assignment dates from Canvas" fills the Assignment Dates sheet with every
+ *   assignment in the course; edit the open, due, and lock dates/times there (date cells
+ *   have a date picker), check Update?, then "Send changed dates to Canvas".
  *   Ported from course-manager/03d.AssignmentDates.js. Keep the two public function
  *   names: drawn buttons on row 1 of the sheet can call them.
  * Canvas endpoints called:
@@ -33,7 +34,7 @@ const DATES_FIELDS = Object.freeze([
 ]);
 const DATES_OVERRIDE_NOTE = 'Has section dates: edit in Canvas';
 
-/** Menu / button: Fetch assignment dates. Rebuilds the sheet from row 2 down. */
+/** Menu: Load assignment dates from Canvas. Rebuilds the sheet from row 2 down. */
 function fetchCanvasAssignmentDates() {
   const ui = SpreadsheetApp.getUi();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -46,19 +47,19 @@ function fetchCanvasAssignmentDates() {
     writeDatesSheet_(sheet, assignments, ss.getSpreadsheetTimeZone());
     console.log(`Fetch assignment dates: ${assignments.length} assignment(s) loaded.`);
     ss.toast('', '', 1);
-    ui.alert('Fetch assignment dates', assignments.length ?
+    ui.alert('Load assignment dates', assignments.length ?
       `Loaded ${assignments.length} assignment(s).` : 'No assignments found in this course.',
       ui.ButtonSet.OK);
   } catch (error) {
-    console.error('Fetch assignment dates failed: ' + (error.canvasType || error.message));
+    console.error('Load assignment dates failed: ' + (error.canvasType || error.message));
     ss.toast('', '', 1);
-    ui.alert('Fetch assignment dates', 'Could not finish. ' + describeCanvasError_(error),
+    ui.alert('Load assignment dates', 'Could not finish. ' + describeCanvasError_(error),
       ui.ButtonSet.OK);
   }
 }
 
 /**
- * Menu / button: Push assignment dates. For each row with Update? checked, compares the
+ * Menu: Send changed dates to Canvas. For each row with Update? checked, compares the
  * sheet's dates with Canvas right now and sends only the dates that changed. Asks first.
  */
 function pushAssignmentDatesToCanvas() {
@@ -67,7 +68,8 @@ function pushAssignmentDatesToCanvas() {
   try {
     const sheet = ss.getSheetByName(DATES_SHEET_NAME);
     if (!sheet || sheet.getLastRow() < DATES_FIRST_DATA_ROW) {
-      ui.alert('Push assignment dates', 'Run Fetch assignment dates first. Nothing was sent.',
+      ui.alert('Send assignment dates', 'Run Canvas Tools › 📝 Assignment dates › ' +
+        'Load assignment dates from Canvas first. Nothing was sent.',
         ui.ButtonSet.OK);
       return;
     }
@@ -81,19 +83,19 @@ function pushAssignmentDatesToCanvas() {
     ss.toast('', '', 1);
 
     if (plan.problems.length) {
-      ui.alert('Push assignment dates', 'Fix these first. Nothing was sent.\n\n' +
+      ui.alert('Send assignment dates', 'Fix these first. Nothing was sent.\n\n' +
         plan.problems.join('\n'), ui.ButtonSet.OK);
       return;
     }
     if (!plan.toSend.length) {
-      ui.alert('Push assignment dates', 'No date changes in the checked rows.' +
+      ui.alert('Send assignment dates', 'No date changes in the checked rows.' +
         (plan.skipped ? `\n\n${plan.skipped} row(s) skipped; see Sync Status.` : ''),
         ui.ButtonSet.OK);
       return;
     }
 
     const dateCount = plan.toSend.reduce((sum, job) => sum + job.fields.length, 0);
-    const answer = ui.alert('Push assignment dates?',
+    const answer = ui.alert('Send assignment dates?',
       `Course ${courseId}: ${plan.toSend.length} assignment(s) will change ` +
       `(${dateCount} date(s) in all). Students will see the new dates.` +
       (plan.skipped ? `\n${plan.skipped} row(s) will be skipped; see Sync Status.` : '') +
@@ -106,16 +108,16 @@ function pushAssignmentDatesToCanvas() {
     console.log(`Push assignment dates: ${result.sent} sent, ${result.failed} failed, ` +
       `${plan.skipped} skipped, dry run ${result.dryRun ? 'ON' : 'OFF'}.`);
     ss.toast('', '', 1);
-    ui.alert('Push assignment dates',
+    ui.alert('Send assignment dates',
       (result.dryRun ? `Dry run: ${result.sent} assignment(s) checked; nothing was sent to Canvas.` :
         `${result.sent} assignment(s) updated.`) +
       (result.failed ? `\n${result.failed} failed; see Sync Status.` : '') +
       (result.stoppedMessage ? '\n\nStopped early: ' + result.stoppedMessage : ''),
       ui.ButtonSet.OK);
   } catch (error) {
-    console.error('Push assignment dates failed: ' + (error.canvasType || error.message));
+    console.error('Send assignment dates failed: ' + (error.canvasType || error.message));
     ss.toast('', '', 1);
-    ui.alert('Push assignment dates', 'Could not finish. ' + describeCanvasError_(error),
+    ui.alert('Send assignment dates', 'Could not finish. ' + describeCanvasError_(error),
       ui.ButtonSet.OK);
   }
 }
@@ -136,7 +138,7 @@ function writeDatesSheet_(sheet, assignments, tz) {
   if (filter) filter.remove();
   if (sheet.getLastRow() >= DATES_HEADER_ROW) {
     sheet.getRange(DATES_HEADER_ROW, 1, sheet.getLastRow() - DATES_HEADER_ROW + 1,
-      Math.max(sheet.getLastColumn(), DATES_HEADERS.length)).clear();
+      Math.max(sheet.getLastColumn(), DATES_HEADERS.length)).clear().clearDataValidations();
   }
   sheet.getRange(DATES_HEADER_ROW, 1, 1, DATES_HEADERS.length)
     .setValues([DATES_HEADERS]).setFontWeight('bold').setBackground('#f3f3f3');
@@ -172,7 +174,11 @@ function writeDatesSheet_(sheet, assignments, tz) {
   sheet.getRange(first, 1, count, 1).insertCheckboxes();
   sheet.getRange(first, 2, count, 4).setFontColor('#666666'); // reference only, not pushed
   sheet.getRange(first, 5, count, 1).setNumberFormat('0.##');
-  [6, 9, 11].forEach(col => sheet.getRange(first, col, count, 1).setNumberFormat('m/d/yy'));
+  // A date rule gives each date cell a calendar picker (double-click) and rejects typos.
+  const dateRule = SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false)
+    .setHelpText('Double-click for a calendar, or type a date like 8/12/26.').build();
+  [6, 9, 11].forEach(col => sheet.getRange(first, col, count, 1)
+    .setNumberFormat('m/d/yy').setDataValidation(dateRule));
   [7, 10, 12].forEach(col => sheet.getRange(first, col, count, 1).setNumberFormat('h:mm am/pm'));
   sheet.getRange(first, 6, count, 2).setFontColor('#0d522c').setBackground('#e6f4ea'); // open
   sheet.getRange(first, 8, count, 1).setFontColor('#4a148c').setBackground('#f3e5f5'); // schedule
