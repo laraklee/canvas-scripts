@@ -3,9 +3,9 @@
 > **Generated** from the Decision column of `legacy-function-map.md` by
 > `npm run porting-summary`. Don't edit this file by hand: change the map, then rerun.
 
-**103 legacy functions:** 53 ported · 0 planned for later · 19 left behind on purpose · 31 not yet reviewed.
+**103 legacy functions:** 59 ported · 0 planned for later · 21 left behind on purpose · 23 not yet reviewed.
 
-## Ported (53)
+## Ported (59)
 
 | Legacy function | Legacy file | Now |
 |---|---|---|
@@ -15,6 +15,8 @@
 | `createDropdowns1` | 01_Utilities.js | createDropdowns1 (MakeAssignment.js): Overrides Due Time only, typed times allowed |
 | `convertToUTC` | 01_Utilities.js | buildCanvasTime_ + parseSheetTime_ (PostRows.js); code, no longer a custom function |
 | `writeCurrentSpreadsheetIdToConfig` | 01_Utilities.js | buildSheetIndex_ writes cfg_ThisSheetID (SheetIndex.js) |
+| `sendCanvasRequest` | 02_APIRunner.js | canvasWrite_ (assign-sheet/05_CanvasApi.js) + sendEventJobs_ (assign-sheet/03_Content_Sync.js) |
+| `processUnifiedSheetForCanvasWithLinks` | 02_APIRunner.js | processUnifiedSheetForCanvasWithLinks (assign-sheet/03_Content_Sync.js), not this workbook |
 | `getNextUrl` | 02_APIRunner.js | getCanvasNextUrl_ (CanvasApi.js), the one shared paging helper |
 | `makeAssignmentAll` | 03a_Assign_Core.js | makeAssignmentAll + runMakeAssignment_ (MakeAssignment.js): one button for A, D, CQ, NQ; tab found by labels |
 | `postOneAssignment` | 03a_Assign_Core.js | planMakeAssignmentItem_ (MakeAssignment.js), using createByRow's request builders |
@@ -34,6 +36,10 @@
 | `postSingleClassicQuiz` | 03b_Assign_UI.js | classicQuizPayload_ (PostRows.js) |
 | `generateDescription2` | 03b_Assign_UI.js | buildDescription_ (PostRows.js) |
 | `clearCreationIDs` | 03c_Assign_Misc.js | clearCreationIDs (MakeAssignment.js); also clears Canvas URL, Status, Payload, QuestionIDs |
+| `fetchCanvasAssignmentDates` | 03d.AssignmentDates.js | fetchCanvasAssignmentDates (assign-sheet/07_AssignmentDates.js), not this workbook |
+| `pushAssignmentDatesToCanvas` | 03d.AssignmentDates.js | pushAssignmentDatesToCanvas (assign-sheet/07_AssignmentDates.js): sends only changed open/due/lock dates |
+| `formatDisplayDateTime_` | 03d.AssignmentDates.js | formatDisplayDateTime_ (assign-sheet/07_AssignmentDates.js) |
+| `mergeDateAndTimeIso_` | 03d.AssignmentDates.js | parseSheetDateTime_ (assign-sheet/07_AssignmentDates.js): also rejects bad dates and a date with no time |
 | `getNextPageUrl_` | 03d.AssignmentDates.js | getCanvasNextUrl_ (CanvasApi.js), the one shared paging helper |
 | `createActiveSheetRoster` | 04_CommTools.js | createActiveSheetRoster (Jupiter.js): writes A–E only (legacy cleared A–J); reminds to check Jupiter IDs in F |
 | `runFullDataRefresh` | 05_DataSync.js | refreshAllTables (Menus.js): course list, people, assignment groups, sections, sheet index; not Jupiter categories |
@@ -67,7 +73,7 @@
 
 _None._
 
-## Left behind on purpose (19)
+## Left behind on purpose (21)
 
 | Legacy function | Legacy file | Reason |
 |---|---|---|
@@ -84,6 +90,8 @@ _None._
 | `populateEditSheetWithAssignmentData` | 03c_Assign_Misc.js | makeAssignment is creation only; no load/edit/update (Lara) |
 | `fetchAssignmentFromCanvas` | 03c_Assign_Misc.js | makeAssignment is creation only; no load/edit/update (Lara) |
 | `fetchAssignmentOverrides` | 03c_Assign_Misc.js | makeAssignment is creation only; no load/edit/update (Lara) |
+| `parseSubmissionTypesArray_` | 03d.AssignmentDates.js | assign-sheet no longer sends submission types (dates only) |
+| `extractNameFromCell_` | 03d.AssignmentDates.js | assign-sheet no longer sends assignment names (dates only) |
 | `getUniqueSectionIds` | 06_DataSetup.js | refreshSectionList gets every section in one request |
 | `fetchSectionNames` | 06_DataSetup.js | refreshSectionList gets every section in one request |
 | `fillGradesForSelectedGradingPeriodInActiveColumn` | 07_BatchActions.js | past-quarter gradebook scores not needed for Jupiter (Lara) |
@@ -91,7 +99,7 @@ _None._
 | `createDropdowns` | 09_MiscTools.js | older copy; clashes with Config cells (port createDropdowns1 instead) |
 | `mapMultipleCanvasAssignmentsToJupiterExport` | 10_Jupiter.gs.js | not in Lara's workflow (she uses CreateRoster + Update Grades) |
 
-## Not yet reviewed (31)
+## Not yet reviewed (23)
 
 | Legacy function | Legacy file | What it does |
 |---|---|---|
@@ -103,17 +111,9 @@ _None._
 | `parseTimeValue` | 01_Utilities.js | Turns a time cell into a Date |
 | `toggleSelectedCheckboxes` | 01_Utilities.js | Checks or unchecks every checkbox in the selection |
 | `convertRichTextToHtml` | 01_Utilities.js | Turns a rich-text cell into simple HTML for email |
-| `sendCanvasRequest` | 02_APIRunner.js | Sends one POST and puts a link or error in a status cell |
-| `processUnifiedSheetForCanvasWithLinks` | 02_APIRunner.js | For selected rows, creates calendar events and/or announcements |
 | `performCanvasApiOperation` | 02_APIRunner.js | Runs any GET/POST/PUT/DELETE typed in the sheet, follows paging, can write results to a named sheet |
 | `parseCombinedJsonToSheet` | 02_APIRunner.js | Turns JSON pages into a table on a sheet |
 | `getPeriodNameFromId` | 03c_Assign_Misc.js | Looks up a period name from a section ID |
-| `fetchCanvasAssignmentDates` | 03d.AssignmentDates.js | Lists every assignment with its dates, times, and schedule info |
-| `pushAssignmentDatesToCanvas` | 03d.AssignmentDates.js | Sends edited dates and details back for each row |
-| `formatDisplayDateTime_` | 03d.AssignmentDates.js | Splits a Canvas timestamp into a date and a time |
-| `mergeDateAndTimeIso_` | 03d.AssignmentDates.js | Combines a date and a time into a Canvas timestamp |
-| `parseSubmissionTypesArray_` | 03d.AssignmentDates.js | Turns "online_upload, …" into a list |
-| `extractNameFromCell_` | 03d.AssignmentDates.js | Gets the title out of a `HYPERLINK` cell |
 | `sendEmailsToSelected` | 04_CommTools.js | Sends one Gmail message, BCC to the selected people |
 | `generateEmailList` | 04_CommTools.js | Writes an email list table at the active cell |
 | `runFullScheduleUpdate` | 05_DataSync.js | Placeholder: only shows toasts |

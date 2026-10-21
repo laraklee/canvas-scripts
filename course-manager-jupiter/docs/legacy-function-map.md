@@ -44,8 +44,8 @@ A read-only map of every function in the legacy `course-manager` project (tag
 
 | Function | Purpose | Menu item | Sheets | Canvas endpoints | Writes? | Notes | Decision |
 |---|---|---|---|---|---|---|---|
-| `sendCanvasRequest` | Sends one POST and puts a link or error in a status cell | — | active | (whatever URL it is given) | **YES** | Helper for the function below | |
-| `processUnifiedSheetForCanvasWithLinks` | For selected rows, creates calendar events and/or announcements | CT › 4. Rubric Layouts › Batch Calendar/Announce (Selected Rows) | active | `POST /calendar_events`, `POST /courses/:course/discussion_topics` (announcement) | **YES** | | |
+| `sendCanvasRequest` | Sends one POST and puts a link or error in a status cell | — | active | (whatever URL it is given) | **YES** | Helper for the function below | ported → canvasWrite_ (assign-sheet/05_CanvasApi.js) + sendEventJobs_ (assign-sheet/03_Content_Sync.js) |
+| `processUnifiedSheetForCanvasWithLinks` | For selected rows, creates calendar events and/or announcements | CT › 4. Rubric Layouts › Batch Calendar/Announce (Selected Rows) | active | `POST /calendar_events`, `POST /courses/:course/discussion_topics` (announcement) | **YES** | | ported → processUnifiedSheetForCanvasWithLinks (assign-sheet/03_Content_Sync.js), not this workbook |
 | `performCanvasApiOperation` | Runs any GET/POST/PUT/DELETE typed in the sheet, follows paging, can write results to a named sheet | — | `API Batch`, sheet named in column F (created if missing) | any endpoint typed in the row | **YES** (any) | Must be run on `API Batch`; sends whatever is typed | |
 | `parseCombinedJsonToSheet` | Turns JSON pages into a table on a sheet | — | target sheet | — | no | | |
 | `getNextUrl` | Reads the next-page URL from the `Link` header | — | — | — | no | A third copy of the paging helper | ported → getCanvasNextUrl_ (CanvasApi.js), the one shared paging helper |
@@ -101,12 +101,12 @@ All of these read the assignment builder layout on the active sheet (row 3 = ite
 
 | Function | Purpose | Menu item | Sheets | Canvas endpoints | Writes? | Notes | Decision |
 |---|---|---|---|---|---|---|---|
-| `fetchCanvasAssignmentDates` | Lists every assignment with its dates, times, and schedule info | — | `Assignment Dates` (created if missing) | `GET /courses/:course/assignments` | no | Not on a menu (button?) | |
-| `pushAssignmentDatesToCanvas` | Sends edited dates and details back for each row | — | `Assignment Dates` | `PUT /courses/:course/assignments/:id` | **YES** | Not on a menu (button?) | |
-| `formatDisplayDateTime_` | Splits a Canvas timestamp into a date and a time | — | — | — | no | | |
-| `mergeDateAndTimeIso_` | Combines a date and a time into a Canvas timestamp | — | — | — | no | | |
-| `parseSubmissionTypesArray_` | Turns "online_upload, …" into a list | — | — | — | no | | |
-| `extractNameFromCell_` | Gets the title out of a `HYPERLINK` cell | — | — | — | no | | |
+| `fetchCanvasAssignmentDates` | Lists every assignment with its dates, times, and schedule info | — | `Assignment Dates` (created if missing) | `GET /courses/:course/assignments` | no | Not on a menu (button?) | ported → fetchCanvasAssignmentDates (assign-sheet/07_AssignmentDates.js), not this workbook |
+| `pushAssignmentDatesToCanvas` | Sends edited dates and details back for each row | — | `Assignment Dates` | `PUT /courses/:course/assignments/:id` | **YES** | Not on a menu (button?) | ported → pushAssignmentDatesToCanvas (assign-sheet/07_AssignmentDates.js): sends only changed open/due/lock dates |
+| `formatDisplayDateTime_` | Splits a Canvas timestamp into a date and a time | — | — | — | no | | ported → formatDisplayDateTime_ (assign-sheet/07_AssignmentDates.js) |
+| `mergeDateAndTimeIso_` | Combines a date and a time into a Canvas timestamp | — | — | — | no | | ported → parseSheetDateTime_ (assign-sheet/07_AssignmentDates.js): also rejects bad dates and a date with no time |
+| `parseSubmissionTypesArray_` | Turns "online_upload, …" into a list | — | — | — | no | | leave behind: assign-sheet no longer sends submission types (dates only) |
+| `extractNameFromCell_` | Gets the title out of a `HYPERLINK` cell | — | — | — | no | | leave behind: assign-sheet no longer sends assignment names (dates only) |
 | `getNextPageUrl_` | Reads the next-page URL from the `Link` header | — | — | — | no | A fourth copy of the paging helper | ported → getCanvasNextUrl_ (CanvasApi.js), the one shared paging helper |
 
 ## 04_CommTools.js: roster and email

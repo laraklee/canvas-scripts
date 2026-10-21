@@ -5,7 +5,18 @@ below exists **only** in the legacy project: the `course-manager/` folder (never
 and the Git tag `legacy-gradebook`. For function-by-function detail, see
 `legacy-function-map.md`; for counts, `porting-summary.md`.
 
-Last updated 2026-10-18.
+Last updated 2026-10-20.
+
+## Moved to assign-sheet
+
+These were ported into the **assign-sheet** project (the Assignment sheets for Biology,
+Gastronomy, and AI9), not into this workbook. Lara decided they belong there. Use them
+from each Assignment sheet's **Canvas Tools** menu; see `assign-sheet/BRIEF.md`.
+
+| Area | Legacy functions | Now in assign-sheet |
+|---|---|---|
+| Calendar events and announcements | `processUnifiedSheetForCanvasWithLinks` (and its helper `sendCanvasRequest`) | **📅 Calendar & announcements › Post selected calendarEvents rows to Canvas** (`03_Content_Sync.js`). Sends through `canvasWrite_`, so dry run applies. |
+| Bulk assignment dates | `fetchCanvasAssignmentDates`, `pushAssignmentDatesToCanvas` (and helpers) | **📝 Assignment dates › Load assignment dates from Canvas / Send changed dates to Canvas** (`07_AssignmentDates.js`). Sends only the open/due/lock dates that changed; name, points, and submission type are no longer sent. |
 
 ## Left behind on purpose
 
@@ -35,8 +46,6 @@ Items marked **writes to Canvas** would need dry run and a test-course check whe
 | Read scores into a column | Read each student's score for one assignment into the active column (`syncGradesAndStatusForAssignmentActiveColumn`) | Read-only; one request per student. Involves student data. |
 | Student grade PDFs | Fill a report sheet per student and save PDFs (`batchExportAllStudentGrades`) | **Broken in legacy** (missing helper functions). |
 | Email tools | Build an email list; send one Gmail message BCC to selected people; toggle checkboxes; rich text to HTML (`generateEmailList`, `sendEmailsToSelected`, …) | Sends **Gmail**, not Canvas. Involves student emails. Would need a Gmail permission. |
-| Calendar events and announcements | For selected rows, create calendar events and/or announcements (`processUnifiedSheetForCanvasWithLinks`) | **Writes to Canvas.** |
-| Bulk assignment dates | List every assignment's dates on a sheet, edit them, push changes back (`fetchCanvasAssignmentDates`, `pushAssignmentDatesToCanvas`) | **Writes to Canvas** (updates existing assignments). |
 | API Batch runner | Send any request typed into the `API Batch` sheet; turn JSON replies into tables (`performCanvasApiOperation`, `parseJsonToSheet`, …) | **Writes to Canvas** (anything typed). A developer tool; risky to port as-is. |
 | Assignment selector dropdowns | Searchable assignment-name dropdowns and ID lookups in a cell (`setupAssignmentFilterAndDropdown`, `createAssignmentSelector`, …) | Sheet only. |
 | Unused helpers and placeholders | Functions nothing calls, and two placeholders that did nothing (`runFullScheduleUpdate`, `updateMasterConnection`) | Probably leave behind; listed for completeness. |
