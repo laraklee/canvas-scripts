@@ -28,6 +28,8 @@ const TOOL_SHEETS = Object.freeze({
   JUPITER_EXPORT: 'JupiterExport',
   // Built by Export rubric for Canvas (legacy name); downloaded as CSV for Canvas.
   RUBRIC_EXPORT: 'rubricCanvasExport',
+  // Built by Course check (and after assignment-group refreshes): possible setup mistakes.
+  COURSE_CHECK: 'Course Check',
 });
 
 /** Sheets built so far. Add each one here as it is created. */

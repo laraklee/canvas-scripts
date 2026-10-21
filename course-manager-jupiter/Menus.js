@@ -5,11 +5,13 @@
  *   in; the menus hold everything, including data chores (Lara, 2026-10-18; legacy also
  *   had two menus, "Canvas Tools" and "Setup & Admin"). Function names are unchanged, so
  *   every button keeps working.
- *   - Canvas Tools: doing things (create, reorder, groups, rubrics, Jupiter, seating).
+ *   - Canvas Tools: doing things (create, reorder, groups, rubrics, Jupiter, seating),
+ *     and Course check (read-only report, CourseCheck.js) at the bottom.
  *   - Setup & Data: refreshing reference tables, Jupiter categories (manual, on purpose),
  *     and setup / safety checks.
  *   Also here: goToHomePage (jumps to the Home tab) and refreshAllTables (every ref_
- *   table refresh in a row, except Jupiter categories, then one summary).
+ *   table refresh in a row, except Jupiter categories, then one summary; the assignment
+ *   groups step also updates the Course Check tab).
  * Canvas endpoints called: those of the refreshes it runs (all GET; see RefSheets.js).
  * Canvas write operations: none here (the menu items for write tools call their own
  *   files, which go through canvasWrite_).
@@ -49,6 +51,8 @@ function buildMenus_() {
         'buildJupiterExportFromRecentCanvasGrades'))
     .addSeparator()
     .addItem('Build seating chart', 'buildSeatingChart')
+    .addSeparator()
+    .addItem('Course check (possible setup mistakes)', 'runCourseCheck')
     .addToUi();
 
   ui.createMenu('Setup & Data')
@@ -105,7 +109,8 @@ function refreshAllTables() {
     ['People list', () => `${writePeopleListSheet_(ss)} enrollment row(s)`],
     ['Assignment groups', () => {
       const counts = writeAssignmentGroupsSheet_(ss);
-      return `${counts.assignments} assignment(s) in ${counts.groups} group(s)`;
+      return `${counts.assignments} assignment(s) in ${counts.groups} group(s). ` +
+        courseCheckAfterRefresh_(ss, counts.canvasGroups);
     }],
     ['Section list', () => `${writeSectionLookupSheet_(ss).sections} section(s)`],
     ['Sheet index', () => `${buildSheetIndex_(ss)} tab(s)`],

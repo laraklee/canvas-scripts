@@ -1,0 +1,246 @@
+/**
+ * CourseCheck.js
+ * Purpose: Course check, a read-only report of likely course-setup mistakes, written to
+ *   the Course Check tab (one row per possible problem; Lara decides what to ignore):
+ *   - Missing due date: no due date at all (main or section dates).
+ *   - Unpublished: the assignment is not published.
+ *   - No-school day: a due date on a weekend, a day not in ref_simpleSchedule (a break),
+ *     or a day whose Schedule (column E) is H (holiday) or PD (no US classes). Only
+ *     dates inside the schedule's date range are checked.
+ *   - Outside the term: a due date before the term starts or after it ends (catches
+ *     dates left over from last term's course copy). The term is the quarters in
+ *     cfg_TermQuarters (e.g. 2, 1-2, 1-4), dated from ref_simpleSchedule column A;
+ *     if that range is missing or blank, the Canvas term dates are used.
+ *   - Group not checked for Jupiter: one line per assignment group with point-earning
+ *     assignments that is not checked in cfg_JupiterCategories. Skipped when no
+ *     category is checked (a course that doesn't use Jupiter, e.g. AI9).
+ *   Runs from its own menu item (runCourseCheck) and after Refresh assignment groups and
+ *   Refresh all tables, using the assignments those refreshes already downloaded.
+ * Canvas endpoints called (GET, via canvasGet_): /api/v1/courses/:course?include[]=term
+ *   (only when cfg_TermQuarters is blank), plus the assignment groups refresh's own
+ *   request (RefSheets.js).
+ * Canvas write operations: none.
+ * Required: User Properties CANVAS_BASE_URL and CANVAS_TOKEN; cfg_CourseID; sheet
+ *   ref_simpleSchedule. Optional: cfg_TermQuarters, cfg_JupiterCategories.
+ *   Lists assignment names only (no student data); logs counts only.
+ */
+
+const COURSE_CHECK_HEADERS = Object.freeze(['Check', 'Assignment', 'Group', 'Due', 'Link']);
+// Optional, so it is not in CFG_NAMES (Check setup doesn't ask for it).
+const TERM_QUARTERS_RANGE = 'cfg_TermQuarters';
+// ref_simpleSchedule Schedule codes (column E) that mean no classes.
+const NO_SCHOOL_CODES = Object.freeze(['H', 'PD']);
+const COURSE_CHECKS = Object.freeze({
+  MISSING_DUE: 'Missing due date',
+  UNPUBLISHED: 'Unpublished',
+  NO_SCHOOL: 'No-school day',
+  OUTSIDE_TERM: 'Outside the term',
+  JUPITER: 'Group not checked for Jupiter',
+  INFO: 'Info',
+});
+
+/**
+ * Menu / button: Course check. Refreshes ref_assignmentGroups (refresh before use), fills
+ * the Course Check tab, opens it, and shows counts.
+ */
+function runCourseCheck() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  try {
+    ss.toast('Checking the course…', 'Course check', -1);
+    const result = writeCourseCheck_(ss, writeAssignmentGroupsSheet_(ss).canvasGroups);
+    ss.getSheetByName(TOOL_SHEETS.COURSE_CHECK).activate();
+    ss.toast('Done.', 'Course check', 2);
+    ui.alert('Course check', courseCheckCountsText_(result) + '\n\n' + result.termNote +
+      (result.jupiterNote ? '\n' + result.jupiterNote : '') +
+      '\n\nDetails are on the Course Check tab. These are possible problems: ignore any ' +
+      'that are on purpose.', ui.ButtonSet.OK);
+  } catch (error) {
+    reportRefreshFailure_('Course check', 'The Course Check tab was not changed.', error);
+  }
+}
+
+/**
+ * Builds the Course Check tab from the assignment groups Canvas just returned (with
+ * assignments and all_dates). Returns { counts, total, termNote, jupiterNote }.
+ * Throws (tab unchanged) if the tab's row 1 isn't this report's layout.
+ */
+function writeCourseCheck_(ss, groups) {
+  const existing = ss.getSheetByName(TOOL_SHEETS.COURSE_CHECK);
+  if (existing) checkHeaderLayout_(existing, COURSE_CHECK_HEADERS);
+
+  const timeZone = ss.getSpreadsheetTimeZone();
+  const dayOf = iso => Utilities.formatDate(new Date(iso), timeZone, 'yyyy-MM-dd');
+  const showDue = iso => Utilities.formatDate(new Date(iso), timeZone, 'EEE M/d/yy h:mm a');
+  const schedule = readScheduleDays_(ss, timeZone);
+  const term = findTerm_(ss, schedule, dayOf);
+  let allowed = null;
+  try {
+    allowed = readJupiterAllowed_(ss);
+  } catch (error) {
+    if (!error.isSheetProblem) throw error; // none checked or no table: skip that check
+  }
+
+  const result = buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue);
+  const sheet = existing || ss.insertSheet(TOOL_SHEETS.COURSE_CHECK);
+  sheet.getRange(1, 1, 1, COURSE_CHECK_HEADERS.length)
+    .setValues([COURSE_CHECK_HEADERS.slice()]).setFontWeight('bold');
+  sheet.getRange(2, 4, Math.max(sheet.getMaxRows() - 1, 1), 1).setNumberFormat('@');
+  replaceDataRows_(sheet, result.rows, COURSE_CHECK_HEADERS.length);
+  sheet.setFrozenRows(1);
+
+  console.log(`Course check: ${result.total} possible problem(s); ` +
+    Object.entries(result.counts).map(([check, n]) => `${check} ${n}`).join(', ') + '.');
+  return result;
+}
+
+/** "3 possible problems: Unpublished 2, No-school day 1." or "No problems found." */
+function courseCheckCountsText_(result) {
+  if (!result.total) return 'No problems found.';
+  return `${result.total} possible problem(s): ` + Object.entries(result.counts)
+    .filter(([, n]) => n).map(([check, n]) => `${check} ${n}`).join(', ') + '.';
+}
+
+/**
+ * The report rows and counts. groups: Canvas assignment groups with assignments;
+ * schedule: [{ day: 'yyyy-MM-dd', quarter, code }]; term: { start, end, note } or
+ * { note } when unknown; allowed: checked Jupiter categories ({ ids, names }) or null
+ * to skip that check; dayOf / showDue turn a Canvas date into a day key / display text.
+ * Rows: Info rows first (when run, term, skipped checks), then one row per problem in
+ * check order, assignments in Canvas order.
+ */
+function buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue) {
+  const scheduleByDay = new Map(schedule.map(entry => [entry.day, entry]));
+  const days = schedule.map(entry => entry.day).sort();
+  const first = days[0];
+  const last = days[days.length - 1];
+  const found = Object.fromEntries([COURSE_CHECKS.MISSING_DUE, COURSE_CHECKS.UNPUBLISHED, COURSE_CHECKS.NO_SCHOOL,
+    COURSE_CHECKS.OUTSIDE_TERM, COURSE_CHECKS.JUPITER].map(check => [check, []]));
+
+  groups.forEach(group => (group.assignments || []).forEach(assignment => {
+    const row = (check, due) => [check, assignment.name || '', group.name || '',
+      due ? showDue(due) : '', assignment.html_url || ''];
+    const dues = [...new Set([assignment.due_at].concat((assignment.all_dates || [])
+      .map(date => date.due_at)).filter(Boolean))];
+    if (!dues.length) found[COURSE_CHECKS.MISSING_DUE].push(row(COURSE_CHECKS.MISSING_DUE));
+    if (assignment.published === false) found[COURSE_CHECKS.UNPUBLISHED].push(row(COURSE_CHECKS.UNPUBLISHED));
+    dues.forEach(due => {
+      const day = dayOf(due);
+      const why = first && day >= first && day <= last ? noSchoolReason_(day, scheduleByDay) : '';
+      if (why) found[COURSE_CHECKS.NO_SCHOOL].push(row(`${COURSE_CHECKS.NO_SCHOOL}: ${why}`, due));
+      if (term.start && (day < term.start || day > term.end)) {
+        found[COURSE_CHECKS.OUTSIDE_TERM].push(row(COURSE_CHECKS.OUTSIDE_TERM, due));
+      }
+    });
+  }));
+
+  if (allowed) {
+    groups.forEach(group => {
+      const id = String(group.id || '');
+      const name = String(group.name || '').trim();
+      if (allowed.ids.has(id) || allowed.names.has(name.toLowerCase())) return;
+      const scored = (group.assignments || []).filter(a => Number(a.points_possible) > 0).length;
+      if (scored) {
+        found[COURSE_CHECKS.JUPITER].push([COURSE_CHECKS.JUPITER, `${scored} assignment(s) worth points`,
+          name, '', '']);
+      }
+    });
+  }
+
+  const counts = Object.fromEntries(Object.entries(found).map(([check, list]) => [check, list.length]));
+  const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
+  const jupiterNote = allowed ? '' : 'Jupiter check skipped: no categories are checked in ' +
+    'cfg_JupiterCategories.';
+  const info = [[COURSE_CHECKS.INFO, term.note, '', '', '']]
+    .concat(jupiterNote ? [[COURSE_CHECKS.INFO, jupiterNote, '', '', '']] : [])
+    .concat(total ? [] : [[COURSE_CHECKS.INFO, 'No problems found.', '', '', '']]);
+  return { rows: info.concat(...Object.values(found)), counts, total, termNote: term.note,
+    jupiterNote };
+}
+
+/** Why a day (inside the schedule's range) has no school, or '' if it's a school day. */
+function noSchoolReason_(day, scheduleByDay) {
+  const weekday = new Date(day + 'T12:00:00Z').getUTCDay();
+  if (weekday === 0 || weekday === 6) return 'weekend';
+  const entry = scheduleByDay.get(day);
+  if (!entry) return 'not in the schedule (break?)';
+  return NO_SCHOOL_CODES.includes(entry.code) ? `Schedule ${entry.code}` : '';
+}
+
+/**
+ * ref_simpleSchedule rows as [{ day: 'yyyy-MM-dd', quarter: '2', code: 'A' }]: column A
+ * quarter, C date, E Schedule code. Rows without a date are left out.
+ */
+function readScheduleDays_(ss, timeZone) {
+  const sheet = ss.getSheetByName(SHEETS.SIMPLE_SCHEDULE);
+  if (!sheet) throw sheetProblem_(`There is no ${SHEETS.SIMPLE_SCHEDULE} tab.`);
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  return sheet.getRange(2, 1, lastRow - 1, 5).getValues()
+    .filter(row => row.slice(2, 3)[0] instanceof Date)
+    .map(row => ({
+      day: Utilities.formatDate(row.slice(2, 3)[0], timeZone, 'yyyy-MM-dd'),
+      quarter: String(row.slice(0, 1)[0]).trim(),
+      code: String(row.slice(4, 5)[0]).trim(),
+    }));
+}
+
+/**
+ * The term as { start, end, note } (day keys), from cfg_TermQuarters and the schedule,
+ * or else from Canvas's term dates; { note } alone if neither gives dates.
+ */
+function findTerm_(ss, schedule, dayOf) {
+  const range = ss.getRangeByName(TERM_QUARTERS_RANGE);
+  const setting = range ? String(range.getValue()).trim() : '';
+  if (setting) return termFromSchedule_(parseQuarters_(setting), schedule, setting);
+
+  const course = canvasStep_('course request', () =>
+    canvasGet_('/courses/' + getCourseIdForRefresh_(), { 'include[]': ['term'] }));
+  const termDates = course && course.term && course.term.start_at && course.term.end_at ?
+    course.term : course;
+  if (!termDates || !termDates.start_at || !termDates.end_at) {
+    return { note: `Term check skipped: ${TERM_QUARTERS_RANGE} is blank and the Canvas course ` +
+      'has no term dates.' };
+  }
+  const start = dayOf(termDates.start_at);
+  const end = dayOf(termDates.end_at);
+  return { start, end, note: `Term: ${showDay_(start)} – ${showDay_(end)} (Canvas term dates; ` +
+    `set ${TERM_QUARTERS_RANGE} on ${SHEETS.CONFIG} for a quarter course).` };
+}
+
+/** '2', '1-2', '1,2', 'Q2', 'Q1-Q2' (or the number 2) → ['2'] / ['1', '2']. */
+function parseQuarters_(setting) {
+  const text = String(setting).toUpperCase().replace(/Q/g, '').replace(/\s/g, '');
+  const quarters = [];
+  text.split(',').forEach(part => {
+    const match = part.match(/^(\d)(?:-(\d))?$/);
+    if (!match) {
+      throw sheetProblem_(`${TERM_QUARTERS_RANGE} should be quarter numbers like 2, 1-2, or ` +
+        '1-4.');
+    }
+    const from = Number(match[1]);
+    const to = Number(match[2] || match[1]);
+    for (let q = Math.min(from, to); q <= Math.max(from, to); q++) quarters.push(String(q));
+  });
+  return quarters;
+}
+
+/** { start, end, note }: first and last schedule day of those quarters. */
+function termFromSchedule_(quarters, schedule, setting) {
+  const days = schedule.filter(entry => quarters.includes(entry.quarter))
+    .map(entry => entry.day).sort();
+  if (!days.length) {
+    throw sheetProblem_(`${SHEETS.SIMPLE_SCHEDULE} has no days for quarter(s) ${setting} ` +
+      `(${TERM_QUARTERS_RANGE}).`);
+  }
+  const start = days[0];
+  const end = days[days.length - 1];
+  return { start, end, note: `Term: Q${setting}, ${showDay_(start)} – ${showDay_(end)} ` +
+    `(${TERM_QUARTERS_RANGE} and ${SHEETS.SIMPLE_SCHEDULE}).` };
+}
+
+/** 'yyyy-MM-dd' → 'M/d/yy'. */
+function showDay_(day) {
+  const [year, month, date] = day.split('-');
+  return `${Number(month)}/${Number(date)}/${year.slice(2)}`;
+}

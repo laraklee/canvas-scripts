@@ -494,13 +494,37 @@
 >   reads a Canvas-built table now refreshes it first, except sheet formulas (the
 >   makeAssignment Section ID lookup and `cfg_CourseName`).
 > - **Open questions:**
->   - **Course check report (idea, 2026-10-20; Lara is deciding which mistakes to
->     catch):** a read-only button that lists likely course-setup mistakes. Ideas so far:
->     missing due dates; unpublished items; due dates on no-school days (from
->     `ref_simpleSchedule`); assignments in groups not checked for Jupiter; probable
->     override typos (dates out of order, far from the main date, a deleted section,
->     overrides covering every section). Overrides are *meant* to differ from the main
->     dates. Plan in a later session.
+>   - **Course check report (idea 2026-10-20; decided 2026-10-21, building):** a
+>     read-only report of likely course-setup mistakes. **Lives in course-manager-jupiter**
+>     (both Jupiter courses, Biology and Gastronomy, need the Jupiter check; this is
+>     where Lara makes the Canvas items). **First version, five checks:** missing due
+>     dates; unpublished items; due dates on no-school days; due dates outside the term
+>     (catches dates left from last term's course copy); assignments in groups not
+>     checked for Jupiter (skipped when a course has no Jupiter categories checked, e.g.
+>     AI9). **Runs:** its own menu item/button, and a short summary after Refresh
+>     assignment groups (alone or via Refresh all tables). Not onOpen (can't contact
+>     Canvas without an installable trigger, design rule 4). Override-typo checks left
+>     out (no overrides this year). Lara's term setup: copy last term's content into a
+>     sandbox, which is copied into the school shell (students from the SIS); then fill
+>     the assignment sheet and rosters, make Canvas items with Course Manager, and copy
+>     links into the assignment sheet. Plan: test on Biology, then move AI9 and
+>     Gastronomy to this code.
+>     **Details decided 2026-10-21:** report everything; Lara ignores exceptions, so no
+>     clever filtering. **Term** = the quarters in a new optional setting
+>     `cfg_TermQuarters` (e.g. `2` for AI9, `1-2` Gastronomy S1, `1-4` Biology), dated from
+>     `ref_simpleSchedule` column A (quarter number; column B is the week; a "5" row is next
+>     year's first day); blank or missing → Canvas term dates (a quarter course shows the
+>     semester's). **No-school day** = a date not in `ref_simpleSchedule` (weekends,
+>     breaks) or with Schedule (column E) `H` or `PD`; checked only inside the schedule's
+>     date range. Column I (periods JSON) is empty on many real school days (chapel, exams,
+>     Class Day), so it is not used. **Weekends flagged.** **All unpublished items
+>     flagged.** **Jupiter check:** one line per unchecked group with point-earning
+>     assignments. **Tab:** `Course Check`.
+>     **Second pass (ideas, not in v1):** something due right after a **No Homework
+>     Weekend** (`ref_simpleSchedule` column G); no **tests or major papers due on SAC
+>     review days** (if the schedule lists them; how to spot "test or major paper" TBD).
+>   - **Naming (2026-10-21):** "Sequence 9: AI and Media Literacy" is called **AI9** from
+>     now on (older notes say "Sequence 9"; same course).
 >   - **Jupiter comments (Lara will test once there's work to grade):** Update Grades
 >     clears JupiterExport, Comment columns included, so a rerun (e.g. for late work)
 >     brings back every score but leaves earlier typed comments blank. Unknown: does a

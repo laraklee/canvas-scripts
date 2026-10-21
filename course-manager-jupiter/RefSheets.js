@@ -8,7 +8,9 @@
  *     cfg_CourseID course, all enrollment types, same nine columns as the legacy tab.
  *   - ref_assignmentGroups ("Refresh assignment groups"): every assignment in the
  *     cfg_CourseID course, same seven columns as the legacy tab, sorted by group order
- *     and then position. readAssignmentGroups_() reads it back by header name.
+ *     and then position. readAssignmentGroups_() reads it back by header name. The menu
+ *     item (not the reorder tool) also updates the Course Check tab (CourseCheck.js) and
+ *     adds its count to the summary.
  *   - ref_SectionLookup ("Refresh section list"): every section in the cfg_CourseID course,
  *     same four columns as the legacy tab (Period comes from "(P3)" in the section name).
  * Canvas endpoints called (all GET, via canvasGet_):
@@ -18,6 +20,7 @@
  *   /api/v1/courses/:course/enrollments?state[]=active&state[]=invited
  *   /api/v1/courses/:course/assignment_groups?include[]=assignments&include[]=all_dates
  *   /api/v1/courses/:course/sections
+ *   /api/v1/courses/:course?include[]=term (Course check, only if cfg_TermQuarters is blank)
  * Canvas write operations: none.
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN
  *   (read by canvasGet_).
@@ -180,7 +183,8 @@ function refreshAssignmentGroups() {
   try {
     const counts = writeAssignmentGroupsSheet_(ss);
     const summary = `${counts.assignments} assignment(s) in ${counts.groups} group(s)`;
-    ss.toast(`${summary} listed on ${SHEETS.ASSIGNMENT_GROUPS}.`, 'Refresh assignment groups', 5);
+    ss.toast(`${summary} listed on ${SHEETS.ASSIGNMENT_GROUPS}. ` +
+      courseCheckAfterRefresh_(ss, counts.canvasGroups), 'Refresh assignment groups', 8);
   } catch (error) {
     reportRefreshFailure_('Refresh assignment groups',
       'The assignment groups list was not changed.', error);
@@ -188,9 +192,25 @@ function refreshAssignmentGroups() {
 }
 
 /**
+ * After a manual refresh: updates the Course Check tab from the groups just downloaded
+ * and returns one line for the summary. A failure here never undoes the refresh.
+ */
+function courseCheckAfterRefresh_(ss, canvasGroups) {
+  try {
+    const result = writeCourseCheck_(ss, canvasGroups);
+    return `Course check: ${result.total ? result.total + ' possible problem(s); see the ' +
+      TOOL_SHEETS.COURSE_CHECK + ' tab.' : 'no problems found.'}`;
+  } catch (error) {
+    console.error('Course check after refresh failed: ' + (error.canvasType || error.message));
+    return 'Course check could not run (use Course check in the menu to see why).';
+  }
+}
+
+/**
  * Does the work of Refresh assignment groups without any pop-up, so the reorder tool
- * can call it too. Returns { assignments, groups } counts. Throws on any problem,
- * before the sheet is touched if Canvas fails.
+ * can call it too. Returns { assignments, groups } counts and canvasGroups (what Canvas
+ * returned, for Course check). Throws on any problem, before the sheet is touched if
+ * Canvas fails.
  */
 function writeAssignmentGroupsSheet_(ss) {
   const courseId = getCourseIdForRefresh_();
@@ -228,7 +248,7 @@ function writeAssignmentGroupsSheet_(ss) {
 
   console.log(`Refresh assignment groups: ${rows.length} assignment(s) in ` +
     `${groups.length} group(s) written.`);
-  return { assignments: rows.length, groups: groups.length };
+  return { assignments: rows.length, groups: groups.length, canvasGroups: groups };
 }
 
 /**
