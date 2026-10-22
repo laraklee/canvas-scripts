@@ -9,14 +9,26 @@
 >   tabs hide themselves after refresh. This Mac, GitHub, and Google matched at commit
 >   221da33.
 > - **Waiting on Lara (this week):** the first real **Jupiter paste** (Bio timed writing
->   analysis, AI-graded); the **blank Comment cell test** in Jupiter (see "Jupiter
->   comments" under Open questions). A fix to Update Grades may follow.
+>   analysis, AI-graded). A fix to Update Grades may follow. The blank Comment cell
+>   test in Jupiter is **shelved**: comments will be written in the Sheet and posted to
+>   Canvas instead (see "Jupiter comments" under Open questions).
+> - **Next up (Lara, 2026-10-21; she needs both soon):**
+>   1. **Bring back the one-assignment tools from legacy** (see `docs/still-in-legacy.md`
+>      rows 49-51): read each student's score for one assignment into the active column
+>      (`syncGradesAndStatusForAssignmentActiveColumn`, read-only), post the comments in a
+>      column to each student's submission (`postBatchCommentsForAssignmentActiveColumn`),
+>      and the assignment dropdowns that pick the assignment. Posting comments **writes
+>      to Canvas** (comments only, no grades): call it out first, route it through one
+>      write helper with `DRY_RUN`, and keep student data out of logs.
+>   2. **AI grading follow-up:** Lara tried the BioGrading Gem (`gems/BioGrading.md`) in
+>      Gemini, and also MagicSchool, on real work. Mixed results: some things done very
+>      well, others very poorly. Start by asking her what worked and what didn't, then
+>      revise the Gem instructions.
 > - **Next big piece:** move **AI9** and **Gastronomy** to this code, one workbook per
 >   course (see "Other courses" below; not decided in detail). Each new workbook needs
 >   `cfg_TermQuarters` (AI9 `2` now, Gastronomy `1-2`); Gastronomy's multi-section grading
 >   sheets get re-sorted once by Period, then name.
-> - **Later / maybe:** email tools (wait and see); comment tools (only if commenting
->   moves into Canvas).
+> - **Later / maybe:** email tools (wait and see).
 > - Everything below is the running log, oldest first; the decision notes for each piece
 >   are there.
 >
@@ -570,7 +582,10 @@
 >     homework) is a structural exception: Lara ticks its rows "OK as is"; no setting.
 >   - **Naming (2026-10-21):** "Sequence 9: AI and Media Literacy" is called **AI9** from
 >     now on (older notes say "Sequence 9"; same course).
->   - **Jupiter comments (Lara will test once there's work to grade):** Update Grades
+>   - **Jupiter comments: shelved (Lara, 2026-10-21).** Lara will write comments in
+>     the Sheet and post them to Canvas with the comment tool being brought back (see
+>     "Next up"), which is cleaner. The blank-cell test below isn't needed for now.
+>     Earlier note, kept for reference: Update Grades
 >     clears JupiterExport, Comment columns included, so a rerun (e.g. for late work)
 >     brings back every score but leaves earlier typed comments blank. Unknown: does a
 >     blank Comment cell pasted into Jupiter erase a comment already there? Test with
