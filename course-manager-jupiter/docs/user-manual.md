@@ -151,6 +151,29 @@ Groups are created empty (no students are added).
 ### Seating chart
 **Canvas Tools › Build seating chart.**
 
+### Course check (possible setup mistakes)
+**Canvas Tools › Course check.** Read-only: it never changes Canvas. Run it after setting
+up a term, or any time. It refreshes the assignment list, then fills the **Course Check**
+tab with possible problems:
+- **Missing due date**, and **Unpublished** items.
+- **No-school day:** due on a weekend, during a break, or on a holiday (`H`) or PD day
+  in ref_simpleSchedule.
+- **Outside the term:** often dates left over from last term's course copy.
+- **Group not checked for Jupiter:** a group with assignments worth points that isn't
+  ticked in the Jupiter categories (skipped if no category is ticked, e.g. AI9).
+
+The first **Info** row shows which term dates were used. **Refresh assignment groups**
+and **Refresh all tables** also update the tab and say how many problems there are.
+
+- **Term dates:** on ref_Config, a cell named `cfg_TermQuarters` holds the quarters this
+  course covers: `2` for one quarter, `1-2` for a semester, `1-4` for a year. Update it
+  each new term (AI9). If it's blank or missing, Canvas's term dates are used (for a
+  quarter course, that's the whole semester).
+- **OK as is:** tick it for anything that's fine on purpose (for example, a Sunday-night
+  due date). Next time, that row is listed last, in gray, and isn't counted. If the due
+  date changes, it shows up again. Fixed problems simply disappear on the next run.
+  Only the ticks are kept: anything else typed on the tab is replaced.
+
 ---
 
 ## 6. When something goes wrong

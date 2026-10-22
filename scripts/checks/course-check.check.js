@@ -106,7 +106,44 @@ check('rows: Info first, then each check in order (assignment, group, due)',
     ['Group not checked for Jupiter', '1 assignment(s) worth points', 'Labs', ''],
   ]);
 check('link column filled for assignments', result.rows[1][4], 'https://canvas.example.test/a/3');
-check('every row has 5 columns', result.rows.every(row => row.length === 5), true);
+check('every row has 7 columns', result.rows.every(row => row.length === 7), true);
+check('problem rows unticked with a key; Info rows have neither',
+  [result.rows[0].slice(5), result.rows[3].slice(5), result.rows[10].slice(5)],
+  [['', ''], [false, 'No-school day: weekend|2|2026-10-24T23:59'],
+    [false, 'Group not checked for Jupiter|group:2']]);
+
+// ---- OK as is ----
+const okKeys = new Set(['No-school day: weekend|2|2026-10-24T23:59',
+  'Group not checked for Jupiter|group:2', 'Unpublished|999|']); // the last one is stale
+const okRun = c.buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue, okKeys);
+check('ticked problems leave the counts; stale ticks ignored',
+  [okRun.total, okRun.okCount, okRun.counts['No-school day'], okRun.counts['Group not checked for Jupiter']],
+  [8, 2, 3, 0]);
+check('ticked rows last, still ticked, in check order',
+  okRun.rows.slice(-2).map(row => [row[0], row[1], row[5]]),
+  [['No-school day: weekend', 'HW 2', true], ['Group not checked for Jupiter', '1 assignment(s) worth points', true]]);
+check('open rows come before them, unticked', okRun.rows.slice(1, -2).every(row => row[5] === false), true);
+check('counts text mentions OK as is', c.courseCheckCountsText_(okRun).startsWith(
+  '8 possible problem(s) (2 marked OK as is): '), true);
+const moved = groups.map(g => Object.assign({}, g, { assignments: g.assignments.map(x =>
+  (x.id === 2 ? Object.assign({}, x, { due_at: '2026-10-25T23:59' }) : x)) }));
+const movedRun = c.buildCourseCheck_(moved, schedule, term, allowed, dayOf, showDue, okKeys);
+check('a changed due date shows again', movedRun.rows.some(row => row[1] === 'HW 2' && row[5] === false), true);
+check('all ticked: no problems found, with the OK count', c.courseCheckCountsText_({ total: 0, okCount: 3,
+  counts: {} }), 'No problems found (3 marked OK as is).');
+
+// Reading ticks from the tab, and accepting the first version's tab.
+const tab = rows => ({ getLastRow: () => rows.length + 1,
+  getRange: () => ({ getValues: () => rows }) });
+check('reads ticked keys only', [...c.readOkKeys_(tab([[true, 'k1'], [false, 'k2'], [true, ''], ['', '']]))],
+  ['k1']);
+let layoutChecked = false;
+c.checkHeaderLayout_ = () => { layoutChecked = true; };
+const headerTab = header => ({ getRange: () => ({ getValues: () => [header] }) });
+c.checkCourseCheckLayout_(headerTab(['Check', 'Assignment', 'Group', 'Due', 'Link', '', '']));
+check('first-version tab (5 columns) accepted as is', layoutChecked, false);
+c.checkCourseCheckLayout_(headerTab(['Name', '', '', '', '', '', '']));
+check('anything else goes to the usual header check', layoutChecked, true);
 check('counts text', c.courseCheckCountsText_(result), '10 possible problem(s): Missing due ' +
   'date 1, Unpublished 1, No-school day 4, Outside the term 3, Group not checked for Jupiter 1.');
 

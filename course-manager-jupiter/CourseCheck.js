@@ -16,6 +16,10 @@
  *     category is checked (a course that doesn't use Jupiter, e.g. AI9).
  *   Runs from its own menu item (runCourseCheck) and after Refresh assignment groups and
  *   Refresh all tables, using the assignments those refreshes already downloaded.
+ *   "OK as is" checkbox: a ticked row is remembered across runs by the hidden Key column
+ *   (check + assignment ID + due date, or check + group ID), listed last in gray, and
+ *   counted separately. A changed due date or a different problem shows again. Only the
+ *   ticks are kept; everything else on the tab is rebuilt each run.
  * Canvas endpoints called (GET, via canvasGet_): /api/v1/courses/:course?include[]=term
  *   (only when cfg_TermQuarters is blank), plus the assignment groups refresh's own
  *   request (RefSheets.js).
@@ -25,7 +29,11 @@
  *   Lists assignment names only (no student data); logs counts only.
  */
 
-const COURSE_CHECK_HEADERS = Object.freeze(['Check', 'Assignment', 'Group', 'Due', 'Link']);
+const COURSE_CHECK_HEADERS = Object.freeze(['Check', 'Assignment', 'Group', 'Due', 'Link',
+  'OK as is', 'Key']);
+const COURSE_CHECK_OK_COLUMN = 6;
+const COURSE_CHECK_KEY_COLUMN = 7;
+const COURSE_CHECK_OK_COLOR = '#999999'; // ticked rows, listed last
 // Optional, so it is not in CFG_NAMES (Check setup doesn't ask for it).
 const TERM_QUARTERS_RANGE = 'cfg_TermQuarters';
 // ref_simpleSchedule Schedule codes (column E) that mean no classes.
@@ -53,8 +61,9 @@ function runCourseCheck() {
     ss.toast('Done.', 'Course check', 2);
     ui.alert('Course check', courseCheckCountsText_(result) + '\n\n' + result.termNote +
       (result.jupiterNote ? '\n' + result.jupiterNote : '') +
-      '\n\nDetails are on the Course Check tab. These are possible problems: ignore any ' +
-      'that are on purpose.', ui.ButtonSet.OK);
+      '\n\nDetails are on the Course Check tab. These are possible problems: tick "OK as ' +
+      'is" for any that are on purpose, and they stay at the bottom next time.',
+    ui.ButtonSet.OK);
   } catch (error) {
     reportRefreshFailure_('Course check', 'The Course Check tab was not changed.', error);
   }
@@ -62,12 +71,14 @@ function runCourseCheck() {
 
 /**
  * Builds the Course Check tab from the assignment groups Canvas just returned (with
- * assignments and all_dates). Returns { counts, total, termNote, jupiterNote }.
- * Throws (tab unchanged) if the tab's row 1 isn't this report's layout.
+ * assignments and all_dates), keeping the "OK as is" ticks. Returns { counts, total,
+ * okCount, termNote, jupiterNote }. Throws (tab unchanged) if the tab's row 1 isn't
+ * this report's layout.
  */
 function writeCourseCheck_(ss, groups) {
   const existing = ss.getSheetByName(TOOL_SHEETS.COURSE_CHECK);
-  if (existing) checkHeaderLayout_(existing, COURSE_CHECK_HEADERS);
+  if (existing) checkCourseCheckLayout_(existing);
+  const okKeys = existing ? readOkKeys_(existing) : new Set();
 
   const timeZone = ss.getSpreadsheetTimeZone();
   const dayOf = iso => Utilities.formatDate(new Date(iso), timeZone, 'yyyy-MM-dd');
@@ -81,23 +92,56 @@ function writeCourseCheck_(ss, groups) {
     if (!error.isSheetProblem) throw error; // none checked or no table: skip that check
   }
 
-  const result = buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue);
+  const result = buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue, okKeys);
   const sheet = existing || ss.insertSheet(TOOL_SHEETS.COURSE_CHECK);
-  sheet.getRange(1, 1, 1, COURSE_CHECK_HEADERS.length)
-    .setValues([COURSE_CHECK_HEADERS.slice()]).setFontWeight('bold');
-  sheet.getRange(2, 4, Math.max(sheet.getMaxRows() - 1, 1), 1).setNumberFormat('@');
-  replaceDataRows_(sheet, result.rows, COURSE_CHECK_HEADERS.length);
+  const width = COURSE_CHECK_HEADERS.length;
+  const dataRows = Math.max(sheet.getMaxRows() - 1, 1);
+  sheet.getRange(1, 1, 1, width).setValues([COURSE_CHECK_HEADERS.slice()]).setFontWeight('bold');
+  sheet.getRange(2, 4, dataRows, 1).setNumberFormat('@');
+  sheet.getRange(2, 1, dataRows, width).setFontColor(null);
+  sheet.getRange(2, COURSE_CHECK_OK_COLUMN, dataRows, 1).clearDataValidations();
+  // Checkboxes go in before the values, since adding them unticks every box.
+  const firstProblem = 2 + result.infoCount;
+  const problems = result.rows.length - result.infoCount;
+  if (problems) sheet.getRange(firstProblem, COURSE_CHECK_OK_COLUMN, problems, 1).insertCheckboxes();
+  replaceDataRows_(sheet, result.rows, width);
+  if (result.okCount) {
+    sheet.getRange(firstProblem + problems - result.okCount, 1, result.okCount, width)
+      .setFontColor(COURSE_CHECK_OK_COLOR);
+  }
+  sheet.hideColumns(COURSE_CHECK_KEY_COLUMN);
   sheet.setFrozenRows(1);
 
-  console.log(`Course check: ${result.total} possible problem(s); ` +
+  console.log(`Course check: ${result.total} possible problem(s), ${result.okCount} OK as is; ` +
     Object.entries(result.counts).map(([check, n]) => `${check} ${n}`).join(', ') + '.');
   return result;
 }
 
-/** "3 possible problems: Unpublished 2, No-school day 1." or "No problems found." */
+/**
+ * Accepts this report's row 1, the first version's (five columns, before "OK as is"),
+ * or a blank row; anything else stops with checkHeaderLayout_'s message.
+ */
+function checkCourseCheckLayout_(sheet) {
+  const header = sheet.getRange(1, 1, 1, COURSE_CHECK_HEADERS.length).getValues()[0];
+  const firstVersion = COURSE_CHECK_HEADERS.slice(0, 5).concat(['', '']);
+  if (JSON.stringify(header) === JSON.stringify(firstVersion)) return;
+  checkHeaderLayout_(sheet, COURSE_CHECK_HEADERS);
+}
+
+/** The Key of every row ticked "OK as is" on the tab now. */
+function readOkKeys_(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return new Set();
+  return new Set(sheet.getRange(2, COURSE_CHECK_OK_COLUMN, lastRow - 1, 2).getValues()
+    .filter(([ok, key]) => ok === true && key !== '')
+    .map(([, key]) => String(key)));
+}
+
+/** "3 possible problem(s) (2 marked OK as is): Unpublished 2, …" or "No problems found." */
 function courseCheckCountsText_(result) {
-  if (!result.total) return 'No problems found.';
-  return `${result.total} possible problem(s): ` + Object.entries(result.counts)
+  const ok = result.okCount ? ` (${result.okCount} marked OK as is)` : '';
+  if (!result.total) return `No problems found${ok}.`;
+  return `${result.total} possible problem(s)${ok}: ` + Object.entries(result.counts)
     .filter(([, n]) => n).map(([check, n]) => `${check} ${n}`).join(', ') + '.';
 }
 
@@ -105,11 +149,14 @@ function courseCheckCountsText_(result) {
  * The report rows and counts. groups: Canvas assignment groups with assignments;
  * schedule: [{ day: 'yyyy-MM-dd', quarter, code }]; term: { start, end, note } or
  * { note } when unknown; allowed: checked Jupiter categories ({ ids, names }) or null
- * to skip that check; dayOf / showDue turn a Canvas date into a day key / display text.
- * Rows: Info rows first (when run, term, skipped checks), then one row per problem in
- * check order, assignments in Canvas order.
+ * to skip that check; dayOf / showDue turn a Canvas date into a day key / display text;
+ * okKeys: Keys ticked "OK as is" on the last run.
+ * Rows (Check, Assignment, Group, Due, Link, OK as is, Key): Info rows first (term,
+ * skipped checks), then one row per open problem in check order (assignments in Canvas
+ * order), then the problems ticked OK as is, in the same order. counts and total cover
+ * open problems only; okCount the ticked ones; infoCount the Info rows.
  */
-function buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue) {
+function buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue, okKeys = new Set()) {
   const scheduleByDay = new Map(schedule.map(entry => [entry.day, entry]));
   const days = schedule.map(entry => entry.day).sort();
   const first = days[0];
@@ -119,7 +166,8 @@ function buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue) {
 
   groups.forEach(group => (group.assignments || []).forEach(assignment => {
     const row = (check, due) => [check, assignment.name || '', group.name || '',
-      due ? showDue(due) : '', assignment.html_url || ''];
+      due ? showDue(due) : '', assignment.html_url || '', false,
+      `${check}|${assignment.id}|${due || ''}`];
     const dues = [...new Set([assignment.due_at].concat((assignment.all_dates || [])
       .map(date => date.due_at)).filter(Boolean))];
     if (!dues.length) found[COURSE_CHECKS.MISSING_DUE].push(row(COURSE_CHECKS.MISSING_DUE));
@@ -142,20 +190,25 @@ function buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue) {
       const scored = (group.assignments || []).filter(a => Number(a.points_possible) > 0).length;
       if (scored) {
         found[COURSE_CHECKS.JUPITER].push([COURSE_CHECKS.JUPITER, `${scored} assignment(s) worth points`,
-          name, '', '']);
+          name, '', '', false, `${COURSE_CHECKS.JUPITER}|group:${id}`]);
       }
     });
   }
 
-  const counts = Object.fromEntries(Object.entries(found).map(([check, list]) => [check, list.length]));
+  const isOk = row => okKeys.has(row.slice(-1)[0]);
+  const counts = Object.fromEntries(Object.entries(found).map(([check, list]) =>
+    [check, list.filter(row => !isOk(row)).length]));
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
+  const all = [].concat(...Object.values(found));
+  const ticked = all.filter(isOk).map(row => row.slice(0, 5).concat([true], row.slice(-1)));
   const jupiterNote = allowed ? '' : 'Jupiter check skipped: no categories are checked in ' +
     'cfg_JupiterCategories.';
-  const info = [[COURSE_CHECKS.INFO, term.note, '', '', '']]
-    .concat(jupiterNote ? [[COURSE_CHECKS.INFO, jupiterNote, '', '', '']] : [])
-    .concat(total ? [] : [[COURSE_CHECKS.INFO, 'No problems found.', '', '', '']]);
-  return { rows: info.concat(...Object.values(found)), counts, total, termNote: term.note,
-    jupiterNote };
+  const infoRow = text => [COURSE_CHECKS.INFO, text, '', '', '', '', ''];
+  const info = [infoRow(term.note)]
+    .concat(jupiterNote ? [infoRow(jupiterNote)] : [])
+    .concat(total ? [] : [infoRow('No problems found.')]);
+  return { rows: info.concat(all.filter(row => !isOk(row)), ticked), counts, total,
+    okCount: ticked.length, infoCount: info.length, termNote: term.note, jupiterNote };
 }
 
 /** Why a day (inside the schedule's range) has no school, or '' if it's a school day. */

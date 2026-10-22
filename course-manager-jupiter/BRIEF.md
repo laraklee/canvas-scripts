@@ -494,7 +494,15 @@
 >   reads a Canvas-built table now refreshes it first, except sheet formulas (the
 >   makeAssignment Section ID lookup and `cfg_CourseName`).
 > - **Open questions:**
->   - **Course check report (idea 2026-10-20; decided 2026-10-21, building):** a
+>   - **Course check: v1 built and tested (2026-10-21, commit 06253f9; pushed to Google;
+>     Lara ran it on Biology: "everything seemed to work").** Next (building): an **"OK
+>     as is"** checkbox column. A tick is remembered across runs by a hidden key (check +
+>     assignment ID + due date; Jupiter line: check + group ID), so a changed date or a
+>     new problem shows again; ticked rows go to the bottom in gray and are counted
+>     separately. No "fixed" status: a fixed problem drops off on the next run. New
+>     terms' course copies get new assignment IDs, so old ticks drop off by themselves.
+>     Only the ticks are kept; other typing on the tab is replaced each run.
+>   - **Course check report (idea 2026-10-20; decided 2026-10-21):** a
 >     read-only report of likely course-setup mistakes. **Lives in course-manager-jupiter**
 >     (both Jupiter courses, Biology and Gastronomy, need the Jupiter check; this is
 >     where Lara makes the Canvas items). **First version, five checks:** missing due
