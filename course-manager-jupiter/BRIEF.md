@@ -539,7 +539,9 @@
 >     master calendar, not in the workbook tab. **Update (2026-10-21):** the one known SAC
 >     day (Q2) is now in the master calendar. **Departmental Project days dropped**
 >     (not official, and no class uses them: Biology and Gastronomy give finals in final
->     exam week). **Decided (building):** (1) **SAC review day:** a schedule day whose
+>     exam week). **Built and tested (2026-10-21, commit 155e8c5; pushed; Lara: both
+>     tests worked and showed on Course Check; Course check opens its tab even if it was
+>     hidden).** (1) **SAC review day:** a schedule day whose
 >     column G contains "SAC Review Day" (any case); flag anything worth **50+ points**
 >     due that day. (2) **After No Homework Weekend:** column G contains "No Homework
 >     Weekend" on the last school days before the break; flag **anything** due on the
