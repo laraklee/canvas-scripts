@@ -1,7 +1,7 @@
 # Course Manager (Jupiter edition): User Manual
 
-**Status:** quick-start draft, 2026-10-18. To be filled out after the Biology field test,
-before Sequence 9 and Gastronomy move to this workbook.
+**Status:** quick-start draft, updated 2026-10-21. In use in Biology; to be filled out
+before AI9 (formerly Sequence 9) and Gastronomy move to their own copies of this workbook.
 
 This workbook connects a Google Sheet to one Canvas course. It creates assignments,
 quizzes, discussions, overrides, and groups in Canvas; reorders assignments; exports

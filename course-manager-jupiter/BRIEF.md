@@ -1,6 +1,26 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (2026-10-16)**
+> **Where we left off (current state, 2026-10-21)**
+>
+> - **Live in the Biology workbook and tested:** every tool Lara uses from legacy (legacy
+>   review finished 2026-10-20; see `docs/still-in-legacy.md`); CreateRoster keeps rows
+>   lined up by User ID; Course check (seven checks, "OK as is" ticks, burgundy Info
+>   rows) runs from Canvas Tools and after assignment-group refreshes; Canvas-built ref
+>   tabs hide themselves after refresh. This Mac, GitHub, and Google matched at commit
+>   221da33.
+> - **Waiting on Lara (this week):** the first real **Jupiter paste** (Bio timed writing
+>   analysis, AI-graded); the **blank Comment cell test** in Jupiter (see "Jupiter
+>   comments" under Open questions). A fix to Update Grades may follow.
+> - **Next big piece:** move **AI9** and **Gastronomy** to this code, one workbook per
+>   course (see "Other courses" below; not decided in detail). Each new workbook needs
+>   `cfg_TermQuarters` (AI9 `2` now, Gastronomy `1-2`); Gastronomy's multi-section grading
+>   sheets get re-sorted once by Period, then name.
+> - **Later / maybe:** email tools (wait and see); comment tools (only if commenting
+>   moves into Canvas).
+> - Everything below is the running log, oldest first; the decision notes for each piece
+>   are there.
+>
+> **Running log (from 2026-10-16)**
 >
 > - **Built and tested in the Sheet:** `ref_Config` with its twelve `cfg_` named ranges;
 >   `ref_CourseIDs` ("Refresh course list"); `ref_peopleList` ("Refresh people list");
