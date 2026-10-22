@@ -34,6 +34,7 @@ const COURSE_CHECK_HEADERS = Object.freeze(['Check', 'Assignment', 'Group', 'Due
 const COURSE_CHECK_OK_COLUMN = 6;
 const COURSE_CHECK_KEY_COLUMN = 7;
 const COURSE_CHECK_OK_COLOR = '#999999'; // ticked rows, listed last
+const COURSE_CHECK_INFO_COLOR = '#800020'; // burgundy Info rows, so they stand out
 // Optional, so it is not in CFG_NAMES (Check setup doesn't ask for it).
 const TERM_QUARTERS_RANGE = 'cfg_TermQuarters';
 // ref_simpleSchedule Schedule codes (column E) that mean no classes.
@@ -105,6 +106,7 @@ function writeCourseCheck_(ss, groups) {
   const problems = result.rows.length - result.infoCount;
   if (problems) sheet.getRange(firstProblem, COURSE_CHECK_OK_COLUMN, problems, 1).insertCheckboxes();
   replaceDataRows_(sheet, result.rows, width);
+  sheet.getRange(2, 1, result.infoCount, width).setFontColor(COURSE_CHECK_INFO_COLOR);
   if (result.okCount) {
     sheet.getRange(firstProblem + problems - result.okCount, 1, result.okCount, width)
       .setFontColor(COURSE_CHECK_OK_COLOR);
