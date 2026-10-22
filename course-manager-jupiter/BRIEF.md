@@ -556,14 +556,16 @@
 >     `formatTime` copy ran); `parseSheetTime_` reads them. See `createDropdowns1` above.
 >   - What are Period Pairs for? (Seating chart: yes, Lara uses it; ported.)
 >   - Should reference sheets be hidden automatically when built? **Yes (Lara,
->     2026-10-21); building.** The four Canvas-built tabs (ref_CourseIDs,
+>     2026-10-21); built and tested (commit b95e121; pushed; Lara: "tests are clean").**
+>     A ref_Index link to a hidden tab gets Google's own "hidden" message with an
+>     Unhide option, which Lara is fine with, so no "(hidden)" label. The four Canvas-built tabs (ref_CourseIDs,
 >     ref_peopleList, ref_assignmentGroups, ref_SectionLookup) are hidden after every
 >     refresh unless it's the tab being viewed; creating one no longer moves you to it.
 >     ref_Index stays visible (Home reads it); ref_Config, ref_simpleSchedule,
 >     ref_gradingScale are not touched. No flashing into view (it would pull you off your
 >     tab during CreateRoster etc.); instead Refresh all tables shows a step-by-step
->     message. To test: whether ref_Index links still open a hidden tab (if not, mark
->     hidden tabs "(hidden)" in the index).
+>     message. Course Check updates with Refresh assignment groups, Refresh all tables,
+>     and Course check, but not when the reorder tool refreshes (on purpose).
 >   - Limit `script.external_request` with a `urlFetchWhitelist` for the school's
 >     Canvas address? **No (Lara, 2026-10-21).**
 
