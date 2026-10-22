@@ -534,10 +534,18 @@
 >     **Second pass (ideas, not in v1):** something due right after a **No Homework
 >     Weekend** (`ref_simpleSchedule` column G); no **tests or major papers due on SAC
 >     review days** (if the schedule lists them; how to spot "test or major paper" TBD).
->     Lara's plan (2026-10-21, on hold until she looks into it): mark **SAC days** and
->     **Departmental Project days** (two at the end of each semester) in column G of the
->     schedule. ref_simpleSchedule is an IMPORTRANGE of the master calendar, so the marks
->     go in the master calendar, not in the workbook tab.
+>     Lara's plan (2026-10-21): mark **SAC days** in column G of the schedule.
+>     ref_simpleSchedule is an IMPORTRANGE of the master calendar, so the marks go in the
+>     master calendar, not in the workbook tab. **Update (2026-10-21):** the one known SAC
+>     day (Q2) is now in the master calendar. **Departmental Project days dropped**
+>     (not official, and no class uses them: Biology and Gastronomy give finals in final
+>     exam week). **Decided (building):** (1) **SAC review day:** a schedule day whose
+>     column G contains "SAC Review Day" (any case); flag anything worth **50+ points**
+>     due that day. (2) **After No Homework Weekend:** column G contains "No Homework
+>     Weekend" on the last school days before the break; flag **anything** due on the
+>     first school day after it (the next school day that isn't itself marked, H, PD,
+>     or a weekend), whether or not that class meets that day. AI9 (pass/fail, no
+>     homework) is a structural exception: Lara ticks its rows "OK as is"; no setting.
 >   - **Naming (2026-10-21):** "Sequence 9: AI and Media Literacy" is called **AI9** from
 >     now on (older notes say "Sequence 9"; same course).
 >   - **Jupiter comments (Lara will test once there's work to grade):** Update Grades

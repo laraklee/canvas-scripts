@@ -167,6 +167,11 @@ tab with possible problems:
 - **No-school day:** due on a weekend, during a break, or on a holiday (`H`) or PD day
   in ref_simpleSchedule.
 - **Outside the term:** often dates left over from last term's course copy.
+- **Big item on SAC review day:** something worth 50+ points due on a day the master
+  calendar notes "SAC Review Day" (column G of ref_simpleSchedule).
+- **After No Homework Weekend:** anything due on the first school day after a weekend
+  the master calendar notes "No Homework Weekend". (AI9 has no homework: tick these
+  OK as is.)
 - **Group not checked for Jupiter:** a group with assignments worth points that isn't
   ticked in the Jupiter categories (skipped if no category is ticked, e.g. AI9).
 

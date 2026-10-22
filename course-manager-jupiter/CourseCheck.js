@@ -11,6 +11,11 @@
  *     dates left over from last term's course copy). The term is the quarters in
  *     cfg_TermQuarters (e.g. 2, 1-2, 1-4), dated from ref_simpleSchedule column A;
  *     if that range is missing or blank, the Canvas term dates are used.
+ *   - Big item on SAC review day: worth 50+ points and due on a day whose
+ *     ref_simpleSchedule note (column G) contains "SAC Review Day".
+ *   - After No Homework Weekend: anything due on the first school day after a No
+ *     Homework Weekend (column G "No Homework Weekend" marks the last school days
+ *     before it), whether or not the class meets that day.
  *   - Group not checked for Jupiter: one line per assignment group with point-earning
  *     assignments that is not checked in cfg_JupiterCategories. Skipped when no
  *     category is checked (a course that doesn't use Jupiter, e.g. AI9).
@@ -39,11 +44,18 @@ const COURSE_CHECK_INFO_COLOR = '#800020'; // burgundy Info rows, so they stand 
 const TERM_QUARTERS_RANGE = 'cfg_TermQuarters';
 // ref_simpleSchedule Schedule codes (column E) that mean no classes.
 const NO_SCHOOL_CODES = Object.freeze(['H', 'PD']);
+// ref_simpleSchedule notes (column G) the checks look for, in any case.
+const SAC_NOTE = /SAC Review Day/i;
+const NO_HOMEWORK_NOTE = /No Homework Weekend/i;
+// "Big" items: tests and major papers shouldn't be due on SAC review days.
+const BIG_ITEM_POINTS = 50;
 const COURSE_CHECKS = Object.freeze({
   MISSING_DUE: 'Missing due date',
   UNPUBLISHED: 'Unpublished',
   NO_SCHOOL: 'No-school day',
   OUTSIDE_TERM: 'Outside the term',
+  SAC_DAY: 'Big item on SAC review day',
+  AFTER_NO_HOMEWORK: 'After No Homework Weekend',
   JUPITER: 'Group not checked for Jupiter',
   INFO: 'Info',
 });
@@ -163,8 +175,12 @@ function buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue, okKe
   const days = schedule.map(entry => entry.day).sort();
   const first = days[0];
   const last = days[days.length - 1];
+  const sacDays = new Set(schedule.filter(entry => SAC_NOTE.test(entry.note || ''))
+    .map(entry => entry.day));
+  const afterNoHomework = daysAfterNoHomework_(schedule);
   const found = Object.fromEntries([COURSE_CHECKS.MISSING_DUE, COURSE_CHECKS.UNPUBLISHED, COURSE_CHECKS.NO_SCHOOL,
-    COURSE_CHECKS.OUTSIDE_TERM, COURSE_CHECKS.JUPITER].map(check => [check, []]));
+    COURSE_CHECKS.OUTSIDE_TERM, COURSE_CHECKS.SAC_DAY, COURSE_CHECKS.AFTER_NO_HOMEWORK,
+    COURSE_CHECKS.JUPITER].map(check => [check, []]));
 
   groups.forEach(group => (group.assignments || []).forEach(assignment => {
     const row = (check, due) => [check, assignment.name || '', group.name || '',
@@ -180,6 +196,12 @@ function buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue, okKe
       if (why) found[COURSE_CHECKS.NO_SCHOOL].push(row(`${COURSE_CHECKS.NO_SCHOOL}: ${why}`, due));
       if (term.start && (day < term.start || day > term.end)) {
         found[COURSE_CHECKS.OUTSIDE_TERM].push(row(COURSE_CHECKS.OUTSIDE_TERM, due));
+      }
+      if (sacDays.has(day) && Number(assignment.points_possible) >= BIG_ITEM_POINTS) {
+        found[COURSE_CHECKS.SAC_DAY].push(row(COURSE_CHECKS.SAC_DAY, due));
+      }
+      if (afterNoHomework.has(day)) {
+        found[COURSE_CHECKS.AFTER_NO_HOMEWORK].push(row(COURSE_CHECKS.AFTER_NO_HOMEWORK, due));
       }
     });
   }));
@@ -223,20 +245,39 @@ function noSchoolReason_(day, scheduleByDay) {
 }
 
 /**
- * ref_simpleSchedule rows as [{ day: 'yyyy-MM-dd', quarter: '2', code: 'A' }]: column A
- * quarter, C date, E Schedule code. Rows without a date are left out.
+ * The first school day after each No Homework Weekend: for every day noted "No Homework
+ * Weekend", the next schedule day that is a school day (not a weekend, H, or PD) and
+ * isn't itself noted. Returns a Set of day keys.
+ */
+function daysAfterNoHomework_(schedule) {
+  const byDay = new Map(schedule.map(entry => [entry.day, entry]));
+  const noted = entry => NO_HOMEWORK_NOTE.test(entry.note || '');
+  const schoolDays = schedule.filter(entry => !noted(entry) && !noSchoolReason_(entry.day, byDay))
+    .map(entry => entry.day).sort();
+  const days = new Set();
+  schedule.filter(noted).forEach(entry => {
+    const next = schoolDays.find(day => day > entry.day);
+    if (next) days.add(next);
+  });
+  return days;
+}
+
+/**
+ * ref_simpleSchedule rows as [{ day: 'yyyy-MM-dd', quarter: '2', code: 'A', note }]:
+ * column A quarter, C date, E Schedule code, G note. Rows without a date are left out.
  */
 function readScheduleDays_(ss, timeZone) {
   const sheet = ss.getSheetByName(SHEETS.SIMPLE_SCHEDULE);
   if (!sheet) throw sheetProblem_(`There is no ${SHEETS.SIMPLE_SCHEDULE} tab.`);
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
-  return sheet.getRange(2, 1, lastRow - 1, 5).getValues()
+  return sheet.getRange(2, 1, lastRow - 1, 7).getValues()
     .filter(row => row.slice(2, 3)[0] instanceof Date)
     .map(row => ({
       day: Utilities.formatDate(row.slice(2, 3)[0], timeZone, 'yyyy-MM-dd'),
       quarter: String(row.slice(0, 1)[0]).trim(),
       code: String(row.slice(4, 5)[0]).trim(),
+      note: String(row.slice(6, 7)[0]).trim(),
     }));
 }
 

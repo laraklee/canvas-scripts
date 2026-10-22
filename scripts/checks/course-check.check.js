@@ -89,7 +89,8 @@ const dayOf = iso => iso.slice(0, 10);
 const showDue = iso => iso.replace('T', ' ');
 const result = c.buildCourseCheck_(groups, schedule, term, allowed, dayOf, showDue);
 check('counts per check', result.counts, { 'Missing due date': 1, Unpublished: 1,
-  'No-school day': 4, 'Outside the term': 3, 'Group not checked for Jupiter': 1 });
+  'No-school day': 4, 'Outside the term': 3, 'Big item on SAC review day': 0,
+  'After No Homework Weekend': 0, 'Group not checked for Jupiter': 1 });
 check('total', result.total, 10);
 check('rows: Info first, then each check in order (assignment, group, due)',
   result.rows.map(row => row.slice(0, 4)), [
@@ -155,6 +156,37 @@ check('skipped checks: Info rows explain, no problems',
   [0, [['Info', 'Term check skipped.'], ['Info', 'Jupiter check skipped: no categories are ' +
     'checked in cfg_JupiterCategories.'], ['Info', 'No problems found.']]]);
 check('counts text with no problems', c.courseCheckCountsText_(quiet), 'No problems found.');
+
+// ---- SAC review day and No Homework Weekend (made-up notes in column G) ----
+const notedSchedule = [
+  { day: '2026-11-23', quarter: '2', code: 'D', note: '' },
+  { day: '2026-11-24', quarter: '2', code: 'Er', note: 'No Chapel\nNo Homework Weekend' },
+  { day: '2026-11-25', quarter: '2', code: 'F1r', note: 'no homework weekend' },
+  { day: '2026-11-26', quarter: '2', code: 'H', note: 'Thanksgiving' },
+  { day: '2026-11-27', quarter: '2', code: 'H', note: 'Black Friday' },
+  { day: '2026-11-30', quarter: '2', code: 'A', note: '' },
+  { day: '2026-12-01', quarter: '2', code: 'B', note: '' },
+  { day: '2026-12-15', quarter: '2', code: 'Fr', note: 'SAC Review Day' },
+  { day: '2027-02-11', quarter: '3', code: 'F1', note: 'MQ3\nNo Homework Weekend' },
+  { day: '2027-02-12', quarter: '3', code: 'PD', note: 'No US Classes' },
+  { day: '2027-02-15', quarter: '3', code: 'H', note: "President's Day" },
+  { day: '2027-02-16', quarter: '3', code: 'A', note: '' },
+];
+check('first school day after each No Homework Weekend (skips holidays, PD, weekends)',
+  [...c.daysAfterNoHomework_(notedSchedule)], ['2026-11-30', '2027-02-16']);
+const notedRun = c.buildCourseCheck_([{ id: 5, name: 'Units', assignments: [
+  a(21, 'HW after break', '2026-11-30T08:00', { points_possible: 5 }),
+  a(22, 'Unit test', '2026-12-15T08:00', { points_possible: 50 }),
+  a(23, 'Small quiz', '2026-12-15T08:00', { points_possible: 20 }),
+  a(24, 'Lab', '2026-12-01T08:00'),
+  a(25, 'HW after Presidents Day', '2027-02-16T23:59', { points_possible: 0 }),
+] }], notedSchedule, { note: 'Term check skipped.' }, null, dayOf, showDue);
+check('SAC: 50+ points only; No Homework Weekend: anything',
+  notedRun.rows.filter(row => row[0] !== 'Info').map(row => [row[0], row[1]]), [
+    ['Big item on SAC review day', 'Unit test'],
+    ['After No Homework Weekend', 'HW after break'],
+    ['After No Homework Weekend', 'HW after Presidents Day'],
+  ]);
 
 // Blank cfg_TermQuarters: falls back to the Canvas term dates.
 c.getCourseIdForRefresh_ = () => '123';
