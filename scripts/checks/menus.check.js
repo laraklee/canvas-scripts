@@ -40,6 +40,11 @@ check('one line per step; failures do not stop the rest', lines, [
   '✓ A: 3 thing(s)', '✗ B: Sheet B is missing.',
   '✗ C: unexpected error (see Extensions › Apps Script › Executions)', '✓ D: 1 thing(s)']);
 
+const progress = [];
+c.runRefreshSteps_([['A', () => '1'], ['B', () => { throw new Error('x'); }], ['C', () => '2']],
+  (label, i) => progress.push(`${label} ${i + 1}`));
+check('progress callback runs before every step, failures included', progress, ['A 1', 'B 2', 'C 3']);
+
 // Every menu item's function must exist somewhere in the project (a typo would show
 // "Script function not found" in the menu).
 const allSource = fs.readdirSync(PROJECT).filter(f => f.endsWith('.js'))

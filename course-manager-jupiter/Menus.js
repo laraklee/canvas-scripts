@@ -115,8 +115,8 @@ function refreshAllTables() {
     ['Section list', () => `${writeSectionLookupSheet_(ss).sections} section(s)`],
     ['Sheet index', () => `${buildSheetIndex_(ss)} tab(s)`],
   ];
-  ss.toast('Refreshing reference tables…', 'Refresh all tables', -1);
-  const lines = runRefreshSteps_(steps);
+  const lines = runRefreshSteps_(steps, (label, i) => ss.toast(
+    `Refreshing ${label.toLowerCase()}… (${i + 1} of ${steps.length})`, 'Refresh all tables', -1));
   const failed = lines.filter(line => line.startsWith('✗')).length;
   console.log(`Refresh all tables: ${steps.length - failed} done, ${failed} failed.`);
   ss.toast(failed ? `${failed} refresh(es) failed.` : 'All tables refreshed.',
@@ -130,9 +130,11 @@ function refreshAllTables() {
  * Runs [label, work] steps in order; work returns a short count summary. Returns one
  * line per step: "✓ label: summary" or "✗ label: why". A step's failure never stops the
  * next one. Messages are shown only if safe (sheet problems and Canvas error types).
+ * onStep(label, index), if given, runs before each step (for a progress message).
  */
-function runRefreshSteps_(steps) {
-  return steps.map(([label, work]) => {
+function runRefreshSteps_(steps, onStep) {
+  return steps.map(([label, work], i) => {
+    if (onStep) onStep(label, i);
     try {
       return `✓ ${label}: ${work()}`;
     } catch (error) {

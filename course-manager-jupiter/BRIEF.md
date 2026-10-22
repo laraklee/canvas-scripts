@@ -475,8 +475,8 @@
 >   tab. Low urgency in Biology this year.
 > - **Next:** fixes from the field test; Lara reports on the first real Jupiter paste;
 >   other tools from Lara's
->   Decision column in `docs/legacy-function-map.md`. Button ideas for later (Lara still
->   deciding): buttons on the Assignment Order tab. (Done 2026-10-21: Lara added a Home
+>   Decision column in `docs/legacy-function-map.md`. Buttons on the Assignment Order
+>   tab: not needed for now (Lara, 2026-10-21). (Done 2026-10-21: Lara added a Home
 >   button assigned to `refreshAllTables`; no code change.)
 > - **Legacy review finished (2026-10-20):** every legacy function now has a decision
 >   (see `docs/still-in-legacy.md`). Left behind: API Batch runner, grade PDFs (Jupiter's
@@ -534,6 +534,10 @@
 >     **Second pass (ideas, not in v1):** something due right after a **No Homework
 >     Weekend** (`ref_simpleSchedule` column G); no **tests or major papers due on SAC
 >     review days** (if the schedule lists them; how to spot "test or major paper" TBD).
+>     Lara's plan (2026-10-21, on hold until she looks into it): mark **SAC days** and
+>     **Departmental Project days** (two at the end of each semester) in column G of the
+>     schedule. ref_simpleSchedule is an IMPORTRANGE of the master calendar, so the marks
+>     go in the master calendar, not in the workbook tab.
 >   - **Naming (2026-10-21):** "Sequence 9: AI and Media Literacy" is called **AI9** from
 >     now on (older notes say "Sequence 9"; same course).
 >   - **Jupiter comments (Lara will test once there's work to grade):** Update Grades
@@ -545,15 +549,23 @@
 >     (matched by assignment and Jupiter ID), or move commenting into Canvas (port the
 >     comment tools; Update Grades also pulls comments). For now Lara keeps comments
 >     out of Jupiter except tests, which are curved by hand and not sent by this tool.
->   - Assignment ID vs. the ID in the Canvas URL: the reorder call needs the
->     Assignment ID (`assignment.id`). Why the old data differed is still unknown. Check
->     after step 2, using IDs and URL paths only (no names).
+>   - Assignment ID vs. the ID in the Canvas URL: **closed (2026-10-21).** The reorder
+>     tool uses `assignment.id` and was tested with a real Push; nothing has gone wrong
+>     since. Lara will report it if it comes up again.
 >   - Time dropdowns: answered. The values read back are "Label (0815)" (the 09
 >     `formatTime` copy ran); `parseSheetTime_` reads them. See `createDropdowns1` above.
 >   - What are Period Pairs for? (Seating chart: yes, Lara uses it; ported.)
->   - Should reference sheets be hidden automatically when built?
+>   - Should reference sheets be hidden automatically when built? **Yes (Lara,
+>     2026-10-21); building.** The four Canvas-built tabs (ref_CourseIDs,
+>     ref_peopleList, ref_assignmentGroups, ref_SectionLookup) are hidden after every
+>     refresh unless it's the tab being viewed; creating one no longer moves you to it.
+>     ref_Index stays visible (Home reads it); ref_Config, ref_simpleSchedule,
+>     ref_gradingScale are not touched. No flashing into view (it would pull you off your
+>     tab during CreateRoster etc.); instead Refresh all tables shows a step-by-step
+>     message. To test: whether ref_Index links still open a hidden tab (if not, mark
+>     hidden tabs "(hidden)" in the index).
 >   - Limit `script.external_request` with a `urlFetchWhitelist` for the school's
->     Canvas address?
+>     Canvas address? **No (Lara, 2026-10-21).**
 
 Read this at the start of every session, together with the repo-level `CLAUDE.md`
 (which always wins if the two disagree). Lara is new to the command line: explain each

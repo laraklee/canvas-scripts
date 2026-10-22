@@ -55,6 +55,14 @@ grades for Jupiter; and builds rubrics for Canvas to import. It never changes gr
 | Refresh course list / people list / assignment groups / section list / sheet index | Just one table needs updating |
 | Refresh Jupiter categories | Canvas assignment groups changed. Then check the ticks on ref_Config (ticked = exported to Jupiter). Run it on purpose; it's not part of Refresh all. |
 
+**Reference tabs hide themselves.** After a refresh, ref_CourseIDs, ref_peopleList,
+ref_assignmentGroups, and ref_SectionLookup are hidden to keep them out of the way,
+unless you're looking at that tab when it refreshes. To see one, use **View › Hidden
+sheets**, or the **≡ (All sheets)** button at the bottom left, where hidden tabs are
+grayed out; click it to show it. It hides again at its next refresh. ref_Index always
+stays visible. While **Refresh all tables** runs, the message at the bottom right shows
+each step ("Refreshing people list… (2 of 5)").
+
 ---
 
 ## 4. Creating items in Canvas

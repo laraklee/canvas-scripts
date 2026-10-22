@@ -1,7 +1,8 @@
 /**
  * RefSheets.js
  * Purpose: builders for the reference (ref_) sheets and their menu items. Logs counts only;
- *   no student data in logs, alerts, or error messages.
+ *   no student data in logs, alerts, or error messages. Each Canvas-built tab below is
+ *   hidden after it's refreshed, unless it's the tab you're looking at (hideRefSheet_).
  *   - ref_CourseIDs ("Refresh course list"): courses where you are an active teacher
  *     (A = course ID, B = course name).
  *   - ref_peopleList ("Refresh people list"): every active or invited enrollment in the
@@ -94,6 +95,7 @@ function writeCourseListSheet_(ss) {
     .setValues([COURSE_IDS_HEADERS.slice()]).setFontWeight('bold');
   replaceDataRows_(sheet, rows, COURSE_IDS_HEADERS.length);
   getRefreshedCell_(ss, sheet, COURSE_IDS_REFRESHED).setValue(new Date());
+  hideRefSheet_(ss, sheet);
 
   console.log(`Refresh course list: ${rows.length} course(s) written.`);
   return rows.length;
@@ -166,6 +168,7 @@ function writePeopleListSheet_(ss) {
   sheet.setFrozenRows(1);
   sheet.autoResizeColumns(1, PEOPLE_LIST_HEADERS.length);
   getRefreshedCell_(ss, sheet, PEOPLE_LIST_REFRESHED).setValue(new Date());
+  hideRefSheet_(ss, sheet);
 
   console.log(`Refresh people list: ${rows.length} enrollment row(s) written.`);
   return rows.length;
@@ -245,6 +248,7 @@ function writeAssignmentGroupsSheet_(ss) {
   sheet.setFrozenRows(1);
   sheet.autoResizeColumns(1, ASSIGNMENT_GROUPS_HEADERS.length);
   getRefreshedCell_(ss, sheet, ASSIGNMENT_GROUPS_REFRESHED).setValue(new Date());
+  hideRefSheet_(ss, sheet);
 
   console.log(`Refresh assignment groups: ${rows.length} assignment(s) in ` +
     `${groups.length} group(s) written.`);
@@ -353,6 +357,7 @@ function writeSectionLookupSheet_(ss) {
   sheet.setFrozenRows(1);
   sheet.autoResizeColumns(1, SECTION_LOOKUP_HEADERS.length);
   getRefreshedCell_(ss, sheet, SECTION_LOOKUP_REFRESHED).setValue(new Date());
+  hideRefSheet_(ss, sheet);
 
   const withPeriod = rows.filter(row => row[2] !== '').length;
   console.log(`Refresh section list: ${rows.length} section(s), ${withPeriod} with a period ` +
@@ -434,9 +439,26 @@ function reportRefreshFailure_(title, unchangedNote, error) {
     SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
-/** New reference sheets get the red "be careful here" tab color. */
+/**
+ * New reference sheets get the red "be careful here" tab color. Creating one doesn't
+ * move you away from the tab you were on.
+ */
 function createRefSheet_(ss, name) {
-  return ss.insertSheet(name).setTabColor(REF_TAB_COLOR);
+  const viewing = ss.getActiveSheet();
+  const sheet = ss.insertSheet(name).setTabColor(REF_TAB_COLOR);
+  if (viewing) viewing.activate();
+  return sheet;
+}
+
+/**
+ * Hides a Canvas-built reference tab after a refresh, to keep them out of the way
+ * (Lara, 2026-10-21), unless it's the tab you're looking at. Never flashes it into view.
+ * Unhide one with View › Hidden sheets or the All sheets (≡) list.
+ */
+function hideRefSheet_(ss, sheet) {
+  const viewing = ss.getActiveSheet();
+  if (viewing && viewing.getSheetId() === sheet.getSheetId()) return;
+  if (!sheet.isSheetHidden()) sheet.hideSheet();
 }
 
 /** An error whose message is safe and useful to show as-is. */
