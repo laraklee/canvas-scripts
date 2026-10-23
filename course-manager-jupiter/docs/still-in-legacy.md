@@ -46,9 +46,12 @@ Items marked **writes to Canvas** would need dry run and a test-course check whe
 | Area | What legacy does | Comes back if |
 |---|---|---|
 | Email tools | Build an email list; send one Gmail message BCC to selected people; toggle checkboxes; rich text to HTML (`generateEmailList`, `sendEmailsToSelected`, …) | Someone misses them (Lara: wait and see). Sends **Gmail**, not Canvas; would need a Gmail permission. Involves student emails. |
-| Assignment comments | Post the comments in a column to each student's submission; post one message to every student (`postBatchCommentsForAssignmentActiveColumn`, `promptAndConfirmBatchCommentToAllStudents`) | Commenting moves into Canvas (see the Jupiter comments open item in `BRIEF.md`). **Writes to Canvas** (comments only). Involves student data. |
-| Read scores into a column | Read each student's score for one assignment into the active column (`syncGradesAndStatusForAssignmentActiveColumn`) | Same as comments. Read-only. Update Grades already reads scores by assignment for Jupiter. |
-| Assignment selector dropdowns | Searchable assignment-name dropdowns and ID lookups in a cell (`setupAssignmentFilterAndDropdown`, `createAssignmentSelector`, …) | The score pull into a column comes back (they pick its assignment). Sheet only. |
+| Assignment selector dropdowns | Searchable assignment-name dropdowns and ID lookups in a cell (`setupAssignmentFilterAndDropdown`, `createAssignmentSelector`, …) | Lara still wants them (2026-10-23: skipped; the list got too long to be useful, and a row 1 XLOOKUP formula shows the assignment's name). Sheet only. |
+
+Brought back 2026-10-23 (`AssignmentColumn.js`): comment posting
+(`postCommentsForActiveColumn`) and reading scores into a column
+(`pullScoresForActiveColumn`). The one-message-to-everyone tool is left behind (type
+the same text in every comment cell instead).
 
 Nothing is left unreviewed: every legacy function has a decision in `legacy-function-map.md`.
 

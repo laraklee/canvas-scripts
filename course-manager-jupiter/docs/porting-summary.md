@@ -3,9 +3,9 @@
 > **Generated** from the Decision column of `legacy-function-map.md` by
 > `npm run porting-summary`. Don't edit this file by hand: change the map, then rerun.
 
-**103 legacy functions:** 59 ported · 10 planned for later · 34 left behind on purpose · 0 not yet reviewed.
+**103 legacy functions:** 61 ported · 7 planned for later · 35 left behind on purpose · 0 not yet reviewed.
 
-## Ported (59)
+## Ported (61)
 
 | Legacy function | Legacy file | Now |
 |---|---|---|
@@ -47,6 +47,8 @@
 | `createAssignmentGroupsList` | 06_DataSetup.js | refreshAssignmentGroups + writeAssignmentGroupsSheet_ (RefSheets.js) |
 | `createSectionLookup` | 06_DataSetup.js | refreshSectionList + writeSectionLookupSheet_ (RefSheets.js) |
 | `extractPeriod` | 06_DataSetup.js | periodFromSectionName_ (RefSheets.js) |
+| `postBatchCommentsForAssignmentActiveColumn` | 07_BatchActions.js | postCommentsForActiveColumn (AssignmentColumn.js) |
+| `syncGradesAndStatusForAssignmentActiveColumn` | 07_BatchActions.js | pullScoresForActiveColumn (AssignmentColumn.js) |
 | `getNextUrlLocal` (line 420) | 07_BatchActions.js | getCanvasNextUrl_ (CanvasApi.js), the one shared paging helper |
 | `getNextUrlLocal` (line 436) | 07_BatchActions.js | getCanvasNextUrl_ (CanvasApi.js), the one shared paging helper |
 | `refreshIndex` | 09_MiscTools.js | refreshSheetIndex (SheetIndex.js) |
@@ -69,7 +71,7 @@
 | `writeJupiterExport_` | 10_Jupiter.gs.js | fillJupiterExport_ (Jupiter.js); counts unmatched students |
 | `buildJupiterExportFromRecentCanvasGrades` | 10_Jupiter.gs.js | buildJupiterExportFromRecentCanvasGrades (Jupiter.js): sends the final score (after any late penalty; legacy sent entered_score) |
 
-## Planned for later (10)
+## Planned for later (7)
 
 | Legacy function | Legacy file | When / why |
 |---|---|---|
@@ -77,14 +79,11 @@
 | `convertRichTextToHtml` | 01_Utilities.js | with the email tools, if anyone misses them (Lara) |
 | `sendEmailsToSelected` | 04_CommTools.js | wait and see if anyone misses the email tools (Lara) |
 | `generateEmailList` | 04_CommTools.js | wait and see if anyone misses the email tools (Lara) |
-| `postBatchCommentsForAssignmentActiveColumn` | 07_BatchActions.js | only if commenting moves into Canvas (see the Jupiter comments open item in BRIEF.md) |
-| `promptAndConfirmBatchCommentToAllStudents` | 07_BatchActions.js | only if commenting moves into Canvas (see the Jupiter comments open item in BRIEF.md) |
-| `syncGradesAndStatusForAssignmentActiveColumn` | 07_BatchActions.js | only if commenting moves into Canvas (see the Jupiter comments open item in BRIEF.md) |
-| `setupAssignmentFilterAndDropdown` | 09_MiscTools.js | only if the score pull into a column comes back (Lara) |
-| `createAssignmentSelector` | 09_MiscTools.js | only if the score pull into a column comes back (Lara) |
-| `createAssignmentSelectorBelow` | 09_MiscTools.js | only if the score pull into a column comes back (Lara) |
+| `setupAssignmentFilterAndDropdown` | 09_MiscTools.js | maybe; for now a row 1 XLOOKUP formula shows the name (Lara, 2026-10-23) |
+| `createAssignmentSelector` | 09_MiscTools.js | maybe; for now a row 1 XLOOKUP formula shows the name (Lara, 2026-10-23) |
+| `createAssignmentSelectorBelow` | 09_MiscTools.js | maybe; for now a row 1 XLOOKUP formula shows the name (Lara, 2026-10-23) |
 
-## Left behind on purpose (34)
+## Left behind on purpose (35)
 
 | Legacy function | Legacy file | Reason |
 |---|---|---|
@@ -116,6 +115,7 @@
 | `updateMasterConnection` | 05_DataSync.js | placeholder that does nothing |
 | `getUniqueSectionIds` | 06_DataSetup.js | refreshSectionList gets every section in one request |
 | `fetchSectionNames` | 06_DataSetup.js | refreshSectionList gets every section in one request |
+| `promptAndConfirmBatchCommentToAllStudents` | 07_BatchActions.js | same text in every comment cell, then Post comments (Lara, 2026-10-23) |
 | `fillGradesForSelectedGradingPeriodInActiveColumn` | 07_BatchActions.js | past-quarter gradebook scores not needed for Jupiter (Lara) |
 | `batchExportAllStudentGrades` | 07_BatchActions.js | Jupiter's reports replace it (Lara); broken in legacy |
 | `setupRubricUI` | 09_MiscTools.js | Lara copies a rubric template tab instead |

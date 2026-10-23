@@ -1,20 +1,31 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-10-22)**
+> **Where we left off (current state, 2026-10-23)**
 >
+> - **Done 2026-10-23 (Mac session):** Pull scores and Post comments (cell notes) built,
+>   tested, and live in **Biology** (Google matches commit a5ee5d1's code). Details under
+>   "Next up" item 1 below.
+> - **Blocked: AI9 and Gastronomy not pushed.** `clasp push -P` refused both with
+>   "Invalid script key": `.clasp-ai9.json` and `.clasp-gastronomy.json` hold 44-character
+>   IDs, which look like the **workbooks'** IDs (from the Sheet's address), not the
+>   **Apps Script project** IDs clasp needs (57 characters, like `.clasp.json`'s). Nothing
+>   was uploaded. Fix: in each workbook, Extensions › Apps Script › Project Settings (gear)
+>   › IDs › Script ID; put it in that file's `scriptId`, commit, then push (Mac:
+>   `clasp -P "$PWD/.clasp-ai9.json" push` from `course-manager-jupiter/`). Both still
+>   hold the code they were copied with.
 > - **Live in the Biology workbook and tested:** every tool Lara uses from legacy (legacy
 >   review finished 2026-10-20; see `docs/still-in-legacy.md`); CreateRoster keeps rows
 >   lined up by User ID; Course check (seven checks, "OK as is" ticks, burgundy Info
 >   rows) runs from Canvas Tools and after assignment-group refreshes; Canvas-built ref
->   tabs hide themselves after refresh. Google (Biology) matches commit 221da33's code;
->   later commits are BRIEF/settings only. Last session was on the PC: on the Mac,
->   `git pull` first.
+>   tabs hide themselves after refresh; Pull scores and Post comments (2026-10-23).
+>   Last session was on the Mac: on the PC, `git pull` first.
 > - **First real Jupiter update (Bio) done 2026-10-22:** worked fine, no fix needed. The
 >   blank Comment cell test in Jupiter is **shelved**: comments will be written in the
 >   Sheet and posted to Canvas instead (see "Jupiter comments" under Open questions).
-> - **Next up (Lara, 2026-10-22: start here next session):**
->   1. **Bring back the one-assignment tools from legacy** (see `docs/still-in-legacy.md`
->      rows 49-51):
+> - **Next up (start here next session):** fix the AI9/Gastronomy script IDs and push
+>   (above); then item 2 (AI grading follow-up). Item 1 is **done** (kept for the record).
+>   1. **Done 2026-10-23: bring back the one-assignment tools from legacy** (see
+>      `docs/still-in-legacy.md`):
 >      - **Pull grades:** read each student's score for one assignment into a column
 >        whose **row 2 holds the assignment ID** (legacy
 >        `syncGradesAndStatusForAssignmentActiveColumn`, read-only).
@@ -58,7 +69,10 @@
 >      sent, and comment-only requests work under the grade block. **First version (Status
 >      column, commit c3ba58a) worked live in Biology** (Lara skipped the test-course step and
 >      posted real comments: "we're in business").
->      **Redesign, Lara's choice (built, not yet tested): no Status column; cell notes.**
+>      **Redesign, Lara's choice: no Status column; cell notes (commit a5ee5d1; pushed to
+>      Biology; tested 2026-10-23: dry run fine, Lara called it tested since the Canvas call
+>      is unchanged; she'll report any problem. Not yet seen live: skip-on-rerun reading a
+>      "Commented" note, and the red for a refusal).**
 >      Each comment cell gets a note right after it's sent: "Commented M/d h:mm a", "Dry run
 >      (not sent)" (posts again later), or "Not sent: not found (404)" / "not allowed (403)"
 >      / "Canvas error (HTTP n)" (posts again on rerun). Refused cells get a light red
