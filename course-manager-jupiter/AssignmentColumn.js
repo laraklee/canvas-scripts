@@ -9,18 +9,31 @@
  *     instead of one per student, and the same score as Update Grades (final score; blank
  *     if excused or not graded). Only rows with a User ID are written, so Average rows and
  *     formulas below the students are never touched. Asks before replacing filled cells.
- *   Student names, IDs, and scores stay in the sheet: never logged or shown in messages
- *   (counts and the assignment's name only).
- * Canvas endpoints called (all GET, via canvasGet_):
+ *   - postCommentsForActiveColumn (menu: Canvas Tools › Grading sheet): posts each
+ *     student's comment in that column to their submission, and writes the result into
+ *     the Status column just to the right. Ported from legacy
+ *     postBatchCommentsForAssignmentActiveColumn, plus: dry run, a confirm pop-up, rows
+ *     whose Status starts with "Commented" are skipped (no double posts; clear Status to
+ *     resend), a 5-minute stop, and one run at a time. Comments only, never grades.
+ *   Student names, IDs, scores, and comment text stay in the sheet: never logged or shown
+ *   in messages (counts, row numbers, and the assignment's name only).
+ * Canvas endpoints called (GET via canvasGet_):
  *   /api/v1/courses/:course/assignments/:assignment
  *   /api/v1/courses/:course/assignments/:assignment/submissions
- * Canvas write operations: none.
- * Required: User Properties CANVAS_BASE_URL and CANVAS_TOKEN; named range cfg_CourseID.
+ * Canvas write operations (via canvasWrite_, so dry run applies):
+ *   PUT /api/v1/courses/:course/assignments/:assignment/submissions/:user with only
+ *   comment[text_comment] (Post comments). Canvas notifies the student per their settings.
+ * Required: User Properties CANVAS_BASE_URL and CANVAS_TOKEN; named range cfg_CourseID;
+ *   Script Property DRY_RUN (unset means dry run is ON).
  */
 
 // Row 2 holds the assignment ID (the grading sheet's label row, ROSTER_HEADER_ROW in
 // Jupiter.js; a literal here because this file loads before Jupiter.js).
 const ASSIGNMENT_ID_ROW = 2;
+const COMMENT_STATUS_LABEL = 'Status';
+const COMMENTED_PREFIX = 'Commented';
+const COMMENT_DRY_RUN_STATUS = 'Dry run (not sent)';
+const COMMENTS_TIME_LIMIT_MS = 5 * 60 * 1000;
 
 /**
  * Menu: Canvas Tools › Grading sheet › Pull scores into this column.
@@ -137,4 +150,171 @@ function scoreRuns_(writes) {
     }
   });
   return runs;
+}
+
+// ---- Post comments ----
+
+/**
+ * Menu: Canvas Tools › Grading sheet › Post comments from this column.
+ * Click a cell in the comment column (row 2 = assignment ID); results go in the Status
+ * column to its right. Asks first. Each row's Status is written as soon as that row is
+ * done, so a stop part-way leaves an accurate record and a rerun posts only the rest.
+ */
+function postCommentsForActiveColumn() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const title = 'Post comments';
+  const lock = LockService.getDocumentLock();
+  if (!lock.tryLock(1000)) {
+    ui.alert(title, 'Comments are already being posted. Wait for that run to finish.',
+      ui.ButtonSet.OK);
+    return;
+  }
+  try {
+    const started = Date.now();
+    const sheet = ss.getActiveSheet();
+    checkGradingSheet_(sheet);
+    const target = readAssignmentColumn_(sheet);
+    const statusColumn = target.column + 1;
+    const statusLetter = sheet.getRange(1, statusColumn).getA1Notation().replace(/\d+/g, '');
+    checkStatusLabel_(sheet.getRange(ASSIGNMENT_ID_ROW, statusColumn).getValue(), statusLetter);
+    const courseId = getCourseIdForRefresh_();
+
+    const rows = target.lastRow - ROSTER_FIRST_ROW + 1;
+    if (rows < 1) throw sheetProblem_('There are no student rows (from row 3) on this sheet.');
+    const plan = planComments_(
+      sheet.getRange(ROSTER_FIRST_ROW, 1, rows, 1).getValues(),
+      sheet.getRange(ROSTER_FIRST_ROW, target.column, rows, 1).getDisplayValues(),
+      sheet.getRange(ROSTER_FIRST_ROW, statusColumn, rows, 1).getDisplayValues(),
+      ROSTER_FIRST_ROW);
+    if (!plan.posts.length) {
+      ui.alert(title, `No comments to post from column ${target.letter}.` +
+        (plan.alreadyCommented ? ` ${plan.alreadyCommented} row(s) already say ` +
+          `"${COMMENTED_PREFIX}" in column ${statusLetter} (clear a Status cell to resend).` :
+          ' Type comments in the rows of students who have a User ID in column A.'),
+        ui.ButtonSet.OK);
+      return;
+    }
+
+    // Also confirms the ID is an assignment in this course before anything is sent.
+    const assignment = canvasStep_('assignment request', () =>
+      canvasGet_(`/courses/${courseId}/assignments/${target.assignmentId}`));
+    const name = String(assignment.name || '').trim() || 'this assignment';
+    const dryRun = isDryRun_();
+    const answer = ui.alert(dryRun ? `${title} (dry run)` : title,
+      `"${name}" (course ${courseId})\n\n${plan.posts.length} comment(s) from column ` +
+      `${target.letter} to post; results go in column ${statusLetter}.` +
+      (plan.alreadyCommented ? `\n${plan.alreadyCommented} row(s) already commented will ` +
+        'be skipped.' : '') + '\n\n' + (dryRun ?
+        'Dry run is ON: nothing will be sent. Status will say "' + COMMENT_DRY_RUN_STATUS +
+          '".' :
+        'Dry run is OFF: these comments WILL be posted, and Canvas will notify the ' +
+          'students.') + '\n\nContinue?',
+      ui.ButtonSet.YES_NO);
+    if (answer !== ui.Button.YES) {
+      ui.alert(title, 'Cancelled. Nothing was sent.', ui.ButtonSet.OK);
+      return;
+    }
+
+    if (isBlank_(sheet.getRange(ASSIGNMENT_ID_ROW, statusColumn).getValue())) {
+      sheet.getRange(ASSIGNMENT_ID_ROW, statusColumn).setValue(COMMENT_STATUS_LABEL);
+    }
+    const stamp = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'M/d h:mm a');
+    ss.toast(`Posting ${plan.posts.length} comment(s)…`, title, -1);
+    const result = sendComments_(plan.posts, post => canvasWrite_('PUT',
+      `/courses/${courseId}/assignments/${target.assignmentId}/submissions/${post.userId}`,
+      { comment: { text_comment: post.text } }),
+    (row, status) => sheet.getRange(row, statusColumn).setValue(status),
+    { dryRun, stamp, started });
+    ss.toast('', title, 1);
+
+    console.log(`Post comments${dryRun ? ' (dry run)' : ''}: ${result.sent} sent, ` +
+      `${result.refusedRows.length} refused, ${result.notStarted} not started, ` +
+      `${plan.alreadyCommented} already commented.`);
+    ui.alert(dryRun ? `${title} (dry run)` : title, (dryRun ?
+      `Dry run: ${result.sent} comment(s) would have been posted. Nothing was sent.` :
+      `${result.sent} comment(s) posted to "${name}".`) +
+      (result.refusedRows.length ? `\n\nCanvas refused row(s) ${result.refusedRows.join(', ')}` +
+        ` (see column ${statusLetter}). The other rows still went.` : '') +
+      (result.notStarted ? `\n\nStopped near the time limit with ${result.notStarted} ` +
+        'comment(s) not sent yet. Run Post comments again to send the rest.' : '') +
+      (dryRun ? '\n\nSee Extensions › Apps Script › Executions for the "DRY RUN" lines.' : ''),
+    ui.ButtonSet.OK);
+  } catch (error) {
+    reportRefreshFailure_(title, 'Posting stopped. Rows whose Status says "Commented" ' +
+      'were sent; running Post comments again sends only the rest.', error);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** The Status column's row 2 must be blank or "Status", so other columns aren't written. */
+function checkStatusLabel_(value, letter) {
+  const label = String(value).trim();
+  if (label && label.toLowerCase() !== COMMENT_STATUS_LABEL.toLowerCase()) {
+    throw sheetProblem_(`Post comments writes its results in column ${letter}, the column ` +
+      `right of the comments, but row 2 there isn't blank or "${COMMENT_STATUS_LABEL}". ` +
+      `Insert a blank column right of the comments, or type ${COMMENT_STATUS_LABEL} in ` +
+      `${letter}2.`);
+  }
+}
+
+/**
+ * Which comments to post. userIds, comments, and statuses are one-column grids starting
+ * at firstRow. A row posts when it has a numeric User ID, a non-blank comment, and a
+ * Status that doesn't start with "Commented".
+ * Returns { posts: [{ row, userId, text }], alreadyCommented }.
+ */
+function planComments_(userIds, comments, statuses, firstRow) {
+  const plan = { posts: [], alreadyCommented: 0 };
+  userIds.forEach((cells, i) => {
+    const userId = jupiterId_(cells.slice(0, 1)[0]);
+    const text = String(comments.slice(i, i + 1)[0].slice(0, 1)[0]).trim();
+    if (!/^\d+$/.test(userId) || !text) return;
+    const status = String(statuses.slice(i, i + 1)[0].slice(0, 1)[0]).trim().toLowerCase();
+    if (status.startsWith(COMMENTED_PREFIX.toLowerCase())) {
+      plan.alreadyCommented++;
+      return;
+    }
+    plan.posts.push({ row: firstRow + i, userId, text });
+  });
+  return plan;
+}
+
+/**
+ * Sends each post with send(post) and records each row's Status with record(row, status)
+ * right away. A refusal for one student (e.g. 404) is recorded and the rest still go;
+ * errors that would hit every request (token, network, busy) are thrown. Stops starting
+ * new posts after the time limit. options: { dryRun, stamp, started, now }.
+ * Returns { sent, refusedRows, notStarted }.
+ */
+function sendComments_(posts, send, record, options) {
+  const now = options.now || (() => Date.now());
+  const result = { sent: 0, refusedRows: [], notStarted: 0 };
+  for (let i = 0; i < posts.length; i++) {
+    if (now() - options.started > COMMENTS_TIME_LIMIT_MS) {
+      result.notStarted = posts.length - i;
+      break;
+    }
+    const post = posts.slice(i, i + 1)[0];
+    try {
+      send(post);
+      record(post.row, options.dryRun ? COMMENT_DRY_RUN_STATUS :
+        `${COMMENTED_PREFIX} ${options.stamp}`);
+      result.sent++;
+    } catch (error) {
+      if (!error.canvasType || CANVAS_STOP_ALL_TYPES.includes(error.canvasType)) throw error;
+      record(post.row, commentRefusedStatus_(error.canvasType));
+      result.refusedRows.push(post.row);
+    }
+  }
+  return result;
+}
+
+/** Short Status text for a refused comment, from the error type only. */
+function commentRefusedStatus_(type) {
+  if (type === 'NOT_FOUND') return 'Not sent: not found (404)';
+  if (type === 'NOT_ALLOWED') return 'Not sent: not allowed (403)';
+  const code = String(type).match(/^HTTP_(\d+)$/);
+  return code ? `Not sent: Canvas error (HTTP ${code[1]})` : 'Not sent: Canvas error';
 }

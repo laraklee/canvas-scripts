@@ -40,7 +40,11 @@
 >      (course, assignment name, count, dry-run state), **skip rows whose Status already says
 >      "Commented"** (no double posts; clear Status to resend), 5-minute stop. First real test
 >      on the course's Test Student (Canvas notifies students of comments).
->      **Pull scores built (2026-10-23, not yet tested):** `pullScoresForActiveColumn`. Click
+>      **Pull scores built and tested (2026-10-23, commit f31f516; pushed to Biology; Lara:
+>      works, including students who haven't submitted yet).** Row 1 selector stand-in (Lara,
+>      instead of dropdowns): `=IF(J$2="", "", IFERROR(XLOOKUP(VALUE(J$2),
+>      ref_assignmentGroups!$A:$A, ref_assignmentGroups!$B:$B), "ID not found"))` shows the
+>      assignment's name above its ID (refresh assignment groups for new items). `pullScoresForActiveColumn`. Click
 >      a cell in the column (G or later; A–F refused), row 2 = assignment ID. One request for
 >      the class (`GET …/assignments/:id/submissions`; legacy sent one per student) plus one
 >      for the assignment's name. Same score as Update Grades (`scoreForJupiter_`). Writes
@@ -48,6 +52,23 @@
 >      students Canvas doesn't list are left blank and counted. Asks Yes/No if any student
 >      cell is already filled. Read-only; no new permissions. Offline check:
 >      `scripts/checks/assignment-column.check.js`.
+>      **Post comments built (2026-10-23, Lara approved the plan; not yet tested):**
+>      `postCommentsForActiveColumn` (menu: Grading sheet › Post comments from this column).
+>      Canvas docs checked: "Grade or comment on a submission" needs manage-grades permission
+>      only when submission/rubric fields are sent, so a comment-only request should be fine
+>      under the grade block. Status column = the one right of the comments; its row 2 must
+>      be blank (the tool writes "Status") or "Status", else it stops (protects the next
+>      assignment's column). Posts rows with a numeric User ID and a comment (display text,
+>      trimmed) whose Status doesn't start with "Commented" (any case; legacy's plain
+>      "Commented" counts). Each row's Status is written right after it's sent: "Commented
+>      M/d h:mm a", "Dry run (not sent)" (posts again later), or "Not sent: not found (404)"
+>      / "not allowed (403)" / "Canvas error (HTTP n)" (posts again on rerun). Stop-all errors
+>      (token, network, busy) stop the run; 5-minute stop; document lock. Confirm pop-up:
+>      assignment name (GET also checks the ID), course, counts, dry-run state, and that
+>      Canvas notifies students. Test plan: dry run in Biology; then switch `cfg_CourseID` to
+>      the old Sequence 9 test course, one row for the Test Student (User ID from
+>      ref_peopleList; open Student View once if missing), real post with a Drive link,
+>      rerun (nothing double-posts); then dry run ON and `cfg_CourseID` back to Biology.
 >   2. **AI grading follow-up:** Lara tried the BioGrading Gem (`gems/BioGrading.md`) in
 >      Gemini, and also MagicSchool, on real work. Mixed results: some things done very
 >      well, others very poorly. Start by asking her what worked and what didn't, then
