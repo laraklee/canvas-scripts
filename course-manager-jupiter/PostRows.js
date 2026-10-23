@@ -1,9 +1,10 @@
 /**
  * PostRows.js
  * Purpose: the createByRow tab: create Canvas items from selected rows (row 4 and below),
- *   without overrides. Ported from the legacy postRows, postSingleAssignment, and
- *   generateDescription2; the legacy convertToUTC custom function and the O–R formula
- *   columns are replaced by code (buildCanvasTime_).
+ *   without overrides. Ported from the legacy postRows and postSingleAssignment; the
+ *   legacy convertToUTC custom function and the O–R formula columns are replaced by code
+ *   (buildCanvasTime_). Descriptions (buildDescription_, shared with makeAssignment) use
+ *   the legacy editor's green-button style (generateDescription), not generateDescription2.
  *   - postRows (same name as legacy, so the button works): for each selected row, builds
  *     the request, writes it to the Payload column, sends it through canvasWrite_, and
  *     writes CanvasID, Canvas Link, and Status.
@@ -478,23 +479,36 @@ function validTime_(hours, minutes) {
   return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59 ? { hours, minutes } : null;
 }
 
+const DESCRIPTION_BUTTON_COLOR = '#5d783e'; // green
+const DESCRIPTION_DEFAULT_LABEL = 'Open Resource';
+
 /**
- * The HTML description (ported from legacy generateDescription2): the text, a blank line,
- * then, if there is a Doc link, a link to it and the Doc embedded as a preview.
+ * The HTML description, in the legacy makeAssignment editor's style (generateDescription;
+ * Lara's choice 2026-10-23, for both tools): the directions in bold (line breaks kept),
+ * then, if there is a link, a big green "🚀" button to it (every link, Google Docs too;
+ * legacy gave Docs a plain link), and for a Google Doc/Drive link the Doc embedded as a
+ * full-width preview below the button. Nothing at all when both are blank (legacy filled
+ * in a "see the title" line).
  */
 function buildDescription_(text, link, linkText) {
-  let html = text ? `<p>${text}</p>\n` : '';
-  html += '<p><br></p>\n';
+  const directions = String(text || '').trim();
+  let html = directions ? '<div style="margin-bottom: 20px; font-weight: bold; ' +
+    `color: #333; font-size: 1.1em;">${directions.replace(/\n/g, '<br>')}</div>\n` : '';
   if (link) {
-    const label = String(linkText || link).split('\n').map(line => line.trim())
-      .filter(line => line !== '').join('<br>');
+    const label = String(linkText || DESCRIPTION_DEFAULT_LABEL).split('\n')
+      .map(line => line.trim()).filter(line => line !== '').join('<br>');
     const href = link.replace(/"/g, '&quot;');
-    html += `<p><a class="inline_disabled" href="${href}" target="_blank" rel="noopener">` +
-      `${label}</a></p>\n`;
-    html += `<p><iframe style="width: 750px; height: 750px;" title="Google Document" ` +
-      `src="${href.replace('/edit', '/preview')}" allowfullscreen="allowfullscreen" ` +
-      'allow="geolocation *; microphone *; camera *; midi *; encrypted-media *; autoplay *; ' +
-      'clipboard-write *; display-capture *"></iframe></p>\n';
+    html += `<p><a class="btn" href="${href}" target="_blank" rel="noopener" ` +
+      `style="background-color: ${DESCRIPTION_BUTTON_COLOR}; color: #ffffff; ` +
+      'padding: 10px 20px; text-decoration: none; border-radius: 4px; ' +
+      `display: inline-block;">🚀 ${label}</a></p>\n`;
+    if (/(drive|docs)\.google\.com/.test(link)) {
+      html += '<p><iframe style="width: 100%; height: 750px; border: 1px solid #ccc;" ' +
+        `title="Google Document" src="${href.replace('/edit', '/preview')
+          .replace('/view', '/preview')}" allowfullscreen="allowfullscreen" ` +
+        'allow="geolocation *; microphone *; camera *; midi *; encrypted-media *; ' +
+        'autoplay *; clipboard-write *; display-capture *"></iframe></p>\n';
+    }
   }
   return html;
 }

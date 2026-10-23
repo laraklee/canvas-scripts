@@ -91,14 +91,25 @@ check('payload: bad points refused',
   throwsMessage(() => c.assignmentPayload_({ name: 'X', points: 'ten' })),
   'points_possible is not a number');
 
-// Description.
-const html = c.buildDescription_('Read this.', 'https://docs.google.com/document/d/abc/edit',
-  'Line one\n\nLine two');
-check('description: text, link, and /preview embed',
-  [html.includes('<p>Read this.</p>'), html.includes('>Line one<br>Line two</a>'),
-    html.includes('src="https://docs.google.com/document/d/abc/preview"')], [true, true, true]);
-check('description: no link = text and blank line only',
-  c.buildDescription_('Hi', '', ''), '<p>Hi</p>\n<p><br></p>\n');
+// Description (green-button style).
+const bold = text => '<div style="margin-bottom: 20px; font-weight: bold; color: #333; ' +
+  `font-size: 1.1em;">${text}</div>\n`;
+const html = c.buildDescription_('Read this.\nThen answer.',
+  'https://docs.google.com/document/d/abc/edit', 'Line one\n\nLine two');
+check('description: bold directions (line breaks kept), green button, /preview embed',
+  [html.startsWith(bold('Read this.<br>Then answer.')),
+    html.includes('<a class="btn" href="https://docs.google.com/document/d/abc/edit"'),
+    html.includes('background-color: #5d783e;'), html.includes('>🚀 Line one<br>Line two</a>'),
+    html.includes('src="https://docs.google.com/document/d/abc/preview"'),
+    html.includes('width: 100%;')], [true, true, true, true, true, true]);
+check('description: Drive /view link previews too',
+  c.buildDescription_('', 'https://drive.google.com/file/d/xyz/view', 'PDF')
+    .includes('src="https://drive.google.com/file/d/xyz/preview"'), true);
+const site = c.buildDescription_('', 'https://example.test/sim', '');
+check('description: other site = button only (default label), no preview',
+  [site.includes('>🚀 Open Resource</a>'), site.includes('<iframe')], [true, false]);
+check('description: no link = bold directions only', c.buildDescription_('Hi', '', ''), bold('Hi'));
+check('description: nothing typed = blank', c.buildDescription_('', '', ''), '');
 
 // Planning one row.
 const L = c.LABELS;
@@ -175,7 +186,7 @@ const readyNQ = plan({ [L.DUE_DATE]: jan28, [L.POINTS]: 12 },
 check('NQ payload: title, points, grading type, instructions, due; no quiz_type/published',
   readyNQ.request.payload, {
     quiz: { title: 'NQ 1', points_possible: 12, grading_type: 'points',
-      instructions: '<p>Do this.</p>\n<p><br></p>\n', due_at: '2026-01-28T08:15:00-10:00' },
+      instructions: bold('Do this.'), due_at: '2026-01-28T08:15:00-10:00' },
   });
 check('NQ row: New Quizzes API path; CanvasID = quiz ID; link built from it',
   [readyNQ.request.path, readyNQ.request.readId({ id: 321 }), readyNQ.request.readLink({ id: 321 })],

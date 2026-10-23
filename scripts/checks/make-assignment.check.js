@@ -178,7 +178,7 @@ let p = plan();
 check('item ready', [p.item.label, p.item.request.path], ['A, draft', '/courses/5000/assignments']);
 check('item payload', p.item.request.payload.assignment, {
   name: 'Sample lab', points_possible: 20,
-  description: '<p>Read and answer.</p>\n<p><br></p>\n',
+  description: '<div style="margin-bottom: 20px; font-weight: bold; color: #333; font-size: 1.1em;">Read and answer.</div>\n',
   submission_types: ['online_text_entry'], published: false,
   due_at: '2030-01-28T08:15:00-10:00', unlock_at: '2030-01-21T00:00:00-10:00',
   lock_at: '2030-02-04T23:59:00-10:00',
@@ -402,7 +402,7 @@ check('no title: overrides stop above the labels',
 
 p = tab.plan();
 check('CQ item: instructions sent as the quiz description',
-  p.item.request.payload.quiz.description, '<p>Read carefully.</p>\n<p><br></p>\n');
+  p.item.request.payload.quiz.description, '<div style="margin-bottom: 20px; font-weight: bold; color: #333; font-size: 1.1em;">Read carefully.</div>\n');
 check('questions planned (blank-question rows skipped)', p.questions.map(q => q.rowNumber),
   [22, 23, 24, 25]);
 check('essay payload', p.questions[0].payload, { question: {

@@ -23,6 +23,9 @@
 > - **First real Jupiter update (Bio) done 2026-10-22:** worked fine, no fix needed. The
 >   blank Comment cell test in Jupiter is **shelved**: comments will be written in the
 >   Sheet and posted to Canvas instead (see "Jupiter comments" under Open questions).
+> - **Green-button descriptions built 2026-10-23, not yet tested** (see "Description
+>   style" in the makeAssignment notes): test one draft item with a Google Doc link in the
+>   old Sequence 9 test course before relying on it.
 > - **Next up (start here next session):** item 2 (AI grading follow-up). Item 1 is
 >   **done** (kept for the record). From now on, a change goes to Biology first, then (after
 >   Lara's OK) to AI9 and Gastronomy.
@@ -463,8 +466,15 @@
 >     starts fresh.
 >   - **Build order:** (1) layout + label check; (2) create item + overrides for A, D, NQ,
 >     CQ with Preview and dry run; (3) CQ questions + instructions; (4) Clear/reset.
->   - **Still to decide:** one description style for both tools (the editor's bold
->     directions + green button for non-Google links, or createByRow's simpler one).
+>   - **Description style: decided 2026-10-23 (Lara): the green-button style for both
+>     tools** (built in `buildDescription_`, PostRows.js; not yet tested in Canvas). From
+>     legacy `generateDescription`: directions bold, dark gray, 1.1em, line breaks kept;
+>     a green (`#5d783e`) "🚀 label" button for **every** link (Lara: Google Docs too;
+>     legacy gave Docs a plain link); Google Doc/Drive links also get the full-width
+>     preview below (`/edit` or `/view` → `/preview`). Blank link text → "Open
+>     Resource". Nothing at all when directions and link are both blank (legacy's "see the
+>     assignment title" fallback dropped). Applies to A, D, NQ instructions, and CQ
+>     descriptions in createByRow and makeAssignment.
 >   - Legacy quirks to avoid: types read dates differently (NQ always midnight); descriptions
 >     differ by type (D had none); legacy CQ wrote the quiz ID into O3, over the update
 >     formula; no dry run; errors often only logged.
