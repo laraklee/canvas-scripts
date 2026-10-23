@@ -24,10 +24,14 @@
 >      Gemini, and also MagicSchool, on real work. Mixed results: some things done very
 >      well, others very poorly. Start by asking her what worked and what didn't, then
 >      revise the Gem instructions.
-> - **Next big piece:** move **AI9** and **Gastronomy** to this code, one workbook per
->   course (see "Other courses" below; not decided in detail). Each new workbook needs
->   `cfg_TermQuarters` (AI9 `2` now, Gastronomy `1-2`); Gastronomy's multi-section grading
->   sheets get re-sorted once by Period, then name.
+> - **AI9 and Gastronomy workbooks made (2026-10-22):** Lara copied the Biology workbook
+>   once per course, set `cfg_CourseID` and `cfg_TermQuarters` (AI9 `2`, Gastronomy `1-2`),
+>   refreshed the tables, and re-sorted AI9's multi-section grading sheets herself.
+>   Settings files: `.clasp-ai9.json`, `.clasp-gastronomy.json` (same code as Biology).
+>   Push from `course-manager-jupiter/` after Biology is tested:
+>   `clasp push -P 'C:\Users\lalee\Code\canvas-scripts\course-manager-jupiter\.clasp-ai9.json'`
+>   (same for `-gastronomy`; full backslash path on Windows, as in assign-sheet). Not yet
+>   pushed from clasp. Retire each legacy workbook once its new one is in use.
 > - **Later / maybe:** email tools (wait and see).
 > - Everything below is the running log, oldest first; the decision notes for each piece
 >   are there.
