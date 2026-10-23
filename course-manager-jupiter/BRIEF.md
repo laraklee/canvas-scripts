@@ -1,25 +1,32 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-10-21)**
+> **Where we left off (current state, 2026-10-22)**
 >
 > - **Live in the Biology workbook and tested:** every tool Lara uses from legacy (legacy
 >   review finished 2026-10-20; see `docs/still-in-legacy.md`); CreateRoster keeps rows
 >   lined up by User ID; Course check (seven checks, "OK as is" ticks, burgundy Info
 >   rows) runs from Canvas Tools and after assignment-group refreshes; Canvas-built ref
->   tabs hide themselves after refresh. This Mac, GitHub, and Google matched at commit
->   221da33.
-> - **Waiting on Lara (this week):** the first real **Jupiter paste** (Bio timed writing
->   analysis, AI-graded). A fix to Update Grades may follow. The blank Comment cell
->   test in Jupiter is **shelved**: comments will be written in the Sheet and posted to
->   Canvas instead (see "Jupiter comments" under Open questions).
-> - **Next up (Lara, 2026-10-21; she needs both soon):**
+>   tabs hide themselves after refresh. Google (Biology) matches commit 221da33's code;
+>   later commits are BRIEF/settings only. Last session was on the PC: on the Mac,
+>   `git pull` first.
+> - **First real Jupiter update (Bio) done 2026-10-22:** worked fine, no fix needed. The
+>   blank Comment cell test in Jupiter is **shelved**: comments will be written in the
+>   Sheet and posted to Canvas instead (see "Jupiter comments" under Open questions).
+> - **Next up (Lara, 2026-10-22: start here next session):**
 >   1. **Bring back the one-assignment tools from legacy** (see `docs/still-in-legacy.md`
->      rows 49-51): read each student's score for one assignment into the active column
->      (`syncGradesAndStatusForAssignmentActiveColumn`, read-only), post the comments in a
->      column to each student's submission (`postBatchCommentsForAssignmentActiveColumn`),
->      and the assignment dropdowns that pick the assignment. Posting comments **writes
->      to Canvas** (comments only, no grades): call it out first, route it through one
->      write helper with `DRY_RUN`, and keep student data out of logs.
+>      rows 49-51):
+>      - **Pull grades:** read each student's score for one assignment into a column
+>        whose **row 2 holds the assignment ID** (legacy
+>        `syncGradesAndStatusForAssignmentActiveColumn`, read-only).
+>      - **Post comments:** post each student's comment from the given column **and the
+>        column next to it** to their submission for that assignment (legacy
+>        `postBatchCommentsForAssignmentActiveColumn`). Check in legacy how the two
+>        columns are used before building.
+>      - The assignment dropdowns that pick the assignment, if still needed.
+>      Posting comments **writes to Canvas** (comments only, no grades): call it out
+>      first, route it through `canvasWrite_()` with `DRY_RUN`, and keep student data
+>      (names, scores, comment text) out of logs. Test on Sequence 9 / a copy first.
+>      Then push to Biology, test, then AI9 and Gastronomy.
 >   2. **AI grading follow-up:** Lara tried the BioGrading Gem (`gems/BioGrading.md`) in
 >      Gemini, and also MagicSchool, on real work. Mixed results: some things done very
 >      well, others very poorly. Start by asking her what worked and what didn't, then
