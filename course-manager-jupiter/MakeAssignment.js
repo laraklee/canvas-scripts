@@ -625,7 +625,7 @@ function planMakeAssignmentItem_(cell, text, courseId, timeZone) {
       published: parsePublished_(cell('Published')),
     };
     if (type === 'A') fields.submissionTypes = parseSubmissionTypes_(text('Type of Submission'));
-    if (!fields.published) plan.label = type === 'NQ' ? 'NQ, Published ignored' : `${type}, draft`;
+    plan.label = publishLabel_(type, fields.published) || plan.label;
     const request = requestForType_(type, fields, courseId);
     // CQ: the instructions go in the create request (legacy sent a second update).
     if (type === 'CQ') request.payload.quiz.description = fields.description;

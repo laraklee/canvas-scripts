@@ -142,14 +142,14 @@ check('D payload: title, message, published, assignment part with points and dat
 const readyD = plan({ [L.DUE_DATE]: jan28 }, { [L.NAME]: 'Talk', [L.TYPE]: 'D' });
 check('ready D row: discussion path; CanvasID is the assignment ID',
   [readyD.request.path, readyD.request.readId({ id: 1, assignment_id: 77 }), readyD.label],
-  ['/courses/999/discussion_topics', 77, 'D']);
+  ['/courses/999/discussion_topics', 77, 'D, draft']);
 
 // Published column (optional).
 const P = c.OPTIONAL.PUBLISHED;
-check('published: blank, TRUE, true, checkbox ticked = publish',
-  ['', 'TRUE', 'true', true].map(v => c.parsePublished_(v)), [true, true, true, true]);
-check('published: FALSE or unticked checkbox = draft',
-  ['FALSE', false].map(v => c.parsePublished_(v)), [false, false]);
+check('published: TRUE, true, checkbox ticked = publish',
+  ['TRUE', 'true', true].map(v => c.parsePublished_(v)), [true, true, true]);
+check('published: FALSE, unticked checkbox, or blank = draft',
+  ['FALSE', false, ''].map(v => c.parsePublished_(v)), [false, false, false]);
 check('published: anything else is refused',
   throwsMessage(() => c.parsePublished_('maybe')), 'Published must be TRUE, FALSE, or blank');
 const draftA = plan({ [P]: false }, { [L.NAME]: 'Lab 3', [L.TYPE]: 'A' });
@@ -157,14 +157,17 @@ check('draft A row: published false, label says draft',
   [draftA.request.payload.assignment.published, draftA.label], [false, 'A, draft']);
 const draftD = plan({ [P]: 'FALSE' }, { [L.NAME]: 'Talk 2', [L.TYPE]: 'D' });
 check('draft D row: topic unpublished', draftD.request.payload.published, false);
-check('no Published column = publish (as before)',
-  plan({}, { [L.NAME]: 'Lab 4', [L.TYPE]: 'A' }).request.payload.assignment.published, true);
+check('no Published column = draft (changed 2026-10-23; was publish)',
+  plan({}, { [L.NAME]: 'Lab 4', [L.TYPE]: 'A' }).request.payload.assignment.published, false);
+const tickedA = plan({ [P]: true }, { [L.NAME]: 'Lab 5', [L.TYPE]: 'A' });
+check('ticked A row: published, plain label',
+  [tickedA.request.payload.assignment.published, tickedA.label], [true, 'A']);
 
 // Type CQ (graded Classic quiz shell).
 const readyCQ = plan({ [L.DUE_DATE]: jan28, [L.POINTS]: 20 },
   { [L.NAME]: 'Quiz 1', [L.TYPE]: 'cq', [L.DUE_TIME]: '8:15 AM' });
 check('CQ payload: graded quiz type, title, published, due; no points', readyCQ.request.payload, {
-  quiz: { title: 'Quiz 1', quiz_type: 'assignment', published: true,
+  quiz: { title: 'Quiz 1', quiz_type: 'assignment', published: false,
     due_at: '2026-01-28T08:15:00-10:00' },
 });
 check('CQ row: quizzes path; CanvasID = assignment ID; Canvas Link = the quiz link',
@@ -194,11 +197,14 @@ check('NQ row: New Quizzes API path; CanvasID = quiz ID; link built from it',
 check('NQ with blank points = not ready',
   plan({}, { [L.NAME]: 'NQ 2', [L.TYPE]: 'NQ' }).message,
   'Not ready: NQ needs points_possible above 0');
-check('NQ with Published FALSE: label says ignored, nothing about publishing sent',
-  (() => {
-    const p = plan({ [P]: false, [L.POINTS]: 5 }, { [L.NAME]: 'NQ 3', [L.TYPE]: 'NQ' });
-    return [p.label, 'published' in p.request.payload.quiz];
-  })(), ['NQ, Published ignored', false]);
+const nqLabel = published => {
+  const p = plan({ [P]: published, [L.POINTS]: 5 }, { [L.NAME]: 'NQ 3', [L.TYPE]: 'NQ' });
+  return [p.label, 'published' in p.request.payload.quiz];
+};
+check('NQ unticked: label says draft (Canvas starts New Quizzes as drafts); nothing sent',
+  nqLabel(false), ['NQ, draft', false]);
+check('NQ ticked: still a draft, label says Published ignored; nothing sent',
+  nqLabel(true), ['NQ, draft (Published ignored)', false]);
 
 // Blank times: Unlock = start of the day; Due and Lock = end of the day.
 const jan26 = vm.runInContext("new Date('2026-01-26T10:00:00Z')", context);

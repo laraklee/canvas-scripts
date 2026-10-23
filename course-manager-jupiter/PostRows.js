@@ -15,7 +15,8 @@
  *   Lock Time means 11:59 PM on that date; a blank Unlock Time means 12:00 AM (the start
  *   of that day). Times are sent with the Sheet's UTC offset
  *   (e.g. 2026-01-28T14:05:00-10:00), so the Payload is readable in Hawaii time.
- *   Optional "Published" column: blank or TRUE publishes; FALSE creates a draft.
+ *   Optional "Published" column: only TRUE (a ticked checkbox) publishes; FALSE, blank, or
+ *   no column creates a draft.
  *   Built so far: Type A (assignment), D (graded discussion), CQ (graded Classic quiz
  *   shell; Canvas Link gets its link, which ends in the quiz ID; points come
  *   from questions, so points_possible isn't sent), NQ (New Quiz, through the New Quizzes
@@ -290,8 +291,7 @@ function planCreateByRow_(rowNumber, cell, text, courseId, timeZone) {
         text(CREATE_BY_ROW_LABELS.DOC_LINK), text(CREATE_BY_ROW_LABELS.LINK_TEXT)),
       published: parsePublished_(cell(CREATE_BY_ROW_OPTIONAL_LABELS.PUBLISHED)),
     };
-    // NQ can't be set to draft on create (Canvas decides), so say the column was ignored.
-    if (!fields.published) plan.label = type === 'NQ' ? 'NQ, Published ignored' : `${type}, draft`;
+    plan.label = publishLabel_(type, fields.published) || plan.label;
     return Object.assign(plan, { request: requestForType_(type, fields, courseId) });
   } catch (error) {
     if (!error.isSheetProblem) throw error;
@@ -329,14 +329,27 @@ function requestForType_(type, fields, courseId) {
   throw sheetProblem_(`Type ${type} is not built yet`);
 }
 
-/** Blank or TRUE → publish; FALSE → draft (a checkbox works too). */
+/**
+ * TRUE (or a ticked checkbox) → publish; FALSE, unticked, blank, or no Published column →
+ * draft (Lara, 2026-10-23: nothing publishes unless ticked; it used to be blank → publish).
+ */
 function parsePublished_(value) {
-  if (isBlank_(value) || value === true) return true;
-  if (value === false) return false;
+  if (value === true) return true;
+  if (isBlank_(value) || value === false) return false;
   const textValue = String(value).trim().toUpperCase();
   if (textValue === 'TRUE') return true;
   if (textValue === 'FALSE') return false;
   throw sheetProblem_('Published must be TRUE, FALSE, or blank');
+}
+
+/**
+ * Status label for drafts: "A, draft" (blank for a published item, which keeps the plain
+ * type label). New Quizzes have no publish setting on create and Canvas starts them as
+ * drafts, so NQ always says draft, and a ticked box is noted as ignored.
+ */
+function publishLabel_(type, published) {
+  if (type === 'NQ') return published ? 'NQ, draft (Published ignored)' : 'NQ, draft';
+  return published ? '' : `${type}, draft`;
 }
 
 function pointsFrom_(value) {

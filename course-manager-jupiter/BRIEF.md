@@ -23,9 +23,10 @@
 > - **First real Jupiter update (Bio) done 2026-10-22:** worked fine, no fix needed. The
 >   blank Comment cell test in Jupiter is **shelved**: comments will be written in the
 >   Sheet and posted to Canvas instead (see "Jupiter comments" under Open questions).
-> - **Green-button descriptions built 2026-10-23, not yet tested** (see "Description
->   style" in the makeAssignment notes): test one draft item with a Google Doc link in the
->   old Sequence 9 test course before relying on it.
+> - **Green-button descriptions (pushed to Biology, commit 9318667) and "blank Published =
+>   draft" (built 2026-10-23), neither tested yet** (see "Description style" in the
+>   makeAssignment notes and "Published column, in practice"): test one draft item with a
+>   Google Doc link in the old Sequence 9 test course before relying on them.
 > - **Next up (start here next session):** item 2 (AI grading follow-up). Item 1 is
 >   **done** (kept for the record). From now on, a change goes to Biology first, then (after
 >   Lara's OK) to AI9 and Gastronomy.
@@ -316,6 +317,13 @@
 >   add a Published column filled with checkboxes: new checkboxes start unticked = draft,
 >   ticked = publish, so each row is chosen explicitly. A cell with no checkbox still
 >   means publish; offered to make blank = draft too (one-line change) if she wants.
+>   **Changed 2026-10-23 (Lara): only a ticked box (or TRUE) publishes**; unticked, FALSE,
+>   blank, or no Published column = draft, in createByRow **and** makeAssignment
+>   (`parsePublished_`, shared). Status labels (`publishLabel_`, shared): "A, draft" etc.;
+>   NQ always "NQ, draft" (Canvas starts New Quizzes unpublished), or "NQ, draft
+>   (Published ignored)" when ticked. Lara is moving createByRow's Published column out of
+>   N to where she can see it (fine: columns are found by row 3 label). Built, not yet
+>   tested in the Sheet.
 >   Lara has added the Published checkbox column to `createByRow`.
 > - **makeAssignment redesign: decisions so far (2026-10-17, nothing built yet).** Legacy
 >   (03a/03b/03c) had one tab per type with fixed cells (row 3 main item, F4/H4/H5
