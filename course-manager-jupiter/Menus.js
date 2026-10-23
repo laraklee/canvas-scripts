@@ -5,7 +5,8 @@
  *   in; the menus hold everything, including data chores (Lara, 2026-10-18; legacy also
  *   had two menus, "Canvas Tools" and "Setup & Admin"). Function names are unchanged, so
  *   every button keeps working.
- *   - Canvas Tools: doing things (create, reorder, groups, rubrics, Jupiter, seating),
+ *   - Canvas Tools: doing things (create, reorder, groups, rubrics, Jupiter, grading
+ *     sheet one-assignment tools, seating),
  *     and Course check (read-only report, CourseCheck.js) at the bottom.
  *   - Setup & Data: refreshing reference tables, Jupiter categories (manual, on purpose),
  *     and setup / safety checks.
@@ -49,6 +50,8 @@ function buildMenus_() {
       .addItem('CreateRoster (grading sheet)', 'createActiveSheetRoster')
       .addItem('Update Grades → JupiterExport (grading sheet)',
         'buildJupiterExportFromRecentCanvasGrades'))
+    .addSubMenu(ui.createMenu('Grading sheet')
+      .addItem('Pull scores into this column (ID in row 2)', 'pullScoresForActiveColumn'))
     .addSeparator()
     .addItem('Build seating chart', 'buildSeatingChart')
     .addSeparator()

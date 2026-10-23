@@ -27,6 +27,27 @@
 >      first, route it through `canvasWrite_()` with `DRY_RUN`, and keep student data
 >      (names, scores, comment text) out of logs. Test on Sequence 9 / a copy first.
 >      Then push to Biology, test, then AI9 and Gastronomy.
+>      **Plan and Lara's decisions (2026-10-23):** legacy checked: the column next to the
+>      comment column is a **Status** column the tool writes ("Commented" / "API Error"),
+>      not a second comment. Both tools go in new `AssignmentColumn.js`, menu Canvas Tools ›
+>      Grading sheet. **Dropdowns skipped** (Lara: the list got too long to be useful; maybe
+>      later). **Attachments:** Drive links typed into the comment text only (no code, no
+>      Drive permission); real file uploads (3-step Canvas upload + a Drive scope) not
+>      planned. Lara: the legacy comment tool **worked earlier this school year**, so the
+>      grade-write block doesn't seem to stop comments. Comment plan (not built yet):
+>      `PUT /courses/:course/assignments/:id/submissions/:user` with only
+>      `comment[text_comment]` (never a grade field), through `canvasWrite_`, confirm pop-up
+>      (course, assignment name, count, dry-run state), **skip rows whose Status already says
+>      "Commented"** (no double posts; clear Status to resend), 5-minute stop. First real test
+>      on the course's Test Student (Canvas notifies students of comments).
+>      **Pull scores built (2026-10-23, not yet tested):** `pullScoresForActiveColumn`. Click
+>      a cell in the column (G or later; A–F refused), row 2 = assignment ID. One request for
+>      the class (`GET …/assignments/:id/submissions`; legacy sent one per student) plus one
+>      for the assignment's name. Same score as Update Grades (`scoreForJupiter_`). Writes
+>      only rows with a numeric User ID in A (legacy also blanked other rows, e.g. Average);
+>      students Canvas doesn't list are left blank and counted. Asks Yes/No if any student
+>      cell is already filled. Read-only; no new permissions. Offline check:
+>      `scripts/checks/assignment-column.check.js`.
 >   2. **AI grading follow-up:** Lara tried the BioGrading Gem (`gems/BioGrading.md`) in
 >      Gemini, and also MagicSchool, on real work. Mixed results: some things done very
 >      well, others very poorly. Start by asking her what worked and what didn't, then
