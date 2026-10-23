@@ -37,8 +37,10 @@
 >   Settings files: `.clasp-ai9.json`, `.clasp-gastronomy.json` (same code as Biology).
 >   Push from `course-manager-jupiter/` after Biology is tested:
 >   `clasp push -P 'C:\Users\lalee\Code\canvas-scripts\course-manager-jupiter\.clasp-ai9.json'`
->   (same for `-gastronomy`; full backslash path on Windows, as in assign-sheet). Not yet
->   pushed from clasp. Retire each legacy workbook once its new one is in use.
+>   (same for `-gastronomy`; full backslash path on Windows, as in assign-sheet).
+>   **Live (Lara, 2026-10-22):** both connected (Canvas token set, authorized), functions
+>   run in each, and the legacy workbooks retired. Not yet pushed from clasp (they hold
+>   the code they were copied with, which matches Git).
 > - **Later / maybe:** email tools (wait and see).
 > - Everything below is the running log, oldest first; the decision notes for each piece
 >   are there.
