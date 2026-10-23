@@ -3,16 +3,17 @@
 > **Where we left off (current state, 2026-10-23)**
 >
 > - **Done 2026-10-23 (Mac session):** Pull scores and Post comments (cell notes) built,
->   tested, and live in **Biology** (Google matches commit a5ee5d1's code). Details under
->   "Next up" item 1 below.
-> - **Blocked: AI9 and Gastronomy not pushed.** `clasp push -P` refused both with
->   "Invalid script key": `.clasp-ai9.json` and `.clasp-gastronomy.json` hold 44-character
->   IDs, which look like the **workbooks'** IDs (from the Sheet's address), not the
->   **Apps Script project** IDs clasp needs (57 characters, like `.clasp.json`'s). Nothing
->   was uploaded. Fix: in each workbook, Extensions › Apps Script › Project Settings (gear)
->   › IDs › Script ID; put it in that file's `scriptId`, commit, then push (Mac:
->   `clasp -P "$PWD/.clasp-ai9.json" push` from `course-manager-jupiter/`). Both still
->   hold the code they were copied with.
+>   tested, and live in **all three workbooks** (Biology, AI9, Gastronomy); Google matches
+>   commit a5ee5d1's code in each (AI9 and Gastronomy checked by a read-only `clasp clone`
+>   after the push). Details under "Next up" item 1 below.
+> - **AI9/Gastronomy script IDs fixed (2026-10-23, commit 5a91eb3).** The first push was
+>   refused ("Invalid script key"): the two files held the **workbooks'** IDs (44
+>   characters), not the **Apps Script project** IDs (57; Extensions › Apps Script ›
+>   Project Settings › Script ID). They had never been pushed, so the copies held the code
+>   they were copied with, which matched Git except for the two new tools; their manifests
+>   differed only in formatting (same 4 scopes), so the first push used `--force`. Mac push
+>   from `course-manager-jupiter/`: `clasp -P "$PWD/.clasp-ai9.json" push` (`-P` before
+>   `push`; same for `-gastronomy`).
 > - **Live in the Biology workbook and tested:** every tool Lara uses from legacy (legacy
 >   review finished 2026-10-20; see `docs/still-in-legacy.md`); CreateRoster keeps rows
 >   lined up by User ID; Course check (seven checks, "OK as is" ticks, burgundy Info
@@ -22,8 +23,9 @@
 > - **First real Jupiter update (Bio) done 2026-10-22:** worked fine, no fix needed. The
 >   blank Comment cell test in Jupiter is **shelved**: comments will be written in the
 >   Sheet and posted to Canvas instead (see "Jupiter comments" under Open questions).
-> - **Next up (start here next session):** fix the AI9/Gastronomy script IDs and push
->   (above); then item 2 (AI grading follow-up). Item 1 is **done** (kept for the record).
+> - **Next up (start here next session):** item 2 (AI grading follow-up). Item 1 is
+>   **done** (kept for the record). From now on, a change goes to Biology first, then (after
+>   Lara's OK) to AI9 and Gastronomy.
 >   1. **Done 2026-10-23: bring back the one-assignment tools from legacy** (see
 >      `docs/still-in-legacy.md`):
 >      - **Pull grades:** read each student's score for one assignment into a column
