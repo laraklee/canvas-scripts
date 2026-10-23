@@ -23,10 +23,13 @@
 > - **First real Jupiter update (Bio) done 2026-10-22:** worked fine, no fix needed. The
 >   blank Comment cell test in Jupiter is **shelved**: comments will be written in the
 >   Sheet and posted to Canvas instead (see "Jupiter comments" under Open questions).
-> - **Green-button descriptions (pushed to Biology, commit 9318667) and "blank Published =
->   draft" (built 2026-10-23), neither tested yet** (see "Description style" in the
->   makeAssignment notes and "Published column, in practice"): test one draft item with a
->   Google Doc link in the old Sequence 9 test course before relying on them.
+> - **Green-button descriptions and "blank Published = draft": pushed to Biology
+>   (commit 8f8f891), not yet tested** (see "Description style" in the makeAssignment
+>   notes and "Published column, in practice"). **Lara (2026-10-23): she'll test in the
+>   next day or so** (one draft createByRow item with a Google Doc link in the old
+>   Sequence 9 test course) **and come back if there are issues.** Next session: ask how
+>   it went; once OK, mark tested and push to AI9 and Gastronomy (ask first). Until then
+>   AI9 and Gastronomy still have the old description style and blank = publish.
 > - **Next up (start here next session):** item 2 (AI grading follow-up). Item 1 is
 >   **done** (kept for the record). From now on, a change goes to Biology first, then (after
 >   Lara's OK) to AI9 and Gastronomy.
