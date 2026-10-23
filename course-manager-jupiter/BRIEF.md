@@ -52,23 +52,27 @@
 >      students Canvas doesn't list are left blank and counted. Asks Yes/No if any student
 >      cell is already filled. Read-only; no new permissions. Offline check:
 >      `scripts/checks/assignment-column.check.js`.
->      **Post comments built (2026-10-23, Lara approved the plan; not yet tested):**
->      `postCommentsForActiveColumn` (menu: Grading sheet › Post comments from this column).
->      Canvas docs checked: "Grade or comment on a submission" needs manage-grades permission
->      only when submission/rubric fields are sent, so a comment-only request should be fine
->      under the grade block. Status column = the one right of the comments; its row 2 must
->      be blank (the tool writes "Status") or "Status", else it stops (protects the next
->      assignment's column). Posts rows with a numeric User ID and a comment (display text,
->      trimmed) whose Status doesn't start with "Commented" (any case; legacy's plain
->      "Commented" counts). Each row's Status is written right after it's sent: "Commented
->      M/d h:mm a", "Dry run (not sent)" (posts again later), or "Not sent: not found (404)"
->      / "not allowed (403)" / "Canvas error (HTTP n)" (posts again on rerun). Stop-all errors
->      (token, network, busy) stop the run; 5-minute stop; document lock. Confirm pop-up:
->      assignment name (GET also checks the ID), course, counts, dry-run state, and that
->      Canvas notifies students. Test plan: dry run in Biology; then switch `cfg_CourseID` to
->      the old Sequence 9 test course, one row for the Test Student (User ID from
->      ref_peopleList; open Student View once if missing), real post with a Drive link,
->      rerun (nothing double-posts); then dry run ON and `cfg_CourseID` back to Biology.
+>      **Post comments (2026-10-23):** `postCommentsForActiveColumn` (menu: Grading sheet ›
+>      Post comments from this column). Canvas docs checked: "Grade or comment on a
+>      submission" needs manage-grades permission only when submission/rubric fields are
+>      sent, and comment-only requests work under the grade block. **First version (Status
+>      column, commit c3ba58a) worked live in Biology** (Lara skipped the test-course step and
+>      posted real comments: "we're in business").
+>      **Redesign, Lara's choice (built, not yet tested): no Status column; cell notes.**
+>      Each comment cell gets a note right after it's sent: "Commented M/d h:mm a", "Dry run
+>      (not sent)" (posts again later), or "Not sent: not found (404)" / "not allowed (403)"
+>      / "Canvas error (HTTP n)" (posts again on rerun). Refused cells get a light red
+>      background (`#f4cccc`); a later success removes only that exact red. The row 1 cell
+>      gets a summary note ("M/d h:mm a: 15 posted, 0 refused, 3 already commented"),
+>      replaced each run; notes leave Lara's row 1 name formula alone. Cells whose note
+>      starts with "Commented" (any case) are skipped (no double posts; delete the note to
+>      resend). Notes, not Sheets comments: scripts can't create cell comments without the
+>      Drive API, and comments email collaborators. Note triangles can't be colored.
+>      Lara's decisions: no "clear notes" menu item (she starts a new column instead); no
+>      compatibility with the old Status column (she won't reuse it). Unchanged: posts rows
+>      with a numeric User ID and a comment (display text, trimmed); stop-all errors stop
+>      the run; 5-minute stop; document lock; confirm pop-up (assignment name, course,
+>      counts, dry-run state, students notified).
 >   2. **AI grading follow-up:** Lara tried the BioGrading Gem (`gems/BioGrading.md`) in
 >      Gemini, and also MagicSchool, on real work. Mixed results: some things done very
 >      well, others very poorly. Start by asking her what worked and what didn't, then

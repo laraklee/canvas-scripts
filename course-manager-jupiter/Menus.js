@@ -52,8 +52,7 @@ function buildMenus_() {
         'buildJupiterExportFromRecentCanvasGrades'))
     .addSubMenu(ui.createMenu('Grading sheet')
       .addItem('Pull scores into this column (ID in row 2)', 'pullScoresForActiveColumn')
-      .addItem('Post comments from this column (Status goes right)',
-        'postCommentsForActiveColumn'))
+      .addItem('Post comments from this column (ID in row 2)', 'postCommentsForActiveColumn'))
     .addSeparator()
     .addItem('Build seating chart', 'buildSeatingChart')
     .addSeparator()

@@ -79,25 +79,19 @@ try { c.readAssignmentColumn_(fakeSheet(7, 'Lab 3')); } catch (e) { thrown = e.m
 check('refuses a row 2 that is not an ID', /Row 2 of column G/.test(thrown), true);
 
 // ---- Post comments: which rows post ----
-// From row 3: a comment to post; already commented (old legacy wording too); no comment;
-// no User ID; a refused earlier try (posts again); a dry-run Status (posts again).
+// From row 3 (the third grid is the comment cells' notes): a comment to post; already
+// commented (any capitals); no comment; no User ID; a refused earlier try (posts again);
+// a dry-run note (posts again).
 const cUserIds = [['101'], [102], ['103'], ['104'], [''], ['106'], ['107']];
 const cComments = [['  Nice work, see link  '], ['Good'], ['Redo part 2'], [''], ['Orphan'],
   ['Try again'], ['Check units']];
-const cStatuses = [[''], ['Commented 10/23 8:15 AM'], ['commented'], [''], [''],
+const cNotes = [[''], ['Commented 10/23 8:15 AM'], ['commented'], [''], [''],
   ['Not sent: not found (404)'], ['Dry run (not sent)']];
-const cPlan = c.planComments_(cUserIds, cComments, cStatuses, 3);
+const cPlan = c.planComments_(cUserIds, cComments, cNotes, 3);
 check('posts: trimmed text; skips commented, blank comment, no User ID',
   cPlan.posts, [{ row: 3, userId: '101', text: 'Nice work, see link' },
     { row: 8, userId: '106', text: 'Try again' }, { row: 9, userId: '107', text: 'Check units' }]);
 check('already commented counted (any capitals)', cPlan.alreadyCommented, 2);
-
-let label = 'ok';
-try { c.checkStatusLabel_('', 'L'); c.checkStatusLabel_(' status ', 'L'); } catch (e) { label = e.message; }
-check('Status column: blank or "Status" is fine', label, 'ok');
-label = '';
-try { c.checkStatusLabel_(5551, 'L'); } catch (e) { label = e.message; }
-check('Status column: refuses another assignment\'s column', /column L/.test(label), true);
 
 // ---- Post comments: sending ----
 const canvasErr = type => Object.assign(new Error('x'), { canvasType: type });
@@ -108,7 +102,8 @@ function run(send, options) {
   let error = null;
   let result = null;
   try {
-    result = c.sendComments_(posts, send, (row, status) => recorded.push([row, status]),
+    result = c.sendComments_(posts, send,
+      (row, status, refused) => recorded.push(refused ? [row, status, 'red'] : [row, status]),
       Object.assign({ dryRun: false, stamp: '10/23 9:00 AM', started: 0, now: () => 0 }, options));
   } catch (e) { error = e.canvasType || e.message; }
   return { recorded, result, error };
@@ -120,9 +115,10 @@ check('real run: every row Commented with the time', [ok.recorded, ok.result],
 check('dry run: Status says not sent', run(() => {}, { dryRun: true }).recorded[0],
   [3, 'Dry run (not sent)']);
 const one404 = run(post => { if (post.userId === '2') throw canvasErr('NOT_FOUND'); });
-check('one student refused: recorded, the others still go',
-  [one404.recorded.map(r => r[1]), one404.result.refusedRows],
-  [['Commented 10/23 9:00 AM', 'Not sent: not found (404)', 'Commented 10/23 9:00 AM'], [4]]);
+check('one student refused: noted and marked red, the others still go',
+  [one404.recorded, one404.result.refusedRows],
+  [[[3, 'Commented 10/23 9:00 AM'], [4, 'Not sent: not found (404)', 'red'],
+    [5, 'Commented 10/23 9:00 AM']], [4]]);
 const badToken = run(post => { if (post.userId === '2') throw canvasErr('TOKEN_REJECTED'); });
 check('token rejected: stops; rows done so far keep their Status',
   [badToken.error, badToken.recorded], ['TOKEN_REJECTED', [[3, 'Commented 10/23 9:00 AM']]]);
@@ -133,6 +129,14 @@ check('time limit: stops starting new posts', [slow.result.sent, slow.result.not
 check('refused status text', [c.commentRefusedStatus_('NOT_ALLOWED'),
   c.commentRefusedStatus_('HTTP_400'), c.commentRefusedStatus_('ODD')],
 ['Not sent: not allowed (403)', 'Not sent: Canvas error (HTTP 400)', 'Not sent: Canvas error']);
+
+// ---- Post comments: row 1 summary note ----
+check('summary: real run', c.commentSummary_('10/23 9:00 AM',
+  { sent: 15, refusedRows: [7], notStarted: 0 }, 3, false),
+'10/23 9:00 AM: 15 posted, 1 refused, 3 already commented');
+check('summary: dry run and time limit', c.commentSummary_('10/23 9:00 AM',
+  { sent: 2, refusedRows: [], notStarted: 4 }, 0, true),
+'10/23 9:00 AM: dry run, 2 not sent, 0 refused, 0 already commented, 4 not started (time limit)');
 
 if (failures) {
   console.log(`\n${failures} check(s) failed.`);
