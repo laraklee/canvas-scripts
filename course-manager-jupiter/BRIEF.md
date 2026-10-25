@@ -30,7 +30,8 @@
 >   item with a Google Doc link) **and come back if there are issues.** Next session: ask
 >   how it went; once OK, mark tested and push to AI9 (ask first). Until then AI9 still
 >   has the old description style and blank = publish.
-> - **Export to Google Docs: built 2026-10-25, not yet pushed or tested.** New
+> - **Export to Google Docs: built 2026-10-25 (commit 8b29ab8), pushed to Gastronomy
+>   only (`--force`: clasp asks before a manifest change), not yet tested.** New
 >   `ExportToDocs.js`, `exportCanvasToDocs` (menu: Canvas Tools › Export to Google Docs
 >   (this tab)). Lara's first use: Gastronomy (content mostly in Canvas pages and
 >   assignments), so it **goes to Gastronomy first** (her choice, 2026-10-25), then
