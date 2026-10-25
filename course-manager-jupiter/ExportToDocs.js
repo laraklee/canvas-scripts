@@ -8,8 +8,8 @@
  *   it in Drive any time, the link keeps working). A label row with "Canvas Link" and
  *   "Google Doc" (plus optional "Name" and "Exported") somewhere in rows 1–10 (Lara uses
  *   row 3); data below.
- *   Paste an assignment, discussion, or page link from Canvas (typed, or a blue link
- *   showing other text); rows that already have a
+ *   Paste an assignment, discussion, page, course home, or syllabus link from Canvas
+ *   (typed, or a blue link showing other text); rows that already have a
  *   Google Doc link are skipped (delete the link to export again). The Doc gets the
  *   item's title, a link back to Canvas, and its content. Pictures stored in Canvas are
  *   downloaded by the script and put inside the Doc (Google can't log in to Canvas to
@@ -20,6 +20,8 @@
  *   /api/v1/courses/:course/assignments/:id
  *   /api/v1/courses/:course/discussion_topics/:id
  *   /api/v1/courses/:course/pages/:page_url
+ *   /api/v1/courses/:course/front_page (course home link, /courses/:course)
+ *   /api/v1/courses/:course?include[]=syllabus_body (syllabus link)
  *   /api/v1/files/:id (a picture's details and temporary download link; the picture
  *   itself is then downloaded from that link without the Canvas token)
  * Canvas write operations: none (read-only, so DRY_RUN doesn't apply).
@@ -50,6 +52,8 @@ const EXPORT_TYPES = Object.freeze({
   assignments: { label: 'assignment', title: 'name', html: 'description' },
   discussion_topics: { label: 'discussion', title: 'title', html: 'message' },
   pages: { label: 'page', title: 'title', html: 'body' },
+  front_page: { label: 'course home page', title: 'title', html: 'body' },
+  // syllabus is read from the course itself (see fetchCanvasContent_).
 });
 
 /**
@@ -101,7 +105,7 @@ function exportCanvasToDocs() {
       }
     };
     plan.badLinks.forEach(row => markRow(row, 'Not exported: not an assignment, ' +
-      'discussion, or page link from Canvas', true));
+      'discussion, page, course home, or syllabus link from Canvas', true));
 
     let result = { made: 0, refusedRows: [], notStarted: 0 };
     let folder = null;
@@ -128,7 +132,8 @@ function exportCanvasToDocs() {
           if (exportedCol) sheet.getRange(item.row, exportedCol).setValue(new Date());
           markRow(item.row, '', false);
         },
-        (item, error) => markRow(item.row, exportRefusedNote_(error.canvasType), true),
+        (item, error) => markRow(item.row, exportRefusedNote_(error.canvasType, item.type),
+          true),
         { started });
     }
     ss.toast('', title, 1);
@@ -224,11 +229,18 @@ function cellLinks_(richTexts, formulas, displays) {
 
 /**
  * Reads a Canvas link like <your Canvas address>/courses/1/pages/lab-safety.
- * Returns { type, courseId, itemId } (type: assignments, discussion_topics, or pages) or
- * null. Assignment and discussion IDs must be numbers; a page uses its URL name.
+ * Returns { type, courseId, itemId } or null. Types: assignments, discussion_topics,
+ * pages (by URL name), front_page (the course home, /courses/1 or /courses/1/wiki), and
+ * syllabus (/courses/1/assignments/syllabus). Assignment and discussion IDs must be
+ * numbers.
  */
 function parseCanvasContentLink_(link) {
-  const match = String(link).match(
+  const text = String(link);
+  const syllabus = text.match(/\/courses\/(\d+)\/assignments\/syllabus\/?(?:[?#]|$)/);
+  if (syllabus) return { type: 'syllabus', courseId: syllabus[1], itemId: '' };
+  const home = text.match(/\/courses\/(\d+)(?:\/wiki)?\/?(?:[?#]|$)/);
+  if (home) return { type: 'front_page', courseId: home[1], itemId: '' };
+  const match = text.match(
     /\/courses\/(\d+)\/(assignments|discussion_topics|pages)\/([^/?#\s]+)/);
   if (!match) return null;
   const [, courseId, type, itemId] = match;
@@ -279,9 +291,20 @@ function runExports_(items, read, make, done, refused, options) {
 
 /** Reads one item from Canvas: { title, html, url }. */
 function fetchCanvasContent_(item) {
+  const course = `/courses/${item.courseId}`;
+  if (item.type === 'syllabus') {
+    const data = canvasGet_(course, { 'include[]': 'syllabus_body' });
+    return {
+      title: `${String(data.name || 'Course').trim()} Syllabus`,
+      html: String(data.syllabus_body || ''),
+      url: '', // the pasted link is used
+    };
+  }
   const spec = EXPORT_TYPES[item.type];
-  const id = item.type === 'pages' ? encodeURIComponent(item.itemId) : item.itemId;
-  const data = canvasGet_(`/courses/${item.courseId}/${item.type}/${id}`);
+  const path = item.type === 'front_page' ? `${course}/front_page` :
+    `${course}/${item.type}/` +
+      (item.type === 'pages' ? encodeURIComponent(item.itemId) : item.itemId);
+  const data = canvasGet_(path);
   return {
     title: String(data[spec.title] || '').trim(),
     html: String(data[spec.html] || ''),
@@ -368,8 +391,11 @@ function buildExportHtml_(content, pastedLink) {
     '</body></html>';
 }
 
-/** Short note text for a row Canvas refused, from the error type only. */
-function exportRefusedNote_(type) {
+/** Short note text for a row Canvas refused, from the error type (and link type) only. */
+function exportRefusedNote_(type, linkType) {
+  if (type === 'NOT_FOUND' && linkType === 'front_page') {
+    return 'Not exported: this course has no front page (its home is not set to a Page)';
+  }
   if (type === 'NOT_FOUND') return 'Not exported: not found in Canvas (404)';
   if (type === 'NOT_ALLOWED') return 'Not exported: not allowed (403)';
   const code = String(type).match(/^HTTP_(\d+)$/);

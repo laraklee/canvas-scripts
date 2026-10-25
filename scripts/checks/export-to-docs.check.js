@@ -44,9 +44,20 @@ check('discussion link with extra bits after it',
 check('page link keeps its URL name (decoded)',
   c.parseCanvasContentLink_(`${base}/courses/11/pages/lab-safety%20rules/edit`),
   { type: 'pages', courseId: '11', itemId: 'lab-safety rules' });
+check('course home link', c.parseCanvasContentLink_(`${base}/courses/4939`),
+  { type: 'front_page', courseId: '4939', itemId: '' });
+check('course home link with slash, wiki, or ?', [`${base}/courses/1/`, `${base}/courses/1/wiki`,
+  `${base}/courses/1?x=1`].map(link => c.parseCanvasContentLink_(link).type),
+['front_page', 'front_page', 'front_page']);
+check('syllabus link', c.parseCanvasContentLink_(`${base}/courses/1/assignments/syllabus`),
+  { type: 'syllabus', courseId: '1', itemId: '' });
+check('other course areas not taken for home', [`${base}/courses/1/modules`,
+  `${base}/courses/12345x`].map(link => c.parseCanvasContentLink_(link)), [null, null]);
+check('no front page: clear note', c.exportRefusedNote_('NOT_FOUND', 'front_page'),
+  'Not exported: this course has no front page (its home is not set to a Page)');
 check('quiz link not supported', c.parseCanvasContentLink_(`${base}/courses/11/quizzes/4`), null);
 check('assignment ID must be a number',
-  c.parseCanvasContentLink_(`${base}/courses/11/assignments/syllabus`), null);
+  c.parseCanvasContentLink_(`${base}/courses/11/assignments/new`), null);
 check('a bare ID is not a link', c.parseCanvasContentLink_('22'), null);
 check('broken %-code in a page name', c.parseCanvasContentLink_(`${base}/courses/1/pages/a%zz`),
   null);

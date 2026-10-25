@@ -45,7 +45,10 @@
 >   (this tab)). Lara's first use: Gastronomy (content mostly in Canvas pages and
 >   assignments), so it **goes to Gastronomy first** (her choice, 2026-10-25), then
 >   Biology/AI9 after her OK. Lara's decisions: paste the **Canvas link** (type and course
->   come from it; assignment, discussion, page; quizzes not supported); **narrow Drive
+>   come from it; assignment, discussion, page; quizzes not supported; **added 2026-10-25:
+>   course home** `/courses/:id` or `/wiki` → `GET …/front_page` (404 note says the home
+>   isn't a Page) **and syllabus** `/courses/:id/assignments/syllabus` → course with
+>   `include[]=syllabus_body`, Doc titled "<course name> Syllabus"); **narrow Drive
 >   scope `drive.file`** (new; security over convenience: the script can only see
 >   folders/files it made, so it can't use an existing folder): **B1 = folder name**
 >   (typed), **C1 = folder link** (written when the script makes the folder in My Drive;
