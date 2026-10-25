@@ -30,6 +30,25 @@
 >   item with a Google Doc link) **and come back if there are issues.** Next session: ask
 >   how it went; once OK, mark tested and push to AI9 (ask first). Until then AI9 still
 >   has the old description style and blank = publish.
+> - **Export to Google Docs: built 2026-10-25, not yet pushed or tested.** New
+>   `ExportToDocs.js`, `exportCanvasToDocs` (menu: Canvas Tools › Export to Google Docs
+>   (this tab)). Lara's first use: Gastronomy (content mostly in Canvas pages and
+>   assignments), so it **goes to Gastronomy first** (her choice, 2026-10-25), then
+>   Biology/AI9 after her OK. Lara's decisions: paste the **Canvas link** (type and course
+>   come from it; assignment, discussion, page; quizzes not supported); **narrow Drive
+>   scope `drive.file`** (new; security over convenience: the script can only see
+>   folders/files it made, so it can't use an existing folder): **B2 = folder name**
+>   (typed), **B3 = folder link** (written when the script makes the folder in My Drive;
+>   Lara can move/rename it). Label row in rows 1–10 found by **Canvas Link** and **Google
+>   Doc** (optional **Name**, **Exported**). **Rows with a Google Doc link are skipped**
+>   (delete it to remake). Missing Canvas images are acceptable (Google can't log in to
+>   Canvas to fetch them). Discussions: prompt only, never replies. Doc = title heading,
+>   "Open in Canvas" link, then the HTML converted by Drive. Refused rows: light red +
+>   note on the link cell. Read-only in Canvas. Drive via REST v3 + `ScriptApp
+>   .getOAuthToken()` (no Advanced Service). Offline check
+>   `scripts/checks/export-to-docs.check.js`. First run in each workbook asks for the new
+>   Drive permission. Untested facts: whether Drive's HTML import keeps Canvas formatting
+>   well, and which images survive.
 > - **Next up (start here next session):** nothing new planned; ask how the
 >   green-button test went (above). Items 1 and 2 are **done** (kept for the record). From now on, a change goes to Biology first, then (after
 >   Lara's OK) to AI9 and Gastronomy.
