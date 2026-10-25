@@ -30,8 +30,8 @@
 >   item with a Google Doc link) **and come back if there are issues.** Next session: ask
 >   how it went; once OK, mark tested and push to AI9 (ask first). Until then AI9 still
 >   has the old description style and blank = publish.
-> - **Next up (start here next session):** item 2 (AI grading follow-up). Item 1 is
->   **done** (kept for the record). From now on, a change goes to Biology first, then (after
+> - **Next up (start here next session):** nothing new planned; ask how the
+>   green-button test went (above). Items 1 and 2 are **done** (kept for the record). From now on, a change goes to Biology first, then (after
 >   Lara's OK) to AI9 and Gastronomy.
 >   1. **Done 2026-10-23: bring back the one-assignment tools from legacy** (see
 >      `docs/still-in-legacy.md`):
@@ -96,10 +96,18 @@
 >      with a numeric User ID and a comment (display text, trimmed); stop-all errors stop
 >      the run; 5-minute stop; document lock; confirm pop-up (assignment name, course,
 >      counts, dry-run state, students notified).
->   2. **AI grading follow-up:** Lara tried the BioGrading Gem (`gems/BioGrading.md`) in
->      Gemini, and also MagicSchool, on real work. Mixed results: some things done very
->      well, others very poorly. Start by asking her what worked and what didn't, then
->      revise the Gem instructions.
+>   2. **Done 2026-10-24: AI grading follow-up.** Lara tried the BioGrading Gem
+>      (`gems/BioGrading.md`) in Gemini, and also MagicSchool, on the 3.2D Digestive
+>      Enzymes lab (two students per printed paper: Data Collector graded on the data
+>      boxes, Analyzer on the analysis questions). Weak spot: reading Benedict's colors in
+>      uneven student photos; written answers graded fine. Things improved once she made a
+>      key by hand of what each photo showed. One student at a time, with the AI comment in
+>      its own paragraph, worked well (she posts her comment, then the AI's, in Canvas).
+>      **Lara's decision: no Gem changes.** The instructions stay general purpose; she'll
+>      explain assignment-specific issues to the AI before uploading work. Worksheet ideas
+>      for her (not code): add a color/description to the carbohydrate table like the
+>      protein table has, a Benedict's color strip in photos, an expected-results key by
+>      Runner #.
 > - **AI9 and Gastronomy workbooks made (2026-10-22):** Lara copied the Biology workbook
 >   once per course, set `cfg_CourseID` and `cfg_TermQuarters` (AI9 `2`, Gastronomy `1-2`),
 >   refreshed the tables, and re-sorted AI9's multi-section grading sheets herself.
