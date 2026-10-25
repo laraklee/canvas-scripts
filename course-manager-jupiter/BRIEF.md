@@ -78,7 +78,11 @@
 >   up in her personal OneDrive.** She asked about making Word files instead. Suggested:
 >   keep Google Docs; Drive's **Download** on a whole folder turns every Google Doc into
 >   a .docx inside the zip, so no Word code is needed (a .docx copy in the folder is
->   possible later if wanted). Also mentioned: Canvas's own course export (.imscc, the
+>   possible later if wanted). **Images:** Google fetches each image without a
+>   Canvas login, so images uploaded **into Canvas Files** usually go missing (unless the
+>   link carries a `verifier=` code); images from public sites come through. Possible fix
+>   for the backup tool: the script downloads Canvas images with Lara's token and puts
+>   them into the Doc itself. Also mentioned: Canvas's own course export (.imscc, the
 >   complete course, for re-import into another Canvas); check the school's policy on
 >   taking course materials to a personal account; the backup must never include student
 >   work, replies, or grades (FERPA; the tool already reads prompts only).
