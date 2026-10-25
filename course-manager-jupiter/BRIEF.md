@@ -46,8 +46,13 @@
 >   (delete it to remake). Missing Canvas images are acceptable (Google can't log in to
 >   Canvas to fetch them). Discussions: prompt only, never replies. Doc = title heading,
 >   "Open in Canvas" link, then the HTML converted by Drive. Refused rows: light red +
->   note on the link cell. Read-only in Canvas. Drive via REST v3 + `ScriptApp
->   .getOAuthToken()` (no Advanced Service). Offline check
+>   note on the link cell. Read-only in Canvas. **Drive via the Advanced Drive service
+>   (v3)**: the first version called Drive's REST API through UrlFetchApp and got HTTP 403
+>   `accessNotConfigured` in Gastronomy (the Drive API is off in the script's hidden
+>   Google Cloud project); enabling the Advanced service turns it on. Scope is still only
+>   `drive.file`; the scan's "Advanced Drive service" warning is expected (DriveApp can't
+>   convert HTML to a Doc). If the 403 stays after the push: Extensions › Apps Script ›
+>   Services › Drive API › Add, by hand. Offline check
 >   `scripts/checks/export-to-docs.check.js`. First run in each workbook asks for the new
 >   Drive permission. Untested facts: whether Drive's HTML import keeps Canvas formatting
 >   well, and which images survive. **Blue links** (pasted Canvas links showing the item's

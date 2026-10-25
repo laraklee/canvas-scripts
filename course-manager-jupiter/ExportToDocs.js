@@ -19,9 +19,11 @@
  *   /api/v1/courses/:course/discussion_topics/:id
  *   /api/v1/courses/:course/pages/:page_url
  * Canvas write operations: none (read-only, so DRY_RUN doesn't apply).
- * Google Drive (REST v3 through UrlFetchApp, scope drive.file: the script can see only
+ * Google Drive (Advanced Drive service v3, scope drive.file: the script can see only
  *   files and folders it made itself): creates the export folder, creates each Doc (HTML
- *   converted to a Google Doc), and checks the C1 folder still exists.
+ *   converted to a Google Doc), and checks the C1 folder still exists. The Advanced
+ *   service (not UrlFetchApp) because Drive answered "accessNotConfigured" to direct
+ *   calls: turning the service on also turns on the Drive API for the script.
  * Required: User Properties CANVAS_BASE_URL and CANVAS_TOKEN.
  */
 
@@ -36,8 +38,6 @@ const EXPORT_LABELS = Object.freeze({
 });
 const EXPORT_REFUSED_COLOR = '#f4cccc'; // light red, same as Post comments
 const EXPORT_TIME_LIMIT_MS = 5 * 60 * 1000;
-const DRIVE_API = 'https://www.googleapis.com/drive/v3/files';
-const DRIVE_UPLOAD_API = 'https://www.googleapis.com/upload/drive/v3/files';
 const DRIVE_FOLDER_TYPE = 'application/vnd.google-apps.folder';
 const DRIVE_DOC_TYPE = 'application/vnd.google-apps.document';
 // Which Canvas request each link type makes, and which fields hold the title and content.
@@ -303,10 +303,9 @@ function exportFolder_(sheet) {
     let folder = null;
     if (id) {
       try {
-        folder = driveRequest_('get', `${DRIVE_API}/${encodeURIComponent(id)}` +
-          '?fields=id,name,mimeType,trashed');
-      } catch (error) {
-        if (!error.driveCode || ![403, 404].includes(error.driveCode)) throw error;
+        folder = Drive.Files.get(id, { fields: 'id,name,mimeType,trashed' });
+      } catch {
+        folder = null; // not found, or not one the script made (drive.file)
       }
     }
     if (!folder || folder.mimeType !== DRIVE_FOLDER_TYPE || folder.trashed) {
@@ -321,72 +320,39 @@ function exportFolder_(sheet) {
   if (!name) {
     throw sheetProblem_(`Type a name for the Docs folder in ${EXPORT_FOLDER_NAME_CELL}.`);
   }
-  const folder = driveRequest_('post', `${DRIVE_API}?fields=id,webViewLink`,
-    { contentType: 'application/json',
-      payload: JSON.stringify({ name, mimeType: DRIVE_FOLDER_TYPE }) });
-  sheet.getRange(EXPORT_FOLDER_LINK_CELL).setValue(folder.webViewLink);
+  const folder = driveStep_('making the folder', () =>
+    Drive.Files.create({ name, mimeType: DRIVE_FOLDER_TYPE }));
+  sheet.getRange(EXPORT_FOLDER_LINK_CELL).setValue(driveFolderUrl_(folder.id));
   return { id: folder.id, name, created: true };
 }
 
 /** Uploads HTML as a new Google Doc in the folder; returns { id, webViewLink }. */
 function createDocFromHtml_(name, folderId, html) {
-  const boundary = 'export-' + Utilities.getUuid();
-  const body = multipartBody_(boundary,
-    { name, mimeType: DRIVE_DOC_TYPE, parents: [folderId] }, html);
-  return driveRequest_('post', `${DRIVE_UPLOAD_API}?uploadType=multipart&fields=id,webViewLink`,
-    { contentType: `multipart/related; boundary=${boundary}`,
-      payload: Utilities.newBlob(body).getBytes() });
+  const doc = driveStep_('making a Doc', () => Drive.Files.create(
+    { name, mimeType: DRIVE_DOC_TYPE, parents: [folderId] },
+    Utilities.newBlob(html, 'text/html', 'export.html')));
+  return { id: doc.id, webViewLink: driveDocUrl_(doc.id) };
 }
 
-/** Drive's two-part upload body: the file's settings (JSON), then its HTML. */
-function multipartBody_(boundary, metadata, html) {
-  return `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n` +
-    `${JSON.stringify(metadata)}\r\n--${boundary}\r\n` +
-    `Content-Type: text/html; charset=UTF-8\r\n\r\n${html}\r\n--${boundary}--`;
+function driveFolderUrl_(id) {
+  return `https://drive.google.com/drive/folders/${id}`;
 }
 
-/**
- * One Drive request with the script's own Google sign-in (drive.file scope). Errors say
- * the HTTP code only; error.driveCode holds it. Never logs the token or file contents.
- */
-function driveRequest_(method, url, extra) {
-  const options = Object.assign({
-    method,
-    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
-    muteHttpExceptions: true,
-  }, extra || {});
-  let response;
-  try {
-    response = UrlFetchApp.fetch(url, options);
-  } catch {
-    throw sheetProblem_('Could not reach Google Drive. Try again in a minute.');
-  }
-  const code = response.getResponseCode();
-  if (code < 200 || code >= 300) {
-    const reason = driveErrorReason_(response.getContentText());
-    const error = sheetProblem_(`Google Drive refused the request (HTTP ${code}` +
-      (reason ? `: ${reason}` : '') + ').');
-    error.driveCode = code;
-    throw error;
-  }
-  return JSON.parse(response.getContentText());
+function driveDocUrl_(id) {
+  return `https://docs.google.com/document/d/${id}/edit`;
 }
 
 /**
- * Google's short reason code from a Drive error reply (e.g. "insufficientPermissions",
- * "accessNotConfigured"), letters/digits/dots only, or ''. Tells a missing approval from
- * a switched-off Drive API or a school block. Never the full reply.
+ * Runs one Drive call; on failure, a clear message with Google's own short explanation
+ * (Drive errors name the problem, never file contents). Nothing is logged here.
  */
-function driveErrorReason_(text) {
-  let reason = '';
+function driveStep_(label, work) {
   try {
-    const error = JSON.parse(text).error || {};
-    const first = (Array.isArray(error.errors) && error.errors.slice(0, 1)[0]) || {};
-    const details = (Array.isArray(error.details) && error.details
-      .find(detail => detail && detail.reason)) || {};
-    reason = String(first.reason || details.reason || error.status || '');
-  } catch {
-    return '';
+    return work();
+  } catch (error) {
+    const why = String(error && error.message || '').replace(/^API call to [\w.]+ failed with error:\s*/i, '')
+      .slice(0, 150);
+    throw sheetProblem_(`Google Drive refused ${label}` + (why ? `: ${why}` : '.'));
   }
-  return /^[\w.]{1,60}$/.test(reason) ? reason : '';
 }
+

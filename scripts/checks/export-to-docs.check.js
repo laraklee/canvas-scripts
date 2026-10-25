@@ -143,23 +143,48 @@ check('empty content says so, falls back to pasted link',
     '<h1>Untitled (from Canvas)</h1><p><a href="pasted">Open in Canvas</a></p>' +
     '<p>(No content in Canvas.)</p>'), true);
 
-// ---- Drive upload body ----
-check('upload body: settings then HTML',
-  c.multipartBody_('B', { name: 'N', parents: ['f'] }, '<p>x</p>'),
-  '--B\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{"name":"N","parents":["f"]}' +
-  '\r\n--B\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<p>x</p>\r\n--B--');
+// ---- Drive (faked Advanced Drive service) ----
+const driveCalls = [];
+c.Utilities = { newBlob: (text, type, name) => ({ text, type, name }) };
+c.Drive = { Files: {
+  create: (resource, blob) => {
+    driveCalls.push([resource, blob]);
+    return { id: blob ? 'doc1' : 'fold1' };
+  },
+  get: id => {
+    if (id === 'gone') throw new Error('API call to drive.files.get failed with error: File not found: gone');
+    return { id, name: 'Old', mimeType: 'application/vnd.google-apps.folder', trashed: id === 'binned' };
+  },
+} };
+function fakeSheet(cells) {
+  return { getRange: a1 => ({
+    getDisplayValue: () => cells[a1] || '',
+    setValue: value => { cells[a1] = value; },
+  }) };
+}
+const cells = { B1: 'Gastro pages' };
+check('new folder: made from B1, link written to C1', c.exportFolder_(fakeSheet(cells)),
+  { id: 'fold1', name: 'Gastro pages', created: true });
+check('folder link in C1', cells.C1, 'https://drive.google.com/drive/folders/fold1');
+check('folder request', driveCalls.slice(-1)[0],
+  [{ name: 'Gastro pages', mimeType: 'application/vnd.google-apps.folder' }, null]);
+check('existing folder in C1 is used, nothing made',
+  [c.exportFolder_(fakeSheet({ C1: 'https://drive.google.com/drive/folders/keep' })),
+    driveCalls.length], [{ id: 'keep', name: 'Old', created: false }, 1]);
+throws('folder not found', () => c.exportFolder_(fakeSheet({
+  C1: 'https://drive.google.com/drive/folders/gone' })), /can't use the folder in C1/);
+throws('folder in the trash', () => c.exportFolder_(fakeSheet({
+  C1: 'https://drive.google.com/drive/folders/binned' })), /can't use the folder in C1/);
+throws('no name in B1', () => c.exportFolder_(fakeSheet({})), /name for the Docs folder in B1/);
 
-// ---- Drive error reason codes ----
-check('reason from the errors list', c.driveErrorReason_(JSON.stringify({ error: { code: 403,
-  errors: [{ reason: 'insufficientPermissions' }], status: 'PERMISSION_DENIED' } })),
-'insufficientPermissions');
-check('reason from details', c.driveErrorReason_(JSON.stringify({ error: {
-  details: [{ '@type': 'x' }, { reason: 'SERVICE_DISABLED' }], status: 'PERMISSION_DENIED' } })),
-'SERVICE_DISABLED');
-check('status when nothing else', c.driveErrorReason_('{"error":{"status":"PERMISSION_DENIED"}}'),
-  'PERMISSION_DENIED');
-check('unreadable reply gives nothing', c.driveErrorReason_('<html>no</html>'), '');
-check('odd reason text is not shown', c.driveErrorReason_('{"error":{"status":"a b <c>"}}'), '');
+check('Doc made from HTML in the folder', c.createDocFromHtml_('Lab', 'fold1', '<p>x</p>'),
+  { id: 'doc1', webViewLink: 'https://docs.google.com/document/d/doc1/edit' });
+check('Doc request converts HTML', driveCalls.slice(-1)[0], [
+  { name: 'Lab', mimeType: 'application/vnd.google-apps.document', parents: ['fold1'] },
+  { text: '<p>x</p>', type: 'text/html', name: 'export.html' }]);
+throws('Drive refusal explains itself', () => c.driveStep_('making a Doc', () => {
+  throw new Error('API call to drive.files.create failed with error: Access Not Configured.');
+}), /^Google Drive refused making a Doc: Access Not Configured\.$/);
 
 console.log(failures ? `\n${failures} check(s) failed.` : '\nAll checks passed.');
 process.exitCode = failures ? 1 : 0;
