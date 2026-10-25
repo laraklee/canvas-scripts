@@ -1,7 +1,12 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-10-23)**
+> **Where we left off (current state, 2026-10-25, PC session)**
 >
+> - **Session 2026-10-25 (PC):** Export to Google Docs built and **tested in Gastronomy**
+>   (below); green-button descriptions **tested** (below). Everything on this PC, GitHub,
+>   and Gastronomy matches commit b19761d's code. **Biology and AI9 do not have Export to
+>   Google Docs or the Drive service yet; AI9 also lacks the green-button change.** Next
+>   session on another machine: `git pull` first.
 > - **Done 2026-10-23 (Mac session):** Pull scores and Post comments (cell notes) built,
 >   tested, and live in **all three workbooks** (Biology, AI9, Gastronomy); Google matches
 >   commit a5ee5d1's code in each (AI9 and Gastronomy checked by a read-only `clasp clone`
@@ -23,15 +28,19 @@
 > - **First real Jupiter update (Bio) done 2026-10-22:** worked fine, no fix needed. The
 >   blank Comment cell test in Jupiter is **shelved**: comments will be written in the
 >   Sheet and posted to Canvas instead (see "Jupiter comments" under Open questions).
-> - **Green-button descriptions and "blank Published = draft": pushed to Biology and
+> - **Green-button descriptions: tested 2026-10-25** (Lara made a new assignment by row in
+>   Gastronomy; "the green box works fine"). **Still to do: push to AI9 (ask first).**
+>   Older note: **Green-button descriptions and "blank Published = draft": pushed to Biology and
 >   Gastronomy (commit 8f8f891), not yet tested** (see "Description style" in the
 >   makeAssignment notes and "Published column, in practice"). **Lara (2026-10-23): she'll
 >   test in the next day or so, likely starting in Gastronomy** (one draft createByRow
 >   item with a Google Doc link) **and come back if there are issues.** Next session: ask
 >   how it went; once OK, mark tested and push to AI9 (ask first). Until then AI9 still
 >   has the old description style and blank = publish.
-> - **Export to Google Docs: built 2026-10-25 (commit 8b29ab8), pushed to Gastronomy
->   only (`--force`: clasp asks before a manifest change), not yet tested.** New
+> - **Export to Google Docs: built 2026-10-25, live in Gastronomy only (commit b19761d;
+>   `--force` was needed for each manifest change). Tested by Lara 2026-10-25: "It
+>   worked"; a linked picture even came through.** Push to Biology/AI9 after Lara's OK
+>   (each workbook's first run asks for the new Drive permission). New
 >   `ExportToDocs.js`, `exportCanvasToDocs` (menu: Canvas Tools › Export to Google Docs
 >   (this tab)). Lara's first use: Gastronomy (content mostly in Canvas pages and
 >   assignments), so it **goes to Gastronomy first** (her choice, 2026-10-25), then
@@ -54,12 +63,18 @@
 >   convert HTML to a Doc). If the 403 stays after the push: Extensions › Apps Script ›
 >   Services › Drive API › Add, by hand. Offline check
 >   `scripts/checks/export-to-docs.check.js`. First run in each workbook asks for the new
->   Drive permission. Untested facts: whether Drive's HTML import keeps Canvas formatting
->   well, and which images survive. **Blue links** (pasted Canvas links showing the item's
+>   Drive permission. First test (one assignment): worked, and a linked picture came
+>   through; how formatting and images hold up on other items is still to be seen. **Blue links** (pasted Canvas links showing the item's
 >   name) were refused at first; fixed (3efc987): the address comes from the cell's link,
 >   a link on part of its text, or a `=HYPERLINK` formula before the visible text.
-> - **Next up (start here next session):** nothing new planned; ask how the
->   green-button test went (above). Items 1 and 2 are **done** (kept for the record). From now on, a change goes to Biology first, then (after
+> - **Next up (start here next session): Lara wants to look at whether Export to Google
+>   Docs should grow into a full course backup tool** (idea only, nothing decided): pull a
+>   list of the course's assignments, discussions, and pages into the tab, with a
+>   checkbox per row for which ones to archive, then export the ticked ones. Questions to
+>   talk through first: one tab per course or term; how re-backups work (skip, or new
+>   dated Docs); folder layout; Classic/New Quizzes; time limits for a big course (6
+>   minutes per run). Read-only in Canvas either way.
+>   Earlier: nothing new planned; the green-button test is done (above). Items 1 and 2 are **done** (kept for the record). From now on, a change goes to Biology first, then (after
 >   Lara's OK) to AI9 and Gastronomy.
 >   1. **Done 2026-10-23: bring back the one-assignment tools from legacy** (see
 >      `docs/still-in-legacy.md`):
