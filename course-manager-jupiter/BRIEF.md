@@ -74,6 +74,14 @@
 >   talk through first: one tab per course or term; how re-backups work (skip, or new
 >   dated Docs); folder layout; Classic/New Quizzes; time limits for a big course (6
 >   minutes per run). Read-only in Canvas either way.
+>   **Goal (Lara, 2026-10-25): an archive of everything for a possible retirement, ending
+>   up in her personal OneDrive.** She asked about making Word files instead. Suggested:
+>   keep Google Docs; Drive's **Download** on a whole folder turns every Google Doc into
+>   a .docx inside the zip, so no Word code is needed (a .docx copy in the folder is
+>   possible later if wanted). Also mentioned: Canvas's own course export (.imscc, the
+>   complete course, for re-import into another Canvas); check the school's policy on
+>   taking course materials to a personal account; the backup must never include student
+>   work, replies, or grades (FERPA; the tool already reads prompts only).
 >   Earlier: nothing new planned; the green-button test is done (above). Items 1 and 2 are **done** (kept for the record). From now on, a change goes to Biology first, then (after
 >   Lara's OK) to AI9 and Gastronomy.
 >   1. **Done 2026-10-23: bring back the one-assignment tools from legacy** (see
