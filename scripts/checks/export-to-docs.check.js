@@ -143,6 +143,33 @@ check('empty content says so, falls back to pasted link',
     '<h1>Untitled (from Canvas)</h1><p><a href="pasted">Open in Canvas</a></p>' +
     '<p>(No content in Canvas.)</p>'), true);
 
+// ---- Pictures stored in Canvas ----
+check('Canvas file picture: relative address', c.canvasImageFileId_('/courses/1/files/55/preview', base), '55');
+check('Canvas file picture: full address with &amp;',
+  c.canvasImageFileId_(`${base}/courses/1/files/56/download?a=1&amp;verifier=x`, base), '56');
+check('picture on another site left alone',
+  c.canvasImageFileId_('https://pics.example.com/files/57/cat.png', base), '');
+check('protocol-relative address left alone', c.canvasImageFileId_('//evil.example/files/58', base), '');
+check('Canvas address that is not a file', c.canvasImageFileId_('/images/icon.png', base), '');
+
+const loads = [];
+const embedded = c.embedCanvasImages_(
+  '<p><img alt="a" src="/courses/1/files/55/preview"> <IMG src=\'https://pics.example.com/x.png\'>' +
+  `<img src="${base}/courses/1/files/99/preview" width="20"></p>`, base,
+  id => { loads.push(id); return id === '55' ? { type: 'image/png', base64: 'QUJD' } : null; });
+check('Canvas picture put inside, other site untouched, failed one left as is', embedded.html,
+  '<p><img alt="a" src="data:image/png;base64,QUJD"> <IMG src=\'https://pics.example.com/x.png\'>' +
+  `<img src="${base}/courses/1/files/99/preview" width="20"></p>`);
+check('picture counts', [embedded.embedded, embedded.missed], [1, 1]);
+check('only Canvas pictures are looked up', loads, ['55', '99']);
+check('no pictures: HTML unchanged', c.embedCanvasImages_('<p>Hi</p>', base, () => null),
+  { html: '<p>Hi</p>', embedded: 0, missed: 0 });
+
+let loaderCalls = 0;
+const cached = c.cachedLoader_(id => { loaderCalls++; return id === '1' ? null : { id }; });
+cached('1'); cached('1'); cached('2'); cached('2');
+check('each picture looked up once, misses too', loaderCalls, 2);
+
 // ---- Drive (faked Advanced Drive service) ----
 const driveCalls = [];
 c.Utilities = { newBlob: (text, type, name) => ({ text, type, name }) };

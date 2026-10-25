@@ -82,7 +82,13 @@
 >   Canvas login, so images uploaded **into Canvas Files** usually go missing (unless the
 >   link carries a `verifier=` code); images from public sites come through. Possible fix
 >   for the backup tool: the script downloads Canvas images with Lara's token and puts
->   them into the Doc itself. Also mentioned: Canvas's own course export (.imscc, the
+>   them into the Doc itself. **Built 2026-10-25 (Lara: fix it unless it's slow; about a
+>   second per picture):** `embedCanvasImages_` turns each `<img>` on this Canvas with a
+>   `/files/:id` address into a `data:` picture: `GET /files/:id` (type, size, temporary
+>   `url`), then the picture is downloaded from that `url` **without** the token; not a
+>   picture, over 5 MB, or failed → left as is (missing), Doc still made; each file looked
+>   up once per run. The finish pop-up counts pictures put in / missed. **Untested:**
+>   whether Drive's HTML conversion accepts `data:` pictures. Also mentioned: Canvas's own course export (.imscc, the
 >   complete course, for re-import into another Canvas); check the school's policy on
 >   taking course materials to a personal account; the backup must never include student
 >   work, replies, or grades (FERPA; the tool already reads prompts only).

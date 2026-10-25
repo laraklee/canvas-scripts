@@ -11,13 +11,17 @@
  *   Paste an assignment, discussion, or page link from Canvas (typed, or a blue link
  *   showing other text); rows that already have a
  *   Google Doc link are skipped (delete the link to export again). The Doc gets the
- *   item's title, a link back to Canvas, and its content. Images stored in Canvas usually
- *   don't come through (Google can't log in to Canvas to fetch them).
+ *   item's title, a link back to Canvas, and its content. Pictures stored in Canvas are
+ *   downloaded by the script and put inside the Doc (Google can't log in to Canvas to
+ *   fetch them itself); pictures from other sites are left for Google to fetch. A picture
+ *   that can't be downloaded is just missing; the Doc is still made.
  *   Discussions: only the teacher's prompt is read, never student replies.
  * Canvas endpoints called (GET via canvasGet_; the course comes from each link):
  *   /api/v1/courses/:course/assignments/:id
  *   /api/v1/courses/:course/discussion_topics/:id
  *   /api/v1/courses/:course/pages/:page_url
+ *   /api/v1/files/:id (a picture's details and temporary download link; the picture
+ *   itself is then downloaded from that link without the Canvas token)
  * Canvas write operations: none (read-only, so DRY_RUN doesn't apply).
  * Google Drive (Advanced Drive service v3, scope drive.file: the script can see only
  *   files and folders it made itself): creates the export folder, creates each Doc (HTML
@@ -38,6 +42,7 @@ const EXPORT_LABELS = Object.freeze({
 });
 const EXPORT_REFUSED_COLOR = '#f4cccc'; // light red, same as Post comments
 const EXPORT_TIME_LIMIT_MS = 5 * 60 * 1000;
+const EXPORT_IMAGE_MAX_BYTES = 5 * 1024 * 1024; // bigger pictures are left as links
 const DRIVE_FOLDER_TYPE = 'application/vnd.google-apps.folder';
 const DRIVE_DOC_TYPE = 'application/vnd.google-apps.document';
 // Which Canvas request each link type makes, and which fields hold the title and content.
@@ -100,12 +105,21 @@ function exportCanvasToDocs() {
 
     let result = { made: 0, refusedRows: [], notStarted: 0 };
     let folder = null;
+    const pictures = { embedded: 0, missed: 0 };
     if (plan.exports.length) {
       ss.toast('Checking the Drive folder…', title, -1);
       folder = exportFolder_(sheet);
       ss.toast(`Exporting ${plan.exports.length} item(s)…`, title, -1);
+      const baseUrl = getCanvasCredentials_().baseUrl;
+      const loadImage = cachedLoader_(loadCanvasImage_);
       result = runExports_(plan.exports,
-        item => fetchCanvasContent_(item),
+        item => {
+          const content = fetchCanvasContent_(item);
+          const embedded = embedCanvasImages_(content.html, baseUrl, loadImage);
+          pictures.embedded += embedded.embedded;
+          pictures.missed += embedded.missed;
+          return Object.assign(content, { html: embedded.html });
+        },
         (item, content) => createDocFromHtml_(content.title || 'Untitled (from Canvas)',
           folder.id, buildExportHtml_(content, item.link)),
         (item, content, doc) => {
@@ -122,10 +136,14 @@ function exportCanvasToDocs() {
     const refused = result.refusedRows.concat(plan.badLinks).sort((a, b) => a - b);
     console.log(`Export to Docs: ${result.made} made, ${result.refusedRows.length} refused, ` +
       `${plan.badLinks.length} bad link(s), ${result.notStarted} not started, ` +
-      `${plan.alreadyDone} already done.`);
+      `${plan.alreadyDone} already done; pictures ${pictures.embedded} put in, ` +
+      `${pictures.missed} missed.`);
     ui.alert(title, `${result.made} Google Doc(s) made` +
       (folder && folder.created ? ` in the new folder "${folder.name}" (link in ` +
         `${EXPORT_FOLDER_LINK_CELL}; it's in My Drive, move it anywhere)` : '') + '.' +
+      (pictures.embedded || pictures.missed ? `\nPictures stored in Canvas: ` +
+        `${pictures.embedded} put into the Docs` + (pictures.missed ? `, ${pictures.missed} ` +
+        'could not be downloaded (missing from the Doc)' : '') + '.' : '') +
       (plan.alreadyDone ? `\n${plan.alreadyDone} row(s) already had a Doc and were skipped.` : '') +
       (refused.length ? `\n\nNot exported: row(s) ${refused.join(', ')} (light red; the ` +
         'link cell\'s note says why). The other rows still went.' : '') +
@@ -269,6 +287,75 @@ function fetchCanvasContent_(item) {
     html: String(data[spec.html] || ''),
     url: String(data.html_url || ''),
   };
+}
+
+/**
+ * Puts pictures stored in this Canvas inside the HTML. Each <img> whose address is on
+ * this Canvas (starts with "/" or the Canvas address) and names a file (/files/123) gets
+ * load(fileId) → { type, base64 } or null; found pictures become data: addresses that
+ * Google can read without logging in. Other pictures are left alone. Returns
+ * { html, embedded, missed }.
+ */
+function embedCanvasImages_(html, baseUrl, load) {
+  const counts = { embedded: 0, missed: 0 };
+  const out = String(html).replace(/(<img\b[^>]*?\bsrc\s*=\s*)(["'])([^"']*)\2/gi,
+    (whole, start, quote, src) => {
+      const fileId = canvasImageFileId_(src, baseUrl);
+      if (!fileId) return whole;
+      const image = load(fileId);
+      if (!image) {
+        counts.missed++;
+        return whole;
+      }
+      counts.embedded++;
+      return `${start}${quote}data:${image.type};base64,${image.base64}${quote}`;
+    });
+  return { html: out, embedded: counts.embedded, missed: counts.missed };
+}
+
+/** The Canvas file ID in a picture address on this Canvas, or '' (e.g. another site). */
+function canvasImageFileId_(src, baseUrl) {
+  const address = String(src).replace(/&amp;/g, '&').trim();
+  const onCanvas = (address.startsWith('/') && !address.startsWith('//')) ||
+    address.toLowerCase().startsWith(String(baseUrl).toLowerCase() + '/');
+  const match = address.match(/\/files\/(\d+)(?:[/?#]|$)/);
+  return onCanvas && match ? match[1] : '';
+}
+
+/** Wraps load(id) so each ID is looked up once per run (a picture used twice). */
+function cachedLoader_(load) {
+  const seen = new Map();
+  return id => {
+    if (!seen.has(id)) seen.set(id, load(id));
+    return seen.get(id);
+  };
+}
+
+/**
+ * Downloads one picture stored in Canvas: { type, base64 }, or null if it isn't a
+ * picture, is over 5 MB, or can't be downloaded. Canvas gives a temporary download link
+ * (GET /files/:id); the picture comes from that link, never with the token. Token,
+ * network, and busy errors still stop the export.
+ */
+function loadCanvasImage_(fileId) {
+  let file;
+  try {
+    file = canvasGet_(`/files/${fileId}`);
+  } catch (error) {
+    if (!error.canvasType || CANVAS_STOP_ALL_TYPES.includes(error.canvasType)) throw error;
+    return null;
+  }
+  const type = String(file['content-type'] || '');
+  if (!/^image\/[\w.+-]+$/.test(type) || !file.url || Number(file.size) > EXPORT_IMAGE_MAX_BYTES) {
+    return null;
+  }
+  try {
+    const response = UrlFetchApp.fetch(file.url, { muteHttpExceptions: true });
+    if (response.getResponseCode() !== 200) return null;
+    return { type, base64: Utilities.base64Encode(response.getContent()) };
+  } catch {
+    return null;
+  }
 }
 
 /** The Doc's HTML: title as a heading, a link back to Canvas, then Canvas's content. */
