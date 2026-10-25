@@ -7,7 +7,8 @@
  *   written by the script the first time it makes the folder (in My Drive; move or rename
  *   it in Drive any time, the link keeps working). A label row with "Canvas Link" and
  *   "Google Doc" (plus optional "Name" and "Exported") somewhere in rows 1–10; data below.
- *   Paste an assignment, discussion, or page link from Canvas; rows that already have a
+ *   Paste an assignment, discussion, or page link from Canvas (typed, or a blue link
+ *   showing other text); rows that already have a
  *   Google Doc link are skipped (delete the link to export again). The Doc gets the
  *   item's title, a link back to Canvas, and its content. Images stored in Canvas usually
  *   don't come through (Google can't log in to Canvas to fetch them).
@@ -71,8 +72,10 @@ function exportCanvasToDocs() {
     const docCol = table.columns.get(EXPORT_LABELS.DOC);
     const nameCol = table.columns.get(EXPORT_LABELS.NAME);
     const exportedCol = table.columns.get(EXPORT_LABELS.EXPORTED);
+    const linkCells = sheet.getRange(table.headerRow + 1, linkCol, rows, 1);
     const plan = planExports_(
-      sheet.getRange(table.headerRow + 1, linkCol, rows, 1).getDisplayValues(),
+      cellLinks_(linkCells.getRichTextValues(), linkCells.getFormulas(),
+        linkCells.getDisplayValues()),
       sheet.getRange(table.headerRow + 1, docCol, rows, 1).getDisplayValues(),
       table.headerRow + 1);
     if (!plan.exports.length && !plan.badLinks.length) {
@@ -181,6 +184,23 @@ function planExports_(links, docs, firstRow) {
     else plan.badLinks.push(firstRow + i);
   });
   return plan;
+}
+
+/**
+ * The web address in each cell of a one-column range, as a one-column grid. A blue link
+ * shows text (often the item's name) with the address hidden behind it, so the address
+ * comes from, in order: the cell's link, a link on part of its text, a
+ * =HYPERLINK("address", …) formula, then the text you see.
+ */
+function cellLinks_(richTexts, formulas, displays) {
+  return displays.map((cells, i) => {
+    const rich = richTexts.slice(i, i + 1)[0].slice(0, 1)[0];
+    const runLink = rich ? (rich.getRuns().map(run => run.getLinkUrl()).find(Boolean)) : '';
+    const formula = String(formulas.slice(i, i + 1)[0].slice(0, 1)[0]);
+    const hyperlink = formula.match(/^=\s*HYPERLINK\(\s*"([^"]+)"/i);
+    return [(rich && rich.getLinkUrl()) || runLink || (hyperlink ? hyperlink[1] : '') ||
+      cells.slice(0, 1)[0]];
+  });
 }
 
 /**

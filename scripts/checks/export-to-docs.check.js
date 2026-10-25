@@ -51,6 +51,19 @@ check('a bare ID is not a link', c.parseCanvasContentLink_('22'), null);
 check('broken %-code in a page name', c.parseCanvasContentLink_(`${base}/courses/1/pages/a%zz`),
   null);
 
+// ---- Addresses behind blue links ----
+const rich = (cellLink, runLinks) => ({
+  getLinkUrl: () => cellLink || null,
+  getRuns: () => (runLinks || []).map(link => ({ getLinkUrl: () => link })),
+});
+check('blue link: the hidden address, not the text you see', c.cellLinks_(
+  [[rich(`${base}/courses/1/assignments/9`)], [rich(null, [null, `${base}/courses/1/pages/p`])],
+    [null], [rich(null, [null])]],
+  [[''], [''], [`=HYPERLINK("${base}/courses/1/discussion_topics/3", "Discuss")`], ['']],
+  [['Lab 3'], ['See the page'], ['Discuss'], [`${base}/courses/1/assignments/4`]]),
+[[`${base}/courses/1/assignments/9`], [`${base}/courses/1/pages/p`],
+  [`${base}/courses/1/discussion_topics/3`], [`${base}/courses/1/assignments/4`]]);
+
 // ---- Folder links ----
 check('folder link', c.folderIdFromLink_('https://drive.google.com/drive/folders/abc-123_X?usp=x'),
   'abc-123_X');
