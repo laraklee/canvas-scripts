@@ -3,10 +3,11 @@
  * Purpose: copies Canvas assignment, discussion, and page content into Google Docs, one
  *   Doc per row, on the tab being viewed (any tab name; recognized by its labels).
  *   exportCanvasToDocs (menu: Canvas Tools › Export to Google Docs).
- *   Tab layout (Lara, 2026-10-25): B2 = the folder name you want; B3 = the folder's link,
+ *   Tab layout (Lara, 2026-10-25): B1 = the folder name you want; C1 = the folder's link,
  *   written by the script the first time it makes the folder (in My Drive; move or rename
  *   it in Drive any time, the link keeps working). A label row with "Canvas Link" and
- *   "Google Doc" (plus optional "Name" and "Exported") somewhere in rows 1–10; data below.
+ *   "Google Doc" (plus optional "Name" and "Exported") somewhere in rows 1–10 (Lara uses
+ *   row 3); data below.
  *   Paste an assignment, discussion, or page link from Canvas (typed, or a blue link
  *   showing other text); rows that already have a
  *   Google Doc link are skipped (delete the link to export again). The Doc gets the
@@ -20,12 +21,12 @@
  * Canvas write operations: none (read-only, so DRY_RUN doesn't apply).
  * Google Drive (REST v3 through UrlFetchApp, scope drive.file: the script can see only
  *   files and folders it made itself): creates the export folder, creates each Doc (HTML
- *   converted to a Google Doc), and checks the B3 folder still exists.
+ *   converted to a Google Doc), and checks the C1 folder still exists.
  * Required: User Properties CANVAS_BASE_URL and CANVAS_TOKEN.
  */
 
-const EXPORT_FOLDER_NAME_CELL = 'B2';
-const EXPORT_FOLDER_LINK_CELL = 'B3';
+const EXPORT_FOLDER_NAME_CELL = 'B1';
+const EXPORT_FOLDER_LINK_CELL = 'C1';
 const EXPORT_LABEL_SEARCH_ROWS = 10;
 const EXPORT_LABELS = Object.freeze({
   LINK: 'Canvas Link',
@@ -291,9 +292,9 @@ function exportRefusedNote_(type) {
 // ---- Google Drive ----
 
 /**
- * The folder for this tab's Docs: { id, name, created }. Uses the link in B3 if there is
+ * The folder for this tab's Docs: { id, name, created }. Uses the link in C1 if there is
  * one (it must be a folder this script made); otherwise makes a folder in My Drive named
- * from B2 and writes its link to B3.
+ * from B1 and writes its link to C1.
  */
 function exportFolder_(sheet) {
   const link = String(sheet.getRange(EXPORT_FOLDER_LINK_CELL).getDisplayValue()).trim();

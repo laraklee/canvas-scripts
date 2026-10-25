@@ -38,9 +38,10 @@
 >   Biology/AI9 after her OK. Lara's decisions: paste the **Canvas link** (type and course
 >   come from it; assignment, discussion, page; quizzes not supported); **narrow Drive
 >   scope `drive.file`** (new; security over convenience: the script can only see
->   folders/files it made, so it can't use an existing folder): **B2 = folder name**
->   (typed), **B3 = folder link** (written when the script makes the folder in My Drive;
->   Lara can move/rename it). Label row in rows 1–10 found by **Canvas Link** and **Google
+>   folders/files it made, so it can't use an existing folder): **B1 = folder name**
+>   (typed), **C1 = folder link** (written when the script makes the folder in My Drive;
+>   Lara can move/rename it; moved from B2/B3 at Lara's request, 2026-10-25). Labels in
+>   **row 3** on Lara's tab (any row 1–10 works), found by **Canvas Link** and **Google
 >   Doc** (optional **Name**, **Exported**). **Rows with a Google Doc link are skipped**
 >   (delete it to remake). Missing Canvas images are acceptable (Google can't log in to
 >   Canvas to fetch them). Discussions: prompt only, never replies. Doc = title heading,
@@ -49,7 +50,9 @@
 >   .getOAuthToken()` (no Advanced Service). Offline check
 >   `scripts/checks/export-to-docs.check.js`. First run in each workbook asks for the new
 >   Drive permission. Untested facts: whether Drive's HTML import keeps Canvas formatting
->   well, and which images survive.
+>   well, and which images survive. **Blue links** (pasted Canvas links showing the item's
+>   name) were refused at first; fixed (3efc987): the address comes from the cell's link,
+>   a link on part of its text, or a `=HYPERLINK` formula before the visible text.
 > - **Next up (start here next session):** nothing new planned; ask how the
 >   green-button test went (above). Items 1 and 2 are **done** (kept for the record). From now on, a change goes to Biology first, then (after
 >   Lara's OK) to AI9 and Gastronomy.

@@ -72,14 +72,12 @@ check('not a folder link', c.folderIdFromLink_('my folder'), '');
 
 // ---- Finding the table ----
 const grid = [
-  ['Export', '', '', '', ''],
-  ['Folder name', 'Gastro pages', '', '', ''],
-  ['Folder link', '', '', '', ''],
+  ['Folder Name:', 'Gastro pages', 'https://drive.google.com/drive/folders/abc', '', ''],
   ['', '', '', '', ''],
   ['Canvas Link', 'Name', 'Google Doc', 'Exported', 'Notes'],
 ];
 const table = c.findExportTable_(grid);
-check('label row found below the folder cells', table.headerRow, 5);
+check('label row found below the folder cells', table.headerRow, 3);
 check('columns by label', [...table.columns.entries()],
   [['Canvas Link', 1], ['Google Doc', 3], ['Name', 2], ['Exported', 4]]);
 check('Name and Exported are optional',
