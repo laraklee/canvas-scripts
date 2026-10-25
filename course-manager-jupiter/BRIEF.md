@@ -1,12 +1,22 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-10-25, PC session)**
+> **Where we left off (current state, 2026-10-25 late morning, PC session)**
 >
 > - **Session 2026-10-25 (PC):** Export to Google Docs built and **tested in Gastronomy**
->   (below); green-button descriptions **tested** (below). Everything on this PC, GitHub,
->   and Gastronomy matches commit b19761d's code. **Biology and AI9 do not have Export to
->   Google Docs or the Drive service yet; AI9 also lacks the green-button change.** Next
->   session on another machine: `git pull` first.
+>   (below); green-button descriptions **tested** (below). Later the same day: Canvas-stored
+>   pictures embedded in the Doc, and course home + syllabus links accepted. Everything on
+>   this PC, GitHub, and Gastronomy matches commit 2994807's code. **Biology and AI9 do not
+>   have Export to Google Docs or the Drive service yet; AI9 also lacks the green-button
+>   change.** Next session on another machine: `git pull` first.
+> - **Start here next session: ask how Lara's test went** (not run yet): export the
+>   Gastronomy **course home page** (`/courses/4939`, has pictures stored in Canvas; its
+>   row was red from the earlier "not a link" refusal). Check the finish pop-up's
+>   "Pictures stored in Canvas: N put into the Docs, M could not be downloaded" line and
+>   whether the pictures show in the Doc. If counted "put in" but not showing: Drive's HTML
+>   conversion ignores `data:` pictures; try another way (e.g. upload each picture to the
+>   folder and point the `<img>` at it, or insert with DocumentApp, which needs a new
+>   scope; ask first). If "could not be downloaded": debug the `GET /files/:id` → `url`
+>   download (Canvas side). Then the backup-tool idea below.
 > - **Done 2026-10-23 (Mac session):** Pull scores and Post comments (cell notes) built,
 >   tested, and live in **all three workbooks** (Biology, AI9, Gastronomy); Google matches
 >   commit a5ee5d1's code in each (AI9 and Gastronomy checked by a read-only `clasp clone`
