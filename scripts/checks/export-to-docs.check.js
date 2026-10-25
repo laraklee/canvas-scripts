@@ -149,5 +149,17 @@ check('upload body: settings then HTML',
   '--B\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{"name":"N","parents":["f"]}' +
   '\r\n--B\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<p>x</p>\r\n--B--');
 
+// ---- Drive error reason codes ----
+check('reason from the errors list', c.driveErrorReason_(JSON.stringify({ error: { code: 403,
+  errors: [{ reason: 'insufficientPermissions' }], status: 'PERMISSION_DENIED' } })),
+'insufficientPermissions');
+check('reason from details', c.driveErrorReason_(JSON.stringify({ error: {
+  details: [{ '@type': 'x' }, { reason: 'SERVICE_DISABLED' }], status: 'PERMISSION_DENIED' } })),
+'SERVICE_DISABLED');
+check('status when nothing else', c.driveErrorReason_('{"error":{"status":"PERMISSION_DENIED"}}'),
+  'PERMISSION_DENIED');
+check('unreadable reply gives nothing', c.driveErrorReason_('<html>no</html>'), '');
+check('odd reason text is not shown', c.driveErrorReason_('{"error":{"status":"a b <c>"}}'), '');
+
 console.log(failures ? `\n${failures} check(s) failed.` : '\nAll checks passed.');
 process.exitCode = failures ? 1 : 0;

@@ -363,9 +363,30 @@ function driveRequest_(method, url, extra) {
   }
   const code = response.getResponseCode();
   if (code < 200 || code >= 300) {
-    const error = sheetProblem_(`Google Drive refused the request (HTTP ${code}).`);
+    const reason = driveErrorReason_(response.getContentText());
+    const error = sheetProblem_(`Google Drive refused the request (HTTP ${code}` +
+      (reason ? `: ${reason}` : '') + ').');
     error.driveCode = code;
     throw error;
   }
   return JSON.parse(response.getContentText());
+}
+
+/**
+ * Google's short reason code from a Drive error reply (e.g. "insufficientPermissions",
+ * "accessNotConfigured"), letters/digits/dots only, or ''. Tells a missing approval from
+ * a switched-off Drive API or a school block. Never the full reply.
+ */
+function driveErrorReason_(text) {
+  let reason = '';
+  try {
+    const error = JSON.parse(text).error || {};
+    const first = (Array.isArray(error.errors) && error.errors.slice(0, 1)[0]) || {};
+    const details = (Array.isArray(error.details) && error.details
+      .find(detail => detail && detail.reason)) || {};
+    reason = String(first.reason || details.reason || error.status || '');
+  } catch {
+    return '';
+  }
+  return /^[\w.]{1,60}$/.test(reason) ? reason : '';
 }
