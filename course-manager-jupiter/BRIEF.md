@@ -13,6 +13,15 @@
 > - **Not yet seen live:** Export to Google Docs in Biology and AI9 (each one's first run
 >   asks Lara to approve the Drive permission); Post comments skipping a cell already
 >   noted "Commented" on a rerun, and the light red on a refused comment.
+> - **Backup tool step 3 built 2026-10-25 evening, not yet pushed or tested:** List
+>   course content marks a row's **Google Doc cell light yellow (`#fff2cc`) with the note
+>   "Changed in Canvas since export"** when its Canvas Updated date is after its Exported
+>   date (`planChangeFlags_`, `applyChangeFlags_`, `sheetDate_` in CourseContentList.js);
+>   a later run removes only this tool's yellow and note once it no longer applies (the
+>   row was re-exported). Needs the Exported column. Never marks discussions or the
+>   syllabus (no Canvas date). Assignments also get marked after settings changes (due
+>   date, points). Pop-up counts marked rows and says how to redo one (delete the Doc
+>   link, tick Back up?, Export). Read-only; no new permissions.
 > - **Fix 2026-10-25 evening (first step 2 test):** Lara's label read "Back Up?", so Export
 >   didn't find the column and started on all 98 rows (she cancelled; some Docs were made).
 >   Now **labels ignore capitals and extra spaces** (`exportLabelText_`, all labels), and

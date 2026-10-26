@@ -14,6 +14,11 @@
  *   in Canvas are left alone and counted. Optional row 3 labels, each filled only if it is
  *   there: Name, Type, Published, Canvas Updated, Back up?. Graded discussions are listed
  *   once (as discussions); quizzes are left out for now (not in v1).
+ *   Step 3: a row with a Google Doc whose Canvas last-updated date is after its Exported
+ *   date gets a light yellow Google Doc cell and the note "Changed in Canvas since export";
+ *   the mark comes off on a later run once that's no longer true (only this tool's yellow
+ *   and note). Needs the Exported column. Discussions and the syllabus have no Canvas date,
+ *   so they are never marked.
  * Canvas endpoints called (GET via canvasGet_):
  *   /api/v1/courses/:course?include[]=syllabus_body
  *   /api/v1/courses/:course/assignments
@@ -34,6 +39,9 @@ const CONTENT_TYPE_NAMES = new Map([
   ['discussion_topics', 'Discussion'],
   ['pages', 'Page'],
 ]);
+// Step 3: a Google Doc cell whose item changed in Canvas after its Exported date.
+const CONTENT_CHANGED_COLOR = '#fff2cc'; // light yellow
+const CONTENT_CHANGED_NOTE = 'Changed in Canvas since export';
 // Assignments that are really a discussion (listed as one) or a quiz (not in v1).
 const CONTENT_SKIP_SUBMISSION_TYPES = Object.freeze(['discussion_topic', 'online_quiz']);
 
@@ -94,6 +102,19 @@ function listCourseContent() {
       });
     }
 
+    // Step 3: mark Docs whose item changed in Canvas since export; unmark ones that
+    // didn't (only this tool's yellow and note come off).
+    const exportedCol = table.columns.get(EXPORT_LABELS.EXPORTED);
+    let changed = 0;
+    if (plan.matches.size && exportedCol) {
+      const docCells = sheet.getRange(firstRow, table.columns.get(EXPORT_LABELS.DOC), rows, 1);
+      const flags = planChangeFlags_(plan.matches, docCells.getDisplayValues(),
+        sheet.getRange(firstRow, exportedCol, rows, 1).getValues());
+      const marks = applyChangeFlags_(flags, docCells.getBackgrounds(), docCells.getNotes());
+      changed = marks.changed;
+      if (marks.touched) docCells.setBackgrounds(marks.backgrounds).setNotes(marks.notes);
+    }
+
     // New items below the last row that has a Canvas link.
     const added = plan.newItems.length;
     if (added) {
@@ -112,11 +133,16 @@ function listCourseContent() {
 
     const name = String(course.name || '').trim() || 'this course';
     console.log(`List course content: course ${courseId}, ${items.length} item(s), ` +
-      `${added} added, ${plan.matches.size} row(s) refreshed, ${plan.gone} gone.`);
+      `${added} added, ${plan.matches.size} row(s) refreshed, ${plan.gone} gone, ` +
+      `${changed} changed since export.`);
     ui.alert(title, `"${name}" (course ${courseId}): ${items.length} item(s) in Canvas.\n\n` +
       `${added} new item(s) added at the bottom` + (added && table.columns.has(EXPORT_LABELS.BACKUP) ?
         ' (Back up? unticked)' : '') + `; ${plan.matches.size} row(s) already here were ` +
       'refreshed.' +
+      (changed ? `\n\n${changed} exported item(s) changed in Canvas since export: their ` +
+        'Google Doc cells are light yellow. To redo one, delete its Doc link, tick ' +
+        `"${EXPORT_LABELS.BACKUP}", and Export again. (Discussions and the syllabus have ` +
+        'no Canvas date, so they are never marked.)' : '') +
       (plan.gone ? `\n\n${plan.gone} row(s) for this course are no longer in Canvas ` +
         '(deleted or renamed page); they were left alone.' : '') +
       (table.columns.has(EXPORT_LABELS.BACKUP) ? '' : `\n\nTip: add a "${EXPORT_LABELS.BACKUP}" ` +
@@ -188,6 +214,63 @@ function contentItems_(courseId, baseUrl, course, assignments, discussions, page
   pages.filter(page => !page.front_page).forEach(page => items.push(make('pages', page.title,
     page.published, page.updated_at, pageLink(page))));
   return items;
+}
+
+/**
+ * Which Google Doc cells to mark (step 3). For each row already on the tab (matches: row
+ * index → item) that has a Doc link: true if Canvas's last-updated date is after the
+ * row's Exported date, otherwise false (no date on either side counts as unchanged:
+ * discussions and the syllabus have no Canvas date). docs and exported are one-column
+ * grids. Returns Map row index → true/false.
+ */
+function planChangeFlags_(matches, docs, exported) {
+  const flags = new Map();
+  matches.forEach((item, i) => {
+    if (!String(docs.slice(i, i + 1)[0].slice(0, 1)[0]).trim()) return;
+    const exportedAt = sheetDate_(exported.slice(i, i + 1)[0].slice(0, 1)[0]);
+    const updatedAt = sheetDate_(item.updated);
+    flags.set(i, Boolean(exportedAt && updatedAt && updatedAt.getTime() > exportedAt.getTime()));
+  });
+  return flags;
+}
+
+/**
+ * New backgrounds and notes for the Doc column: changed rows get the yellow and note;
+ * unchanged rows lose only this tool's yellow and note (colors and notes Lara set stay).
+ * Returns { backgrounds, notes, changed, touched }.
+ */
+function applyChangeFlags_(flags, backgrounds, notes) {
+  const out = { backgrounds: backgrounds.map(row => row.slice()),
+    notes: notes.map(row => row.slice()), changed: 0, touched: false };
+  flags.forEach((isChanged, i) => {
+    const bgRow = out.backgrounds.slice(i, i + 1)[0];
+    const noteRow = out.notes.slice(i, i + 1)[0];
+    const ours = String(bgRow.slice(0, 1)[0]).toLowerCase() === CONTENT_CHANGED_COLOR;
+    if (isChanged) {
+      out.changed++;
+      bgRow.splice(0, 1, CONTENT_CHANGED_COLOR);
+      noteRow.splice(0, 1, CONTENT_CHANGED_NOTE);
+      out.touched = true;
+    } else {
+      if (ours) {
+        bgRow.splice(0, 1, null);
+        out.touched = true;
+      }
+      if (noteRow.slice(0, 1)[0] === CONTENT_CHANGED_NOTE) {
+        noteRow.splice(0, 1, '');
+        out.touched = true;
+      }
+    }
+  });
+  return out;
+}
+
+/** A Date from a sheet value (Date) or Canvas date text, or null if blank or unreadable. */
+function sheetDate_(value) {
+  if (value === '' || value === null || value === undefined) return null;
+  const date = Object.prototype.toString.call(value) === '[object Date]' ?
+    value : new Date(String(value));
+  return isNaN(date.getTime()) ? null : date;
 }
 
 /** A link's match key, e.g. "pages:12:lab-safety" (page names ignore capitals). */

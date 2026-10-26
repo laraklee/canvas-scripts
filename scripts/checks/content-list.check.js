@@ -83,6 +83,33 @@ check('info values', info.map(col => col.value(items.slice(2, 3)[0])).map(v =>
 ['Lab 1', 'Assignment', '2026-10-01T10:00:00.000Z']);
 check('no date → blank', info.slice(2, 3)[0].value(items.slice(0, 1)[0]), '');
 
+// ---- Step 3: changed since export ----
+const updated = when => ({ updated: when });
+const flagMatches = new Map([
+  [0, updated('2026-10-20T10:00:00Z')], // edited after export → mark
+  [1, updated('2026-10-01T10:00:00Z')], // not edited since → no mark
+  [2, updated('')], // discussion: no Canvas date → no mark
+  [3, updated('2026-10-20T10:00:00Z')], // no Doc yet → not looked at
+  [4, updated('2026-10-20T10:00:00Z')], // no Exported date → no mark
+]);
+const flags = c.planChangeFlags_(flagMatches,
+  [['doc'], ['doc'], ['doc'], [''], ['doc']],
+  [[new Date('2026-10-10T00:00:00Z')], [new Date('2026-10-10T00:00:00Z')],
+    [new Date('2026-10-10T00:00:00Z')], [''], ['']]);
+check('changed only when Canvas date is after Exported', [...flags.entries()],
+  [[0, true], [1, false], [2, false], [4, false]]);
+const marks = c.applyChangeFlags_(flags,
+  [['#ffffff'], ['#FFF2CC'], ['#d9ead3'], ['#fff2cc'], ['#fff2cc']],
+  [[''], ['Changed in Canvas since export'], ['my note'], ['x'], ['']]);
+check('marks: changed row yellow + note; old marks removed; other colors and notes kept',
+  [marks.backgrounds, marks.notes, marks.changed, marks.touched], [
+    [['#fff2cc'], [null], ['#d9ead3'], ['#fff2cc'], [null]],
+    [['Changed in Canvas since export'], [''], ['my note'], ['x'], ['']], 1, true]);
+check('nothing to change: nothing written', c.applyChangeFlags_(new Map([[0, false]]),
+  [['#ffffff']], [['']]).touched, false);
+check('Canvas date text and sheet dates both read', [c.sheetDate_('2026-10-20T10:00:00Z')
+  .toISOString(), c.sheetDate_(''), c.sheetDate_('soon')], ['2026-10-20T10:00:00.000Z', null, null]);
+
 // ---- Export with a Back up? column: only ticked rows ----
 const exp = c.planExports_([[`${root}/assignments/1`], [`${root}/pages/a`], [`${root}/pages/b`],
   ['']], [[''], [''], ['https://docs.google.com/document/d/x/edit'], ['']], 4,
