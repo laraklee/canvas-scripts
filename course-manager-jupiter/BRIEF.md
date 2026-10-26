@@ -13,8 +13,30 @@
 > - **Not yet seen live:** Export to Google Docs in Biology and AI9 (each one's first run
 >   asks Lara to approve the Drive permission); Post comments skipping a cell already
 >   noted "Commented" on a rerun, and the light red on a refused comment.
-> - **Next up: Lara wants to look at whether Export to Google Docs should grow into a full
->   course backup tool** (idea only, nothing decided): pull a list of the course's
+> - **Next up: the course backup tool. Started 2026-10-25 evening; decisions made, nothing
+>   built yet.** It extends the Export to Google Docs tab (same `ExportToDocs.js` tab, same
+>   B1 folder name / C1 folder link / row 3 labels). Lara's decisions (2026-10-25):
+>   - **Course ID on the tab** (proposed: A2 label, **B2** value), filled from
+>     `cfg_CourseID` when blank, so any course she teaches (old terms too) can be backed
+>     up from one workbook.
+>   - **Re-backups: skip rows with a Doc (as now) and flag changed ones:** the List step
+>     compares Canvas's last-updated date with the row's Exported date and marks rows
+>     edited since (proposed: light yellow + note on the Google Doc cell), so she clears
+>     and redoes only those.
+>   - **Folders: subfolders by type** inside the course folder (Assignments, Discussions,
+>     Pages; syllabus and home page at the top), made by the script (`drive.file`).
+>   - **Quizzes: not in v1** (Classic quiz instructions + questions could be step 2; New
+>     Quizzes later).
+>   Proposed shape: menu **"List course content"** fills one row per assignment,
+>   discussion, and page plus the course home page and syllabus (Type, Name, Published,
+>   Canvas Updated, Canvas Link, **Back up?** checkbox); rerunning adds new items and keeps
+>   ticks and Doc links (matched by link). Export then does only ticked rows when a Back
+>   up? column exists (otherwise every row, as now). Graded discussions are listed once (as
+>   discussions; skip assignments whose `submission_types` include `discussion_topic`),
+>   and quiz assignments (`online_quiz`) are left out in v1. Read-only in Canvas; no new
+>   permissions. Build order: (1) List course content + Course ID cell; (2) Export ticked
+>   rows into type subfolders; (3) changed-since-export flag.
+>   Original idea, kept for the record: pull a list of the course's
 >   assignments, discussions, and pages into the tab, with a checkbox per row for which
 >   ones to archive, then export the ticked ones. Questions to talk through first: one tab
 >   per course or term; how re-backups work (skip, or new dated Docs); folder layout;
