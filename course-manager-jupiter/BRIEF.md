@@ -24,8 +24,12 @@
 >   Rows for this course no longer in Canvas are counted, left alone. Optional new row 3
 >   labels: **Type, Published, Canvas Updated, Back up?** (Lara will ask for a reminder).
 >   **Export now does only ticked rows when a Back up? column exists** (built in step 1 so
->   a long list can't export everything by accident). Untested: whether Canvas's
->   discussion list gives `updated_at` (blank Canvas Updated if not). Offline check
+>   a long list can't export everything by accident). **Tested 2026-10-25 in Gastronomy
+>   (Lara: "seemed to work").** Canvas Updated = Canvas's `updated_at` (pages: last save;
+>   assignments: any settings change incl. due date/points/publish, not submissions).
+>   **Blank for every discussion and the syllabus** (confirmed: Canvas's discussion list
+>   sends no `updated_at`; the syllabus has no date), so step 3's changed-since-export
+>   flag can't cover those rows; `last_reply_at` is student activity, not a substitute. Offline check
 >   `scripts/checks/content-list.check.js`. Read-only; no new permissions.
 > - **Next up: the course backup tool. Started 2026-10-25 evening; decisions made, step 1
 >   built (above).** It extends the Export to Google Docs tab (same `ExportToDocs.js` tab, same
