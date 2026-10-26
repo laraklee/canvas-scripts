@@ -8,7 +8,11 @@
 >   this PC, GitHub, and Gastronomy matches commit 2994807's code. **Biology and AI9 do not
 >   have Export to Google Docs or the Drive service yet; AI9 also lacks the green-button
 >   change.** Next session on another machine: `git pull` first.
-> - **Start here next session: ask how Lara's test went** (not run yet): export the
+> - **Home page + Canvas pictures: tested 2026-10-25 (Lara: "basically seems to work").**
+>   Wrinkle, accepted by Lara: the course home link exported the **front page**, not the
+>   syllabus her course home shows; use the syllabus link (`…/assignments/syllabus`) for
+>   that. **Next up: the backup-tool idea below.** Earlier plan, kept for the record:
+> - **(Done) Start here next session: ask how Lara's test went**: export the
 >   Gastronomy **course home page** (`/courses/4939`, has pictures stored in Canvas; its
 >   row was red from the earlier "not a link" refusal). Check the finish pop-up's
 >   "Pictures stored in Canvas: N put into the Docs, M could not be downloaded" line and
