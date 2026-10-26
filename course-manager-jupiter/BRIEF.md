@@ -5,13 +5,15 @@
 > - **Overall:** the move off the legacy code is **finished**: every tool Lara used in
 >   legacy is ported and tested (legacy review finished 2026-10-20, see
 >   `docs/still-in-legacy.md`), and the legacy workbooks are retired. **Biology, AI9, and
->   Gastronomy all run the same code** (commit 2e156ab's), which matches GitHub. Changes
+>   Gastronomy all run the same code** (backup tool steps 1-3 included; Biology and AI9
+>   pushed 2026-10-26 from the Mac, Lara's OK), which matches GitHub. Changes
 >   go to one workbook first (usually Biology), then the others after Lara's OK.
 > - **Newest tools (details under Recent history):** Pull scores and Post comments
 >   (2026-10-23); green-button descriptions and "only a ticked Published box publishes"
 >   (tested 2026-10-25); Export to Google Docs (tested in Gastronomy 2026-10-25).
-> - **Not yet seen live:** Export to Google Docs in Biology and AI9 (each one's first run
->   asks Lara to approve the Drive permission); Post comments skipping a cell already
+> - **Not yet seen live:** Export to Google Docs and List course content in Biology and
+>   AI9 (pushed 2026-10-26; Export's first run in each asks Lara to approve the Drive
+>   permission if she hasn't yet); Post comments skipping a cell already
 >   noted "Commented" on a rerun, and the light red on a refused comment.
 > - **Step 3 test passed 2026-10-26 in Gastronomy (no code change).** The 2026-10-25
 >   "failed" test was not a bug: the only item Lara edited was the Syllabus, which is
@@ -123,6 +125,11 @@
 >
 > **Recent history (newest first; kept for the record)**
 >
+> - **2026-10-26 morning (Mac at school):** backup step 3 retest passed in Gastronomy;
+>   then Biology (`clasp push`) and AI9 (`clasp -P "$PWD/.clasp-ai9.json" push`) pushed
+>   with backup steps 1-3 (Lara: "clasp push the current code to Biology and AI9"). No
+>   manifest change, so no new permissions. The "Gastronomy only" notes on steps 1-3
+>   below are from before this push.
 > - **2026-10-25 evening:** Biology and AI9 pushed (Lara: "push to everything"), so all
 >   three workbooks match. Home page + Canvas pictures export tested by Lara ("basically
 >   seems to work"). Wrinkle, accepted by Lara: the course home link exports the **front
