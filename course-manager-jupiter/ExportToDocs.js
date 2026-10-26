@@ -114,6 +114,14 @@ function exportCanvasToDocs() {
           'link to export again).' : ''), ui.ButtonSet.OK);
       return;
     }
+    if (plan.exports.length) {
+      const answer = ui.alert(title, exportConfirmText_(plan, Boolean(backupCol)),
+        ui.ButtonSet.YES_NO);
+      if (answer !== ui.Button.YES) {
+        ui.alert(title, 'Cancelled. No Docs were made.', ui.ButtonSet.OK);
+        return;
+      }
+    }
 
     const markRow = (row, note, refused) => {
       const cell = sheet.getRange(row, linkCol).setNote(note || null);
@@ -186,10 +194,12 @@ function exportCanvasToDocs() {
 /**
  * Finds the label row in the top rows of the tab (grid = display values). Returns
  * { headerRow, columns: Map label → column number } (1-based). Canvas Link and Google
- * Doc are required; Name and Exported are optional. A label used twice stops the run.
+ * Doc are required; the rest are optional. Capitals and extra spaces don't matter. A label
+ * used twice stops the run.
  */
 function findExportTable_(grid) {
-  const r = grid.findIndex(row => row.some(value => String(value).trim() === EXPORT_LABELS.LINK));
+  const isLabel = (value, label) => exportLabelText_(value) === exportLabelText_(label);
+  const r = grid.findIndex(row => row.some(value => isLabel(value, EXPORT_LABELS.LINK)));
   if (r === -1) {
     throw sheetProblem_(`This tab has no "${EXPORT_LABELS.LINK}" label in rows 1–` +
       `${EXPORT_LABEL_SEARCH_ROWS}. Open your export tab first.`);
@@ -197,7 +207,7 @@ function findExportTable_(grid) {
   const columns = new Map();
   const row = grid.slice(r, r + 1)[0];
   Object.values(EXPORT_LABELS).forEach(label => {
-    const found = row.map((value, c) => (String(value).trim() === label ? c + 1 : 0))
+    const found = row.map((value, c) => (isLabel(value, label) ? c + 1 : 0))
       .filter(Boolean);
     if (found.length > 1) throw sheetProblem_(`Row ${r + 1} has "${label}" more than once.`);
     if (found.length) columns.set(label, found[0]);
@@ -207,6 +217,29 @@ function findExportTable_(grid) {
       `"${EXPORT_LABELS.LINK}".`);
   }
   return { headerRow: r + 1, columns };
+}
+
+/**
+ * The Yes/No question before any Docs are made: the count, and, when the tab has no
+ * Back up? column, a plain warning that every row without a Doc will be exported.
+ */
+function exportConfirmText_(plan, hasBackupColumn) {
+  return `Make ${plan.exports.length} Google Doc(s)?\n\n` + (hasBackupColumn ?
+    `These are the rows ticked "${EXPORT_LABELS.BACKUP}" that have no Google Doc yet.` +
+      (plan.notTicked ? ` ${plan.notTicked} unticked row(s) are skipped.` : '') :
+    `This tab has no "${EXPORT_LABELS.BACKUP}" column, so this is EVERY row with a Canvas ` +
+      'link and no Google Doc yet.') +
+    (plan.alreadyDone ? `\n${plan.alreadyDone} row(s) already have a Doc and are skipped.` : '') +
+    '\n\nAbout a few seconds per Doc; a long list stops near 5 minutes (run Export again ' +
+    'for the rest).';
+}
+
+/**
+ * A label as compared: capitals and extra spaces ignored, so "Back Up?" matches
+ * "Back up?" (Lara typed it that way, 2026-10-25, and Export missed the column).
+ */
+function exportLabelText_(value) {
+  return String(value).trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
 /**

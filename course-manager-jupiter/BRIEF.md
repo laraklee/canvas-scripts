@@ -13,6 +13,11 @@
 > - **Not yet seen live:** Export to Google Docs in Biology and AI9 (each one's first run
 >   asks Lara to approve the Drive permission); Post comments skipping a cell already
 >   noted "Commented" on a rerun, and the light red on a refused comment.
+> - **Fix 2026-10-25 evening (first step 2 test):** Lara's label read "Back Up?", so Export
+>   didn't find the column and started on all 98 rows (she cancelled; some Docs were made).
+>   Now **labels ignore capitals and extra spaces** (`exportLabelText_`, all labels), and
+>   **Export asks Yes/No with the count before making any Doc** (`exportConfirmText_`;
+>   says plainly when there's no Back up? column and every row will go).
 > - **Backup tool step 2 built 2026-10-25 evening (commit 3333a06), pushed to Gastronomy only, not yet tested:** Export puts
 >   assignment, discussion, and page Docs in **Assignments / Discussions / Pages**
 >   subfolders inside the C1 folder (`subfolderFinder_`, `exportSubfolder_` in
