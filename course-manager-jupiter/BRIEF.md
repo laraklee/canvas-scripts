@@ -13,7 +13,7 @@
 > - **Not yet seen live:** Export to Google Docs in Biology and AI9 (each one's first run
 >   asks Lara to approve the Drive permission); Post comments skipping a cell already
 >   noted "Commented" on a rerun, and the light red on a refused comment.
-> - **Backup tool step 2 built 2026-10-25 evening, not yet pushed or tested:** Export puts
+> - **Backup tool step 2 built 2026-10-25 evening (commit 3333a06), pushed to Gastronomy only, not yet tested:** Export puts
 >   assignment, discussion, and page Docs in **Assignments / Discussions / Pages**
 >   subfolders inside the C1 folder (`subfolderFinder_`, `exportSubfolder_` in
 >   ExportToDocs.js); syllabus and home page Docs stay at the top. Subfolders are found
