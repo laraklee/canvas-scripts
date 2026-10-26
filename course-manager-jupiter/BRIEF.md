@@ -1,68 +1,64 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-10-25 late morning, PC session)**
+> **Where we left off (current state, 2026-10-25 evening)**
 >
-> - **Session 2026-10-25 (PC):** Export to Google Docs built and **tested in Gastronomy**
->   (below); green-button descriptions **tested** (below). Later the same day: Canvas-stored
->   pictures embedded in the Doc, and course home + syllabus links accepted. Everything on
->   this PC, GitHub, and Gastronomy matches commit 2994807's code. **Biology and AI9 do not
->   have Export to Google Docs or the Drive service yet; AI9 also lacks the green-button
->   change.** Next session on another machine: `git pull` first.
-> - **All three workbooks updated 2026-10-25 evening (Lara's request):** Biology and AI9
->   pushed with `--force` (manifest change), so **Biology, AI9, and Gastronomy all match
->   commit 2e156ab's code**: Export to Google Docs everywhere; AI9 now has the green-button
->   descriptions and **blank Published = draft**. Each workbook's first Export asks for the
->   Drive permission. PC push note: in Git Bash, `-P` needs the backslash path
->   (`'C:\Users\18087\Projects\canvas-scripts\course-manager-jupiter\.clasp-ai9.json'`);
->   a forward-slash path gave "srcDir escapes project root". Biology uses plain
->   `clasp push` (`.clasp.json`).
-> - **Home page + Canvas pictures: tested 2026-10-25 (Lara: "basically seems to work").**
->   Wrinkle, accepted by Lara: the course home link exported the **front page**, not the
->   syllabus her course home shows; use the syllabus link (`…/assignments/syllabus`) for
->   that. **Next up: the backup-tool idea below.** Earlier plan, kept for the record:
-> - **(Done) Start here next session: ask how Lara's test went**: export the
->   Gastronomy **course home page** (`/courses/4939`, has pictures stored in Canvas; its
->   row was red from the earlier "not a link" refusal). Check the finish pop-up's
->   "Pictures stored in Canvas: N put into the Docs, M could not be downloaded" line and
->   whether the pictures show in the Doc. If counted "put in" but not showing: Drive's HTML
->   conversion ignores `data:` pictures; try another way (e.g. upload each picture to the
->   folder and point the `<img>` at it, or insert with DocumentApp, which needs a new
->   scope; ask first). If "could not be downloaded": debug the `GET /files/:id` → `url`
->   download (Canvas side). Then the backup-tool idea below.
-> - **Done 2026-10-23 (Mac session):** Pull scores and Post comments (cell notes) built,
->   tested, and live in **all three workbooks** (Biology, AI9, Gastronomy); Google matches
->   commit a5ee5d1's code in each (AI9 and Gastronomy checked by a read-only `clasp clone`
->   after the push). Details under "Next up" item 1 below.
-> - **AI9/Gastronomy script IDs fixed (2026-10-23, commit 5a91eb3).** The first push was
->   refused ("Invalid script key"): the two files held the **workbooks'** IDs (44
->   characters), not the **Apps Script project** IDs (57; Extensions › Apps Script ›
->   Project Settings › Script ID). They had never been pushed, so the copies held the code
->   they were copied with, which matched Git except for the two new tools; their manifests
->   differed only in formatting (same 4 scopes), so the first push used `--force`. Mac push
->   from `course-manager-jupiter/`: `clasp -P "$PWD/.clasp-ai9.json" push` (`-P` before
->   `push`; same for `-gastronomy`).
-> - **Live in the Biology workbook and tested:** every tool Lara uses from legacy (legacy
->   review finished 2026-10-20; see `docs/still-in-legacy.md`); CreateRoster keeps rows
->   lined up by User ID; Course check (seven checks, "OK as is" ticks, burgundy Info
->   rows) runs from Canvas Tools and after assignment-group refreshes; Canvas-built ref
->   tabs hide themselves after refresh; Pull scores and Post comments (2026-10-23).
->   Last session was on the Mac: on the PC, `git pull` first.
-> - **First real Jupiter update (Bio) done 2026-10-22:** worked fine, no fix needed. The
->   blank Comment cell test in Jupiter is **shelved**: comments will be written in the
->   Sheet and posted to Canvas instead (see "Jupiter comments" under Open questions).
-> - **Green-button descriptions: tested 2026-10-25** (Lara made a new assignment by row in
->   Gastronomy; "the green box works fine"). **Still to do: push to AI9 (ask first).**
->   Older note: **Green-button descriptions and "blank Published = draft": pushed to Biology and
->   Gastronomy (commit 8f8f891), not yet tested** (see "Description style" in the
->   makeAssignment notes and "Published column, in practice"). **Lara (2026-10-23): she'll
->   test in the next day or so, likely starting in Gastronomy** (one draft createByRow
->   item with a Google Doc link) **and come back if there are issues.** Next session: ask
->   how it went; once OK, mark tested and push to AI9 (ask first). Until then AI9 still
->   has the old description style and blank = publish.
-> - **Export to Google Docs: built 2026-10-25, live in Gastronomy only (commit b19761d;
->   `--force` was needed for each manifest change). Tested by Lara 2026-10-25: "It
->   worked"; a linked picture even came through.** Push to Biology/AI9 after Lara's OK
->   (each workbook's first run asks for the new Drive permission). New
+> - **Overall:** the move off the legacy code is **finished**: every tool Lara used in
+>   legacy is ported and tested (legacy review finished 2026-10-20, see
+>   `docs/still-in-legacy.md`), and the legacy workbooks are retired. **Biology, AI9, and
+>   Gastronomy all run the same code** (commit 2e156ab's), which matches GitHub. Changes
+>   go to one workbook first (usually Biology), then the others after Lara's OK.
+> - **Newest tools (details under Recent history):** Pull scores and Post comments
+>   (2026-10-23); green-button descriptions and "only a ticked Published box publishes"
+>   (tested 2026-10-25); Export to Google Docs (tested in Gastronomy 2026-10-25).
+> - **Not yet seen live:** Export to Google Docs in Biology and AI9 (each one's first run
+>   asks Lara to approve the Drive permission); Post comments skipping a cell already
+>   noted "Commented" on a rerun, and the light red on a refused comment.
+> - **Next up: Lara wants to look at whether Export to Google Docs should grow into a full
+>   course backup tool** (idea only, nothing decided): pull a list of the course's
+>   assignments, discussions, and pages into the tab, with a checkbox per row for which
+>   ones to archive, then export the ticked ones. Questions to talk through first: one tab
+>   per course or term; how re-backups work (skip, or new dated Docs); folder layout;
+>   Classic/New Quizzes; time limits for a big course (6 minutes per run). Read-only in
+>   Canvas either way.
+>   **Goal (Lara, 2026-10-25): an archive of everything for a possible retirement, ending
+>   up in her personal OneDrive.** She asked about making Word files instead. Suggested:
+>   keep Google Docs; Drive's **Download** on a whole folder turns every Google Doc into
+>   a .docx inside the zip, so no Word code is needed (a .docx copy in the folder is
+>   possible later if wanted). **Images:** Google fetches each image without a
+>   Canvas login, so images uploaded **into Canvas Files** usually go missing (unless the
+>   link carries a `verifier=` code); images from public sites come through. Possible fix
+>   for the backup tool: the script downloads Canvas images with Lara's token and puts
+>   them into the Doc itself. **Built 2026-10-25 (Lara: fix it unless it's slow; about a
+>   second per picture):** `embedCanvasImages_` turns each `<img>` on this Canvas with a
+>   `/files/:id` address into a `data:` picture: `GET /files/:id` (type, size, temporary
+>   `url`), then the picture is downloaded from that `url` **without** the token; not a
+>   picture, over 5 MB, or failed → left as is (missing), Doc still made; each file looked
+>   up once per run. The finish pop-up counts pictures put in / missed. **Tested 2026-10-25
+>   on the Gastronomy home page: works** (Drive accepts `data:` pictures). Also mentioned: Canvas's own course export (.imscc, the
+>   complete course, for re-import into another Canvas); check the school's policy on
+>   taking course materials to a personal account; the backup must never include student
+>   work, replies, or grades (FERPA; the tool already reads prompts only).
+> - **Later / maybe:** email tools (wait and see); assignment dropdowns for the grading
+>   sheet tools (skipped: the list got too long); tidy unused `ref_Config` cells (see
+>   "`ref_Config` finished" in the running log).
+> - **Pushing (from `course-manager-jupiter/`; always commit first, ask Lara first):**
+>   Biology = plain `clasp push` (`.clasp.json`). AI9 / Gastronomy: on the PC (Git Bash
+>   or PowerShell) `clasp push -P 'C:\Users\18087\Projects\canvas-scripts\course-manager-jupiter\.clasp-ai9.json'`
+>   (backslash path; a forward-slash path gave "srcDir escapes project root"); on the Mac
+>   `clasp -P "$PWD/.clasp-ai9.json" push`. Same for `.clasp-gastronomy.json`. A
+>   manifest (`appsscript.json`) change needs `--force`. Switching machines: `git pull`
+>   first, `git push` at the end.
+>
+> **Recent history (newest first; kept for the record)**
+>
+> - **2026-10-25 evening:** Biology and AI9 pushed (Lara: "push to everything"), so all
+>   three workbooks match. Home page + Canvas pictures export tested by Lara ("basically
+>   seems to work"). Wrinkle, accepted by Lara: the course home link exports the **front
+>   page**, not the syllabus her course home shows; use the syllabus link
+>   (`…/assignments/syllabus`) for that.
+> - **Export to Google Docs (built and tested 2026-10-25; live in all three workbooks).**
+>   Tested in Gastronomy (an assignment, the course home page, pictures stored in
+>   Canvas). `--force` was needed for each manifest change. New
 >   `ExportToDocs.js`, `exportCanvasToDocs` (menu: Canvas Tools › Export to Google Docs
 >   (this tab)). Lara's first use: Gastronomy (content mostly in Canvas pages and
 >   assignments), so it **goes to Gastronomy first** (her choice, 2026-10-25), then
@@ -77,8 +73,8 @@
 >   Lara can move/rename it; moved from B2/B3 at Lara's request, 2026-10-25). Labels in
 >   **row 3** on Lara's tab (any row 1–10 works), found by **Canvas Link** and **Google
 >   Doc** (optional **Name**, **Exported**). **Rows with a Google Doc link are skipped**
->   (delete it to remake). Missing Canvas images are acceptable (Google can't log in to
->   Canvas to fetch them). Discussions: prompt only, never replies. Doc = title heading,
+>   (delete it to remake). Missing Canvas images were acceptable to Lara (since fixed:
+>   pictures stored in Canvas are now embedded, see Next up). Discussions: prompt only, never replies. Doc = title heading,
 >   "Open in Canvas" link, then the HTML converted by Drive. Refused rows: light red +
 >   note on the link cell. Read-only in Canvas. **Drive via the Advanced Drive service
 >   (v3)**: the first version called Drive's REST API through UrlFetchApp and got HTTP 403
@@ -92,33 +88,17 @@
 >   through; how formatting and images hold up on other items is still to be seen. **Blue links** (pasted Canvas links showing the item's
 >   name) were refused at first; fixed (3efc987): the address comes from the cell's link,
 >   a link on part of its text, or a `=HYPERLINK` formula before the visible text.
-> - **Next up (start here next session): Lara wants to look at whether Export to Google
->   Docs should grow into a full course backup tool** (idea only, nothing decided): pull a
->   list of the course's assignments, discussions, and pages into the tab, with a
->   checkbox per row for which ones to archive, then export the ticked ones. Questions to
->   talk through first: one tab per course or term; how re-backups work (skip, or new
->   dated Docs); folder layout; Classic/New Quizzes; time limits for a big course (6
->   minutes per run). Read-only in Canvas either way.
->   **Goal (Lara, 2026-10-25): an archive of everything for a possible retirement, ending
->   up in her personal OneDrive.** She asked about making Word files instead. Suggested:
->   keep Google Docs; Drive's **Download** on a whole folder turns every Google Doc into
->   a .docx inside the zip, so no Word code is needed (a .docx copy in the folder is
->   possible later if wanted). **Images:** Google fetches each image without a
->   Canvas login, so images uploaded **into Canvas Files** usually go missing (unless the
->   link carries a `verifier=` code); images from public sites come through. Possible fix
->   for the backup tool: the script downloads Canvas images with Lara's token and puts
->   them into the Doc itself. **Built 2026-10-25 (Lara: fix it unless it's slow; about a
->   second per picture):** `embedCanvasImages_` turns each `<img>` on this Canvas with a
->   `/files/:id` address into a `data:` picture: `GET /files/:id` (type, size, temporary
->   `url`), then the picture is downloaded from that `url` **without** the token; not a
->   picture, over 5 MB, or failed → left as is (missing), Doc still made; each file looked
->   up once per run. The finish pop-up counts pictures put in / missed. **Untested:**
->   whether Drive's HTML conversion accepts `data:` pictures. Also mentioned: Canvas's own course export (.imscc, the
->   complete course, for re-import into another Canvas); check the school's policy on
->   taking course materials to a personal account; the backup must never include student
->   work, replies, or grades (FERPA; the tool already reads prompts only).
->   Earlier: nothing new planned; the green-button test is done (above). Items 1 and 2 are **done** (kept for the record). From now on, a change goes to Biology first, then (after
->   Lara's OK) to AI9 and Gastronomy.
+> - **Green-button descriptions: tested 2026-10-25** (Lara made a new assignment by row in
+>   Gastronomy; "the green box works fine"). Live in all three workbooks (AI9 pushed
+>   2026-10-25 evening).
+>   Older note: **Green-button descriptions and "blank Published = draft": pushed to Biology and
+>   Gastronomy (commit 8f8f891), not yet tested** (see "Description style" in the
+>   makeAssignment notes and "Published column, in practice"). **Lara (2026-10-23): she'll
+>   test in the next day or so, likely starting in Gastronomy** (one draft createByRow
+>   item with a Google Doc link) **and come back if there are issues.** Next session: ask
+>   how it went; once OK, mark tested and push to AI9 (ask first). Until then AI9 still
+>   has the old description style and blank = publish.
+> - **Done 2026-10-23 and 2026-10-24 (the old "Next up" list):**
 >   1. **Done 2026-10-23: bring back the one-assignment tools from legacy** (see
 >      `docs/still-in-legacy.md`):
 >      - **Pull grades:** read each student's score for one assignment into a column
@@ -194,6 +174,27 @@
 >      for her (not code): add a color/description to the carbohydrate table like the
 >      protein table has, a Benedict's color strip in photos, an expected-results key by
 >      Runner #.
+> - **Done 2026-10-23 (Mac session):** Pull scores and Post comments (cell notes) built,
+>   tested, and live in **all three workbooks** (Biology, AI9, Gastronomy); Google matches
+>   commit a5ee5d1's code in each (AI9 and Gastronomy checked by a read-only `clasp clone`
+>   after the push). Details under "Next up" item 1 below.
+> - **AI9/Gastronomy script IDs fixed (2026-10-23, commit 5a91eb3).** The first push was
+>   refused ("Invalid script key"): the two files held the **workbooks'** IDs (44
+>   characters), not the **Apps Script project** IDs (57; Extensions › Apps Script ›
+>   Project Settings › Script ID). They had never been pushed, so the copies held the code
+>   they were copied with, which matched Git except for the two new tools; their manifests
+>   differed only in formatting (same 4 scopes), so the first push used `--force`. Mac push
+>   from `course-manager-jupiter/`: `clasp -P "$PWD/.clasp-ai9.json" push` (`-P` before
+>   `push`; same for `-gastronomy`).
+> - **Live in the Biology workbook and tested:** every tool Lara uses from legacy (legacy
+>   review finished 2026-10-20; see `docs/still-in-legacy.md`); CreateRoster keeps rows
+>   lined up by User ID; Course check (seven checks, "OK as is" ticks, burgundy Info
+>   rows) runs from Canvas Tools and after assignment-group refreshes; Canvas-built ref
+>   tabs hide themselves after refresh; Pull scores and Post comments (2026-10-23).
+>   Last session was on the Mac: on the PC, `git pull` first.
+> - **First real Jupiter update (Bio) done 2026-10-22:** worked fine, no fix needed. The
+>   blank Comment cell test in Jupiter is **shelved**: comments will be written in the
+>   Sheet and posted to Canvas instead (see "Jupiter comments" under Open questions).
 > - **AI9 and Gastronomy workbooks made (2026-10-22):** Lara copied the Biology workbook
 >   once per course, set `cfg_CourseID` and `cfg_TermQuarters` (AI9 `2`, Gastronomy `1-2`),
 >   refreshed the tables, and re-sorted AI9's multi-section grading sheets herself.
@@ -204,7 +205,6 @@
 >   **Live (Lara, 2026-10-22):** both connected (Canvas token set, authorized), functions
 >   run in each, and the legacy workbooks retired. Not yet pushed from clasp (they hold
 >   the code they were copied with, which matches Git).
-> - **Later / maybe:** email tools (wait and see).
 > - Everything below is the running log, oldest first; the decision notes for each piece
 >   are there.
 >
