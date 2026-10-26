@@ -13,7 +13,18 @@
 > - **Not yet seen live:** Export to Google Docs in Biology and AI9 (each one's first run
 >   asks Lara to approve the Drive permission); Post comments skipping a cell already
 >   noted "Commented" on a rerun, and the light red on a refused comment.
-> - **Backup tool step 3 built 2026-10-25 evening (commit 51ee6df), pushed to Gastronomy only, not yet tested:** List
+> - **START HERE NEXT SESSION: step 3 didn't work in Lara's first test (2026-10-25,
+>   end of session): no yellow marks after editing an exported item and running List.**
+>   Not debugged yet. Ask Lara (no student data involved): (1) which item and type she
+>   edited; (2) whether the finish pop-up had a "changed in Canvas since export" line;
+>   (3) that row's **Canvas Updated** value after List vs its **Exported** value (did
+>   Canvas Updated move to the edit time?); (4) whether the row's Google Doc and Exported
+>   cells are filled. Suspects: the edited item was a discussion/syllabus (never marked);
+>   Canvas Updated didn't change (Canvas's page list date); Exported cell blank or text,
+>   not a date; the row wasn't matched to the Canvas item (check its link); or
+>   `setBackgrounds` with `null` entries (would have shown an error pop-up). Offline
+>   checks pass, so compare with real values.
+> - **Backup tool step 3 built 2026-10-25 evening (commit 51ee6df), pushed to Gastronomy only, not working yet (see above):** List
 >   course content marks a row's **Google Doc cell light yellow (`#fff2cc`) with the note
 >   "Changed in Canvas since export"** when its Canvas Updated date is after its Exported
 >   date (`planChangeFlags_`, `applyChangeFlags_`, `sheetDate_` in CourseContentList.js);
