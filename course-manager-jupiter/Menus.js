@@ -6,7 +6,8 @@
  *   had two menus, "Canvas Tools" and "Setup & Admin"). Function names are unchanged, so
  *   every button keeps working.
  *   - Canvas Tools: doing things (create, reorder, groups, rubrics, Jupiter, grading
- *     sheet one-assignment tools, export to Google Docs, seating),
+ *     sheet one-assignment tools, list course content and export to Google
+ *     Docs, seating),
  *     and Course check (read-only report, CourseCheck.js) at the bottom.
  *   - Setup & Data: refreshing reference tables, Jupiter categories (manual, on purpose),
  *     and setup / safety checks.
@@ -53,6 +54,7 @@ function buildMenus_() {
     .addSubMenu(ui.createMenu('Grading sheet')
       .addItem('Pull scores into this column (ID in row 2)', 'pullScoresForActiveColumn')
       .addItem('Post comments from this column (ID in row 2)', 'postCommentsForActiveColumn'))
+    .addItem('List course content (this tab)', 'listCourseContent')
     .addItem('Export to Google Docs (this tab)', 'exportCanvasToDocs')
     .addSeparator()
     .addItem('Build seating chart', 'buildSeatingChart')

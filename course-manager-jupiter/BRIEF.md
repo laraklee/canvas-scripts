@@ -13,8 +13,21 @@
 > - **Not yet seen live:** Export to Google Docs in Biology and AI9 (each one's first run
 >   asks Lara to approve the Drive permission); Post comments skipping a cell already
 >   noted "Commented" on a rerun, and the light red on a refused comment.
-> - **Next up: the course backup tool. Started 2026-10-25 evening; decisions made, nothing
->   built yet.** It extends the Export to Google Docs tab (same `ExportToDocs.js` tab, same
+> - **Backup tool step 1 built 2026-10-25 evening, not yet pushed or tested:** new
+>   `CourseContentList.js`, `listCourseContent` (menu: Canvas Tools › List course content
+>   (this tab), just above Export). Course from **B2** (A2 labeled "Course ID:" if empty;
+>   blank B2 → `cfg_CourseID`). Rows matched by link (home link `/courses/:id` matches the
+>   front page's page link; page names ignore capitals) keep their place, link, Doc,
+>   Exported, and Back up? cells; Name/Type/Published/Canvas Updated refreshed (other
+>   rows' formulas kept). New items go below the last row with a link, Back up? unticked.
+>   Rows for this course no longer in Canvas are counted, left alone. Optional new row 3
+>   labels: **Type, Published, Canvas Updated, Back up?** (Lara will ask for a reminder).
+>   **Export now does only ticked rows when a Back up? column exists** (built in step 1 so
+>   a long list can't export everything by accident). Untested: whether Canvas's
+>   discussion list gives `updated_at` (blank Canvas Updated if not). Offline check
+>   `scripts/checks/content-list.check.js`. Read-only; no new permissions.
+> - **Next up: the course backup tool. Started 2026-10-25 evening; decisions made, step 1
+>   built (above).** It extends the Export to Google Docs tab (same `ExportToDocs.js` tab, same
 >   B1 folder name / C1 folder link / row 3 labels). Lara's decisions (2026-10-25):
 >   - **Course ID on the tab** (proposed: A2 label, **B2** value), filled from
 >     `cfg_CourseID` when blank, so any course she teaches (old terms too) can be backed

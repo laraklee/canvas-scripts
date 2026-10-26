@@ -10,7 +10,8 @@
  *   row 3); data below.
  *   Paste an assignment, discussion, page, course home, or syllabus link from Canvas
  *   (typed, or a blue link showing other text); rows that already have a
- *   Google Doc link are skipped (delete the link to export again). The Doc gets the
+ *   Google Doc link are skipped (delete the link to export again). With a "Back up?"
+ *   label (filled by List course content, CourseContentList.js), only ticked rows export. The Doc gets the
  *   item's title, a link back to Canvas, and its content. Pictures stored in Canvas are
  *   downloaded by the script and put inside the Doc (Google can't log in to Canvas to
  *   fetch them itself); pictures from other sites are left for Google to fetch. A picture
@@ -41,6 +42,11 @@ const EXPORT_LABELS = Object.freeze({
   DOC: 'Google Doc',
   NAME: 'Name',
   EXPORTED: 'Exported',
+  // Filled by List course content (CourseContentList.js); Back up? also limits Export.
+  TYPE: 'Type',
+  PUBLISHED: 'Published',
+  UPDATED: 'Canvas Updated',
+  BACKUP: 'Back up?',
 });
 const EXPORT_REFUSED_COLOR = '#f4cccc'; // light red, same as Post comments
 const EXPORT_TIME_LIMIT_MS = 5 * 60 * 1000;
@@ -83,14 +89,18 @@ function exportCanvasToDocs() {
     const nameCol = table.columns.get(EXPORT_LABELS.NAME);
     const exportedCol = table.columns.get(EXPORT_LABELS.EXPORTED);
     const linkCells = sheet.getRange(table.headerRow + 1, linkCol, rows, 1);
+    const backupCol = table.columns.get(EXPORT_LABELS.BACKUP);
     const plan = planExports_(
       cellLinks_(linkCells.getRichTextValues(), linkCells.getFormulas(),
         linkCells.getDisplayValues()),
       sheet.getRange(table.headerRow + 1, docCol, rows, 1).getDisplayValues(),
-      table.headerRow + 1);
+      table.headerRow + 1,
+      backupCol ? sheet.getRange(table.headerRow + 1, backupCol, rows, 1).getValues() : null);
     if (!plan.exports.length && !plan.badLinks.length) {
-      ui.alert(title, 'Nothing to export: paste Canvas links in the ' +
-        `"${EXPORT_LABELS.LINK}" column of rows with no Google Doc link.` +
+      ui.alert(title, 'Nothing to export: ' + (backupCol ?
+        `tick "${EXPORT_LABELS.BACKUP}" on rows with no Google Doc link.` :
+        `paste Canvas links in the "${EXPORT_LABELS.LINK}" column of rows with no Google ` +
+          'Doc link.') +
         (plan.alreadyDone ? ` ${plan.alreadyDone} row(s) already have a Doc (delete the ` +
           'link to export again).' : ''), ui.ButtonSet.OK);
       return;
@@ -191,16 +201,22 @@ function findExportTable_(grid) {
 
 /**
  * Which rows to export. links and docs are one-column display-value grids starting at
- * firstRow. A row exports when it has a link and no Google Doc link.
- * Returns { exports: [{ row, link, type, courseId, itemId }], badLinks: [row], alreadyDone }.
+ * firstRow. A row exports when it has a link and no Google Doc link, and, when ticks (the
+ * Back up? column's values) is given, its box is ticked.
+ * Returns { exports: [{ row, link, type, courseId, itemId }], badLinks: [row], alreadyDone,
+ * notTicked }.
  */
-function planExports_(links, docs, firstRow) {
-  const plan = { exports: [], badLinks: [], alreadyDone: 0 };
+function planExports_(links, docs, firstRow, ticks) {
+  const plan = { exports: [], badLinks: [], alreadyDone: 0, notTicked: 0 };
   links.forEach((cells, i) => {
     const link = String(cells.slice(0, 1)[0]).trim();
     if (!link) return;
     if (String(docs.slice(i, i + 1)[0].slice(0, 1)[0]).trim()) {
       plan.alreadyDone++;
+      return;
+    }
+    if (ticks && ticks.slice(i, i + 1)[0].slice(0, 1)[0] !== true) {
+      plan.notTicked++;
       return;
     }
     const parsed = parseCanvasContentLink_(link);
