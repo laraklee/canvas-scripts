@@ -21,7 +21,7 @@
 >   **Then (Lara): "truly default to not making the doc":** Export now does **only ticked
 >   rows, always**; a tab with no Back up? column exports nothing and says to add one
 >   (the old paste-a-link-and-export-all behavior is gone).
-> - **Backup tool step 2 built 2026-10-25 evening (commit 3333a06), pushed to Gastronomy only, not yet tested:** Export puts
+> - **Backup tool step 2 built 2026-10-25 evening, live in Gastronomy only (with the fixes below, commit 7e8ec96); tested by Lara: "Looks solid":** Export puts
 >   assignment, discussion, and page Docs in **Assignments / Discussions / Pages**
 >   subfolders inside the C1 folder (`subfolderFinder_`, `exportSubfolder_` in
 >   ExportToDocs.js); syllabus and home page Docs stay at the top. Subfolders are found
@@ -29,7 +29,7 @@
 >   the first time a type needs one; a subfolder renamed in Drive isn't found, so a new
 >   one is made. Docs made before step 2 stay where they are. "Only ticked rows" was
 >   already built in step 1. Discussion/syllabus dates: left blank (Lara, 2026-10-25).
-> - **Backup tool step 1 built 2026-10-25 evening (commit 7b7524a), pushed to Gastronomy
+> - **Backup tool step 1 built 2026-10-25 evening (commit 7b7524a), live and tested in Gastronomy
 >   only, not yet tested; Biology and AI9 don't have it (they match 2e156ab):** new
 >   `CourseContentList.js`, `listCourseContent` (menu: Canvas Tools › List course content
 >   (this tab), just above Export). Course from **B2** (A2 labeled "Course ID:" if empty;
