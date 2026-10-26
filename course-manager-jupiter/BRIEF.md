@@ -18,6 +18,9 @@
 >   Now **labels ignore capitals and extra spaces** (`exportLabelText_`, all labels), and
 >   **Export asks Yes/No with the count before making any Doc** (`exportConfirmText_`;
 >   says plainly when there's no Back up? column and every row will go).
+>   **Then (Lara): "truly default to not making the doc":** Export now does **only ticked
+>   rows, always**; a tab with no Back up? column exports nothing and says to add one
+>   (the old paste-a-link-and-export-all behavior is gone).
 > - **Backup tool step 2 built 2026-10-25 evening (commit 3333a06), pushed to Gastronomy only, not yet tested:** Export puts
 >   assignment, discussion, and page Docs in **Assignments / Discussions / Pages**
 >   subfolders inside the C1 folder (`subfolderFinder_`, `exportSubfolder_` in

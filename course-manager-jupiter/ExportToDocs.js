@@ -10,8 +10,10 @@
  *   row 3); data below.
  *   Paste an assignment, discussion, page, course home, or syllabus link from Canvas
  *   (typed, or a blue link showing other text); rows that already have a
- *   Google Doc link are skipped (delete the link to export again). With a "Back up?"
- *   label (filled by List course content, CourseContentList.js), only ticked rows export. The Doc gets the
+ *   Google Doc link are skipped (delete the link to export again). Only rows ticked
+ *   in the "Back up?" column export (filled by List course content, CourseContentList.js);
+ *   a tab with no Back up? column exports nothing (Lara, 2026-10-25: never make a Doc by
+ *   default). Export asks Yes/No with the count first. The Doc gets the
  *   item's title, a link back to Canvas, and its content. Pictures stored in Canvas are
  *   downloaded by the script and put inside the Doc (Google can't log in to Canvas to
  *   fetch them itself); pictures from other sites are left for Google to fetch. A picture
@@ -98,24 +100,30 @@ function exportCanvasToDocs() {
     const nameCol = table.columns.get(EXPORT_LABELS.NAME);
     const exportedCol = table.columns.get(EXPORT_LABELS.EXPORTED);
     const linkCells = sheet.getRange(table.headerRow + 1, linkCol, rows, 1);
+    // Only ticked rows are ever exported (Lara, 2026-10-25): no Back up? column, no Docs.
     const backupCol = table.columns.get(EXPORT_LABELS.BACKUP);
+    if (!backupCol) {
+      ui.alert(title, `This tab has no "${EXPORT_LABELS.BACKUP}" column, so nothing was ` +
+        `exported. Add a "${EXPORT_LABELS.BACKUP}" label in row ${table.headerRow} (next to ` +
+        `"${EXPORT_LABELS.LINK}"), put a checkbox on each row (Insert › Checkbox), and tick ` +
+        'the rows to export.', ui.ButtonSet.OK);
+      return;
+    }
     const plan = planExports_(
       cellLinks_(linkCells.getRichTextValues(), linkCells.getFormulas(),
         linkCells.getDisplayValues()),
       sheet.getRange(table.headerRow + 1, docCol, rows, 1).getDisplayValues(),
       table.headerRow + 1,
-      backupCol ? sheet.getRange(table.headerRow + 1, backupCol, rows, 1).getValues() : null);
+      sheet.getRange(table.headerRow + 1, backupCol, rows, 1).getValues());
     if (!plan.exports.length && !plan.badLinks.length) {
-      ui.alert(title, 'Nothing to export: ' + (backupCol ?
-        `tick "${EXPORT_LABELS.BACKUP}" on rows with no Google Doc link.` :
-        `paste Canvas links in the "${EXPORT_LABELS.LINK}" column of rows with no Google ` +
-          'Doc link.') +
+      ui.alert(title, `Nothing to export: tick "${EXPORT_LABELS.BACKUP}" on rows with a ` +
+        'Canvas link and no Google Doc link.' +
         (plan.alreadyDone ? ` ${plan.alreadyDone} row(s) already have a Doc (delete the ` +
           'link to export again).' : ''), ui.ButtonSet.OK);
       return;
     }
     if (plan.exports.length) {
-      const answer = ui.alert(title, exportConfirmText_(plan, Boolean(backupCol)),
+      const answer = ui.alert(title, exportConfirmText_(plan),
         ui.ButtonSet.YES_NO);
       if (answer !== ui.Button.YES) {
         ui.alert(title, 'Cancelled. No Docs were made.', ui.ButtonSet.OK);
@@ -219,16 +227,11 @@ function findExportTable_(grid) {
   return { headerRow: r + 1, columns };
 }
 
-/**
- * The Yes/No question before any Docs are made: the count, and, when the tab has no
- * Back up? column, a plain warning that every row without a Doc will be exported.
- */
-function exportConfirmText_(plan, hasBackupColumn) {
-  return `Make ${plan.exports.length} Google Doc(s)?\n\n` + (hasBackupColumn ?
+/** The Yes/No question before any Docs are made, with the counts. */
+function exportConfirmText_(plan) {
+  return `Make ${plan.exports.length} Google Doc(s)?\n\n` +
     `These are the rows ticked "${EXPORT_LABELS.BACKUP}" that have no Google Doc yet.` +
-      (plan.notTicked ? ` ${plan.notTicked} unticked row(s) are skipped.` : '') :
-    `This tab has no "${EXPORT_LABELS.BACKUP}" column, so this is EVERY row with a Canvas ` +
-      'link and no Google Doc yet.') +
+    (plan.notTicked ? ` ${plan.notTicked} unticked row(s) are skipped.` : '') +
     (plan.alreadyDone ? `\n${plan.alreadyDone} row(s) already have a Doc and are skipped.` : '') +
     '\n\nAbout a few seconds per Doc; a long list stops near 5 minutes (run Export again ' +
     'for the rest).';

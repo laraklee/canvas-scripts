@@ -120,8 +120,8 @@ function listCourseContent() {
       (plan.gone ? `\n\n${plan.gone} row(s) for this course are no longer in Canvas ` +
         '(deleted or renamed page); they were left alone.' : '') +
       (table.columns.has(EXPORT_LABELS.BACKUP) ? '' : `\n\nTip: add a "${EXPORT_LABELS.BACKUP}" ` +
-        'label in the label row so you can tick which items to export. Without it, ' +
-        'Export does every row that has no Google Doc yet.') +
+        'label in the label row so you can tick which items to export. Export does ' +
+        'only ticked rows, so without it nothing is exported.') +
       '\n\nQuizzes are not listed yet.', ui.ButtonSet.OK);
   } catch (error) {
     reportRefreshFailure_(title, 'Listing stopped.', error);

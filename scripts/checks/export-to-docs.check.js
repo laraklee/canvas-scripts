@@ -98,12 +98,10 @@ check('labels ignore capitals and extra spaces', [...c.findExportTable_(
   [['canvas link', ' Google  Doc ', 'Back Up?', 'CANVAS UPDATED']]).columns.entries()],
 [['Canvas Link', 1], ['Google Doc', 2], ['Canvas Updated', 4], ['Back up?', 3]]);
 check('confirm text: ticked rows', c.exportConfirmText_(
-  { exports: [1, 2], notTicked: 96, alreadyDone: 1 }, true),
+  { exports: [1, 2], notTicked: 96, alreadyDone: 1 }),
 'Make 2 Google Doc(s)?\n\nThese are the rows ticked "Back up?" that have no Google Doc yet. ' +
 '96 unticked row(s) are skipped.\n1 row(s) already have a Doc and are skipped.\n\nAbout a ' +
 'few seconds per Doc; a long list stops near 5 minutes (run Export again for the rest).');
-check('confirm text warns when there is no Back up? column', c.exportConfirmText_(
-  { exports: [1], notTicked: 0, alreadyDone: 0 }, false).includes('EVERY row'), true);
 throws('no Canvas Link label', () => c.findExportTable_([['Name']]), /no "Canvas Link"/);
 throws('no Google Doc label', () => c.findExportTable_([['Canvas Link']]), /needs a "Google Doc"/);
 throws('a label twice', () => c.findExportTable_([['Canvas Link', 'Google Doc', 'Name', 'Name']]),
