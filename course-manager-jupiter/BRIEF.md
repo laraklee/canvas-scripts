@@ -8,6 +8,14 @@
 >   this PC, GitHub, and Gastronomy matches commit 2994807's code. **Biology and AI9 do not
 >   have Export to Google Docs or the Drive service yet; AI9 also lacks the green-button
 >   change.** Next session on another machine: `git pull` first.
+> - **All three workbooks updated 2026-10-25 evening (Lara's request):** Biology and AI9
+>   pushed with `--force` (manifest change), so **Biology, AI9, and Gastronomy all match
+>   commit 2e156ab's code**: Export to Google Docs everywhere; AI9 now has the green-button
+>   descriptions and **blank Published = draft**. Each workbook's first Export asks for the
+>   Drive permission. PC push note: in Git Bash, `-P` needs the backslash path
+>   (`'C:\Users\18087\Projects\canvas-scripts\course-manager-jupiter\.clasp-ai9.json'`);
+>   a forward-slash path gave "srcDir escapes project root". Biology uses plain
+>   `clasp push` (`.clasp.json`).
 > - **Home page + Canvas pictures: tested 2026-10-25 (Lara: "basically seems to work").**
 >   Wrinkle, accepted by Lara: the course home link exported the **front page**, not the
 >   syllabus her course home shows; use the syllabus link (`…/assignments/syllabus`) for
