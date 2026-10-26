@@ -13,6 +13,14 @@
 > - **Not yet seen live:** Export to Google Docs in Biology and AI9 (each one's first run
 >   asks Lara to approve the Drive permission); Post comments skipping a cell already
 >   noted "Commented" on a rerun, and the light red on a refused comment.
+> - **Backup tool step 2 built 2026-10-25 evening, not yet pushed or tested:** Export puts
+>   assignment, discussion, and page Docs in **Assignments / Discussions / Pages**
+>   subfolders inside the C1 folder (`subfolderFinder_`, `exportSubfolder_` in
+>   ExportToDocs.js); syllabus and home page Docs stay at the top. Subfolders are found
+>   by name with `Drive.Files.list` (drive.file sees only script-made folders) or made
+>   the first time a type needs one; a subfolder renamed in Drive isn't found, so a new
+>   one is made. Docs made before step 2 stay where they are. "Only ticked rows" was
+>   already built in step 1. Discussion/syllabus dates: left blank (Lara, 2026-10-25).
 > - **Backup tool step 1 built 2026-10-25 evening (commit 7b7524a), pushed to Gastronomy
 >   only, not yet tested; Biology and AI9 don't have it (they match 2e156ab):** new
 >   `CourseContentList.js`, `listCourseContent` (menu: Canvas Tools › List course content

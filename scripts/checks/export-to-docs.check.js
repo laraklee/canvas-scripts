@@ -220,6 +220,32 @@ check('Doc made from HTML in the folder', c.createDocFromHtml_('Lab', 'fold1', '
 check('Doc request converts HTML', driveCalls.slice(-1)[0], [
   { name: 'Lab', mimeType: 'application/vnd.google-apps.document', parents: ['fold1'] },
   { text: '<p>x</p>', type: 'text/html', name: 'export.html' }]);
+// ---- Type subfolders ----
+const listQueries = [];
+const made = [];
+c.Drive = { Files: {
+  list: options => {
+    listQueries.push(options.q);
+    return { files: options.q.includes("name = 'Pages'") ? [{ id: 'pagesOld' }] : [] };
+  },
+  create: resource => {
+    made.push([resource.name, resource.parents]);
+    return { id: `new-${resource.name}` };
+  },
+} };
+const folderFor = c.subfolderFinder_('top1');
+check('each type to its folder; syllabus and home page at the top',
+  ['assignments', 'assignments', 'discussion_topics', 'pages', 'syllabus', 'front_page']
+    .map(folderFor),
+  ['new-Assignments', 'new-Assignments', 'new-Discussions', 'pagesOld', 'top1', 'top1']);
+check('existing subfolder reused, missing ones made inside the top folder', made,
+  [['Assignments', ['top1']], ['Discussions', ['top1']]]);
+check('each subfolder looked up once', listQueries.length, 3);
+check('lookup asks for a live folder by name in the top folder', listQueries.slice(0, 1)[0],
+  "'top1' in parents and name = 'Assignments' and " +
+  "mimeType = 'application/vnd.google-apps.folder' and trashed = false");
+throws('odd folder ID refused', () => c.subfolderFinder_("x' or '1")('pages'), /C1 looks wrong/);
+
 throws('Drive refusal explains itself', () => c.driveStep_('making a Doc', () => {
   throw new Error('API call to drive.files.create failed with error: Access Not Configured.');
 }), /^Google Drive refused making a Doc: Access Not Configured\.$/);

@@ -27,8 +27,10 @@
  *   itself is then downloaded from that link without the Canvas token)
  * Canvas write operations: none (read-only, so DRY_RUN doesn't apply).
  * Google Drive (Advanced Drive service v3, scope drive.file: the script can see only
- *   files and folders it made itself): creates the export folder, creates each Doc (HTML
- *   converted to a Google Doc), and checks the C1 folder still exists. The Advanced
+ *   files and folders it made itself): creates the export folder, its Assignments /
+ *   Discussions / Pages subfolders (when first needed; syllabus and home page Docs stay at
+ *   the top), and each Doc (HTML converted to a Google Doc), and checks the C1 folder
+ *   still exists. The Advanced
  *   service (not UrlFetchApp) because Drive answered "accessNotConfigured" to direct
  *   calls: turning the service on also turns on the Drive API for the script.
  * Required: User Properties CANVAS_BASE_URL and CANVAS_TOKEN.
@@ -53,6 +55,13 @@ const EXPORT_TIME_LIMIT_MS = 5 * 60 * 1000;
 const EXPORT_IMAGE_MAX_BYTES = 5 * 1024 * 1024; // bigger pictures are left as links
 const DRIVE_FOLDER_TYPE = 'application/vnd.google-apps.folder';
 const DRIVE_DOC_TYPE = 'application/vnd.google-apps.document';
+// Subfolder (inside the C1 folder) for each type; the syllabus and home page stay at the
+// top (Lara, 2026-10-25).
+const EXPORT_SUBFOLDERS = new Map([
+  ['assignments', 'Assignments'],
+  ['discussion_topics', 'Discussions'],
+  ['pages', 'Pages'],
+]);
 // Which Canvas request each link type makes, and which fields hold the title and content.
 const EXPORT_TYPES = Object.freeze({
   assignments: { label: 'assignment', title: 'name', html: 'description' },
@@ -126,6 +135,7 @@ function exportCanvasToDocs() {
       ss.toast(`Exporting ${plan.exports.length} item(s)…`, title, -1);
       const baseUrl = getCanvasCredentials_().baseUrl;
       const loadImage = cachedLoader_(loadCanvasImage_);
+      const folderFor = subfolderFinder_(folder.id);
       result = runExports_(plan.exports,
         item => {
           const content = fetchCanvasContent_(item);
@@ -135,7 +145,7 @@ function exportCanvasToDocs() {
           return Object.assign(content, { html: embedded.html });
         },
         (item, content) => createDocFromHtml_(content.title || 'Untitled (from Canvas)',
-          folder.id, buildExportHtml_(content, item.link)),
+          folderFor(item.type), buildExportHtml_(content, item.link)),
         (item, content, doc) => {
           if (nameCol) sheet.getRange(item.row, nameCol).setValue(content.title);
           sheet.getRange(item.row, docCol).setValue(doc.webViewLink);
@@ -456,6 +466,37 @@ function exportFolder_(sheet) {
 }
 
 /** Uploads HTML as a new Google Doc in the folder; returns { id, webViewLink }. */
+/**
+ * Returns folderFor(type): the folder ID a Doc of that type goes in. Assignments,
+ * discussions, and pages go in a subfolder of parentId (found by name, or made the first
+ * time it's needed); other types (syllabus, home page) go in parentId. Each subfolder is
+ * looked up once per run. A subfolder renamed in Drive isn't found, so a new one is made.
+ */
+function subfolderFinder_(parentId) {
+  const found = new Map();
+  return type => {
+    const name = EXPORT_SUBFOLDERS.get(type);
+    if (!name) return parentId;
+    if (!found.has(name)) found.set(name, exportSubfolder_(parentId, name));
+    return found.get(name);
+  };
+}
+
+/** The ID of the folder named name inside parentId (made by the script), made if missing. */
+function exportSubfolder_(parentId, name) {
+  if (!/^[\w-]+$/.test(parentId)) throw sheetProblem_('The Docs folder link in C1 looks wrong.');
+  const list = driveStep_(`finding the ${name} folder`, () => Drive.Files.list({
+    q: `'${parentId}' in parents and name = '${name}' and ` +
+      `mimeType = '${DRIVE_FOLDER_TYPE}' and trashed = false`,
+    fields: 'files(id)',
+    pageSize: 10,
+  }));
+  const existing = ((list && list.files) || []).slice(0, 1)[0];
+  if (existing) return existing.id;
+  return driveStep_(`making the ${name} folder`, () => Drive.Files.create(
+    { name, mimeType: DRIVE_FOLDER_TYPE, parents: [parentId] })).id;
+}
+
 function createDocFromHtml_(name, folderId, html) {
   const doc = driveStep_('making a Doc', () => Drive.Files.create(
     { name, mimeType: DRIVE_DOC_TYPE, parents: [folderId] },
