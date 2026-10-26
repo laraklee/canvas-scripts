@@ -13,7 +13,8 @@
 > - **Not yet seen live:** Export to Google Docs in Biology and AI9 (each one's first run
 >   asks Lara to approve the Drive permission); Post comments skipping a cell already
 >   noted "Commented" on a rerun, and the light red on a refused comment.
-> - **Backup tool step 1 built 2026-10-25 evening, not yet pushed or tested:** new
+> - **Backup tool step 1 built 2026-10-25 evening (commit 7b7524a), pushed to Gastronomy
+>   only, not yet tested; Biology and AI9 don't have it (they match 2e156ab):** new
 >   `CourseContentList.js`, `listCourseContent` (menu: Canvas Tools › List course content
 >   (this tab), just above Export). Course from **B2** (A2 labeled "Course ID:" if empty;
 >   blank B2 → `cfg_CourseID`). Rows matched by link (home link `/courses/:id` matches the
