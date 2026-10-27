@@ -34,11 +34,29 @@
 >   Groups are found through their questions (no list-groups endpoint), so bank groups
 >   are invisible; the points check reports the missing points. **Lara's test on the 3.1
 >   Test: 19 groups, 65 questions, 50 of 50 points, nothing flagged, 8 `[picture]`
->   questions (same as the export).** Fix after the test (not yet pushed): matching
->   questions showed only the left side; now "left → right". Read-only; no new
->   permissions. Offline check `scripts/checks/quiz-report.check.js`. **Next:** run it on a
->   bank quiz (points check should show the gap), then step 2. The **overrides / update
->   dates question** is still open, set aside by Lara (not pressing).
+>   questions (same as the export).** Fix after the test (commit ce93f31, pushed to Biology,
+>   Lara: "looks fine"): matching questions showed only the left side; now "left →
+>   right". Read-only; no new permissions. Offline check `scripts/checks/quiz-report.check.js`.
+>   **Next session (Lara): test a banked Classic quiz with the current code (no new code
+>   needed first):** paste its link in B1, run, read the points check (bank groups
+>   expected to be invisible, so missing points; a "Bank …" Source row would be news);
+>   if possible also drop its QTI export in `Quiz-samples/` to see whether QTI carries the
+>   bank questions. Then step 2. The **overrides / update dates question** is still open,
+>   set aside by Lara (not pressing).
+>   **New Quiz version: tabled (Lara, 2026-10-26).** Her worst image problems are in a
+>   New Quiz. Plan, not built: Quiz report also accepts a New Quiz link
+>   (`…/courses/:course/assignments/:id`), checks it's a New Quiz, and reads items with
+>   `GET /api/quiz/v1/courses/:course/quizzes/:id/items` (questions, stimuli, item-bank
+>   groups; bank contents likely not readable, same gap as Classic). Same layout. Plus a
+>   **Pictures** column for both quiz types: each picture's short address ("course 184
+>   file 195459", "New Quizzes storage", or the outside site), flagging pictures from a
+>   course other than the quiz's own (first half of step 2, before the hidden/locked
+>   lookup). Caveat: pictures uploaded in the New Quiz editor live in New Quizzes' own
+>   storage, which Canvas's file API can't check. Canvas's docs are thin on how bank
+>   groups and stimuli come back from the read endpoint, so the first run may need
+>   adjusting. Read-only; no new permissions.
+>   **Housekeeping:** `Quiz-samples/` (QTI exports, no student data) is untracked on the
+>   PC; next time add it to `.gitignore` or move the exports out of the project.
 > - **Newest tools (details under Recent history):** Pull scores and Post comments
 >   (2026-10-23); green-button descriptions and "only a ticked Published box publishes"
 >   (tested 2026-10-25); Export to Google Docs (tested in Gastronomy 2026-10-25).
