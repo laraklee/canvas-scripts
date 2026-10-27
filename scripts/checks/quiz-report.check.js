@@ -50,6 +50,9 @@ check('matching shows pairs, no correct column', c.quizAnswerCells_({
   question_type: 'matching_question',
   answers: [{ left: 'ATP', right: 'energy', weight: 100 }],
 }), { choices: '1) ATP → energy', correct: '' });
+check('matching pair wins over text (Canvas repeats the left side in text)',
+  c.quizAnswerText_({ text: 'Stomach', left: 'Stomach', right: 'Acid digestion' }),
+  'Stomach → Acid digestion');
 check('numerical answer with margin',
   c.quizAnswerText_({ exact: 7.4, margin: 0.2 }), '7.4 ± 0.2');
 

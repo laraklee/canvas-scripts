@@ -239,12 +239,15 @@ function quizAnswerCells_(question) {
   return { choices, correct };
 }
 
-/** One answer's text: plain text, else its HTML as text, else matching or numeric parts. */
+/**
+ * One answer's text: a matching pair as "left → right" (Canvas also puts the left side in
+ * text, so pairs come first), else plain text, else its HTML as text, else numeric parts.
+ */
 function quizAnswerText_(answer) {
+  if (answer.left || answer.right) return `${answer.left || ''} → ${answer.right || ''}`;
   if (answer.text) return String(answer.text);
   const html = quizHtmlText_(answer.html);
   if (html) return html;
-  if (answer.left || answer.right) return `${answer.left || ''} → ${answer.right || ''}`;
   if (answer.exact !== undefined && answer.exact !== null) {
     return `${answer.exact}` + (Number(answer.margin) ? ` ± ${answer.margin}` : '');
   }

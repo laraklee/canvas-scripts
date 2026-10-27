@@ -1,6 +1,6 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-10-26)**
+> **Where we left off (current state, 2026-10-26 evening)**
 >
 > - **Overall:** the move off the legacy code is **finished**: every tool Lara used in
 >   legacy is ported and tested (legacy review finished 2026-10-20, see
@@ -8,6 +8,37 @@
 >   Gastronomy all run the same code** (backup tool steps 1-3 included; Biology and AI9
 >   pushed 2026-10-26 from the Mac, Lara's OK), which matches GitHub. Changes
 >   go to one workbook first (usually Biology), then the others after Lara's OK.
+> - **Now working on: Classic quiz tools (started 2026-10-26 evening, PC).** Lara's two
+>   long-running Canvas problems: (1) editing a Classic quiz's question groups ("pick 3 of
+>   7"), some in the quiz and some pulling from question banks, without losing the
+>   structure; (2) pictures teachers can see but students can't (stored in the course the
+>   quiz was copied from, or hidden/locked; sometimes only one or two students miss one).
+>   **API, not QTI export (decided 2026-10-26):** a QTI export of the 3.1 Test (course
+>   4791) showed the full group structure and packed its 6 images, but nothing about
+>   whether a file is hidden or locked, and editing has to go through the API anyway.
+>   QTI stays a possible way to read **bank questions**, which Canvas's API doesn't list
+>   (the 3.1 Test has no banks; Lara is exporting one that does). One image there carried
+>   a leftover `data-api-endpoint` tag for course 184 while its `src` was this course's
+>   copy; step 2 should flag such mismatches. Plan: (1) read-only structure report;
+>   (2) picture check (who owns each file, hidden/locked, other course, personal files,
+>   outside site); (3) later, editing groups from the sheet (writes: spell out first,
+>   `canvasWrite_`, dry run). A whole-course picture scan can come later (Lara).
+>   **Step 1 built and tested 2026-10-26 (commit c45a0b6; pushed to Biology only):** new
+>   `QuizReport.js`, `runQuizReport` (menu: Canvas Tools › Quiz report (this tab)). A1
+>   "Quiz link:", **B1 = the whole Classic quiz link** (not the bare ID); works on any tab
+>   whose A1 says that, else opens/makes "Quiz report". Rows 3+ replaced each run: summary
+>   (title, published, points in Canvas vs. found, points check), then group rows (gray:
+>   name, pick, of, points each, In quiz / Bank) with their questions (type, points, text
+>   with `[picture]`, choices, correct numbers) in quiz order, and a **Check** column
+>   (picks more than it has, picks 0, no correct answer, no text, group unreadable).
+>   Groups are found through their questions (no list-groups endpoint), so bank groups
+>   are invisible; the points check reports the missing points. **Lara's test on the 3.1
+>   Test: 19 groups, 65 questions, 50 of 50 points, nothing flagged, 8 `[picture]`
+>   questions (same as the export).** Fix after the test (not yet pushed): matching
+>   questions showed only the left side; now "left → right". Read-only; no new
+>   permissions. Offline check `scripts/checks/quiz-report.check.js`. **Next:** run it on a
+>   bank quiz (points check should show the gap), then step 2. The **overrides / update
+>   dates question** is still open, set aside by Lara (not pressing).
 > - **Newest tools (details under Recent history):** Pull scores and Post comments
 >   (2026-10-23); green-button descriptions and "only a ticked Published box publishes"
 >   (tested 2026-10-25); Export to Google Docs (tested in Gastronomy 2026-10-25).
