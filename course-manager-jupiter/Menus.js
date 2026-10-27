@@ -7,7 +7,7 @@
  *   every button keeps working.
  *   - Canvas Tools: doing things (create, reorder, groups, rubrics, Jupiter, grading
  *     sheet one-assignment tools, list course content and export to Google
- *     Docs, seating),
+ *     Docs, Classic quiz report, seating),
  *     and Course check (read-only report, CourseCheck.js) at the bottom.
  *   - Setup & Data: refreshing reference tables, Jupiter categories (manual, on purpose),
  *     and setup / safety checks.
@@ -56,6 +56,7 @@ function buildMenus_() {
       .addItem('Post comments from this column (ID in row 2)', 'postCommentsForActiveColumn'))
     .addItem('List course content (this tab)', 'listCourseContent')
     .addItem('Export to Google Docs (this tab)', 'exportCanvasToDocs')
+    .addItem('Quiz report (this tab)', 'runQuizReport')
     .addSeparator()
     .addItem('Build seating chart', 'buildSeatingChart')
     .addSeparator()
