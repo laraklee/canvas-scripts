@@ -57,19 +57,14 @@
 >   adjusting. Read-only; no new permissions.
 >   **Housekeeping:** `Quiz-samples/` (QTI exports, no student data) is untracked on the
 >   PC; next time add it to `.gitignore` or move the exports out of the project.
-> - **User guide: draft next session (Lara, 2026-10-26).** New
->   `course-manager-jupiter/USER-GUIDE.md`, written for **other teachers who weren't here**
->   (so it covers setup too: Canvas token in User Properties, first permission prompts,
->   copying the workbook and setting `cfg_CourseID`, what dry run means). One short section
->   per tool: what it's for; tab setup (labels, cells, checkboxes); steps; what colors and
->   notes mean; whether it changes Canvas and whether dry run applies. Draft from this
->   brief; Lara reviews a few tools at a time; maybe link it from the Home tab later. **New
->   rule once it exists:** a tool step isn't done until its guide section is updated, in
->   the same commit (add to the workflow notes). Why: the only how-to record is this brief
->   (written for Claude) and a 3-line README; Lara's "ID or whole URL?" question showed
->   usage details get lost. **Other projects:** `assign-sheet` will need its own
->   instructions eventually (after this one; no date); `anonymize-submissions` needs none
->   (its instructions are in the workbook).
+> - **User guide: first draft 2026-10-27.** `USER-GUIDE.md` (this folder), written for
+>   **other teachers who weren't here**: setup, permissions, safety, then one section per
+>   tool. Built from the old quick-start `docs/user-manual.md` (moved here and renamed)
+>   plus the tools added since 2026-10-21 (grading sheet, course backup, Quiz report,
+>   seating chart). **Stays a draft until a new teacher tests it** (Lara). Rule (in
+>   CLAUDE.md): update it in the same commit as any change a teacher would see. A shared
+>   Google Doc copy goes in Drive folder TeacherTools once tested (assign-sheet's is
+>   there already). Maybe link it from the Home tab later.
 > - **Newest tools (details under Recent history):** Pull scores and Post comments
 >   (2026-10-23); green-button descriptions and "only a ticked Published box publishes"
 >   (tested 2026-10-25); Export to Google Docs (tested in Gastronomy 2026-10-25).

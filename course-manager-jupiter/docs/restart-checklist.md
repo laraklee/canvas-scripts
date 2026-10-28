@@ -1,7 +1,7 @@
 # Getting started again (paste onto the Home tab)
 
 For coming back to the code after a long break. Using the workbook day to day needs none
-of this; see `user-manual.md`.
+of this; see `USER-GUIDE.md` in the project folder.
 
 ## Mac
 
