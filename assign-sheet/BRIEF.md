@@ -43,8 +43,10 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 >   dates now live here.
 > - **User guide (2026-10-27):** `USER-GUIDE.md` first draft, written for other
 >   teachers. Lara skimmed it; real testing waits for a new user. Keep it updated in the
->   same commit as any change a teacher would see (CLAUDE.md rule). A shared Google Doc
->   copy is planned, updated at push time.
+>   same commit as any change a teacher would see (CLAUDE.md rule). **Google Doc copy:**
+>   "Assignment Sheet — User Guide", ID `1Dq_05RfbhIUwW_0yK3RuiO0Hn9ud0Hbl6mFx1ba7vXw`, in
+>   Drive folder TeacherTools. Replace its contents (same link) at push time; strip the
+>   `<!-- -->` notes first.
 > - **Next:** nothing planned. Shelved ideas: per-section (override) dates in Assignment
 >   Dates (no overrides this year); sending name/points from Assignment Dates.
 > - A new Google service in the code (e.g. `MailApp`, `openById`) needs its scope added

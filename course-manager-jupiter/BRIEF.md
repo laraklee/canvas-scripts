@@ -62,9 +62,13 @@
 >   tool. Built from the old quick-start `docs/user-manual.md` (moved here and renamed)
 >   plus the tools added since 2026-10-21 (grading sheet, course backup, Quiz report,
 >   seating chart). **Stays a draft until a new teacher tests it** (Lara). Rule (in
->   CLAUDE.md): update it in the same commit as any change a teacher would see. A shared
->   Google Doc copy goes in Drive folder TeacherTools once tested (assign-sheet's is
->   there already). Maybe link it from the Home tab later.
+>   CLAUDE.md): update it in the same commit as any change a teacher would see. **Google
+>   Doc copy** (made 2026-10-27, so new teachers can read it in Docs): "Course Manager
+>   (Jupiter edition) — User Guide", ID `1kljRuoqQT1q4YVXbRJBsnfyXtSdxZ-oCqzByUl8AhwQ`, in
+>   Drive folder TeacherTools (`1TDwmuQh4buJ6VTMIpEFKqwE8rl5JU2zm`). When the guide
+>   changes, replace this Doc's contents (same link) at push time. Made by uploading the
+>   Markdown (comments stripped) through the Google Drive connector; 4-byte emoji (🏠 🚀)
+>   show as squares, which Lara accepts. Maybe link it from the Home tab later.
 > - **Newest tools (details under Recent history):** Pull scores and Post comments
 >   (2026-10-23); green-button descriptions and "only a ticked Published box publishes"
 >   (tested 2026-10-25); Export to Google Docs (tested in Gastronomy 2026-10-25).
