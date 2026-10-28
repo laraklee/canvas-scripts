@@ -1,7 +1,8 @@
 # assign-sheet — Project Brief
 
 The Biology course Assignment sheet (script ID `145GSzd8oPIJ…`). Menu **Canvas Tools**.
-Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of the
+Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it does
+not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
 > **Where we left off (2026-10-20)**
@@ -40,6 +41,10 @@ Builds the Q1–Q4 schedule sheets from the master calendar, and posts rows of t
 > - **Docs updated:** `course-manager-jupiter/docs/still-in-legacy.md`, the function map,
 >   and the porting summary record that calendar events, announcements, and assignment
 >   dates now live here.
+> - **User guide (2026-10-27):** `USER-GUIDE.md` first draft, written for other
+>   teachers. Lara skimmed it; real testing waits for a new user. Keep it updated in the
+>   same commit as any change a teacher would see (CLAUDE.md rule). A shared Google Doc
+>   copy is planned, updated at push time.
 > - **Next:** nothing planned. Shelved ideas: per-section (override) dates in Assignment
 >   Dates (no overrides this year); sending name/points from Assignment Dates.
 > - A new Google service in the code (e.g. `MailApp`, `openById`) needs its scope added

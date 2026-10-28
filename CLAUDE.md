@@ -77,6 +77,12 @@ reviewable steps over large multi-file changes.
 - Before working in a project folder, read its `BRIEF.md` if it has one. The brief
   adds project-specific rules and decisions; if it ever conflicts with this file,
   this file wins.
+- **User guides:** a project with a `USER-GUIDE.md` (written for other teachers) must
+  have it updated in the **same commit** as any change a teacher would see: menu
+  labels, tabs, columns, colors, statuses, or messages. Write about what's on screen,
+  not the code. The review summary says which guide sections changed, or why none
+  needed to. The Markdown file is the master copy; when the change is pushed to
+  Google, also update the shared Google Doc copy of the guide.
 - Commit small, focused changes with clear messages.
 - To publish changes to Google: show the diff, commit, confirm with Lara, then
   `clasp push` from that project's folder. Always commit before `clasp push` so the
