@@ -15,7 +15,17 @@
  *   Groups are created empty (no members), so no student data is involved. Both writes ask
  *   first and go through canvasWrite_, so nothing is sent while dry run is ON. Logs counts
  *   only; messages give row numbers and Canvas error types, never Canvas's text.
- * Canvas endpoints called: none directly; writes below go through canvasWrite_.
+ *   - pullGroupsForActiveColumn (menu: Canvas Tools › Groups; read-only): on a grading
+ *     sheet, the clicked column's row 2 holds a group category ID. Writes each student's
+ *     current group name into their row (blank if in no group) and gives the student
+ *     cells a dropdown of the set's group names, so names can be picked without typos.
+ *     Same row rules and replace-question as Pull scores (planScorePull_, scoreRuns_ in
+ *     AssignmentColumn.js). Student IDs stay in the sheet; messages give counts and group
+ *     names only.
+ * Canvas endpoints called (GET via canvasGet_, Pull groups only):
+ *   /api/v1/group_categories/:category
+ *   /api/v1/group_categories/:category/groups
+ *   /api/v1/groups/:group/users
  * Canvas write operations (via canvasWrite_, so DRY_RUN applies):
  *   POST /api/v1/courses/:course/group_categories with name
  *   POST /api/v1/group_categories/:category/groups with name
@@ -178,6 +188,125 @@ function createGroups() {
     reportRefreshFailure_('Create groups', 'Groups already created keep their IDs on the ' +
       'sheet; run Create groups again to finish the rest.', error);
   }
+}
+
+/**
+ * Menu: Canvas Tools › Groups › Pull groups into this column. Read-only in Canvas.
+ * Nothing on the sheet changes unless Canvas answers and (if cells are filled) you say Yes.
+ */
+function pullGroupsForActiveColumn() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const title = 'Pull groups';
+  try {
+    const sheet = ss.getActiveSheet();
+    checkGradingSheet_(sheet);
+    const target = readGroupColumn_(sheet);
+    const courseId = getCourseIdForRefresh_();
+
+    ss.toast('Reading groups from Canvas…', title, -1);
+    const category = canvasStep_('group set request', () =>
+      canvasGet_(`/group_categories/${target.categoryId}`));
+    if (jupiterId_(category.course_id) !== courseId) {
+      throw sheetProblem_(`Group set ${target.categoryId} is not in this workbook's course ` +
+        `(${courseId}). Check row 2 of column ${target.letter}.`);
+    }
+    const groups = canvasStep_('groups request', () =>
+      canvasGet_(`/group_categories/${target.categoryId}/groups`));
+    const members = groups.map(group => canvasStep_('group members request', () =>
+      canvasGet_(`/groups/${group.id}/users`)));
+    const membership = groupMembership_(groups, members);
+
+    const rows = target.lastRow - ROSTER_FIRST_ROW + 1;
+    if (rows < 1) throw sheetProblem_('There are no student rows (from row 3) on this sheet.');
+    const userIds = sheet.getRange(ROSTER_FIRST_ROW, 1, rows, 1).getValues();
+    const current = sheet.getRange(ROSTER_FIRST_ROW, target.column, rows, 1).getValues();
+    // planScorePull_ works for any "User ID → value" map: here "scored" means in a group
+    // and "missing" means in no group.
+    const plan = planScorePull_(userIds, current, membership.groupOf, ROSTER_FIRST_ROW);
+    if (!plan.writes.length) {
+      throw sheetProblem_('No row from 3 down has a Canvas User ID in column A. ' +
+        'Run CreateRoster first.');
+    }
+    const onSheet = new Set(userIds.map(cells => jupiterId_(cells.slice(0, 1)[0])));
+    const notOnSheet = [...membership.groupOf.keys()].filter(id => !onSheet.has(id)).length;
+
+    const setName = String(category.name || '').trim() || 'this group set';
+    ss.toast('', title, 1);
+    if (plan.filled) {
+      const answer = ui.alert(title, `"${setName}" (course ${courseId})\n\n${plan.filled} ` +
+        `student cell(s) in column ${target.letter} already have something in them. ` +
+        'Replace them with the groups from Canvas?', ui.ButtonSet.YES_NO);
+      if (answer !== ui.Button.YES) {
+        ui.alert(title, 'Nothing was changed.', ui.ButtonSet.OK);
+        return;
+      }
+    }
+
+    const rule = membership.names.length ? SpreadsheetApp.newDataValidation()
+      .requireValueInList(membership.names, true).setAllowInvalid(false).build() : null;
+    scoreRuns_(plan.writes).forEach(run => {
+      const range = sheet.getRange(run.row, target.column, run.values.length, 1);
+      range.setValues(run.values);
+      if (rule) range.setDataValidation(rule);
+    });
+
+    console.log(`Pull groups: ${groups.length} group(s), ${plan.writes.length} student ` +
+      `row(s), ${plan.scored} in a group, ${notOnSheet} member(s) not on the sheet.`);
+    ui.alert(title, `"${setName}": ${groups.length} group(s). Column ${target.letter} ` +
+      `updated for ${plan.writes.length} student(s): ${plan.scored} in a group, ` +
+      `${plan.missing} in none (blank).` +
+      (rule ? '\n\nEach student cell now has a dropdown of the group names.' :
+        '\n\nThis set has no groups yet, so no dropdown was added. Create groups first.') +
+      (notOnSheet ? `\n\n${notOnSheet} group member(s) have no row on this sheet ` +
+        '(for example, another section, a dropped student, or the Test Student).' : '') +
+      (membership.duplicates.length ? '\n\nMore than one group is named: ' +
+        membership.duplicates.map(name => `"${name}"`).join(', ') +
+        '. Rename them in Canvas so each name is different.' : ''), ui.ButtonSet.OK);
+  } catch (error) {
+    reportRefreshFailure_(title, 'The sheet was not changed.', error);
+  }
+}
+
+/**
+ * The clicked column on a grading sheet: { column, letter, categoryId, lastRow }.
+ * Refuses the roster and Jupiter ID columns (A–F) and a row 2 that isn't an ID number.
+ */
+function readGroupColumn_(sheet) {
+  const column = sheet.getActiveCell().getColumn();
+  const letter = sheet.getRange(1, column).getA1Notation().replace(/\d+/g, '');
+  if (column <= ROSTER_JUPITER_ID_COLUMN) {
+    throw sheetProblem_('Click a cell in a groups column first (G or later). ' +
+      'Columns A–F hold the roster and Jupiter IDs.');
+  }
+  const categoryId = jupiterId_(sheet.getRange(ASSIGNMENT_ID_ROW, column).getValue());
+  if (!/^\d+$/.test(categoryId)) {
+    throw sheetProblem_(`Row 2 of column ${letter} should hold the group set's category ID ` +
+      `(the number Create group category puts in ${GROUPS_CELLS.CATEGORY_ID} of ` +
+      `${TOOL_SHEETS.CREATE_GROUPS}).`);
+  }
+  return { column, letter, categoryId, lastRow: sheet.getLastRow() };
+}
+
+/**
+ * groups is Canvas's group list; members holds each group's user list, in the same order.
+ * Returns { groupOf: Map of User ID → group name, names: group names in Canvas's order
+ * (each once), duplicates: names used by more than one group }.
+ */
+function groupMembership_(groups, members) {
+  const groupOf = new Map();
+  const names = [];
+  const duplicates = [];
+  groups.forEach((group, i) => {
+    const name = String(group.name || '').trim();
+    if (names.includes(name)) {
+      if (!duplicates.includes(name)) duplicates.push(name);
+    } else {
+      names.push(name);
+    }
+    (members.slice(i, i + 1)[0] || []).forEach(user => groupOf.set(jupiterId_(user.id), name));
+  });
+  return { groupOf, names, duplicates };
 }
 
 function getGroupsSheet_(ss) {
