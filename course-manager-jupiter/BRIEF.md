@@ -69,6 +69,22 @@
 >   changes, replace this Doc's contents (same link) at push time. Made by uploading the
 >   Markdown (comments stripped) through the Google Drive connector; 4-byte emoji (🏠 🚀)
 >   show as squares, which Lara accepts. Maybe link it from the Home tab later.
+> - **Template copy (plan, Lara 2026-10-27, not started).** Lara makes a copy of a live
+>   workbook, scrubs the copy (never the live one), and keeps it in her **Shared** folder
+>   in Drive for other teachers. Its script ID gets its own clasp file (like the AI9 and
+>   Gastronomy ones) and it is pushed **last** (Biology → AI9, Gastronomy → template); ask
+>   before the first push. clasp updates code only: new tabs, labels, or buttons go onto
+>   the template by hand. How teachers' own copies get updates: later (copies are frozen
+>   when made).
+>   **Scrub list:** student data (ref_peopleList; grading sheet columns A–F, scores,
+>   comments, and their "Commented…" notes; JupiterExport); hidden tabs and columns;
+>   ref_Config `cfg_CourseID`, `cfg_UserID`, `cfg_CcEmail`, `cfg_SeatingDeckID` (the deck
+>   has student names); course leftovers (CanvasID / Canvas Link / Payload / Status on
+>   createByRow and makeAssignment tabs, Course Check, Quiz report tabs, Export to Google
+>   Docs rows and C1, ref_CourseIDs). Token and version history don't copy. Set dry run
+>   ON in the template. Lara does the final Ctrl+F check for student names and Jupiter
+>   IDs herself: **don't read the template through the Drive connector** (FERPA). Share
+>   view-only, with a `/copy` link.
 > - **Newest tools (details under Recent history):** Pull scores and Post comments
 >   (2026-10-23); green-button descriptions and "only a ticked Published box publishes"
 >   (tested 2026-10-25); Export to Google Docs (tested in Gastronomy 2026-10-25).

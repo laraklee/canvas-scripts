@@ -47,7 +47,15 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 >   "Assignment Sheet — User Guide", ID `1Dq_05RfbhIUwW_0yK3RuiO0Hn9ud0Hbl6mFx1ba7vXw`, in
 >   Drive folder TeacherTools. Replace its contents (same link) at push time; strip the
 >   `<!-- -->` notes first.
-> - **Next:** nothing planned. Shelved ideas: per-section (override) dates in Assignment
+> - **Next: template copy (plan, Lara 2026-10-27, not started).** Lara makes a copy of a
+>   live Assignment sheet, scrubs the copy (never the live sheet), and keeps it in her
+>   **Shared** folder in Drive for other teachers. Its script ID gets its own clasp file
+>   (like `.clasp-gastronomy.json`), and it is pushed **last** (Biology → Gastronomy, AI9 →
+>   template); ask before the first push. Scrub: *Config* B2–B5, calendarEvents rows,
+>   the Assignment Dates tab, Q tabs columns F–I; keep D3/D5 if the master calendar is
+>   shared. Set dry run ON in the template. Share it view-only, with a `/copy` link.
+>   clasp updates code only: tab or label changes go onto the template by hand. How
+>   teachers' own copies get updates: later (copies are frozen when made). Shelved ideas: per-section (override) dates in Assignment
 >   Dates (no overrides this year); sending name/points from Assignment Dates.
 > - A new Google service in the code (e.g. `MailApp`, `openById`) needs its scope added
 >   to `appsscript.json`, or that item fails with a permission error.
