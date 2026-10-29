@@ -1,13 +1,21 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-10-26 evening)**
+> **Where we left off (current state, 2026-10-29 morning)**
 >
+> - **All three workbooks unified 2026-10-29 (Lara: "push both").** Before: Biology had
+>   everything (7ebff5d); AI9 lacked the comment latest-attempt fix; Gastronomy lacked
+>   Quiz report, both groups tools, and that fix. Pushed AI9 and Gastronomy from the Mac,
+>   then a read-only `clasp clone` of each showed **Biology, AI9, and Gastronomy all match
+>   commit 7ebff5d's code** exactly. No manifest change (no new permissions). Gastronomy
+>   now has the groups write tool for the first time; check its `DRY_RUN` before a real
+>   run. Lara to reload each workbook so the menus update. Notes below that say a tool is
+>   in "Biology only" or "AI9 only" are from before this push.
 > - **Overall:** the move off the legacy code is **finished**: every tool Lara used in
 >   legacy is ported and tested (legacy review finished 2026-10-20, see
->   `docs/still-in-legacy.md`), and the legacy workbooks are retired. **Biology, AI9, and
->   Gastronomy all run the same code** (backup tool steps 1-3 included; Biology and AI9
->   pushed 2026-10-26 from the Mac, Lara's OK), which matches GitHub. Changes
+>   `docs/still-in-legacy.md`), and the legacy workbooks are retired. Changes
 >   go to one workbook first (usually Biology), then the others after Lara's OK.
+>   To check what's live, `clasp clone` each script ID into a scratch folder (read-only)
+>   and diff it against Git.
 > - **Now working on: Classic quiz tools (started 2026-10-26 evening, PC).** Lara's two
 >   long-running Canvas problems: (1) editing a Classic quiz's question groups ("pick 3 of
 >   7"), some in the quiz and some pulling from question banks, without losing the
