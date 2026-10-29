@@ -220,6 +220,8 @@ ID (like Average rows) are never touched. **Read-only.**
 submission for that assignment. **This changes Canvas** (dry run applies), and Canvas
 notifies students as their settings say. Comments only, never grades.
 
+- If a student submitted more than once, the comment goes on their **latest** submission,
+  where they'll see it right away.
 - Each comment cell gets a **note** with its result. A refused cell turns light red. The
   row 1 cell gets a summary note.
 - A cell whose note starts with "Commented" is skipped, so nothing posts twice. Delete

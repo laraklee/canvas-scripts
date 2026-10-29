@@ -332,6 +332,11 @@
 >      starts with "Commented" (any case) are skipped (no double posts; delete the note to
 >      resend). Notes, not Sheets comments: scripts can't create cell comments without the
 >      Drive API, and comments email collaborators. Note triangles can't be colored.
+>      **Latest attempt (2026-10-29, Lara's report):** comments landed on attempt 1 for
+>      students who resubmitted (Canvas's default with no `comment[attempt]`), out of sight.
+>      Now one `GET …/submissions` for the class and each comment sends
+>      `comment[attempt]` = that student's latest attempt (omitted if not submitted). Lara:
+>      latest is the default; a choose-the-attempt option only if she asks.
 >      Lara's decisions: no "clear notes" menu item (she starts a new column instead); no
 >      compatibility with the old Status column (she won't reuse it). Unchanged: posts rows
 >      with a numeric User ID and a comment (display text, trimmed); stop-all errors stop
