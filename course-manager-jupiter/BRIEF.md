@@ -65,6 +65,8 @@
 >   grading-sheet column, row 2 = group category ID; writes each student's current group
 >   (blank if none) and adds a dropdown of the set's group names; checks the set belongs
 >   to `cfg_CourseID`. Offline check `scripts/checks/groups.check.js`.
+>   **Biology note (2026-10-29):** steps 1 and 2 reached Biology early, in the push for
+>   the comment latest-attempt fix (7ebff5d); Lara chose to leave them there (dry run ON).
 >   **Step 2 built 2026-10-29, not yet tested (a write, Lara OK'd the plan):** **Put
 >   students in groups from this column** (`putStudentsInGroupsFromActiveColumn`).
 >   Changes only students whose cell differs from Canvas: add, move, or remove (blank
