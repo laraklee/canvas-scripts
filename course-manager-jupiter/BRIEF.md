@@ -87,9 +87,15 @@
 >   Doc copy** (made 2026-10-27, so new teachers can read it in Docs): "Course Manager
 >   (Jupiter edition) — User Guide", ID `1kljRuoqQT1q4YVXbRJBsnfyXtSdxZ-oCqzByUl8AhwQ`, in
 >   Drive folder TeacherTools (`1TDwmuQh4buJ6VTMIpEFKqwE8rl5JU2zm`). When the guide
->   changes, replace this Doc's contents (same link) at push time. Made by uploading the
+>   changes, edit this Doc in place (same link) at push time. Made by uploading the
 >   Markdown (comments stripped) through the Google Drive connector; 4-byte emoji (🏠 🚀)
 >   show as squares, which Lara accepts. Maybe link it from the Home tab later.
+>   **2026-10-29:** latest-submission bullet (Post comments) added to the Doc in place with
+>   the Google Docs connector (Drive alone can't edit a Doc's text). **Google connectors
+>   (Lara, 2026-10-29):** Drive, Docs and Sheets are connected; Lara set **all their tools,
+>   read-only and write, to Needs approval** in Settings › Connectors, so the app asks her
+>   before every Drive/Docs/Sheets call. CLAUDE.md hard rule 7 also limits them to files
+>   named in a BRIEF or in chat (this Doc is one).
 > - **Template copy (plan, Lara 2026-10-27, not started).** Lara makes a copy of a live
 >   workbook, scrubs the copy (never the live one), and keeps it in her **Shared** folder
 >   in Drive for other teachers. Its script ID gets its own clasp file (like the AI9 and
