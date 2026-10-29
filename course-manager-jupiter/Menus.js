@@ -46,7 +46,9 @@ function buildMenus_() {
       .addItem('Create groups', 'createGroups')
       .addItem('Clear group data', 'clearGroupData')
       .addSeparator()
-      .addItem('Pull groups into this column (set ID in row 2)', 'pullGroupsForActiveColumn'))
+      .addItem('Pull groups into this column (set ID in row 2)', 'pullGroupsForActiveColumn')
+      .addItem('Put students in groups from this column (set ID in row 2)',
+        'putStudentsInGroupsFromActiveColumn'))
     .addSubMenu(ui.createMenu('Rubrics')
       .addItem('Export rubric for Canvas (this tab)', 'exportRubricToCanvasFormat'))
     .addSubMenu(ui.createMenu('Jupiter')

@@ -96,7 +96,7 @@ Google lists what the script may do. It asks to:
 | Post selected rows (createByRow) | Preview (either create tool) |
 | makeAll (makeAssignment) | Refresh tables, Jupiter categories |
 | Push reorder | Update Grades, CreateRoster |
-| Create group category, Create groups | Pull scores, Pull groups |
+| Create group category, Create groups, Put students in groups | Pull scores, Pull groups |
 | Post comments | List course content, Export to Google Docs |
 | | Quiz report, Course check, Build seating chart |
 
@@ -263,6 +263,23 @@ of typing them. If no one is in a group yet, you just get the dropdowns. It asks
 replacing cells that already have something in them, and rows without a user ID are
 never touched. **Read-only.** The summary also says if a group member has no row on the
 sheet, or if two groups share a name.
+
+**Put students in groups from this column.** After Pull groups, pick a group for each
+student from the dropdowns (clear a cell to take a student out of their group). Then
+click in the column and choose **Canvas Tools › Groups › Put students in groups from
+this column**. **This changes Canvas** (dry run applies).
+
+- It compares each cell with Canvas and changes only the students who differ: **add**
+  (in no group yet), **move** (a different group picked), or **remove** (cell blank).
+  Students who aren't on this sheet (another section, the Test Student) are never
+  changed.
+- It shows the counts and the groups affected, and asks before sending.
+- If a cell names a group that isn't in the set, it stops before sending anything and
+  lists the rows. Pick from the dropdown instead (run Pull groups to refresh it).
+- A student Canvas refuses turns light red, and the cell's note says why; the rest still
+  go.
+- It stops itself after about 5 minutes. Running it again is safe: it only does what
+  still differs.
 
 ### Rubrics (Canvas import)
 

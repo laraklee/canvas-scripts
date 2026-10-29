@@ -59,17 +59,23 @@
 >   PC; next time add it to `.gitignore` or move the exports out of the project.
 > - **Groups: putting students in groups (started 2026-10-28, Mac).** Lara wants a faster
 >   way than drag-and-drop; AI9 (quarter course, groups change often) goes **first**,
->   then Biology/Gastronomy after her OK. Step 1 built, not yet tested: **Pull groups into
->   this column** (`pullGroupsForActiveColumn`, Groups.js; Canvas Tools › Groups;
->   read-only): grading-sheet column, row 2 = group category ID; writes each student's
->   current group (blank if none) and adds a dropdown of the set's group names; checks
->   the set belongs to `cfg_CourseID`. Offline check `scripts/checks/groups.check.js`.
->   **Step 2 (planned, not built; a write):** "Put students in groups from this column":
->   names must match the set's groups (stop and list rows if not; don't auto-create),
->   preview + confirm, one `PUT /groups/:id` with `members[]` per group via
->   `canvasWrite_` (dry run). That request **replaces** each group's member list, so the
->   column is the master list. Test first in Sequence 9 how Canvas treats a student
->   already in another group of the same set. CSV download: skipped (no student file).
+>   then Biology/Gastronomy after her OK. **Step 1 done (commit 45fa121, pushed to AI9
+>   2026-10-28; Lara: "It worked GREAT!"):** **Pull groups into this column**
+>   (`pullGroupsForActiveColumn`, Groups.js; Canvas Tools › Groups; read-only):
+>   grading-sheet column, row 2 = group category ID; writes each student's current group
+>   (blank if none) and adds a dropdown of the set's group names; checks the set belongs
+>   to `cfg_CourseID`. Offline check `scripts/checks/groups.check.js`.
+>   **Step 2 built 2026-10-29, not yet tested (a write, Lara OK'd the plan):** **Put
+>   students in groups from this column** (`putStudentsInGroupsFromActiveColumn`).
+>   Changes only students whose cell differs from Canvas: add, move, or remove (blank
+>   cell); students not on the sheet are never touched (AI9 sheets are multi-section).
+>   Per student via `canvasWrite_` (dry run): `DELETE /groups/:old/users/:user`, then
+>   `POST /groups/:new/memberships` {user_id}. Replaced the earlier plan (one
+>   `PUT /groups/:id` with `members[]` per group), which would have dropped members not on
+>   the sheet and can't reliably empty a group. Stops before sending on unknown names or
+>   duplicate group names; no auto-create. Refused rows light red + note; 5-minute stop;
+>   document lock. **Test plan:** dry run in AI9, then a real run moving 2-3 students.
+>   CSV download: skipped (no student file).
 > - **User guide: first draft 2026-10-27.** `USER-GUIDE.md` (this folder), written for
 >   **other teachers who weren't here**: setup, permissions, safety, then one section per
 >   tool. Built from the old quick-start `docs/user-manual.md` (moved here and renamed)
