@@ -66,6 +66,28 @@ all of the code standards yet (see Clean-up list).
 - **The spelling "Etoilles" is kept** because it matches the Canvas group name and
   existing sheet text. Changing it would mean renaming the Canvas group too.
 
+## Open issue (10/29): column G totals are too high
+
+The quarter fix (`67201df`) is live and runs without errors, but with G2 = `2` column G
+came out 1–2 higher than Lara's correct numbers (her column H, "# Badges"), never lower.
+Example rows, G vs H: 2/1, 2/0, 1/0, 3/1, 1/1, 2/0, 4/4.
+
+Suspects (none confirmed):
+1. Etoilles assignments with **no due date**. Canvas puts them in the course's last
+   grading period, which is Q2 for a semester course like Gastronomy.
+2. A Q1 assignment with a **later due date for one section or student**, which Canvas
+   then also counts in Q2.
+3. **Points vs badges**: G adds points; H counts badges. Any Etoilles assignment worth
+   more than 1 point would make G higher.
+
+Next steps:
+- Ask Lara where H comes from in Canvas (for example, the Gradebook filtered to Q2, or a
+  count she does by hand).
+- Proposed, waiting on Lara's yes: a read-only pop-up when Update Etoilles finishes,
+  showing the grading period's start/end dates and each assignment counted (title, due
+  date, points possible). No student data, no new Canvas calls or permissions. Then
+  fix whichever cause it shows.
+
 ## Clean-up list (not done; each one small, one at a time)
 
 1. Rename the token property to `CANVAS_TOKEN` and read the base URL from User
