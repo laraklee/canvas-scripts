@@ -1,25 +1,21 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-10-26 evening)**
+> **Where we left off (current state, 2026-10-29 morning)**
 >
+> - **All three workbooks unified 2026-10-29 (Lara: "push both").** Before: Biology had
+>   everything (7ebff5d); AI9 lacked the comment latest-attempt fix; Gastronomy lacked
+>   Quiz report, both groups tools, and that fix. Pushed AI9 and Gastronomy from the Mac,
+>   then a read-only `clasp clone` of each showed **Biology, AI9, and Gastronomy all match
+>   commit 7ebff5d's code** exactly. No manifest change (no new permissions). Gastronomy
+>   now has the groups write tool for the first time; check its `DRY_RUN` before a real
+>   run. Lara to reload each workbook so the menus update. Notes below that say a tool is
+>   in "Biology only" or "AI9 only" are from before this push.
 > - **Overall:** the move off the legacy code is **finished**: every tool Lara used in
 >   legacy is ported and tested (legacy review finished 2026-10-20, see
->   `docs/still-in-legacy.md`), and the legacy workbooks are retired. **Biology, AI9, and
->   Gastronomy all run the same code** (backup tool steps 1-3 included; Biology and AI9
->   pushed 2026-10-26 from the Mac, Lara's OK), which matches GitHub. Changes
+>   `docs/still-in-legacy.md`), and the legacy workbooks are retired. Changes
 >   go to one workbook first (usually Biology), then the others after Lara's OK.
-> - **NEXT TASK (Lara, 2026-10-28): debug Post comments on resubmitted work.** When a
->   student has **more than one submission (attempt)**, the comment lands on the
->   **earliest** attempt, not the newest one, so it's easy for the student to miss. Lara
->   found it on an AI-graded assignment (about 15 students) and is copying those comments
->   by hand; testing didn't catch it because the test students had one attempt each.
->   Lead, not yet checked: `postCommentsForActiveColumn` (AssignmentColumn.js) sends only
->   `comment[text_comment]`; Canvas's "Grade or comment on a submission" also takes
->   `comment[attempt]`. Possible fix: read each student's current `attempt` (already in
->   the class `GET …/submissions` list) and send it with the comment. Confirm in Canvas's
->   docs first, then test on a student with 2+ attempts (Sequence 9 or sandbox). Still a
->   comment-only write through `canvasWrite_`, no grade fields. The Classic quiz work
->   below waits until this is done.
+>   To check what's live, `clasp clone` each script ID into a scratch folder (read-only)
+>   and diff it against Git.
 > - **Now working on: Classic quiz tools (started 2026-10-26 evening, PC).** Lara's two
 >   long-running Canvas problems: (1) editing a Classic quiz's question groups ("pick 3 of
 >   7"), some in the quiz and some pulling from question banks, without losing the
@@ -69,6 +65,27 @@
 >   adjusting. Read-only; no new permissions.
 >   **Housekeeping:** `Quiz-samples/` (QTI exports, no student data) is untracked on the
 >   PC; next time add it to `.gitignore` or move the exports out of the project.
+> - **Groups: putting students in groups (started 2026-10-28, Mac).** Lara wants a faster
+>   way than drag-and-drop; AI9 (quarter course, groups change often) goes **first**,
+>   then Biology/Gastronomy after her OK. **Step 1 done (commit 45fa121, pushed to AI9
+>   2026-10-28; Lara: "It worked GREAT!"):** **Pull groups into this column**
+>   (`pullGroupsForActiveColumn`, Groups.js; Canvas Tools › Groups; read-only):
+>   grading-sheet column, row 2 = group category ID; writes each student's current group
+>   (blank if none) and adds a dropdown of the set's group names; checks the set belongs
+>   to `cfg_CourseID`. Offline check `scripts/checks/groups.check.js`.
+>   **Biology note (2026-10-29):** steps 1 and 2 reached Biology early, in the push for
+>   the comment latest-attempt fix (7ebff5d); Lara chose to leave them there (dry run ON).
+>   **Step 2 built 2026-10-29, not yet tested (a write, Lara OK'd the plan):** **Put
+>   students in groups from this column** (`putStudentsInGroupsFromActiveColumn`).
+>   Changes only students whose cell differs from Canvas: add, move, or remove (blank
+>   cell); students not on the sheet are never touched (AI9 sheets are multi-section).
+>   Per student via `canvasWrite_` (dry run): `DELETE /groups/:old/users/:user`, then
+>   `POST /groups/:new/memberships` {user_id}. Replaced the earlier plan (one
+>   `PUT /groups/:id` with `members[]` per group), which would have dropped members not on
+>   the sheet and can't reliably empty a group. Stops before sending on unknown names or
+>   duplicate group names; no auto-create. Refused rows light red + note; 5-minute stop;
+>   document lock. **Test plan:** dry run in AI9, then a real run moving 2-3 students.
+>   CSV download: skipped (no student file).
 > - **User guide: first draft 2026-10-27.** `USER-GUIDE.md` (this folder), written for
 >   **other teachers who weren't here**: setup, permissions, safety, then one section per
 >   tool. Built from the old quick-start `docs/user-manual.md` (moved here and renamed)
@@ -78,9 +95,15 @@
 >   Doc copy** (made 2026-10-27, so new teachers can read it in Docs): "Course Manager
 >   (Jupiter edition) — User Guide", ID `1kljRuoqQT1q4YVXbRJBsnfyXtSdxZ-oCqzByUl8AhwQ`, in
 >   Drive folder TeacherTools (`1TDwmuQh4buJ6VTMIpEFKqwE8rl5JU2zm`). When the guide
->   changes, replace this Doc's contents (same link) at push time. Made by uploading the
+>   changes, edit this Doc in place (same link) at push time. Made by uploading the
 >   Markdown (comments stripped) through the Google Drive connector; 4-byte emoji (🏠 🚀)
 >   show as squares, which Lara accepts. Maybe link it from the Home tab later.
+>   **2026-10-29:** latest-submission bullet (Post comments) added to the Doc in place with
+>   the Google Docs connector (Drive alone can't edit a Doc's text). **Google connectors
+>   (Lara, 2026-10-29):** Drive, Docs and Sheets are connected; Lara set **all their tools,
+>   read-only and write, to Needs approval** in Settings › Connectors, so the app asks her
+>   before every Drive/Docs/Sheets call. CLAUDE.md hard rule 7 also limits them to files
+>   named in a BRIEF or in chat (this Doc is one).
 > - **Template copy (plan, Lara 2026-10-27, not started).** Lara makes a copy of a live
 >   workbook, scrubs the copy (never the live one), and keeps it in her **Shared** folder
 >   in Drive for other teachers. Its script ID gets its own clasp file (like the AI9 and
@@ -325,6 +348,12 @@
 >      starts with "Commented" (any case) are skipped (no double posts; delete the note to
 >      resend). Notes, not Sheets comments: scripts can't create cell comments without the
 >      Drive API, and comments email collaborators. Note triangles can't be colored.
+>      **Latest attempt (2026-10-29, Lara's report):** comments landed on attempt 1 for
+>      students who resubmitted (Canvas's default with no `comment[attempt]`), out of sight.
+>      Now one `GET …/submissions` for the class and each comment sends
+>      `comment[attempt]` = that student's latest attempt (omitted if not submitted). Lara:
+>      latest is the default; a choose-the-attempt option only if she asks. Pushed to Biology;
+>      **Lara tested live 2026-10-29: "The comments worked fine this time."**
 >      Lara's decisions: no "clear notes" menu item (she starts a new column instead); no
 >      compatibility with the old Status column (she won't reuse it). Unchanged: posts rows
 >      with a numeric User ID and a comment (display text, trimmed); stop-all errors stop

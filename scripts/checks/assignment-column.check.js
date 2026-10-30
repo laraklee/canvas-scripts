@@ -130,6 +130,17 @@ check('refused status text', [c.commentRefusedStatus_('NOT_ALLOWED'),
   c.commentRefusedStatus_('HTTP_400'), c.commentRefusedStatus_('ODD')],
 ['Not sent: not allowed (403)', 'Not sent: Canvas error (HTTP 400)', 'Not sent: Canvas error']);
 
+// ---- Post comments: which attempt ----
+const attempts = c.latestAttempts_([{ user_id: 101, attempt: 3 }, { user_id: 102, attempt: 1 },
+  { user_id: 103, attempt: null }, { user_id: 104 }]);
+check('latest attempt per student; not-submitted left out',
+  [...attempts.entries()], [['101', 3], ['102', 1]]);
+check('not a list: no attempts', c.latestAttempts_(null).size, 0);
+check('comment goes on the latest attempt', c.commentFields_('Good', attempts.get('101')),
+  { text_comment: 'Good', attempt: 3 });
+check('no attempt yet: text only', c.commentFields_('Good', attempts.get('103')),
+  { text_comment: 'Good' });
+
 // ---- Post comments: row 1 summary note ----
 check('summary: real run', c.commentSummary_('10/23 9:00 AM',
   { sent: 15, refusedRows: [7], notStarted: 0 }, 3, false),

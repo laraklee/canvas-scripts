@@ -24,7 +24,9 @@
  *   /api/v1/courses/:course/assignments/:assignment/submissions
  * Canvas write operations (via canvasWrite_, so dry run applies):
  *   PUT /api/v1/courses/:course/assignments/:assignment/submissions/:user with only
- *   comment[text_comment] (Post comments). Canvas notifies the student per their settings.
+ *   comment[text_comment] and comment[attempt] (Post comments; the attempt is the
+ *   student's latest, so resubmitters see it). Canvas notifies the student per their
+ *   settings.
  * Required: User Properties CANVAS_BASE_URL and CANVAS_TOKEN; named range cfg_CourseID;
  *   Script Property DRY_RUN (unset means dry run is ON).
  */
@@ -198,6 +200,10 @@ function postCommentsForActiveColumn() {
     // Also confirms the ID is an assignment in this course before anything is sent.
     const assignment = canvasStep_('assignment request', () =>
       canvasGet_(`/courses/${courseId}/assignments/${target.assignmentId}`));
+    // Without an attempt number Canvas files the comment on attempt 1, where a student
+    // who resubmitted won't see it; so each comment goes on the latest attempt.
+    const attempts = latestAttempts_(canvasStep_('submissions request', () =>
+      canvasGet_(`/courses/${courseId}/assignments/${target.assignmentId}/submissions`)));
     const name = String(assignment.name || '').trim() || 'this assignment';
     const dryRun = isDryRun_();
     const answer = ui.alert(dryRun ? `${title} (dry run)` : title,
@@ -219,7 +225,7 @@ function postCommentsForActiveColumn() {
     ss.toast(`Posting ${plan.posts.length} comment(s)…`, title, -1);
     const result = sendComments_(plan.posts, post => canvasWrite_('PUT',
       `/courses/${courseId}/assignments/${target.assignmentId}/submissions/${post.userId}`,
-      { comment: { text_comment: post.text } }),
+      { comment: commentFields_(post.text, attempts.get(post.userId)) }),
     (row, status, refused) => {
       const cell = sheet.getRange(row, target.column).setNote(status);
       // Only this tool's red comes off, so colors you set yourself stay.
@@ -273,6 +279,26 @@ function planComments_(userIds, comments, notes, firstRow) {
     plan.posts.push({ row: firstRow + i, userId, text });
   });
   return plan;
+}
+
+/**
+ * User ID → latest attempt number, from the class's submissions list. Students with no
+ * attempt yet (not submitted) are left out, so their comment goes without one.
+ */
+function latestAttempts_(submissions) {
+  const attempts = new Map();
+  (Array.isArray(submissions) ? submissions : []).forEach(submission => {
+    const attempt = Number(submission.attempt);
+    if (Number.isInteger(attempt) && attempt > 0) {
+      attempts.set(jupiterId_(submission.user_id), attempt);
+    }
+  });
+  return attempts;
+}
+
+/** The comment fields to send: the text, plus the attempt to file it on when known. */
+function commentFields_(text, attempt) {
+  return attempt ? { text_comment: text, attempt } : { text_comment: text };
 }
 
 /**
