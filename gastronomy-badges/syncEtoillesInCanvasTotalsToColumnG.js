@@ -6,7 +6,7 @@
  * The quarter number is typed in G2 (for example 2 or Q2). It is matched to
  * the Canvas grading period whose title contains that number; Canvas decides
  * which assignments are in the period from their due dates. When it finishes,
- * a pop-up lists the assignments it counted (temporary check, 10/29).
+ * a pop-up lists the assignments it counted.
  *
  * Canvas endpoints (all GET):
  * - /api/v1/courses/:id/grading_periods
@@ -218,8 +218,8 @@ function syncEtoillesInCanvasTotalsToColumnG() {
     10
   );
 
-  // Temporary check (10/29): list what was counted so it can be compared
-  // with Canvas's Q2-filtered grade report. Remove once column G matches.
+  // List what was counted so it can be compared with Canvas's
+  // quarter-filtered grade report.
   showCountedAssignments_(ss, period, periodAssignments);
 }
 

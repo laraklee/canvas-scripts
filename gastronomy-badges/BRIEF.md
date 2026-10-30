@@ -22,8 +22,13 @@ all of the code standards yet (see Clean-up list).
      into column G (blank when the total is 0). G2 is matched to the Canvas grading
      period whose title contains that number; Canvas decides which assignments are in
      it from their due dates. If nothing matches, the message lists Canvas's period
-     titles. Fixed 10/29: it used to total the whole year.
-  3. Writes the time it finished into B1.
+     titles. Fixed 10/29: it used to total the whole year. It adds every score in the
+     group, including assignments marked "do not count towards the final grade".
+  3. Shows a pop-up (click OK) with the quarter's dates and each assignment counted:
+     title, due date, points possible, and a note if some students or sections have a
+     different due date. No student data. Added 10/29 to find the column G issue; Lara
+     kept it as a useful check.
+  4. Writes the time it finished into B1.
 - **1. Set API Key and Base URL** (`setUserProperties`): prompts for the Canvas token.
 - **2. Run FULL Data Refresh** (`runFullDataRefresh`): writes this sheet's ID into
   `*Config*`!B6, then rebuilds the `*peopleList*` and `*assignmentGroups*` tabs.
@@ -66,27 +71,17 @@ all of the code standards yet (see Clean-up list).
 - **The spelling "Etoilles" is kept** because it matches the Canvas group name and
   existing sheet text. Changing it would mean renaming the Canvas group too.
 
-## Open issue (10/29): column G totals are too high
+## Solved (10/29): column G totals were too high
 
-The quarter fix (`67201df`) is live and runs without errors, but with G2 = `2` column G
-came out 1–2 higher than Lara's correct numbers (her column H, "# Badges"), never lower.
-Example rows, G vs H: 2/1, 2/0, 1/0, 3/1, 1/1, 2/0, 4/4.
-
-Suspects (none confirmed):
-1. Etoilles assignments with **no due date**. Canvas puts them in the course's last
-   grading period, which is Q2 for a semester course like Gastronomy.
-2. A Q1 assignment with a **later due date for one section or student**, which Canvas
-   then also counts in Q2.
-3. **Points vs badges**: G adds points; H counts badges. Any Etoilles assignment worth
-   more than 1 point would make G higher.
-
-Next steps:
-- Ask Lara where H comes from in Canvas (for example, the Gradebook filtered to Q2, or a
-  count she does by hand).
-- Proposed, waiting on Lara's yes: a read-only pop-up when Update Etoilles finishes,
-  showing the grading period's start/end dates and each assignment counted (title, due
-  date, points possible). No student data, no new Canvas calls or permissions. Then
-  fix whichever cause it shows.
+With G2 = `2`, column G came out 1–2 higher than Lara's numbers from Canvas's
+Q2-filtered grade summary (her temporary column H), never lower. The pop-up (`7c95d55`)
+showed the right Q2 badge assignments, all due in Q2 with no other due dates, plus
+**"2A Culinary Transformations Instructions" (2 pts)**, which is in the Etoilles in
+Canvas group. Lara thinks it is marked "do not count towards the final grade", so
+Canvas's summary leaves it out while column G adds it. **Lara's decision: no code
+change**; she knows why and can move 2A out of the group if she wants G to match.
+If that comes up again, the fix would be to skip assignments with
+`omit_from_final_grade` (already in the assignment data; no new calls).
 
 ## Clean-up list (not done; each one small, one at a time)
 
