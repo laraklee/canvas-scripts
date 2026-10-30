@@ -11,6 +11,10 @@ Brought into this repo 10/29 with `clasp clone`; the first commit (`86811ca`) is
 code exactly as it was in Google. It was written before CLAUDE.md, so it doesn't follow
 all of the code standards yet (see Clean-up list).
 
+**No user guide yet** (noted 10/29). Unlike assign-sheet and course-manager-jupiter,
+this project has no `USER-GUIDE.md` for other teachers and no Google Doc copy. Not
+started; when one is written, CLAUDE.md's user-guide rules apply from then on.
+
 ## Menu
 
 - **Update Etoilles** (`syncRosterGradesAndEtoilles`): run from a roster sheet.
