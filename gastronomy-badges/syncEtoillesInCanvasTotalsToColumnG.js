@@ -1,29 +1,33 @@
 /**
- * Totals each student's raw Canvas points for all assignments in the
- * "Etoilles in Canvas" assignment group and writes the total to Column G
- * of the active roster sheet.
+ * Totals each student's raw Canvas points for the assignments in the
+ * "Etoilles in Canvas" assignment group that fall in one quarter, and writes
+ * the total to Column G of the active roster sheet.
+ *
+ * The quarter number is typed in G2 (for example 2 or Q2). It is matched to
+ * the Canvas grading period whose title contains that number; Canvas decides
+ * which assignments are in the period from their due dates.
+ *
+ * Canvas endpoints (all GET):
+ * - /api/v1/courses/:id/grading_periods
+ * - /api/v1/courses/:id/assignment_groups?grading_period_id=…&include[]=assignments
+ * - /api/v1/courses/:id/assignments/:id/submissions
  *
  * Active roster sheet:
  * - Column B: Canvas User ID
+ * - G2: Quarter number
  * - Column G: Output total
  * - Row 3 onward: Students
- *
- * *assignmentGroups* sheet:
- * - Column A: Assignment ID
- * - Column D: Group Name
  */
 function syncEtoillesInCanvasTotalsToColumnG() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var rosterSheet = ss.getActiveSheet();
-  var assignmentGroupsSheet = ss.getSheetByName('*assignmentGroups*');
 
   // ---- Sheet layout ----
   var firstDataRow = 3;
   var studentIdCol = 2;       // B: Canvas User ID
   var outputCol = 7;          // G: total Etoilles points
+  var quarterCell = 'G2';     // Quarter number to total
 
-  var assignmentIdCol = 1;    // A on *assignmentGroups*: Canvas Assignment ID
-  var groupNameCol = 4;       // D on *assignmentGroups*: Group Name
   var targetGroupName = 'Etoilles in Canvas';
 
   // ---- Canvas configuration ----
@@ -31,11 +35,6 @@ function syncEtoillesInCanvasTotalsToColumnG() {
   var baseUrl = String(config.BASE_URL || '').replace(/\/$/, '');
   var courseId = String(config.COURSE_ID || '').trim();
   var apiKey = PropertiesService.getUserProperties().getProperty('CANVAS_API_KEY');
-
-  if (!assignmentGroupsSheet) {
-    ss.toast('Sheet "*assignmentGroups*" was not found.', '🛑 Error', 8);
-    return;
-  }
 
   if (rosterSheet.getName() === '*assignmentGroups*') {
     ss.toast(
@@ -55,42 +54,44 @@ function syncEtoillesInCanvasTotalsToColumnG() {
     return;
   }
 
-  var groupLastRow = assignmentGroupsSheet.getLastRow();
+  var quarterMatch = String(rosterSheet.getRange(quarterCell).getValue() || '')
+    .match(/\d+/);
 
-  if (groupLastRow < 2) {
+  if (!quarterMatch) {
     ss.toast(
-      '"*assignmentGroups*" has no assignment rows.',
-      '🛑 Error',
-      6
+      'Type the quarter number (for example 2) in ' + quarterCell + '.',
+      '🛑 Quarter Missing',
+      8
     );
     return;
   }
 
-  // Read columns A through D, beginning below headers.
-  var assignmentGroupRows = assignmentGroupsSheet
-    .getRange(2, 1, groupLastRow - 1, groupNameCol)
-    .getValues();
+  var quarterNumber = quarterMatch[0];
 
-  // Find Canvas assignment IDs whose Group Name is the target group.
-  var assignmentIds = assignmentGroupRows
-    .filter(function(row) {
-      return String(row[groupNameCol - 1] || '').trim().toLowerCase() ===
-        targetGroupName.toLowerCase();
-    })
-    .map(function(row) {
-      return String(row[assignmentIdCol - 1] || '').trim();
-    })
-    .filter(function(id) {
-      return id !== '';
-    });
+  var options = {
+    method: 'get',
+    headers: {
+      Authorization: 'Bearer ' + apiKey
+    },
+    muteHttpExceptions: true
+  };
 
-  if (assignmentIds.length === 0) {
-    ss.toast(
-      'No assignments with Group Name "' + targetGroupName +
-        '" were found in "*assignmentGroups*".',
-      '🛑 Error',
-      8
+  // Ask Canvas which Etoilles assignments are in this quarter.
+  var period;
+  var assignmentIds;
+
+  try {
+    period = findGradingPeriodForQuarter_(baseUrl, courseId, quarterNumber, options);
+    assignmentIds = getGroupAssignmentIdsInPeriod_(
+      baseUrl, courseId, targetGroupName, period.id, options
     );
+  } catch (err) {
+    Logger.log(
+      'Etoilles quarter lookup failed | Course=' + courseId +
+      ' | Quarter=' + quarterNumber +
+      ' | Error=' + err.message
+    );
+    ss.toast(err.message, '🛑 Error', 15);
     return;
   }
 
@@ -123,19 +124,11 @@ function syncEtoillesInCanvasTotalsToColumnG() {
     }
   });
 
-  var options = {
-    method: 'get',
-    headers: {
-      Authorization: 'Bearer ' + apiKey
-    },
-    muteHttpExceptions: true
-  };
-
   var failedAssignments = [];
 
   ss.toast(
     'Reading ' + assignmentIds.length +
-      ' Etoilles assignment(s) from Canvas...',
+      ' Etoilles assignment(s) for ' + period.title + ' from Canvas...',
     'Progress',
     10
   );
@@ -205,7 +198,7 @@ function syncEtoillesInCanvasTotalsToColumnG() {
     .setValues(outputValues);
 
   var completionMessage =
-    'Totals for ' + assignmentIds.length +
+    period.title + ': totals for ' + assignmentIds.length +
     ' Etoilles assignment(s) written to Column G.';
 
   if (failedAssignments.length > 0) {
@@ -219,4 +212,95 @@ function syncEtoillesInCanvasTotalsToColumnG() {
     failedAssignments.length ? '⚠️ Completed with Errors' : '✅ Complete',
     10
   );
+}
+
+/**
+ * Finds the Canvas grading period for a quarter number, matching a title
+ * such as "Q2", "Quarter 2", or "2nd Quarter". Throws with a message for
+ * the user when there is no single match.
+ */
+function findGradingPeriodForQuarter_(baseUrl, courseId, quarterNumber, options) {
+  const periods = canvasGetAll_(
+    baseUrl + '/api/v1/courses/' + encodeURIComponent(courseId) +
+      '/grading_periods?per_page=100',
+    options,
+    'grading_periods'
+  );
+
+  if (periods.length === 0) {
+    throw new Error('This Canvas course has no grading periods (quarters).');
+  }
+
+  // The number on its own, so "Q1" doesn't also match 12 or 2021.
+  const numberPattern = new RegExp('(^|\\D)' + Number(quarterNumber) + '(\\D|$)');
+  const matches = periods.filter(function(period) {
+    return numberPattern.test(String(period.title || ''));
+  });
+
+  if (matches.length !== 1) {
+    const titles = periods.map(function(period) { return period.title; }).join(', ');
+    throw new Error(
+      (matches.length === 0 ? 'No' : 'More than one') +
+      ' Canvas grading period matches quarter ' + quarterNumber +
+      '. Canvas has: ' + titles
+    );
+  }
+
+  return matches[0];
+}
+
+/**
+ * Returns the IDs (as strings) of the assignments in the named assignment
+ * group that Canvas places in the given grading period.
+ */
+function getGroupAssignmentIdsInPeriod_(baseUrl, courseId, groupName, periodId, options) {
+  const groups = canvasGetAll_(
+    baseUrl + '/api/v1/courses/' + encodeURIComponent(courseId) +
+      '/assignment_groups?per_page=100&include[]=assignments' +
+      '&grading_period_id=' + encodeURIComponent(periodId),
+    options
+  );
+
+  const targetGroups = groups.filter(function(group) {
+    return String(group.name || '').trim().toLowerCase() === groupName.toLowerCase();
+  });
+
+  if (targetGroups.length === 0) {
+    throw new Error('No Canvas assignment group named "' + groupName + '".');
+  }
+
+  const ids = [];
+  targetGroups.forEach(function(group) {
+    (group.assignments || []).forEach(function(assignment) {
+      ids.push(String(assignment.id));
+    });
+  });
+  return ids;
+}
+
+/**
+ * GETs every page of a Canvas list (following the Link header) and returns
+ * the combined items. unwrapKey is for endpoints that wrap the list in an
+ * object, such as { grading_periods: [...] }.
+ */
+function canvasGetAll_(url, options, unwrapKey) {
+  let items = [];
+  let nextUrl = url;
+
+  while (nextUrl) {
+    const response = UrlFetchApp.fetch(nextUrl, options);
+    const responseCode = response.getResponseCode();
+
+    if (responseCode !== 200) {
+      throw new Error('Canvas returned HTTP ' + responseCode + ' while reading quarters.');
+    }
+
+    const data = JSON.parse(response.getContentText());
+    items = items.concat(unwrapKey ? (data[unwrapKey] || []) : data);
+
+    const headers = response.getAllHeaders();
+    nextUrl = getNextUrl(headers['Link'] || headers['link']);
+  }
+
+  return items;
 }

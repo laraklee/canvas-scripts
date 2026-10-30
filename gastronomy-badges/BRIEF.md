@@ -17,14 +17,18 @@ all of the code standards yet (see Clean-up list).
   1. For each column C–F, reads the Canvas assignment ID in Row 2 and fills each
      student's score (or Canvas grade text) from Row 3 down. Student Canvas user IDs are
      in column B. Cells show `Not found`, `API Err: <code>`, or `Failed` on problems.
-  2. Totals each student's points for every assignment in the Canvas group
-     **Etoilles in Canvas** into column G (blank when the total is 0). The list of
-     assignments comes from the `*assignmentGroups*` tab.
+  2. Totals each student's points for the assignments in the Canvas group
+     **Etoilles in Canvas** that fall in the quarter typed in **G2** (`2` or `Q2`),
+     into column G (blank when the total is 0). G2 is matched to the Canvas grading
+     period whose title contains that number; Canvas decides which assignments are in
+     it from their due dates. If nothing matches, the message lists Canvas's period
+     titles. Fixed 10/29: it used to total the whole year.
   3. Writes the time it finished into B1.
 - **1. Set API Key and Base URL** (`setUserProperties`): prompts for the Canvas token.
 - **2. Run FULL Data Refresh** (`runFullDataRefresh`): writes this sheet's ID into
   `*Config*`!B6, then rebuilds the `*peopleList*` and `*assignmentGroups*` tabs.
-  Run it when assignments are added to the "Etoilles in Canvas" group.
+  Update Etoilles no longer needs it: it asks Canvas for the Etoilles assignments
+  directly.
 
 ## Sheet tabs
 
@@ -40,6 +44,8 @@ all of the code standards yet (see Clean-up list).
 - `/api/v1/courses/:id`
 - `/api/v1/courses/:id/enrollments`
 - `/api/v1/courses/:id/assignment_groups?include[]=assignments&include[]=all_dates`
+  (refresh) and `…?include[]=assignments&grading_period_id=:id` (Etoilles)
+- `/api/v1/courses/:id/grading_periods`
 - `/api/v1/courses/:id/assignments/:id/submissions` and `…/submissions/:user_id`
 
 ## Properties
