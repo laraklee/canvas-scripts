@@ -5,7 +5,8 @@
  *
  * The quarter number is typed in G2 (for example 2 or Q2). It is matched to
  * the Canvas grading period whose title contains that number; Canvas decides
- * which assignments are in the period from their due dates.
+ * which assignments are in the period from their due dates. When it finishes,
+ * a pop-up lists the assignments it counted (temporary check, 10/29).
  *
  * Canvas endpoints (all GET):
  * - /api/v1/courses/:id/grading_periods
@@ -78,13 +79,17 @@ function syncEtoillesInCanvasTotalsToColumnG() {
 
   // Ask Canvas which Etoilles assignments are in this quarter.
   var period;
+  var periodAssignments;
   var assignmentIds;
 
   try {
     period = findGradingPeriodForQuarter_(baseUrl, courseId, quarterNumber, options);
-    assignmentIds = getGroupAssignmentIdsInPeriod_(
+    periodAssignments = getGroupAssignmentsInPeriod_(
       baseUrl, courseId, targetGroupName, period.id, options
     );
+    assignmentIds = periodAssignments.map(function(assignment) {
+      return String(assignment.id);
+    });
   } catch (err) {
     Logger.log(
       'Etoilles quarter lookup failed | Course=' + courseId +
@@ -212,6 +217,44 @@ function syncEtoillesInCanvasTotalsToColumnG() {
     failedAssignments.length ? '⚠️ Completed with Errors' : '✅ Complete',
     10
   );
+
+  // Temporary check (10/29): list what was counted so it can be compared
+  // with Canvas's Q2-filtered grade report. Remove once column G matches.
+  showCountedAssignments_(ss, period, periodAssignments);
+}
+
+/**
+ * Shows a pop-up with the grading period's dates and each assignment that
+ * was totaled: title, due date, points possible, and whether some sections
+ * or students have a different due date. No student data.
+ */
+function showCountedAssignments_(ss, period, assignments) {
+  const timeZone = ss.getSpreadsheetTimeZone();
+  const formatDate = function(isoDate) {
+    if (!isoDate) {
+      return 'no due date';
+    }
+    return Utilities.formatDate(new Date(isoDate), timeZone, 'M/d/yyyy');
+  };
+
+  const lines = [
+    period.title + ': ' + formatDate(period.start_date) +
+      ' to ' + formatDate(period.end_date),
+    '',
+    assignments.length + ' Etoilles assignment(s) counted:'
+  ];
+
+  assignments.forEach(function(assignment) {
+    lines.push(
+      '• ' + assignment.name +
+      ' | due ' + formatDate(assignment.due_at) +
+      ' | ' + assignment.points_possible + ' pts' +
+      (assignment.has_overrides ? ' | other due dates for some students/sections' : '')
+    );
+  });
+
+  SpreadsheetApp.getUi().alert('Etoilles assignments in column G', lines.join('\n'),
+    SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 /**
@@ -250,10 +293,10 @@ function findGradingPeriodForQuarter_(baseUrl, courseId, quarterNumber, options)
 }
 
 /**
- * Returns the IDs (as strings) of the assignments in the named assignment
- * group that Canvas places in the given grading period.
+ * Returns the assignments in the named assignment group that Canvas places
+ * in the given grading period.
  */
-function getGroupAssignmentIdsInPeriod_(baseUrl, courseId, groupName, periodId, options) {
+function getGroupAssignmentsInPeriod_(baseUrl, courseId, groupName, periodId, options) {
   const groups = canvasGetAll_(
     baseUrl + '/api/v1/courses/' + encodeURIComponent(courseId) +
       '/assignment_groups?per_page=100&include[]=assignments' +
@@ -269,13 +312,13 @@ function getGroupAssignmentIdsInPeriod_(baseUrl, courseId, groupName, periodId, 
     throw new Error('No Canvas assignment group named "' + groupName + '".');
   }
 
-  const ids = [];
+  const assignments = [];
   targetGroups.forEach(function(group) {
     (group.assignments || []).forEach(function(assignment) {
-      ids.push(String(assignment.id));
+      assignments.push(assignment);
     });
   });
-  return ids;
+  return assignments;
 }
 
 /**
