@@ -110,35 +110,38 @@ function syncGradesAndStatusForAssignmentActiveColumn() {
       } else if (responseCode === 404) {
         gradeCell.setValue('Not found');
         notFoundCount++;
-
-        Logger.log(
-          '404 | row=' + row +
-          ' | Canvas user ID=' + userId +
-          ' | URL=' + submissionUrl +
-          ' | Canvas response=' + responseText
-        );
       } else {
         gradeCell.setValue('API Err: ' + responseCode);
         errorCount++;
 
+        // No student IDs or Canvas replies in the log (privacy). The cell
+        // itself shows which row failed.
         Logger.log(
-          'HTTP ' + responseCode +
-          ' | row=' + row +
-          ' | Canvas user ID=' + userId +
-          ' | URL=' + submissionUrl +
-          ' | Canvas response=' + responseText
+          'Grade sync HTTP ' + responseCode +
+          ' | Assignment=' + assignmentId
         );
       }
     } catch (err) {
       gradeCell.setValue('Failed');
       errorCount++;
 
+      // err.message can contain the request URL, which includes the
+      // student's Canvas ID, so log only the error type.
       Logger.log(
-        'Grade sync failed | row=' + row +
-        ' | Canvas user ID=' + userId +
-        ' | Error=' + err.message
+        'Grade sync failed | Assignment=' + assignmentId +
+        ' | Error type=' + err.name
       );
     }
+  }
+
+  // One summary line instead of a line per student.
+  if (notFoundCount > 0 || errorCount > 0) {
+    Logger.log(
+      'Grade sync | Course=' + courseId +
+      ' | Assignment=' + assignmentId +
+      ' | not found=' + notFoundCount +
+      ' | errors=' + errorCount
+    );
   }
 
   ss.toast(

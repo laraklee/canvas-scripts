@@ -155,10 +155,10 @@ function syncEtoillesInCanvasTotalsToColumnG() {
       if (responseCode !== 200) {
         failedAssignments.push(assignmentId);
 
+        // No Canvas reply text in the log: it can include student data.
         Logger.log(
           'Could not get submissions | Assignment=' + assignmentId +
-          ' | HTTP=' + responseCode +
-          ' | Response=' + response.getContentText()
+          ' | HTTP=' + responseCode
         );
         return;
       }

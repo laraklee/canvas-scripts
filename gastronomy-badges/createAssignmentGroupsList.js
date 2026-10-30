@@ -38,7 +38,7 @@ function createAssignmentGroupsList() {
     var response = UrlFetchApp.fetch(nextUrl, options);
     if (response.getResponseCode() !== 200) {
       ss.toast("Failed to fetch assignment groups (Code " + response.getResponseCode() + "). Check log.", "🛑 API Error", 8);
-      Logger.log("Assignment Group Fetch Error: " + response.getContentText().slice(0, 300));
+      Logger.log("Assignment Group Fetch Error | Course=" + courseId + " | HTTP=" + response.getResponseCode());
       return;
     }
     
