@@ -8,6 +8,18 @@
 >   Gastronomy all run the same code** (backup tool steps 1-3 included; Biology and AI9
 >   pushed 2026-10-26 from the Mac, Lara's OK), which matches GitHub. Changes
 >   go to one workbook first (usually Biology), then the others after Lara's OK.
+> - **NEXT TASK (Lara, 2026-10-28): debug Post comments on resubmitted work.** When a
+>   student has **more than one submission (attempt)**, the comment lands on the
+>   **earliest** attempt, not the newest one, so it's easy for the student to miss. Lara
+>   found it on an AI-graded assignment (about 15 students) and is copying those comments
+>   by hand; testing didn't catch it because the test students had one attempt each.
+>   Lead, not yet checked: `postCommentsForActiveColumn` (AssignmentColumn.js) sends only
+>   `comment[text_comment]`; Canvas's "Grade or comment on a submission" also takes
+>   `comment[attempt]`. Possible fix: read each student's current `attempt` (already in
+>   the class `GET …/submissions` list) and send it with the comment. Confirm in Canvas's
+>   docs first, then test on a student with 2+ attempts (Sequence 9 or sandbox). Still a
+>   comment-only write through `canvasWrite_`, no grade fields. The Classic quiz work
+>   below waits until this is done.
 > - **Now working on: Classic quiz tools (started 2026-10-26 evening, PC).** Lara's two
 >   long-running Canvas problems: (1) editing a Classic quiz's question groups ("pick 3 of
 >   7"), some in the quiz and some pulling from question banks, without losing the
