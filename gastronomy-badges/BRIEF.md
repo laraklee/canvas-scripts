@@ -11,9 +11,15 @@ Brought into this repo 10/29 with `clasp clone`; the first commit (`86811ca`) is
 code exactly as it was in Google. It was written before CLAUDE.md, so it doesn't follow
 all of the code standards yet (see Clean-up list).
 
-**No user guide yet** (noted 10/29). Unlike assign-sheet and course-manager-jupiter,
-this project has no `USER-GUIDE.md` for other teachers and no Google Doc copy. Not
-started; when one is written, CLAUDE.md's user-guide rules apply from then on.
+**User guide (10/31):** `USER-GUIDE.md` first draft, written for other teachers: setup,
+the roster tab layout, Update Etoilles (including how to read the pop-up), the data
+refresh, and messages. Update it in the same commit as any change a teacher would see
+(CLAUDE.md rule). **Google Doc copy:** "Gastronomy Badges — User Guide", ID
+`1cfWBB9xwD20B9ZMLBizmh295gKyKpm8dlNptelTZTRE`, in Drive folder TeacherTools
+(`1TDwmuQh4buJ6VTMIpEFKqwE8rl5JU2zm`). Made by uploading the Markdown (closing comment
+stripped) through the Google Drive connector. When the guide changes, edit this Doc in
+place (same link) with the Google Docs connector at push time. If the Clean-up list
+changes the token menu (item 1), the guide's setup section changes too.
 
 ## Menu
 
