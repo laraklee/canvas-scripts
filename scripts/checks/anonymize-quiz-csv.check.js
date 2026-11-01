@@ -151,6 +151,21 @@ check('quiz review sorts by last name, then question',
   ], new Map([['S-AAAAAA', 'Ann Young'], ['S-BBBBBB', 'Zoe Baker']]), null)
     .rows.map((r) => r.name + ' ' + r.question),
   ['Zoe Baker Q1', 'Ann Young Q1', 'Ann Young Q2']);
+const sortRows = [
+  { name: 'Ann Young', number: 10, problem: '' },
+  { name: 'Zoe Baker', number: 2, problem: '' },
+  { name: 'Ann Young', number: 2, problem: '' },
+  { name: 'Zoe Baker', number: 10, problem: '' },
+  { name: 'Ann Young', number: 3, problem: 'Missing from AI results' },
+];
+const order = (by) => [...sortRows].sort((a, b) => c.compareQuizRows_(a, b, by))
+  .map((r) => r.name.split(' ')[1] + ' Q' + r.number);
+check('sort by question: problems first, then Q2 before Q10, last names within',
+  order('question'), ['Young Q3', 'Baker Q2', 'Young Q2', 'Baker Q10', 'Young Q10']);
+check('sort by student: problems first, then last name, then question',
+  order('student'), ['Young Q3', 'Baker Q2', 'Baker Q10', 'Young Q2', 'Young Q10']);
+check('question number read from a Review label',
+  c.questionNumber_('Q10 · An enzyme called aldolase…'), 10);
 check('review tabs keep Reviewed in the same column',
   vm.runInContext('[QUIZ_REVIEW_HEADERS.length, QUIZ_REVIEW_HEADERS.at(-1)]', context),
   [vm.runInContext('REVIEW_HEADERS.length', context), 'Reviewed']);

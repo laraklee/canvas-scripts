@@ -8,7 +8,8 @@
  *   New Quiz answers (see QuizCsv.js) come back one row per answer instead: Code,
  *   Question, Group, Why, Notes. The AI sorts answers into groups; it does not score.
  *   Review is then one row per answer, sorted by student and question, and every answer
- *   in "<name> answers.csv" that the AI left out is flagged.
+ *   in "<name> answers.csv" that the AI left out is flagged. The menu items "Sort Review
+ *   by question" / "by student" re-sort an open quiz Review tab.
  *   The pasted table is untrusted text: it is written back as plain text only and is
  *   never treated as instructions or formulas.
  * Canvas endpoints called: none.
@@ -77,7 +78,7 @@ function runMatch_(ui, assignmentId, shortName, folderId) {
         [asText_(row.name), asText_(row.code), asText_(row.question), asText_(row.group),
           asText_(row.why), asText_(row.notes), row.problem]));
       boldQuestionText_(reviewSheet, review.rows.map((row) => row.question));
-      shadeStudentBlocks_(reviewSheet);
+      shadeBlocks_(reviewSheet, 'A');
     } else {
       review = buildReview_(parsed.rows, students);
       writeReview_(reviewSheet, REVIEW_HEADERS, review.rows.map(
@@ -289,11 +290,70 @@ function buildQuizReview_(resultRows, studentByCode, answers) {
     for (const code of studentByCode.keys()) if (!seenCodes.has(code)) missing(code, 0);
   }
 
-  rows.sort((a, b) => {
-    if (Boolean(a.problem) !== Boolean(b.problem)) return a.problem ? -1 : 1;
-    return compareNames_(a.name, b.name) || a.number - b.number;
-  });
+  rows.sort((a, b) => compareQuizRows_(a, b, 'student'));
   return { rows, matched, problems };
+}
+
+/**
+ * Quiz Review order. Problem rows always come first. 'student': last name, then
+ * question number (Match's default). 'question': question number, then last name, for
+ * scoring one question across the class. a and b have name, number, and problem.
+ */
+function compareQuizRows_(a, b, by) {
+  if (Boolean(a.problem) !== Boolean(b.problem)) return a.problem ? -1 : 1;
+  const byName = compareNames_(a.name, b.name);
+  const byNumber = a.number - b.number;
+  return by === 'question' ? byNumber || byName : byName || byNumber;
+}
+
+/** Menu: re-sorts the open quiz Review tab question by question. */
+function sortReviewByQuestion() {
+  sortQuizReview_('question');
+}
+
+/** Menu: re-sorts the open quiz Review tab student by student (Match's order). */
+function sortReviewByStudent() {
+  sortQuizReview_('student');
+}
+
+/**
+ * Re-sorts the active quiz Review tab. Reviewed checkmarks move with their rows. The
+ * bold question text and the gray bands are redone: bands mark each question's block
+ * when sorted by question, each student's block when sorted by student.
+ */
+function sortQuizReview_(by) {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const sheet = SpreadsheetApp.getActiveSheet();
+    const width = QUIZ_REVIEW_HEADERS.length;
+    const header = sheet.getRange(1, 1, 1, width).getDisplayValues()[0];
+    if (!sheet.getName().endsWith(' Review') || header.join('|') !== QUIZ_REVIEW_HEADERS.join('|')) {
+      ui.alert('Open a quiz\'s Review tab first (one made by Match AI results from a quiz ' +
+        'answers table), then choose this again.');
+      return;
+    }
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return;
+    const range = sheet.getRange(2, 1, lastRow - 1, width);
+    const questionCol = QUIZ_REVIEW_HEADERS.indexOf('Question');
+    const problemCol = QUIZ_REVIEW_HEADERS.indexOf('Problem');
+    const rows = range.getValues().map((values) => ({
+      values, name: String(values[0]), number: questionNumber_(values[questionCol]),
+      problem: String(values[problemCol]),
+    }));
+    rows.sort((a, b) => compareQuizRows_(a, b, by));
+    // Everything but the Reviewed checkbox is text (some of it from students or the AI).
+    range.setValues(rows.map(({ values }) =>
+      values.map((value, i) => (i === width - 1 ? value === true : asText_(value)))));
+    boldQuestionText_(sheet, rows.map(({ values }) => String(values[questionCol])));
+    shadeBlocks_(sheet, by === 'question' ? 'C' : 'A');
+    // Counts only: no student data in logs.
+    console.log('sortQuizReview: by=' + by + ' rows=' + rows.length);
+  } catch (err) {
+    console.error('sortQuizReview failed: ' + err.message);
+    ui.alert('Something went wrong while sorting. Run Match AI results again to rebuild ' +
+      'the Review tab (it asks before clearing any Reviewed checkmarks).');
+  }
 }
 
 function hasCheckedReviews_(sheet) {
@@ -339,28 +399,27 @@ function boldQuestionText_(sheet, labels) {
   }));
 }
 
-// Shades every other student's block of rows in a quiz Review (Lara's rule, plus a
-// check that skips empty rows so the shading stops after the last student).
-const STUDENT_BAND_FORMULA = '=AND($A2<>"", ISODD(COUNTUNIQUE($A$2:$A2)))';
-const STUDENT_BAND_COLOR = '#eeeeee';
+const BAND_COLOR = '#eeeeee';
 
 /**
- * Adds the student-block shading rule to a quiz Review tab. Rebuilding Review runs this
- * again, so any earlier copy of the rule (same formula, with or without the empty-row
- * check) is removed first; other rules are kept.
+ * Shades every other block of rows in a quiz Review tab: each student's block (column
+ * 'A', names) or each question's block (column 'C'). Lara's rule, plus a check that
+ * skips empty rows so the shading stops after the last row. Any earlier banding rule
+ * (either column, with or without that check) is removed first; other rules are kept.
  */
-function shadeStudentBlocks_(sheet) {
-  const sameRule = (rule) => {
+function shadeBlocks_(sheet, column) {
+  const isBandRule = (rule) => {
     const condition = rule.getBooleanCondition();
     const formula = condition && condition.getCriteriaType() ===
       SpreadsheetApp.BooleanCriteria.CUSTOM_FORMULA ? String(condition.getCriteriaValues()[0]) : '';
-    return /ISODD\(COUNTUNIQUE\(\$A\$2:\$A2\)\)/i.test(formula);
+    return /ISODD\(COUNTUNIQUE\(\$[A-Z]\$2:\$[A-Z]2\)\)/i.test(formula);
   };
-  const rules = sheet.getConditionalFormatRules().filter((rule) => !sameRule(rule));
+  const rules = sheet.getConditionalFormatRules().filter((rule) => !isBandRule(rule));
   const range = sheet.getRange(2, 1, Math.max(sheet.getMaxRows() - 1, 1), QUIZ_REVIEW_HEADERS.length);
   rules.push(SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied(STUDENT_BAND_FORMULA)
-    .setBackground(STUDENT_BAND_COLOR)
+    .whenFormulaSatisfied('=AND($' + column + '2<>"", ISODD(COUNTUNIQUE($' + column + '$2:$' +
+      column + '2)))')
+    .setBackground(BAND_COLOR)
     .setRanges([range])
     .build());
   sheet.setConditionalFormatRules(rules);

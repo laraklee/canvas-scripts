@@ -18,7 +18,7 @@ then set the passphrase once in each copy (User Properties belong to one script 
 - **Gastronomy** AI grading workbook: `18X8wcEFb0o4wMvivgWG_Gd6fLYPV4Y3hb-EtmDAaw4kSIpvPkiq7kWQK`.
   11/1: matched commit `985e56b` (checked read-only); pushed `ee722cf`.
 - **11/1: all three run the latest commit** (quiz CSV, Match for quiz answers, last-name order,
-  question text in Review, bold question text, student-block shading).
+  question text in Review, bold question text, shading, sort by question/student).
 - All three courses should run the same code (Lara, 11/1). Same order as the other
   projects: test on Biology first, then push to the others after Lara's OK.
 
@@ -96,7 +96,14 @@ Gem instructions: section C of `gems/BioGrading.md`.
 **Q numbers are the report's column order, not each student's order** (New Quizzes
 shuffle questions and draw from banks; the report doesn't record who saw what when).
 So Review shows the start of each question's text, for matching in SpeedGrader (11/1,
-Lara: without it, matching was more trouble than it was worth).
+Lara: without it, matching was more trouble than it was worth). The question text is
+bold, and every other student's block is shaded gray (Lara's conditional format rule).
+**Two-pass grading (11/1):** menu **Sort Review by question** (Q number, then last name;
+bands mark each question) for scoring one question at a time in SpeedGrader's
+by-question view, then **Sort Review by student** (Match's order; bands mark each
+student) to scan each student's whole quiz. Problem rows stay on top; Reviewed
+checkmarks move with their rows. Strong/OK/Weak ordering within a question was
+considered and skipped: it wouldn't match SpeedGrader's student order.
 
 **Possible add-on (not started; Lara, 11/1: workflow still evolving): Classic Quiz
 reports.** Today a Classic Student Analysis CSV is flagged ("Not a New Quiz…") and not

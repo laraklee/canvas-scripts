@@ -8,6 +8,8 @@
  *   anonymizeSelectedRow / matchSelectedRow / refreshFolderList). "Archive selected
  *   row…" deletes that assignment's Key, AI, and Flagged tabs (after asking), keeps
  *   Review but hides it, and marks the row Archived so it can't be re-run by mistake.
+ *   "Sort Review by question / by student" re-sort the open quiz Review tab
+ *   (MatchResults.js).
  * Canvas endpoints called: none.
  * Canvas write operations: none.
  * Required User/Script Properties: none here (see Passphrase.js, Assignments.js).
@@ -27,6 +29,9 @@ function onOpen() {
     .addItem('Anonymize selected row', 'anonymizeSelectedRow')
     .addItem('Match AI results for selected row', 'matchSelectedRow')
     .addItem('Archive selected row…', 'archiveSelectedRow')
+    .addSeparator()
+    .addItem('Sort Review by question', 'sortReviewByQuestion')
+    .addItem('Sort Review by student', 'sortReviewByStudent')
     .addSeparator()
     .addItem('Set passphrase', 'setPassphrase')
     .addItem('Check passphrase', 'checkPassphrase')
