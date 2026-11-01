@@ -40,9 +40,9 @@ function questionNumber_(text) {
 }
 
 /**
- * For Match: which questions each code answered, from the answers file this assignment's
- * Anonymize run wrote. Returns Map code → Set of question numbers, or null if the file
- * can't be found or read (Match then checks whole students only).
+ * For Match: the answers file this assignment's Anonymize run wrote, as
+ * { byCode: Map code → Set of question numbers, questions: Map number → question text },
+ * or null if the file can't be found or read (Match then checks whole students only).
  */
 function readQuizAnswers_(folderId, shortName) {
   try {
@@ -56,16 +56,30 @@ function readQuizAnswers_(folderId, shortName) {
   }
 }
 
-/** Answers file text (Code, Question, Answer) → Map code → Set of question numbers. */
+/** Answers file text (Code, Question, Answer) → { byCode, questions } (see readQuizAnswers_). */
 function expectedAnswers_(csvText) {
-  const expected = new Map();
+  const byCode = new Map();
+  const questions = new Map();
   for (const [code, question] of parseCsv_(csvText).slice(1)) {
     const number = questionNumber_(question);
     if (!code || !number) continue;
-    if (!expected.has(code)) expected.set(code, new Set());
-    expected.get(code).add(number);
+    if (!byCode.has(code)) byCode.set(code, new Set());
+    byCode.get(code).add(number);
+    questions.set(number, String(question).replace(/^\s*Q\s*\d+\.?\s*/i, ''));
   }
-  return expected;
+  return { byCode, questions };
+}
+
+/**
+ * "Q6 · An enzyme called aldolase catalyzes…": the number plus the start of the question,
+ * so it can be found in SpeedGrader, where each student sees the questions in their own
+ * order. The Q number is the report's column, not the student's question number.
+ */
+function questionLabel_(number, questions) {
+  const text = String((questions && questions.get(number)) || '').replace(/\s+/g, ' ').trim();
+  if (!text) return 'Q' + number;
+  const cut = text.length <= 60 ? text : text.slice(0, 60).replace(/\s+\S*$/, '') + '…';
+  return 'Q' + number + ' · ' + cut;
 }
 
 /**

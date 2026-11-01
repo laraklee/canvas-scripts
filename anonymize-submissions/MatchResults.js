@@ -240,12 +240,15 @@ function compareNames_(a, b) {
 
 /**
  * New Quiz answers: one Review row per AI result ({ name, code, question, group, why,
- * notes, problem }), plus one per answer the AI left out. expected (from the answers
- * file; null if it can't be read) maps each code to the question numbers that student
- * answered; without it, only students missing entirely are flagged.
+ * notes, problem }), plus one per answer the AI left out. answers (from the answers
+ * file via readQuizAnswers_; null if it can't be read) says which questions each code
+ * answered and gives each question's text for its label; without it, only students
+ * missing entirely are flagged and questions show as just "Q6".
  * Problem rows sort to the top; everything else by last name, then question number.
  */
-function buildQuizReview_(resultRows, studentByCode, expected) {
+function buildQuizReview_(resultRows, studentByCode, answers) {
+  const expected = answers && answers.byCode;
+  const questions = answers && answers.questions;
   const rows = [];
   const seen = new Set();
   const seenCodes = new Set();
@@ -266,14 +269,14 @@ function buildQuizReview_(resultRows, studentByCode, expected) {
     if (code && number) seen.add(code + '|' + number);
     if (problem) problems++; else matched++;
     rows.push({ name: studentByCode.get(code) || '', code: result.Code, number,
-      question: number ? 'Q' + number : result.Question, group: result.Group,
+      question: number ? questionLabel_(number, questions) : result.Question, group: result.Group,
       why: result.Why, notes: result.Notes, problem });
   }
 
   const missing = (code, number) => {
     problems++;
     rows.push({ name: studentByCode.get(code) || '', code, number,
-      question: number ? 'Q' + number : '', group: '', why: '', notes: '',
+      question: number ? questionLabel_(number, questions) : '', group: '', why: '', notes: '',
       problem: 'Missing from AI results' });
   };
   if (expected) {

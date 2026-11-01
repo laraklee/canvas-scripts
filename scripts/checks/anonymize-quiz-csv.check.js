@@ -99,8 +99,16 @@ const answersFile = c.toCsv_([['Code', 'Question', 'Answer'],
   ['S-AAAAAA', 'Q2. Soda lime?', 'z']]);
 const expected = c.expectedAnswers_(answersFile);
 check('answers file → questions per code',
-  [...expected].map(([code, numbers]) => [code, [...numbers]]),
+  [...expected.byCode].map(([code, numbers]) => [code, [...numbers]]),
   [['S-AAAAAA', [1, 2]], ['S-BBBBBB', [1]]]);
+check('answers file → question text', [...expected.questions],
+  [[1, 'Independent variable?'], [2, 'Soda lime?']]);
+check('question label: short text kept whole', c.questionLabel_(2, expected.questions),
+  'Q2 · Soda lime?');
+check('question label: long text cut at a word, line breaks flattened',
+  c.questionLabel_(7, new Map([[7, 'An enzyme called aldolase catalyzes the transformation\nof glucose 6 phosphate into pyruvate.']])),
+  'Q7 · An enzyme called aldolase catalyzes the transformation of…');
+check('question label without the answers file', c.questionLabel_(3, null), 'Q3');
 
 const pasted = c.parseResultsTable_([
   ['Gemini summary text above the table', '', '', '', ''],
@@ -120,12 +128,12 @@ const students = new Map([['S-AAAAAA', 'Test, Ann'], ['S-BBBBBB', 'Test, Ben']])
 const quizReview = c.buildQuizReview_(pasted.rows, students, expected);
 check('quiz review: problems on top, then by name and question',
   quizReview.rows.map((r) => [r.name, r.question, r.group, r.problem]), [
-    ['', 'Q1', 'OK', 'Code not in the Key for this assignment'],
-    ['Test, Ann', 'Q1', 'OK', 'Answer listed more than once'],
-    ['Test, Ann', 'Q2', '', 'Missing from AI results'],
-    ['Test, Ben', 'Q2', 'OK', 'This student did not answer this question'],
-    ['Test, Ann', 'Q1', 'Strong', ''],
-    ['Test, Ben', 'Q1', 'Weak', ''],
+    ['', 'Q1 · Independent variable?', 'OK', 'Code not in the Key for this assignment'],
+    ['Test, Ann', 'Q1 · Independent variable?', 'OK', 'Answer listed more than once'],
+    ['Test, Ann', 'Q2 · Soda lime?', '', 'Missing from AI results'],
+    ['Test, Ben', 'Q2 · Soda lime?', 'OK', 'This student did not answer this question'],
+    ['Test, Ann', 'Q1 · Independent variable?', 'Strong', ''],
+    ['Test, Ben', 'Q1 · Independent variable?', 'Weak', ''],
   ]);
 check('quiz review counts', [quizReview.matched, quizReview.problems], [2, 4]);
 check('without the answers file, only missing students are flagged',

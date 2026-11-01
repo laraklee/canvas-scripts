@@ -84,13 +84,18 @@ Lara checked the file (columns, order, clean text, no names).
 
 **Step 2 (11/1): Match for quiz answers.** If the pasted AI table has a **Group** column,
 Match reads **Code, Question, Group, Why, Notes** (one row per answer) and Review becomes
-Name, Code, Question (`Q6`), Group, Why, Notes, Problem, Reviewed: one row per answer,
+Name, Code, Question (`Q6 · <first ~60 characters of the question>`), Group, Why, Notes,
+Problem, Reviewed: one row per answer,
 sorted by student (last name, like SpeedGrader; Canvas gives "First Last", so the last
 word counts as the last name) then question number. Match reads the answers file back to flag every
 answer the AI skipped ("Missing from AI results"), answers listed twice, and answers to
 a question that student didn't get. Same column count as the score Review, with Reviewed
 last, so Archive works unchanged. Anonymize gives a quiz's empty AI tab the quiz headers.
 Gem instructions: section C of `gems/BioGrading.md`.
+**Q numbers are the report's column order, not each student's order** (New Quizzes
+shuffle questions and draw from banks; the report doesn't record who saw what when).
+So Review shows the start of each question's text, for matching in SpeedGrader (11/1,
+Lara: without it, matching was more trouble than it was worth).
 
 **Possible add-on (not started; Lara, 11/1: workflow still evolving): Classic Quiz
 reports.** Today a Classic Student Analysis CSV is flagged ("Not a New Quiz…") and not
