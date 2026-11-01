@@ -76,6 +76,7 @@ function runMatch_(ui, assignmentId, shortName, folderId) {
       writeReview_(reviewSheet, QUIZ_REVIEW_HEADERS, review.rows.map((row) =>
         [asText_(row.name), asText_(row.code), asText_(row.question), asText_(row.group),
           asText_(row.why), asText_(row.notes), row.problem]));
+      boldQuestionText_(reviewSheet, review.rows.map((row) => row.question));
     } else {
       review = buildReview_(parsed.rows, students);
       writeReview_(reviewSheet, REVIEW_HEADERS, review.rows.map(
@@ -318,6 +319,23 @@ function writeReview_(sheet, headers, values) {
     .setValues(values.map((row) => [...row, false]))
     .setVerticalAlignment('top');
   sheet.getRange(2, headers.length, values.length, 1).insertCheckboxes();
+}
+
+/**
+ * In a quiz Review's Question column, bolds the question text after "Q6 · " so it
+ * stands out when matching answers in SpeedGrader. Labels without text stay plain.
+ */
+function boldQuestionText_(sheet, labels) {
+  if (labels.length === 0) return;
+  const column = QUIZ_REVIEW_HEADERS.indexOf('Question') + 1;
+  const bold = SpreadsheetApp.newTextStyle().setBold(true).build();
+  sheet.getRange(2, column, labels.length, 1).setRichTextValues(labels.map((label) => {
+    const text = String(label);
+    const builder = SpreadsheetApp.newRichTextValue().setText(text);
+    const start = text.indexOf(' · ');
+    if (start !== -1) builder.setTextStyle(start + 3, text.length, bold);
+    return [builder.build()];
+  }));
 }
 
 /** A plain number stays a number (so it can be copied into a gradebook); anything else is text. */

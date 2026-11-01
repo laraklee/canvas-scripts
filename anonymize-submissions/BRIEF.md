@@ -17,8 +17,8 @@ then set the passphrase once in each copy (User Properties belong to one script 
   then `8e404ef` (Match for quiz answers) and `ee722cf` (last-name order).
 - **Gastronomy** AI grading workbook: `18X8wcEFb0o4wMvivgWG_Gd6fLYPV4Y3hb-EtmDAaw4kSIpvPkiq7kWQK`.
   11/1: matched commit `985e56b` (checked read-only); pushed `ee722cf`.
-- **11/1: all three run `bfd6a2c`** (quiz CSV, Match for quiz answers, last-name order,
-  question text in Review).
+- **11/1: all three run the latest commit** (quiz CSV, Match for quiz answers, last-name order,
+  question text in Review, bold question text).
 - All three courses should run the same code (Lara, 11/1). Same order as the other
   projects: test on Biology first, then push to the others after Lara's OK.
 
