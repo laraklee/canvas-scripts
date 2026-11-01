@@ -90,7 +90,16 @@ word counts as the last name) then question number. Match reads the answers file
 answer the AI skipped ("Missing from AI results"), answers listed twice, and answers to
 a question that student didn't get. Same column count as the score Review, with Reviewed
 last, so Archive works unchanged. Anonymize gives a quiz's empty AI tab the quiz headers.
-Gem instructions: section C of `gems/BioGrading.md`. Offline check:
+Gem instructions: section C of `gems/BioGrading.md`.
+
+**Possible add-on (not started; Lara, 11/1: workflow still evolving): Classic Quiz
+reports.** Today a Classic Student Analysis CSV is flagged ("Not a New Quiz…") and not
+used. Its layout (from memory; check a real header row first): lowercase `name`, `id`,
+`sis_id`, `section`, `submitted`, `attempt`, then two columns per question (answer under
+`<id>: <question text>`, score under its points possible, like `2.0`). No question-type
+column, so essays can't be told from multiple choice: either keep every non-blank answer
+and let the Gem skip multiple choice, or have Lara list the essay question numbers on the
+Index row. Only the reader changes; answers file, Gem, Match, and Review stay the same. Offline check:
 `scripts/checks/anonymize-quiz-csv.check.js` (made-up data).
 
 ## One set of tabs per assignment (Assignments.js)
