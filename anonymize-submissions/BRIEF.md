@@ -5,6 +5,20 @@ reviewed without names. A script bound to a Google Sheet; menu **Anonymize**.
 One Sheet per course: copy a clean template (Instructions tab only) for each course,
 then set the passphrase once in each copy (User Properties belong to one script copy).
 
+**Scripts (each workbook copy has its own):**
+- **AI9** AI grading workbook ("AI Grading 10.18.26", the original):
+  `18bnY2Po0yf0T9SgMEEMTW0KYnkvUQpy0H4syDaVBrzZf1tekT2cXbPiH`. This is the one
+  `.clasp.json` here points at, so a plain `clasp push` from this folder goes to **AI9
+  only**. 11/1: matched commit `985e56b` (checked read-only); not yet pushed `d0e4fbc`.
+- **Biology** AI grading workbook: `1BcbprgAzhTFBvU8vNtZJgvvmXU5_gHZOJYfpmG-2cNxVoGWFVxnxvSsc`.
+  Lara's main one. To push there without changing `.clasp.json`: `clasp clone` it into a
+  scratch folder, copy this folder's `.js` files in (keep its own `appsscript.json`), then
+  `clasp push` from there. 11/1: it matched commit `985e56b`; pushed `d0e4fbc` (quiz CSV).
+- **Gastronomy** AI grading workbook: `18X8wcEFb0o4wMvivgWG_Gd6fLYPV4Y3hb-EtmDAaw4kSIpvPkiq7kWQK`.
+  11/1: matched commit `985e56b` (checked read-only); not yet pushed `d0e4fbc`.
+- All three courses should run the same code (Lara, 11/1). Same order as the other
+  projects: test on Biology first, then push to the others after Lara's OK.
+
 ## Index tab (Index.js)
 
 B1 holds the link to the course's AI grading folder. Each assignment's Canvas download
