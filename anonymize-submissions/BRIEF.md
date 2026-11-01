@@ -38,6 +38,35 @@ every file again. To start over: delete the `anonymized` folder and clear that c
 6. Adds one row per file to the **`<name> Key`** tab: Name, Canvas user ID, Assignment ID, Code,
    Original filename, Late, Anonymized filename.
 
+## New Quiz essay answers (QuizCsv.js, started 11/1)
+
+For a New Quiz, Lara downloads the **Student Analysis** report (.csv) into the
+assignment's folder instead of a submissions zip. The Index row's assignment ID is the
+New Quiz's assignment ID (the number after `/assignments/`). Anonymize then:
+
+- reads the report (columns `Name`, `ID` = Canvas user ID, student/section columns,
+  `Attempt`, then five per question: `ItemID`, `ItemType`, the answer under a header that
+  is the question text, `EarnedPoints`, `Status`; totals at the end);
+- keeps only **essay** answers the student actually got (questions come at random from
+  several banks, so most are "Not Attempted"); the formula question is graded by Canvas
+  and left out, and so are any points already entered;
+- turns the answer HTML into plain text and repairs Windows-garbled characters (`â€”`);
+- writes **`<short name> answers.csv`** to the `anonymized` folder: Code, Question
+  (`Q6. <text>`), Answer, one row per answer, **sorted by question** so the AI sees
+  every answer to a question together; it is rebuilt on every run;
+- adds one Key row per student with an essay answer (original filename = the report's
+  name), using the same code as a file download. A student listed twice keeps the higher
+  attempt; rows with no ID are flagged.
+
+**Decided with Lara (11/1):** the AI does **not** score. Lara reads and scores every
+answer herself, question by question in SpeedGrader. The AI sorts each answer into a
+group (Strong / OK / Weak or similar) with a short "Why" pointing out what's excellent
+or missing, so Lara can check her own consistency. **Next (step 2, not built):** Match
+accepts **Code, Question, Group, Why**, and Review becomes one row per answer, sorted by
+student then question. Also draft a sample Gemini prompt for those columns. Offline
+check: `scripts/checks/anonymize-quiz-csv.check.js` (made-up data). Not yet tested in
+Google with a real report.
+
 ## One set of tabs per assignment (Assignments.js)
 
 The Index row's short name prefixes four tabs:

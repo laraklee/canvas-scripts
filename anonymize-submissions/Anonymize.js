@@ -11,6 +11,7 @@
  *   (text entry) submissions, name[_LATE]_userID_text.html, are converted to PDF by
  *   Google so AI tools accept them; and a file with no extension gets one from its
  *   first bytes (PDF, JPEG, PNG, GIF, HEIC, Word/PowerPoint/Excel) or is flagged.
+ *   A .csv is read as a New Quiz Student Analysis report instead (see QuizCsv.js).
  *   Originals are only read, never changed, moved, or renamed.
  *   Re-running is safe: files already in the Key tab for that assignment are skipped,
  *   so a run that stops at the time limit can simply be run again.
@@ -76,10 +77,19 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
     let copied = 0;
     let skipped = 0;
     let stoppedEarly = false;
+    const quizzes = [];
     for (const source of sources) {
       if (Date.now() - started > TIME_BUDGET_MS) {
         stoppedEarly = true;
         break;
+      }
+      if (isQuizReport_(source.name)) {
+        const quiz = anonymizeQuizCsv_(source,
+          { assignmentId, shortName, passphrase, state, keySheet, outFolder, flagged });
+        copied += quiz.added;
+        skipped += quiz.skipped;
+        if (quiz.outName) quizzes.push(quiz);
+        continue;
       }
       const parsed = parseCanvasName_(source.name);
       if (!parsed) {
@@ -141,18 +151,26 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
 
     // Counts and IDs only: no student data in logs.
     console.log('anonymize: assignment ' + assignmentId + ' copied=' + copied +
-      ' skipped=' + skipped + ' flagged=' + flagged.length + ' stoppedEarly=' + stoppedEarly);
+      ' skipped=' + skipped + ' flagged=' + flagged.length + ' stoppedEarly=' + stoppedEarly +
+      ' quizAnswers=' + quizzes.reduce((sum, quiz) => sum + quiz.answers, 0));
 
+    const quizLines = quizzes.map((quiz) => '\n\nQuiz report: ' + quiz.answers +
+      ' essay answers saved in "' + quiz.outName + '" (anonymized folder).' +
+      (quiz.noEssay ? ' ' + quiz.noEssay + ' student(s) had no essay answers and were left out.' : ''));
     ui.alert(stoppedEarly ? 'Paused at the time limit' : 'Done',
-      'Copied: ' + copied + '\n' +
+      (quizzes.length ? 'Students added to the Key' : 'Copied') + ': ' + copied + '\n' +
       'Already done before (skipped): ' + skipped + '\n' +
       'Flagged: ' + flagged.length +
       (flagged.length ? ' (see the "' + flaggedName + '" tab)' : '') +
+      quizLines.join('') +
       (stoppedEarly ? '\n\nNot finished yet. Run Anonymize this row again to continue.' : '') +
-      '\n\nOnly filenames were changed. Names written inside the files themselves ' +
-      'are still there.',
+      (quizzes.length
+        ? '\n\nNames were removed, but a name a student typed inside an answer is still there.'
+        : '\n\nOnly filenames were changed. Names written inside the files themselves ' +
+          'are still there.'),
       ui.ButtonSet.OK);
-    return (stoppedEarly ? 'Paused: ' : '') + (copied + skipped) + ' files, ' +
+    return (stoppedEarly ? 'Paused: ' : '') + (copied + skipped) +
+      (quizzes.length ? ' students, ' : ' files, ') +
       flagged.length + ' flagged';
   } catch (err) {
     console.error('anonymize failed while ' + stage + ': ' + err.message);
