@@ -63,6 +63,27 @@
 >   storage, which Canvas's file API can't check. Canvas's docs are thin on how bank
 >   groups and stimuli come back from the read endpoint, so the first run may need
 >   adjusting. Read-only; no new permissions.
+>   **Picture findings (11/1, from QTI exports, checked in a scratch folder):**
+>   - **3.1 Test (Classic, LockDown Browser, given 11/2):** all 6 images are this
+>     course's Files and were packed into the export; Lara checked their folders in
+>     Files ("only available with link" = fine). Group 14's 3 questions keep a leftover
+>     `data-api-endpoint` to course 184 (src is this course's copy; probably harmless).
+>   - **Unit 2 Test 25.26 (New Quiz, 20 item banks, LockDown Browser on school iPads):
+>     the "epic fail".** Most images broke for at least one student (broken-image icon),
+>     so mainly a **loading** problem, not permissions (those break for everyone).
+>     Likely LockDown Browser's iPad app + New Quizzes image storage on busy Wi-Fi;
+>     not provable from the export. Suggested Lara report it to IT/Respondus. Separately,
+>     bank "Unit 2 Test FRQ 1 Plant (1)" has 2 images pointing at an old Classic bank
+>     file (`/assessment_questions/…/download?verifier=…`), which Canvas couldn't even
+>     export: broken for students. 4 images hotlink outside sites (learn-biology.com,
+>     OpenStax S3). Fix: re-upload images inside the New Quizzes editor.
+>   - **Lara's take:** for image-heavy tests on iPads with LockDown Browser, Classic is
+>     safer until that's fixed. New Quizzes was tried only for shared banks. No
+>     Instructure retirement date for Classic yet (checked 11/1). Lara may not teach
+>     Biology next year; this matters mainly if helping another teacher.
+>   - **For the picture check (step 2 / New Quiz version):** flag `/assessment_questions/`
+>     links, other-course numbers, personal files, and outside sites; image size is a
+>     useful extra (Unit 2 had several near 1 MB).
 >   **Housekeeping:** `Quiz-samples/` (QTI exports, no student data) is untracked on the
 >   PC; next time add it to `.gitignore` or move the exports out of the project.
 > - **Groups: putting students in groups (started 2026-10-28, Mac).** Lara wants a faster
