@@ -75,11 +75,20 @@ New Quiz's assignment ID (the number after `/assignments/`). Anonymize then:
 **Decided with Lara (11/1):** the AI does **not** score. Lara reads and scores every
 answer herself, question by question in SpeedGrader. The AI sorts each answer into a
 group (Strong / OK / Weak or similar) with a short "Why" pointing out what's excellent
-or missing, so Lara can check her own consistency. **Next (step 2, not built):** Match
-accepts **Code, Question, Group, Why**, and Review becomes one row per answer, sorted by
-student then question. Also draft a sample Gemini prompt for those columns. Offline
-check: `scripts/checks/anonymize-quiz-csv.check.js` (made-up data). Not yet tested in
-Google with a real report.
+or missing, so Lara can check her own consistency.
+
+**Tested 11/1 on Biology (3.6D Quiz):** 15 students, 105 essay answers, nothing flagged;
+Lara checked the file (columns, order, clean text, no names).
+
+**Step 2 (11/1): Match for quiz answers.** If the pasted AI table has a **Group** column,
+Match reads **Code, Question, Group, Why, Notes** (one row per answer) and Review becomes
+Name, Code, Question (`Q6`), Group, Why, Notes, Problem, Reviewed: one row per answer,
+sorted by student then question number. Match reads the answers file back to flag every
+answer the AI skipped ("Missing from AI results"), answers listed twice, and answers to
+a question that student didn't get. Same column count as the score Review, with Reviewed
+last, so Archive works unchanged. Anonymize gives a quiz's empty AI tab the quiz headers.
+Gem instructions: section C of `gems/BioGrading.md`. Offline check:
+`scripts/checks/anonymize-quiz-csv.check.js` (made-up data).
 
 ## One set of tabs per assignment (Assignments.js)
 

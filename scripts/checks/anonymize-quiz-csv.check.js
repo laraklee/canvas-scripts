@@ -14,7 +14,8 @@ const vm = require('vm');
 const PROJECT = path.join(__dirname, '..', '..', 'anonymize-submissions');
 const context = {};
 vm.createContext(context);
-vm.runInContext(fs.readFileSync(path.join(PROJECT, 'QuizCsv.js'), 'utf8'), context);
+vm.runInContext(['MatchResults.js', 'QuizCsv.js']
+  .map((file) => fs.readFileSync(path.join(PROJECT, file), 'utf8')).join('\n'), context);
 const c = context;
 
 let failures = 0;
@@ -89,5 +90,50 @@ check('columns in a different order are refused',
 check('output CSV: quoted, formula-looking text defused',
   c.toCsv_([['Code', 'Answer'], ['S-ABC123', '=IMPORTXML("x")'], ['S-ABC124', 'a "b"']]),
   '"Code","Answer"\n"S-ABC123","\'=IMPORTXML(""x"")"\n"S-ABC124","a ""b"""');
+
+// --- Match: AI results for quiz answers (made-up codes) ---
+check('question numbers', ['Q6', 'q 12', 'Q3. Soda lime…', 'Soda lime'].map(c.questionNumber_),
+  [6, 12, 3, 0]);
+const answersFile = c.toCsv_([['Code', 'Question', 'Answer'],
+  ['S-AAAAAA', 'Q1. Independent variable?', 'x'], ['S-BBBBBB', 'Q1. Independent variable?', 'y'],
+  ['S-AAAAAA', 'Q2. Soda lime?', 'z']]);
+const expected = c.expectedAnswers_(answersFile);
+check('answers file → questions per code',
+  [...expected].map(([code, numbers]) => [code, [...numbers]]),
+  [['S-AAAAAA', [1, 2]], ['S-BBBBBB', [1]]]);
+
+const pasted = c.parseResultsTable_([
+  ['Gemini summary text above the table', '', '', '', ''],
+  ['Code', 'Question', 'Group', 'Why', 'Notes'],
+  ['S-AAAAAA', 'Q1', 'Strong', 'Names the organism type.', ''],
+  ['S-AAAAAA', 'Q1. Independent variable?', 'OK', 'Again.', ''],
+  ['s-bbbbbb', 'Q1', 'Weak', 'Confuses IV and DV.', ''],
+  ['S-BBBBBB', 'Q2', 'OK', 'Not this student.', ''],
+  ['S-CCCCCC', 'Q1', 'OK', 'Unknown student.', ''],
+]);
+check('pasted table read as quiz results', [pasted.quiz, pasted.rows.length, pasted.rows[0].Group],
+  [true, 5, 'Strong']);
+check('old score table is not quiz', c.parseResultsTable_([['Code', 'Score'], ['S-AAAAAA', '8']]).quiz,
+  false);
+
+const students = new Map([['S-AAAAAA', 'Test, Ann'], ['S-BBBBBB', 'Test, Ben']]);
+const quizReview = c.buildQuizReview_(pasted.rows, students, expected);
+check('quiz review: problems on top, then by name and question',
+  quizReview.rows.map((r) => [r.name, r.question, r.group, r.problem]), [
+    ['', 'Q1', 'OK', 'Code not in the Key for this assignment'],
+    ['Test, Ann', 'Q1', 'OK', 'Answer listed more than once'],
+    ['Test, Ann', 'Q2', '', 'Missing from AI results'],
+    ['Test, Ben', 'Q2', 'OK', 'This student did not answer this question'],
+    ['Test, Ann', 'Q1', 'Strong', ''],
+    ['Test, Ben', 'Q1', 'Weak', ''],
+  ]);
+check('quiz review counts', [quizReview.matched, quizReview.problems], [2, 4]);
+check('without the answers file, only missing students are flagged',
+  c.buildQuizReview_([{ Code: 'S-AAAAAA', Question: 'Q1', Group: 'OK' }], students, null)
+    .rows.map((r) => [r.name, r.problem]),
+  [['Test, Ben', 'Missing from AI results'], ['Test, Ann', '']]);
+check('review tabs keep Reviewed in the same column',
+  vm.runInContext('[QUIZ_REVIEW_HEADERS.length, QUIZ_REVIEW_HEADERS.at(-1)]', context),
+  [vm.runInContext('REVIEW_HEADERS.length', context), 'Reviewed']);
 
 process.exitCode = failures ? 1 : 0;

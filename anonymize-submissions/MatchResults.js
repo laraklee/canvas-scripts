@@ -5,6 +5,10 @@
  *   Notes, matched by header name, any order), looks each code up in "<name> Key", and
  *   rebuilds "<name> Review" with the student's name next to each result. Flags codes
  *   that are not in the key, codes listed twice, and students the AI left out.
+ *   New Quiz answers (see QuizCsv.js) come back one row per answer instead: Code,
+ *   Question, Group, Why, Notes. The AI sorts answers into groups; it does not score.
+ *   Review is then one row per answer, sorted by student and question, and every answer
+ *   in "<name> answers.csv" that the AI left out is flagged.
  *   The pasted table is untrusted text: it is written back as plain text only and is
  *   never treated as instructions or formulas.
  * Canvas endpoints called: none.
@@ -15,6 +19,13 @@
 const RESULTS_HEADERS = ['Code', 'Score', 'Feedback', 'Confidence', 'Notes'];
 const REVIEW_HEADERS = ['Name', 'Code', 'Score', 'Feedback', 'Confidence', 'Notes',
   'Problem', 'Reviewed'];
+const QUIZ_RESULTS_HEADERS = ['Code', 'Question', 'Group', 'Why', 'Notes'];
+// Same length as REVIEW_HEADERS with Reviewed last: Archive and the "already checked"
+// warning find the checkboxes by position.
+const QUIZ_REVIEW_HEADERS = ['Name', 'Code', 'Question', 'Group', 'Why', 'Notes',
+  'Problem', 'Reviewed'];
+// Every column either kind of AI table can have.
+const RESULTS_FIELDS = [...new Set([...RESULTS_HEADERS, ...QUIZ_RESULTS_HEADERS])];
 const CODE_RE = /^S-[0-9A-F]{6}$/;
 
 /**
@@ -22,7 +33,7 @@ const CODE_RE = /^S-[0-9A-F]{6}$/;
  * Shows a summary alert and returns a short status line for the Index, or null if it
  * stopped early (after telling Lara why).
  */
-function runMatch_(ui, assignmentId, shortName) {
+function runMatch_(ui, assignmentId, shortName, folderId) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const resultsName = tabName_(shortName, 'AI');
@@ -58,15 +69,27 @@ function runMatch_(ui, assignmentId, shortName) {
       if (confirm !== ui.Button.YES) return null;
     }
 
-    const review = buildReview_(parsed.rows, studentsByCode_(keyRows, assignmentId));
-    writeReview_(reviewSheet, review.rows);
+    const students = studentsByCode_(keyRows, assignmentId);
+    let review;
+    if (parsed.quiz) {
+      review = buildQuizReview_(parsed.rows, students, readQuizAnswers_(folderId, shortName));
+      writeReview_(reviewSheet, QUIZ_REVIEW_HEADERS, review.rows.map((row) =>
+        [asText_(row.name), asText_(row.code), asText_(row.question), asText_(row.group),
+          asText_(row.why), asText_(row.notes), row.problem]));
+    } else {
+      review = buildReview_(parsed.rows, students);
+      writeReview_(reviewSheet, REVIEW_HEADERS, review.rows.map(
+        ([studentName, code, score, feedback, confidence, notes, problem]) => [
+          asText_(studentName), asText_(code), scoreValue_(score), asText_(feedback),
+          asText_(confidence), asText_(notes), problem]));
+    }
 
     // Counts and IDs only: no student data in logs.
     console.log('matchAiResults: assignment ' + assignmentId + ' matched=' +
-      review.matched + ' problems=' + review.problems);
+      review.matched + ' problems=' + review.problems + ' quiz=' + parsed.quiz);
     reviewSheet.activate();
     ui.alert('"' + reviewName + '" is ready',
-      'Matched: ' + review.matched + '\n' +
+      'Matched: ' + review.matched + (parsed.quiz ? ' answers' : '') + '\n' +
       'Needing a look: ' + review.problems +
       (review.problems ? ' (these are at the top, with the reason in the Problem column)' : ''),
       ui.ButtonSet.OK);
@@ -81,8 +104,9 @@ function runMatch_(ui, assignmentId, shortName) {
 
 /**
  * Reads the pasted table. Accepts a normal pasted table, or a Markdown table that landed
- * as "| a | b |" lines in column A. Returns rows as objects with the RESULTS_HEADERS
- * fields; rows above the first header row are ignored.
+ * as "| a | b |" lines in column A. Returns { rows, quiz }: rows are objects with the
+ * RESULTS_FIELDS fields ('' when a column is missing); quiz is true when a header has a
+ * Group column (New Quiz answers). Rows above the first header row are ignored.
  */
 function parseResultsTable_(values) {
   const grid = values
@@ -99,24 +123,19 @@ function parseResultsTable_(values) {
   }
   const cellAt = (cells, index) => (index === -1 ? '' : String(cells.at(index) || '').trim());
   let columns = null;
+  let quiz = false;
   const rows = [];
   for (const cells of grid) {
     if (isHeader(cells)) {
       const header = cells.map((cell) => cell.toLowerCase());
-      columns = RESULTS_HEADERS.map((name) => header.indexOf(name.toLowerCase()));
+      columns = RESULTS_FIELDS.map((name) => header.indexOf(name.toLowerCase()));
+      if (header.includes('group')) quiz = true;
       continue;
     }
     if (!columns) continue;
-    const [code, score, feedback, confidence, notes] = columns;
-    rows.push({
-      Code: cellAt(cells, code),
-      Score: cellAt(cells, score),
-      Feedback: cellAt(cells, feedback),
-      Confidence: cellAt(cells, confidence),
-      Notes: cellAt(cells, notes),
-    });
+    rows.push(Object.fromEntries(RESULTS_FIELDS.map((name, i) => [name, cellAt(cells, columns[i])])));
   }
-  return { rows };
+  return { rows, quiz };
 }
 
 /** "| a | b |" in the first cell only → ['a', 'b']. Any other row is returned trimmed. */
@@ -204,6 +223,60 @@ function buildReview_(resultRows, studentByCode) {
   return { rows, matched, problems };
 }
 
+/**
+ * New Quiz answers: one Review row per AI result ({ name, code, question, group, why,
+ * notes, problem }), plus one per answer the AI left out. expected (from the answers
+ * file; null if it can't be read) maps each code to the question numbers that student
+ * answered; without it, only students missing entirely are flagged.
+ * Problem rows sort to the top; everything else by name, then question number.
+ */
+function buildQuizReview_(resultRows, studentByCode, expected) {
+  const rows = [];
+  const seen = new Set();
+  const seenCodes = new Set();
+  let matched = 0;
+  let problems = 0;
+
+  for (const result of resultRows) {
+    const code = baseCode_(result.Code);
+    const number = questionNumber_(result.Question);
+    const done = expected && expected.get(code);
+    let problem = '';
+    if (!code) problem = 'Not a valid code';
+    else if (!studentByCode.has(code)) problem = 'Code not in the Key for this assignment';
+    else if (!number) problem = 'No question number (Q1, Q2, …)';
+    else if (seen.has(code + '|' + number)) problem = 'Answer listed more than once';
+    else if (expected && !(done && done.has(number))) problem = 'This student did not answer this question';
+    if (code) seenCodes.add(code);
+    if (code && number) seen.add(code + '|' + number);
+    if (problem) problems++; else matched++;
+    rows.push({ name: studentByCode.get(code) || '', code: result.Code, number,
+      question: number ? 'Q' + number : result.Question, group: result.Group,
+      why: result.Why, notes: result.Notes, problem });
+  }
+
+  const missing = (code, number) => {
+    problems++;
+    rows.push({ name: studentByCode.get(code) || '', code, number,
+      question: number ? 'Q' + number : '', group: '', why: '', notes: '',
+      problem: 'Missing from AI results' });
+  };
+  if (expected) {
+    for (const [code, numbers] of expected) {
+      for (const number of numbers) if (!seen.has(code + '|' + number)) missing(code, number);
+    }
+  } else {
+    for (const code of studentByCode.keys()) if (!seenCodes.has(code)) missing(code, 0);
+  }
+
+  rows.sort((a, b) => {
+    if (Boolean(a.problem) !== Boolean(b.problem)) return a.problem ? -1 : 1;
+    if (a.name !== b.name) return a.name < b.name ? -1 : 1;
+    return a.number - b.number;
+  });
+  return { rows, matched, problems };
+}
+
 function hasCheckedReviews_(sheet) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return false;
@@ -211,21 +284,23 @@ function hasCheckedReviews_(sheet) {
     .some(([value]) => value === true);
 }
 
-/** Clears and rewrites the Review tab. Text comes from the AI, so it goes in as text. */
-function writeReview_(sheet, rows) {
+/**
+ * Clears and rewrites the Review tab with these headers (Reviewed last, as a checkbox).
+ * values are the rows without the checkbox; callers pass AI text through asText_.
+ */
+function writeReview_(sheet, headers, values) {
   const lastRow = sheet.getLastRow();
   if (lastRow > 1) {
-    const old = sheet.getRange(2, 1, lastRow - 1, REVIEW_HEADERS.length);
+    const old = sheet.getRange(2, 1, lastRow - 1, headers.length);
     old.clearContent();
     old.clearDataValidations();
   }
-  if (rows.length === 0) return;
-  const values = rows.map(([studentName, code, score, feedback, confidence, notes, problem]) => [
-    asText_(studentName), asText_(code), scoreValue_(score), asText_(feedback),
-    asText_(confidence), asText_(notes), problem, false]);
-  sheet.getRange(2, 1, values.length, REVIEW_HEADERS.length).setValues(values)
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+  if (values.length === 0) return;
+  sheet.getRange(2, 1, values.length, headers.length)
+    .setValues(values.map((row) => [...row, false]))
     .setVerticalAlignment('top');
-  sheet.getRange(2, REVIEW_HEADERS.length, values.length, 1).insertCheckboxes();
+  sheet.getRange(2, headers.length, values.length, 1).insertCheckboxes();
 }
 
 /** A plain number stays a number (so it can be copied into a gradebook); anything else is text. */

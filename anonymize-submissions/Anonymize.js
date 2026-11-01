@@ -143,6 +143,14 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
       copied++;
     }
 
+    // A quiz's AI tab gets the quiz columns, unless results were already pasted in.
+    const aiSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tabName_(shortName, 'AI'));
+    if (quizzes.length && aiSheet && aiSheet.getLastRow() <= 1) {
+      aiSheet.getRange(1, 1, 1, Math.max(aiSheet.getLastColumn(), 1)).clearContent();
+      aiSheet.getRange(1, 1, 1, QUIZ_RESULTS_HEADERS.length).setValues([QUIZ_RESULTS_HEADERS])
+        .setFontWeight('bold');
+    }
+
     stage = 'writing the Flagged tab';
     const flaggedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(flaggedName);
     if (flagged.length || flaggedSheet) {

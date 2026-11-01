@@ -109,7 +109,7 @@ function matchSelectedRow() {
   const ui = SpreadsheetApp.getUi();
   const job = selectedJob_(ui);
   if (!job || isArchived_(ui, job)) return;
-  const status = runMatch_(ui, job.assignmentId, job.shortName);
+  const status = runMatch_(ui, job.assignmentId, job.shortName, job.folderId);
   if (status) writeStatus_(job, COL.MATCHED, status);
 }
 

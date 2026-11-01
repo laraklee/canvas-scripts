@@ -10,6 +10,7 @@
  *   points already given, are left out. Each student with an essay answer gets one row
  *   in the Key tab, with the same code a file download would give them.
  *   Answers are student text: untrusted data, written as text only, never as formulas.
+ *   Match (MatchResults.js) reads the answers file back to spot answers the AI skipped.
  * Canvas endpoints called: none (works on a report already downloaded to Drive).
  * Canvas write operations: none.
  * Required User/Script Properties: none here (Anonymize.js passes in the passphrase).
@@ -28,6 +29,45 @@ function isQuizReport_(fileName) {
   return /\.csv$/i.test(fileName);
 }
 
+function quizAnswersName_(shortName) {
+  return shortName + ' answers.csv';
+}
+
+/** 6 from "Q6", "q 6", or "Q6. The chemical soda lime…"; 0 if there's no number. */
+function questionNumber_(text) {
+  const match = /^\s*Q\s*(\d+)/i.exec(String(text));
+  return match ? Number(match[1]) : 0;
+}
+
+/**
+ * For Match: which questions each code answered, from the answers file this assignment's
+ * Anonymize run wrote. Returns Map code → Set of question numbers, or null if the file
+ * can't be found or read (Match then checks whole students only).
+ */
+function readQuizAnswers_(folderId, shortName) {
+  try {
+    const anonFolders = DriveApp.getFolderById(folderId).getFoldersByName(ANON_FOLDER_NAME);
+    if (!anonFolders.hasNext()) return null;
+    const files = anonFolders.next().getFilesByName(quizAnswersName_(shortName));
+    if (!files.hasNext()) return null;
+    return expectedAnswers_(files.next().getBlob().getDataAsString('UTF-8'));
+  } catch {
+    return null;
+  }
+}
+
+/** Answers file text (Code, Question, Answer) → Map code → Set of question numbers. */
+function expectedAnswers_(csvText) {
+  const expected = new Map();
+  for (const [code, question] of parseCsv_(csvText).slice(1)) {
+    const number = questionNumber_(question);
+    if (!code || !number) continue;
+    if (!expected.has(code)) expected.set(code, new Set());
+    expected.get(code).add(number);
+  }
+  return expected;
+}
+
 /**
  * Anonymizes one Student Analysis report. job holds assignmentId, shortName, passphrase,
  * state (from readKeyState_), keySheet, outFolder, and flagged (problems are added to it).
@@ -43,7 +83,7 @@ function anonymizeQuizCsv_(source, job) {
   }
   report.problems.forEach((problem) => flagged.push([assignmentId, source.label, problem]));
 
-  result.outName = shortName + ' answers.csv';
+  result.outName = quizAnswersName_(shortName);
   const answerRows = [];
   for (const student of report.students) {
     if (student.answers.length === 0) {
