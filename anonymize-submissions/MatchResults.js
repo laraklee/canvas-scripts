@@ -77,6 +77,7 @@ function runMatch_(ui, assignmentId, shortName, folderId) {
         [asText_(row.name), asText_(row.code), asText_(row.question), asText_(row.group),
           asText_(row.why), asText_(row.notes), row.problem]));
       boldQuestionText_(reviewSheet, review.rows.map((row) => row.question));
+      shadeStudentBlocks_(reviewSheet);
     } else {
       review = buildReview_(parsed.rows, students);
       writeReview_(reviewSheet, REVIEW_HEADERS, review.rows.map(
@@ -336,6 +337,33 @@ function boldQuestionText_(sheet, labels) {
     if (start !== -1) builder.setTextStyle(start + 3, text.length, bold);
     return [builder.build()];
   }));
+}
+
+// Shades every other student's block of rows in a quiz Review (Lara's rule, plus a
+// check that skips empty rows so the shading stops after the last student).
+const STUDENT_BAND_FORMULA = '=AND($A2<>"", ISODD(COUNTUNIQUE($A$2:$A2)))';
+const STUDENT_BAND_COLOR = '#eeeeee';
+
+/**
+ * Adds the student-block shading rule to a quiz Review tab. Rebuilding Review runs this
+ * again, so any earlier copy of the rule (same formula, with or without the empty-row
+ * check) is removed first; other rules are kept.
+ */
+function shadeStudentBlocks_(sheet) {
+  const sameRule = (rule) => {
+    const condition = rule.getBooleanCondition();
+    const formula = condition && condition.getCriteriaType() ===
+      SpreadsheetApp.BooleanCriteria.CUSTOM_FORMULA ? String(condition.getCriteriaValues()[0]) : '';
+    return /ISODD\(COUNTUNIQUE\(\$A\$2:\$A2\)\)/i.test(formula);
+  };
+  const rules = sheet.getConditionalFormatRules().filter((rule) => !sameRule(rule));
+  const range = sheet.getRange(2, 1, Math.max(sheet.getMaxRows() - 1, 1), QUIZ_REVIEW_HEADERS.length);
+  rules.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied(STUDENT_BAND_FORMULA)
+    .setBackground(STUDENT_BAND_COLOR)
+    .setRanges([range])
+    .build());
+  sheet.setConditionalFormatRules(rules);
 }
 
 /** A plain number stays a number (so it can be copied into a gradebook); anything else is text. */
