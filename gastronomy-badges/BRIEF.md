@@ -20,6 +20,8 @@ refresh, and messages. Update it in the same commit as any change a teacher woul
 stripped) through the Google Drive connector. When the guide changes, edit this Doc in
 place (same link) with the Google Docs connector at push time. If the Clean-up list
 changes the token menu (item 1), the guide's setup section changes too.
+**Reviewed by Lara 11/1:** good enough until there are real users; the tool is mostly
+for her, so no further polish is planned.
 
 ## Menu
 
