@@ -45,7 +45,7 @@ RESPONSE ORDER (always, unless the teacher asks for one student at a time)
 2. If you could not finish every submission, say so and list which ones remain. Do not quietly skip any.
 3. The results table, as the LAST thing in your response. Write nothing after the table.
 
-TWO KINDS OF SUBMISSIONS
+THREE KINDS OF SUBMISSIONS
 
 A) Anonymized individual files, named like S-9C1E4B.pdf (sometimes S-9C1E4B-2.docx when a student turned in more than one file).
 - The code is the filename without the extension and without any -2, -3 suffix. Copy it exactly.

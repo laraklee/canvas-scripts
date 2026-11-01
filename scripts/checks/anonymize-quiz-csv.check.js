@@ -132,6 +132,17 @@ check('without the answers file, only missing students are flagged',
   c.buildQuizReview_([{ Code: 'S-AAAAAA', Question: 'Q1', Group: 'OK' }], students, null)
     .rows.map((r) => [r.name, r.problem]),
   [['Test, Ben', 'Missing from AI results'], ['Test, Ann', '']]);
+check('last-name order, either name form',
+  ['Zed Adams', 'Amy Brown', 'Cole, Ben', 'Bo Adams', 'Cher'].sort(c.compareNames_),
+  ['Bo Adams', 'Zed Adams', 'Amy Brown', 'Cher', 'Cole, Ben']);
+check('quiz review sorts by last name, then question',
+  c.buildQuizReview_([
+    { Code: 'S-AAAAAA', Question: 'Q2', Group: 'OK' },
+    { Code: 'S-BBBBBB', Question: 'Q1', Group: 'OK' },
+    { Code: 'S-AAAAAA', Question: 'Q1', Group: 'OK' },
+  ], new Map([['S-AAAAAA', 'Ann Young'], ['S-BBBBBB', 'Zoe Baker']]), null)
+    .rows.map((r) => r.name + ' ' + r.question),
+  ['Zoe Baker Q1', 'Ann Young Q1', 'Ann Young Q2']);
 check('review tabs keep Reviewed in the same column',
   vm.runInContext('[QUIZ_REVIEW_HEADERS.length, QUIZ_REVIEW_HEADERS.at(-1)]', context),
   [vm.runInContext('REVIEW_HEADERS.length', context), 'Reviewed']);

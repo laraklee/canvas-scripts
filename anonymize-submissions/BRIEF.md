@@ -13,7 +13,8 @@ then set the passphrase once in each copy (User Properties belong to one script 
 - **Biology** AI grading workbook: `1BcbprgAzhTFBvU8vNtZJgvvmXU5_gHZOJYfpmG-2cNxVoGWFVxnxvSsc`.
   Lara's main one. To push there without changing `.clasp.json`: `clasp clone` it into a
   scratch folder, copy this folder's `.js` files in (keep its own `appsscript.json`), then
-  `clasp push` from there. 11/1: it matched commit `985e56b`; pushed `d0e4fbc` (quiz CSV).
+  `clasp push` from there. 11/1: it matched commit `985e56b`; pushed `d0e4fbc` (quiz CSV),
+  then `8e404ef` (Match for quiz answers).
 - **Gastronomy** AI grading workbook: `18X8wcEFb0o4wMvivgWG_Gd6fLYPV4Y3hb-EtmDAaw4kSIpvPkiq7kWQK`.
   11/1: matched commit `985e56b` (checked read-only); not yet pushed `d0e4fbc`.
 - All three courses should run the same code (Lara, 11/1). Same order as the other
@@ -83,7 +84,8 @@ Lara checked the file (columns, order, clean text, no names).
 **Step 2 (11/1): Match for quiz answers.** If the pasted AI table has a **Group** column,
 Match reads **Code, Question, Group, Why, Notes** (one row per answer) and Review becomes
 Name, Code, Question (`Q6`), Group, Why, Notes, Problem, Reviewed: one row per answer,
-sorted by student then question number. Match reads the answers file back to flag every
+sorted by student (last name, like SpeedGrader; Canvas gives "First Last", so the last
+word counts as the last name) then question number. Match reads the answers file back to flag every
 answer the AI skipped ("Missing from AI results"), answers listed twice, and answers to
 a question that student didn't get. Same column count as the score Review, with Reviewed
 last, so Archive works unchanged. Anonymize gives a quiz's empty AI tab the quiz headers.

@@ -186,7 +186,7 @@ function studentsByCode_(keyRows, assignmentId) {
 
 /**
  * One Review row per AI result, plus one row per student the AI left out.
- * Problem rows sort to the top; everything else is sorted by name.
+ * Problem rows sort to the top; everything else is sorted by last name.
  */
 function buildReview_(resultRows, studentByCode) {
   const rows = [];
@@ -218,9 +218,24 @@ function buildReview_(resultRows, studentByCode) {
 
   rows.sort((a, b) => {
     if (Boolean(a[6]) !== Boolean(b[6])) return a[6] ? -1 : 1;
-    return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
+    return compareNames_(a[0], b[0]);
   });
   return { rows, matched, problems };
+}
+
+/**
+ * Orders names by last name, as SpeedGrader does. "Last, First" is used as is;
+ * "First Last" is sorted by its last word, then the rest. A two-word last name
+ * ("Van Buren") sorts under its last word: the Key only has the name as Canvas wrote it.
+ */
+function compareNames_(a, b) {
+  const key = (name) => {
+    const text = String(name).trim().toLowerCase();
+    if (text.includes(',')) return text;
+    const words = text.split(/\s+/);
+    return words.length < 2 ? text : words.at(-1) + ', ' + words.slice(0, -1).join(' ');
+  };
+  return key(a).localeCompare(key(b));
 }
 
 /**
@@ -228,7 +243,7 @@ function buildReview_(resultRows, studentByCode) {
  * notes, problem }), plus one per answer the AI left out. expected (from the answers
  * file; null if it can't be read) maps each code to the question numbers that student
  * answered; without it, only students missing entirely are flagged.
- * Problem rows sort to the top; everything else by name, then question number.
+ * Problem rows sort to the top; everything else by last name, then question number.
  */
 function buildQuizReview_(resultRows, studentByCode, expected) {
   const rows = [];
@@ -271,8 +286,7 @@ function buildQuizReview_(resultRows, studentByCode, expected) {
 
   rows.sort((a, b) => {
     if (Boolean(a.problem) !== Boolean(b.problem)) return a.problem ? -1 : 1;
-    if (a.name !== b.name) return a.name < b.name ? -1 : 1;
-    return a.number - b.number;
+    return compareNames_(a.name, b.name) || a.number - b.number;
   });
   return { rows, matched, problems };
 }
