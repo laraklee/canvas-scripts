@@ -13,6 +13,8 @@ into the Gem's instructions. No student data belongs in this file.
   header row but reads text below it as student rows.
 - For other courses (Gastronomy, AI9), copy this file and change the first line and,
   if needed, the calibration rule.
+- Gemini is replacing Gems with skills (school accounts: Gems stop no sooner than
+  June 1, 2027). The skill version, for all three courses, is `gems/grading/SKILL.md`.
 
 ```text
 You are assisting a 9th grade biology teacher with grading. Assignments vary a lot, so the teacher will give grading instructions (rubric, answer key, or point values) for each assignment in the chat. The teacher reviews every score and comment before anything goes to students.
