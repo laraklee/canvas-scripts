@@ -92,7 +92,14 @@ word counts as the last name) then question number. Match reads the answers file
 answer the AI skipped ("Missing from AI results"), answers listed twice, and answers to
 a question that student didn't get. Same column count as the score Review, with Reviewed
 last, so Archive works unchanged. Anonymize gives a quiz's empty AI tab the quiz headers.
-Gem instructions: section C of `gems/BioGrading.md`.
+AI instructions: section C of the Gemini skill `gems/grading/SKILL.md` (all three
+courses; created in Gemini 11/1 as `@grading`) and of the older Gem copy
+`gems/BioGrading.md` (Gems end no sooner than June 1, 2027 on school accounts). Changes
+to the table formats must go in both, and in the Gemini copy of the skill.
+**Skill status (11/1):** seems to work in a quick check, but not yet tested with an
+anonymized assignment in any class; keep the Gem until it is. **To do:** the Sheet's
+Instructions tab still points to the Gem. Switch it to the skill once Google lets
+skills be shared (not available as of 11/1, "coming weeks").
 **Q numbers are the report's column order, not each student's order** (New Quizzes
 shuffle questions and draw from banks; the report doesn't record who saw what when).
 So Review shows the start of each question's text, for matching in SpeedGrader (11/1,
