@@ -117,6 +117,31 @@ let clock = 0;
 const slow = sendRun(() => { clock += 3 * 60 * 1000; }, { now: () => clock });
 check('time limit: stops starting new changes', [slow.result.done, slow.result.notStarted], [2, 2]);
 
+// ---- List groups and members (made-up names) ----
+const list = c.groupListRows_(
+  [{ id: 22, name: 'Group 10' }, { id: 21, name: 'Group 2' }, { id: 23, name: 'Empty' }],
+  [[{ name: 'Zed Ant', sortable_name: 'Ant, Zed' }],
+    [{ name: 'Bo Cat', sortable_name: 'Cat, Bo' }, { name: 'Al Bee', sortable_name: 'Bee, Al' }],
+    []],
+  [{ name: 'Cy Dog', sortable_name: 'Dog, Cy' }]);
+check('group list: groups by name (2 before 10), members by last name, then no-group block',
+  JSON.parse(JSON.stringify(list.rows)), [
+    ['Empty', '0 members', 'Group ID 23'], ['', '', ''],
+    ['Group 2', '2 members', 'Group ID 21'], ['', 'Al Bee', ''], ['', 'Bo Cat', ''], ['', '', ''],
+    ['Group 10', '1 member', 'Group ID 22'], ['', 'Zed Ant', ''], ['', '', ''],
+    ['Not in any group', '1 student', ''], ['', 'Cy Dog', ''],
+  ]);
+check('group list: header rows marked for color',
+  JSON.parse(JSON.stringify(list.blocks)), [{ index: 0, kind: 'group' },
+    { index: 2, kind: 'group' }, { index: 6, kind: 'group' }, { index: 9, kind: 'none' }]);
+check('group list: counts', [list.groupCount, list.placed, list.unassigned], [3, 3, 1]);
+const noGroups = c.groupListRows_([], [], []);
+check('group list: no groups, no one left out', JSON.parse(JSON.stringify(noGroups.rows)),
+  [['Not in any group', '0 students', '']]);
+check('group set list: sorted by name, IDs as text, missing count blank',
+  JSON.parse(JSON.stringify(c.groupSetRows_([{ id: 9.0, name: 'Lab 2', groups_count: 6 },
+    { id: 8, name: 'Lab 1' }]))), [['Lab 1', '8', ''], ['Lab 2', '9', 6]]);
+
 if (failures) {
   console.log(`\n${failures} check(s) failed.`);
   process.exitCode = 1;

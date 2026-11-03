@@ -96,7 +96,7 @@ Google lists what the script may do. It asks to:
 | Post selected rows (createByRow) | Preview (either create tool) |
 | makeAll (makeAssignment) | Refresh tables, Jupiter categories |
 | Push reorder | Update Grades, CreateRoster |
-| Create group category, Create groups, Put students in groups | Pull scores, Pull groups |
+| Create group category, Create groups, Put students in groups | Pull scores, Pull groups, List groups and members |
 | Post comments | List course content, Export to Google Docs |
 | | Quiz report, Course check, Build seating chart |
 
@@ -282,6 +282,21 @@ this column**. **This changes Canvas** (dry run applies).
   go.
 - It stops itself after about 5 minutes. Running it again is safe: it only does what
   still differs.
+
+**List groups and members (this tab).** A quick way to check a group set, group by
+group. **Read-only.** Use a new, empty tab.
+
+1. Type the **course ID** in **B1** (leave it blank for this workbook's course) and the
+   group set's **category ID** in **B3**. Don't know the ID? Leave B3 blank and run it:
+   you get a list of the course's group sets with their IDs. Copy one into B3.
+2. Choose **Canvas Tools › Groups › List groups and members (this tab)**.
+
+The group set's name appears in **C2**, so you can check it's the right set. From row 5,
+each group has a **light blue** row with its name, how many members it has, and its group
+ID, followed by its members by last name. At the bottom, a **light red "Not in any
+group"** block lists students in the course who aren't in any group of this set. Running
+it again replaces everything from row 4 down. It won't run on a tab whose row 4 already
+has something else in it (a grading sheet, for example).
 
 ### Rubrics (Canvas import)
 

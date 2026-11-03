@@ -28,10 +28,19 @@
  *     on the sheet are never touched. Stops before sending if a cell names a group not in
  *     the set, or two groups share a name. Asks first; refused rows turn light red with a
  *     note; 5-minute stop; a rerun only does what still differs.
- * Canvas endpoints called (GET via canvasGet_, Pull groups and Put students in groups):
+ *   - listGroupsAndMembers (menu: Canvas Tools › Groups; read-only; this tab): B1 course
+ *     ID (blank = cfg_CourseID), B3 group set ID. Writes the set's name to C2 and, from
+ *     row 5, each group with its members by name, then students in no group. B3 blank:
+ *     lists the course's group sets and IDs instead. Refuses ref_ tabs and tabs whose row
+ *     4 isn't blank or its own headers, so it can't wipe a grading sheet. Names go only
+ *     onto the sheet; messages and logs give counts.
+ * Canvas endpoints called (GET via canvasGet_, Pull groups, Put students in groups, and
+ *   List groups and members):
+ *   /api/v1/courses/:course/group_categories (List groups, B3 blank)
  *   /api/v1/group_categories/:category
  *   /api/v1/group_categories/:category/groups
  *   /api/v1/groups/:group/users
+ *   /api/v1/group_categories/:category/users?unassigned=true (List groups)
  * Canvas write operations (via canvasWrite_, so DRY_RUN applies):
  *   POST /api/v1/courses/:course/group_categories with name
  *   POST /api/v1/group_categories/:category/groups with name
@@ -52,6 +61,15 @@ const GROUPS_HEADER_ROW = 4;
 const GROUPS_ID_HEADER = 'GroupID';
 const GROUPS_NAME_HEADER = 'Group Names';
 const GROUPS_TIME_LIMIT_MS = 5 * 60 * 1000;
+
+// List groups and members (this tab): input cells, output from row 5 (headers in row 4).
+const GROUP_LIST_CELLS = Object.freeze({ COURSE_ID: 'B1', SET_NAME: 'C2', SET_ID: 'B3' });
+const GROUP_LIST_HEADER_ROW = 4;
+const GROUP_LIST_MEMBER_HEADERS = Object.freeze(['Group', 'Members', 'Notes']);
+const GROUP_LIST_SET_HEADERS = Object.freeze(['Group set', 'Group set ID (copy to B3)',
+  'Groups']);
+const GROUP_LIST_GROUP_COLOR = '#cfe2f3'; // light blue: a group's header row
+const GROUP_LIST_NONE_COLOR = '#f4cccc'; // light red: "Not in any group"
 
 /**
  * Button / menu: Clear group data. Clears the category ID and link (D2, E2) and every
@@ -364,6 +382,172 @@ function putStudentsInGroupsFromActiveColumn() {
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * Menu: Canvas Tools › Groups › List groups and members (this tab). Read-only in Canvas.
+ * B1 course ID (blank = cfg_CourseID), B3 group set ID. Writes the set's name to C2, then
+ * from row 5 one block per group (name, member count, members by last name) and a last
+ * block of students in the course who are in no group of the set. With B3 blank, lists
+ * the course's group sets and their IDs instead, so one can be copied into B3.
+ */
+function listGroupsAndMembers() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const title = 'List groups and members';
+  try {
+    const sheet = ss.getActiveSheet();
+    checkGroupListTab_(sheet);
+    labelGroupListTab_(sheet);
+    const courseId = groupListCourseId_(sheet);
+    const setId = jupiterId_(sheet.getRange(GROUP_LIST_CELLS.SET_ID).getValue());
+    if (setId && !/^\d+$/.test(setId)) {
+      throw sheetProblem_(`${GROUP_LIST_CELLS.SET_ID} should be a group set ID (a number), ` +
+        'or blank to list the course\'s group sets.');
+    }
+
+    ss.toast('Reading groups from Canvas…', title, -1);
+    if (!setId) {
+      const sets = canvasStep_('group sets request', () =>
+        canvasGet_(`/courses/${courseId}/group_categories`));
+      ss.toast('', title, 1);
+      writeGroupListOutput_(sheet, GROUP_LIST_SET_HEADERS, groupSetRows_(sets), []);
+      sheet.getRange(GROUP_LIST_CELLS.SET_NAME).clearContent();
+      console.log(`List groups and members: ${sets.length} group set(s) listed.`);
+      ui.alert(title, `Course ${courseId} has ${sets.length} group set(s), listed from row ` +
+        `${GROUP_LIST_HEADER_ROW + 1}. Copy one ID into ${GROUP_LIST_CELLS.SET_ID} and run ` +
+        'this again.', ui.ButtonSet.OK);
+      return;
+    }
+
+    const category = canvasStep_('group set request', () =>
+      canvasGet_(`/group_categories/${setId}`));
+    if (jupiterId_(category.course_id) !== courseId) {
+      throw sheetProblem_(`Group set ${setId} is not in course ${courseId}. Check ` +
+        `${GROUP_LIST_CELLS.COURSE_ID} and ${GROUP_LIST_CELLS.SET_ID}.`);
+    }
+    const groups = canvasStep_('groups request', () =>
+      canvasGet_(`/group_categories/${setId}/groups`));
+    const members = groups.map(group => canvasStep_('group members request', () =>
+      canvasGet_(`/groups/${group.id}/users`)));
+    const unassigned = canvasStep_('students-in-no-group request', () =>
+      canvasGet_(`/group_categories/${setId}/users`, { unassigned: 'true' }));
+    ss.toast('', title, 1);
+
+    const list = groupListRows_(groups, members, unassigned);
+    sheet.getRange(GROUP_LIST_CELLS.SET_NAME).setValue(String(category.name || '').trim());
+    writeGroupListOutput_(sheet, GROUP_LIST_MEMBER_HEADERS, list.rows, list.blocks);
+    console.log(`List groups and members: ${list.groupCount} group(s), ${list.placed} ` +
+      `in a group, ${list.unassigned} in none.`);
+    ui.alert(title, `"${String(category.name || '').trim()}": ${list.groupCount} group(s), ` +
+      `${list.placed} student(s) in a group, ${list.unassigned} in no group.`,
+    ui.ButtonSet.OK);
+  } catch (error) {
+    reportRefreshFailure_(title, 'The list was not changed.', error);
+  }
+}
+
+/**
+ * Rows for the group list: per group (sorted by name, numbers in order) a header row
+ * [name, "n members", "Group ID id"], its members' names (sorted by last name), and a
+ * blank row; then a "Not in any group" block. Returns { rows, blocks: [{ index, kind }]
+ * (row indexes of the header rows; kind 'group' or 'none'), groupCount, placed,
+ * unassigned }.
+ */
+function groupListRows_(groups, members, unassigned) {
+  const byName = (a, b) => String(a.name || '').trim().localeCompare(
+    String(b.name || '').trim(), undefined, { numeric: true });
+  const byLastName = (a, b) => String(a.sortable_name || a.name || '')
+    .localeCompare(String(b.sortable_name || b.name || ''));
+  const count = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  const out = { rows: [], blocks: [], groupCount: groups.length, placed: 0, unassigned: 0 };
+
+  groups.map((group, i) => ({ group, users: members.slice(i, i + 1)[0] || [] }))
+    .sort((a, b) => byName(a.group, b.group))
+    .forEach(({ group, users }) => {
+      out.blocks.push({ index: out.rows.length, kind: 'group' });
+      out.rows.push([String(group.name || '').trim(), count(users.length, 'member'),
+        `Group ID ${jupiterId_(group.id)}`]);
+      [...users].sort(byLastName).forEach(user => out.rows.push(['', user.name || '', '']));
+      out.rows.push(['', '', '']);
+      out.placed += users.length;
+    });
+
+  const none = [...(unassigned || [])].sort(byLastName);
+  out.unassigned = none.length;
+  out.blocks.push({ index: out.rows.length, kind: 'none' });
+  out.rows.push(['Not in any group', count(none.length, 'student'), '']);
+  none.forEach(user => out.rows.push(['', user.name || '', '']));
+  return out;
+}
+
+/** Rows for the group set list: [name, ID, number of groups], sorted by name. */
+function groupSetRows_(sets) {
+  return [...sets]
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined,
+      { numeric: true }))
+    .map(set => [String(set.name || '').trim(), jupiterId_(set.id),
+      set.groups_count === undefined || set.groups_count === null ? '' : set.groups_count]);
+}
+
+/**
+ * Refuses tabs where clearing row 4 down could lose work: ref_ tabs, and tabs whose row 4
+ * has something other than this tool's own headers (a grading sheet, for example).
+ */
+function checkGroupListTab_(sheet) {
+  if (isSystemSheet_(sheet.getName())) {
+    throw sheetProblem_('Run this on its own tab, not a ref_ tab.');
+  }
+  const row4 = sheet.getRange(GROUP_LIST_HEADER_ROW, 1, 1, Math.max(sheet.getLastColumn(), 1))
+    .getDisplayValues()[0].map(value => String(value).trim());
+  const ours = [GROUP_LIST_MEMBER_HEADERS, GROUP_LIST_SET_HEADERS]
+    .some(headers => headers.every((header, i) => row4.slice(i, i + 1)[0] === header));
+  if (row4.some(Boolean) && !ours) {
+    throw sheetProblem_(`Row ${GROUP_LIST_HEADER_ROW} of this tab already has something in ` +
+      'it, and this tool replaces everything from there down. Use a new, empty tab.');
+  }
+}
+
+/** Fills in the A-column labels on a new tab (only blank cells). */
+function labelGroupListTab_(sheet) {
+  [['A1', 'Course ID:'], ['A2', 'Group set name:'], ['A3', 'Group set ID:']]
+    .forEach(([cell, label]) => {
+      const range = sheet.getRange(cell);
+      if (!String(range.getDisplayValue()).trim()) range.setValue(label).setFontWeight('bold');
+    });
+}
+
+/** B1's course number, or cfg_CourseID when B1 is blank. */
+function groupListCourseId_(sheet) {
+  const typed = jupiterId_(sheet.getRange(GROUP_LIST_CELLS.COURSE_ID).getValue());
+  if (!typed) return getCourseIdForRefresh_();
+  if (!/^\d+$/.test(typed)) {
+    throw sheetProblem_(`${GROUP_LIST_CELLS.COURSE_ID} should be a Canvas course number, ` +
+      'or blank for this workbook\'s course.');
+  }
+  return typed;
+}
+
+/** Clears row 4 down (values and this tool's colors), then writes headers and rows. */
+function writeGroupListOutput_(sheet, headers, rows, blocks) {
+  const width = headers.length;
+  const lastRow = sheet.getLastRow();
+  if (lastRow >= GROUP_LIST_HEADER_ROW) {
+    sheet.getRange(GROUP_LIST_HEADER_ROW, 1, lastRow - GROUP_LIST_HEADER_ROW + 1, width)
+      .clearContent().setBackground(null).setFontWeight('normal');
+  }
+  sheet.getRange(GROUP_LIST_HEADER_ROW, 1, 1, width).setValues([headers])
+    .setFontWeight('bold');
+  if (rows.length) {
+    sheet.getRange(GROUP_LIST_HEADER_ROW + 1, 1, rows.length, width).setValues(rows)
+      .setHorizontalAlignment('left');
+  }
+  blocks.forEach(block => {
+    sheet.getRange(GROUP_LIST_HEADER_ROW + 1 + block.index, 1, 1, width)
+      .setBackground(block.kind === 'none' ? GROUP_LIST_NONE_COLOR : GROUP_LIST_GROUP_COLOR)
+      .setFontWeight('bold');
+  });
+  sheet.autoResizeColumns(1, width);
 }
 
 /**
