@@ -8,6 +8,7 @@
  *   B1 = Canvas Course ID
  *   B3 = Group Set ID (Canvas calls this a "group category").
  *        Leave B3 blank to list all group sets in the course with their IDs.
+ *   C2 = Group set name, filled in by the script so the teacher can double-check it.
  *   Row 5 down = output (cleared and rewritten on each run).
  *
  * Canvas endpoints called (all GET, read-only):
@@ -62,7 +63,7 @@ function listGroupsAndMembers() {
   try {
     const api = getGroupListApi_();
     clearGroupListOutput_(sheet);
-    sheet.getRange('C3').clearContent();
+    sheet.getRange('C2').clearContent();
 
     if (!groupSetId) {
       writeGroupSets_(sheet, api, courseId);
@@ -77,7 +78,7 @@ function listGroupsAndMembers() {
         ui.ButtonSet.OK);
       return;
     }
-    sheet.getRange('C3').setValue(groupSet.name || '');
+    sheet.getRange('C2').setValue(groupSet.name || '');
 
     writeGroupMembers_(sheet, api, groupSetId);
   } catch (e) {
