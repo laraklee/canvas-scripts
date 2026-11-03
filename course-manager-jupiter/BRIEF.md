@@ -115,7 +115,9 @@
 >   and IDs. Refuses ref_ tabs and tabs whose row 4 isn't blank or its own headers.
 >   Lara asked for it after a group set was set up wrong. Goes to **AI9 first**. (It was
 >   first built by mistake in legacy `course-manager/` and pushed there, commits a1731ef
->   and 8ac4478; harmless, read-only.)
+>   and 8ac4478; harmless, read-only.) Pushed to AI9 2026-11-02 (7fc4c4c). Google Doc
+>   guide synced the same day: its Groups section had been missing Pull groups and Put
+>   students in groups too, so the whole section now matches USER-GUIDE.md.
 > - **User guide: first draft 2026-10-27.** `USER-GUIDE.md` (this folder), written for
 >   **other teachers who weren't here**: setup, permissions, safety, then one section per
 >   tool. Built from the old quick-start `docs/user-manual.md` (moved here and renamed)
