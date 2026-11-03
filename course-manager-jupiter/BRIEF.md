@@ -107,7 +107,9 @@
 >   duplicate group names; no auto-create. Refused rows light red + note; 5-minute stop;
 >   document lock. **Test plan:** dry run in AI9, then a real run moving 2-3 students.
 >   CSV download: skipped (no student file).
->   **List groups and members (built 2026-11-02, not yet tested; read-only):**
+>   **List groups and members (2026-11-02; read-only; tested in AI9, Lara: "Beautiful!";
+>   commit 6b940d3 pushed to AI9, Biology, and Gastronomy the same day, so all three
+>   match):**
 >   `listGroupsAndMembers` (Groups.js; Canvas Tools › Groups; this tab). B1 course ID
 >   (blank = cfg_CourseID), B2 group set ID, set name written to C2 (no label; row 3
 >   blank, Lara 2026-11-02 after the first AI9 test; was B3/C2); from row 5 each group
