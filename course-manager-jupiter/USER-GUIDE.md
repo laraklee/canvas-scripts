@@ -287,11 +287,12 @@ this column**. **This changes Canvas** (dry run applies).
 group. **Read-only.** Use a new, empty tab.
 
 1. Type the **course ID** in **B1** (leave it blank for this workbook's course) and the
-   group set's **category ID** in **B3**. Don't know the ID? Leave B3 blank and run it:
-   you get a list of the course's group sets with their IDs. Copy one into B3.
+   group set's **category ID** in **B2**. Don't know the ID? Leave B2 blank and run it:
+   you get a list of the course's group sets with their IDs. Copy one into B2.
 2. Choose **Canvas Tools › Groups › List groups and members (this tab)**.
 
-The group set's name appears in **C2**, so you can check it's the right set. From row 5,
+The group set's name appears in **C2**, next to its ID, so you can check it's the right
+set. Row 3 stays blank. From row 5,
 each group has a **light blue** row with its name, how many members it has, and its group
 ID, followed by its members by last name. At the bottom, a **light red "Not in any
 group"** block lists students in the course who aren't in any group of this set. Running

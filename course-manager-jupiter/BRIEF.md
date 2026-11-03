@@ -109,9 +109,10 @@
 >   CSV download: skipped (no student file).
 >   **List groups and members (built 2026-11-02, not yet tested; read-only):**
 >   `listGroupsAndMembers` (Groups.js; Canvas Tools › Groups; this tab). B1 course ID
->   (blank = cfg_CourseID), B3 group set ID, set name written to C2; from row 5 each group
+>   (blank = cfg_CourseID), B2 group set ID, set name written to C2 (no label; row 3
+>   blank, Lara 2026-11-02 after the first AI9 test; was B3/C2); from row 5 each group
 >   (light blue header, members by last name), then "Not in any group" (light red, from
->   `group_categories/:id/users?unassigned=true`). B3 blank lists the course's group sets
+>   `group_categories/:id/users?unassigned=true`). B2 blank lists the course's group sets
 >   and IDs. Refuses ref_ tabs and tabs whose row 4 isn't blank or its own headers.
 >   Lara asked for it after a group set was set up wrong. Goes to **AI9 first**. (It was
 >   first built by mistake in legacy `course-manager/` and pushed there, commits a1731ef

@@ -29,14 +29,15 @@
  *     the set, or two groups share a name. Asks first; refused rows turn light red with a
  *     note; 5-minute stop; a rerun only does what still differs.
  *   - listGroupsAndMembers (menu: Canvas Tools › Groups; read-only; this tab): B1 course
- *     ID (blank = cfg_CourseID), B3 group set ID. Writes the set's name to C2 and, from
- *     row 5, each group with its members by name, then students in no group. B3 blank:
+ *     ID (blank = cfg_CourseID), B2 group set ID; writes the set's name to C2 (no label;
+ *     it sits next to the ID). Row 3 stays blank. From row 5, each group with its members
+ *     by name, then students in no group. B2 blank:
  *     lists the course's group sets and IDs instead. Refuses ref_ tabs and tabs whose row
  *     4 isn't blank or its own headers, so it can't wipe a grading sheet. Names go only
  *     onto the sheet; messages and logs give counts.
  * Canvas endpoints called (GET via canvasGet_, Pull groups, Put students in groups, and
  *   List groups and members):
- *   /api/v1/courses/:course/group_categories (List groups, B3 blank)
+ *   /api/v1/courses/:course/group_categories (List groups, B2 blank)
  *   /api/v1/group_categories/:category
  *   /api/v1/group_categories/:category/groups
  *   /api/v1/groups/:group/users
@@ -63,10 +64,10 @@ const GROUPS_NAME_HEADER = 'Group Names';
 const GROUPS_TIME_LIMIT_MS = 5 * 60 * 1000;
 
 // List groups and members (this tab): input cells, output from row 5 (headers in row 4).
-const GROUP_LIST_CELLS = Object.freeze({ COURSE_ID: 'B1', SET_NAME: 'C2', SET_ID: 'B3' });
+const GROUP_LIST_CELLS = Object.freeze({ COURSE_ID: 'B1', SET_ID: 'B2', SET_NAME: 'C2' });
 const GROUP_LIST_HEADER_ROW = 4;
 const GROUP_LIST_MEMBER_HEADERS = Object.freeze(['Group', 'Members', 'Notes']);
-const GROUP_LIST_SET_HEADERS = Object.freeze(['Group set', 'Group set ID (copy to B3)',
+const GROUP_LIST_SET_HEADERS = Object.freeze(['Group set', 'Group set ID (copy to B2)',
   'Groups']);
 const GROUP_LIST_GROUP_COLOR = '#cfe2f3'; // light blue: a group's header row
 const GROUP_LIST_NONE_COLOR = '#f4cccc'; // light red: "Not in any group"
@@ -386,10 +387,10 @@ function putStudentsInGroupsFromActiveColumn() {
 
 /**
  * Menu: Canvas Tools › Groups › List groups and members (this tab). Read-only in Canvas.
- * B1 course ID (blank = cfg_CourseID), B3 group set ID. Writes the set's name to C2, then
+ * B1 course ID (blank = cfg_CourseID), B2 group set ID. Writes the set's name to C2, then
  * from row 5 one block per group (name, member count, members by last name) and a last
- * block of students in the course who are in no group of the set. With B3 blank, lists
- * the course's group sets and their IDs instead, so one can be copied into B3.
+ * block of students in the course who are in no group of the set. With B2 blank, lists
+ * the course's group sets and their IDs instead, so one can be copied into B2.
  */
 function listGroupsAndMembers() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -510,7 +511,7 @@ function checkGroupListTab_(sheet) {
 
 /** Fills in the A-column labels on a new tab (only blank cells). */
 function labelGroupListTab_(sheet) {
-  [['A1', 'Course ID:'], ['A2', 'Group set name:'], ['A3', 'Group set ID:']]
+  [['A1', 'Course ID:'], ['A2', 'Group set ID:']]
     .forEach(([cell, label]) => {
       const range = sheet.getRange(cell);
       if (!String(range.getDisplayValue()).trim()) range.setValue(label).setFontWeight('bold');
