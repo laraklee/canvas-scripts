@@ -89,6 +89,8 @@ function onOpen() {
         .addItem('1. Clear Group Data', 'clearGroupData')
         .addItem('2. Create Group Category', 'createGroupCategory')
         .addItem('3. Create Groups List', 'createGroups')
+        .addSeparator()
+        .addItem('List Groups & Members (Group List tab)', 'listGroupsAndMembers')
     )
     .addToUi();
 }
