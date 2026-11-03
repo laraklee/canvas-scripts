@@ -121,6 +121,11 @@
 >   and 8ac4478; harmless, read-only.) Pushed to AI9 2026-11-02 (7fc4c4c). Google Doc
 >   guide synced the same day: its Groups section had been missing Pull groups and Put
 >   students in groups too, so the whole section now matches USER-GUIDE.md.
+>   **Considered and rejected (Lara, 2026-11-02): moving students from the List groups
+>   tab** (a "Move to" dropdown per student plus a "Send moves" item reusing Put
+>   students in groups' writes). Reason: it would mostly redo what Canvas's own People ›
+>   Groups page already does. Don't re-propose unless Lara brings it up. Still open
+>   separately: testing Put students in groups (dry run in AI9, then 2–3 real moves).
 > - **User guide: first draft 2026-10-27.** `USER-GUIDE.md` (this folder), written for
 >   **other teachers who weren't here**: setup, permissions, safety, then one section per
 >   tool. Built from the old quick-start `docs/user-manual.md` (moved here and renamed)
