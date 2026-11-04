@@ -19,6 +19,9 @@ then set the passphrase once in each copy (User Properties belong to one script 
   11/1: matched commit `985e56b` (checked read-only); pushed `ee722cf`.
 - **11/1: all three run the latest commit** (quiz CSV, Match for quiz answers, last-name order,
   question text in Review, bold question text, shading, sort by question/student).
+- **11/4: Biology only** got `45eb8d8` (Classic Quiz reports, Quiz/Assignment ID header);
+  before the push it matched the 11/1 code, and a fresh clone after matches `45eb8d8`.
+  AI9 and Gastronomy are still on the 11/1 code until Lara tests it on a real Classic quiz.
 - All three courses should run the same code (Lara, 11/1). Same order as the other
   projects: test on Biology first, then push to the others after Lara's OK.
 
