@@ -1,7 +1,7 @@
 /**
  * QuizCsv.js
- * Purpose: anonymizes a New Quiz "Student Analysis" report (a .csv downloaded from
- *   Canvas) for AI review. Called by Anonymize.js for any .csv in the assignment's
+ * Purpose: anonymizes a quiz "Student Analysis" report (a .csv downloaded from Canvas,
+ *   New Quiz or Classic Quiz) for AI review. Called by Anonymize.js for any .csv in the assignment's
  *   folder. Keeps only the essay answers each student actually got (questions drawn at
  *   random from banks leave the rest "Not Attempted"), turns their HTML into plain text,
  *   and writes one file, "<short name> answers.csv", to the anonymized folder: columns
@@ -20,6 +20,7 @@
 // third holds the answer, under a header that is the question's text.
 const QUIZ_ITEM_HEADERS = ['ItemID', 'ItemType', null, 'EarnedPoints', 'Status'];
 const QUIZ_ANSWER_HEADERS = ['Code', 'Question', 'Answer'];
+const NOT_A_QUIZ_REPORT = 'Not a quiz Student Analysis report (no name, ID, and question columns)';
 const QUIZ_ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: '\'', nbsp: ' ' };
 // UTF-8 read as Windows text (for example after a round trip through Excel): "â€”" → "—".
 const QUIZ_MOJIBAKE = [['â€”', '—'], ['â€“', '–'], ['â€™', '’'], ['â€˜', '‘'], ['â€œ', '“'],
@@ -85,17 +86,19 @@ function questionLabel_(number, questions) {
 /**
  * Anonymizes one Student Analysis report. job holds assignmentId, shortName, passphrase,
  * state (from readKeyState_), keySheet, outFolder, and flagged (problems are added to it).
- * Returns { added, skipped, answers, noEssay, outName }.
+ * Returns { added, skipped, answers, noEssay, outName, essayNumbers } (essayNumbers:
+ * the questions read as essays in a Classic report; empty for a New Quiz).
  */
 function anonymizeQuizCsv_(source, job) {
   const { assignmentId, shortName, passphrase, state, keySheet, outFolder, flagged } = job;
-  const result = { added: 0, skipped: 0, answers: 0, noEssay: 0, outName: '' };
+  const result = { added: 0, skipped: 0, answers: 0, noEssay: 0, outName: '', essayNumbers: [] };
   const report = parseQuizReport_(source.getBlob().getDataAsString('UTF-8'));
   if (report.error) {
     flagged.push([assignmentId, source.label, report.error + '; not used']);
     return result;
   }
   report.problems.forEach((problem) => flagged.push([assignmentId, source.label, problem]));
+  result.essayNumbers = report.essayNumbers;
 
   result.outName = quizAnswersName_(shortName);
   const answerRows = [];
@@ -138,17 +141,54 @@ function anonymizeQuizCsv_(source, job) {
 }
 
 /**
- * Reads a Student Analysis report. Returns { students, problems }, or { error } if it
- * doesn't look like one. Each student: { row, userId, name, attempt, answers }, where
- * answers are { number, question, text } for essay questions the student answered.
- * A student listed twice keeps the higher attempt.
+ * Reads a Student Analysis report, New Quiz or Classic Quiz. Returns { students,
+ * problems, classic, essayNumbers }, or { error } if it doesn't look like one. Each
+ * student: { row, userId, name, attempt, answers }, where answers are
+ * { number, question, text } for essay questions the student answered. Questions are
+ * numbered in the report's column order. A student listed twice keeps the higher attempt.
  */
 function parseQuizReport_(text) {
-  const rows = parseCsv_(text.replace(/^﻿/, ''));
+  const rows = parseCsv_(text.replace(/^\uFEFF/, ''));
   const header = (rows[0] || []).map((cell) => cell.trim());
+  const dataRows = rows.slice(1);
+  const layout = header.includes('ItemID') ? newQuizLayout_(header) : classicQuizLayout_(header, dataRows);
+  if (layout.error) return layout;
+
+  const byUser = new Map();
+  const problems = [];
+  dataRows.forEach((cells, i) => {
+    const row = i + 2;
+    if (cells.every((cell) => cell.trim() === '')) return;
+    const userId = String(cells[layout.idCol] || '').trim();
+    if (!/^\d+$/.test(userId)) {
+      problems.push('Row ' + row + ': no Canvas ID; left out');
+      return;
+    }
+    const attempt = Number(cells[layout.attemptCol]) || 0;
+    const earlier = byUser.get(userId);
+    if (earlier) {
+      problems.push('Rows ' + earlier.row + ' and ' + row + ' are the same student; ' +
+        'used the higher attempt');
+      if (earlier.attempt > attempt) return;
+    }
+    const answers = layout.items
+      .filter((item) => layout.isEssayAnswer(item, cells))
+      .map((item) => ({ number: item.number, question: item.question,
+        text: quizText_(cells[item.answerCol] || '') }))
+      .filter((answer) => answer.text !== '');
+    byUser.set(userId, { row, userId, name: String(cells[layout.nameCol] || '').trim(), attempt, answers });
+  });
+  return { students: [...byUser.values()], problems, classic: layout.classic,
+    essayNumbers: layout.classic ? layout.items.filter((item) => item.essay).map((item) => item.number) : [] };
+}
+
+/**
+ * New Quiz report: Name, ID, Attempt, and five columns per question (QUIZ_ITEM_HEADERS).
+ * The ItemType and Status columns say which answers are essays the student got.
+ */
+function newQuizLayout_(header) {
   const nameCol = header.indexOf('Name');
   const idCol = header.indexOf('ID');
-  const attemptCol = header.indexOf('Attempt');
   const items = [];
   for (let i = 0; i < header.length; i++) {
     if (header[i] !== 'ItemID') continue;
@@ -157,36 +197,47 @@ function parseQuizReport_(text) {
     items.push({ number: items.length + 1, typeCol: i + 1, answerCol: i + 2, statusCol: i + 4,
       question: quizText_(header[i + 2]) });
   }
-  if (nameCol === -1 || idCol === -1 || items.length === 0) {
-    return { error: 'Not a New Quiz Student Analysis report (no Name, ID, and ItemID columns)' };
-  }
+  if (nameCol === -1 || idCol === -1) return { error: NOT_A_QUIZ_REPORT };
+  return {
+    classic: false, nameCol, idCol, attemptCol: header.indexOf('Attempt'), items,
+    isEssayAnswer: (item, cells) => /^essay$/i.test(String(cells[item.typeCol] || '').trim()) &&
+      !/^not attempted$/i.test(String(cells[item.statusCol] || '').trim()),
+  };
+}
 
-  const byUser = new Map();
-  const problems = [];
-  rows.slice(1).forEach((cells, i) => {
-    const row = i + 2;
-    if (cells.every((cell) => cell.trim() === '')) return;
-    const userId = String(cells[idCol] || '').trim();
-    if (!/^\d+$/.test(userId)) {
-      problems.push('Row ' + row + ': no Canvas ID; left out');
-      return;
+/**
+ * Classic Quiz report: lowercase name, id, attempt, then two columns per question: the
+ * answer under "<question id>: <question text>", and the score under its points
+ * possible (for example "2.0"); n correct, n incorrect, and score at the end.
+ * There is no question-type column. Essay answers are typed in Canvas's editor and come
+ * as HTML (<p>…</p>); multiple-choice and fill-in answers are plain text. So a question
+ * counts as an essay if any student's answer to it has HTML tags. Questions a student
+ * didn't get or skipped are blank.
+ */
+function classicQuizLayout_(header, dataRows) {
+  const nameCol = header.indexOf('name');
+  const idCol = header.indexOf('id');
+  const items = [];
+  for (let i = 0; i < header.length; i++) {
+    const match = /^\d+:\s*([\s\S]*)$/.exec(header[i]);
+    if (!match) continue;
+    if (!/^\d[\d.]*$/.test(header[i + 1] || '')) {
+      return { error: 'Classic Quiz report: question ' + (items.length + 1) +
+        ' is not followed by its points column' };
     }
-    const attempt = Number(cells[attemptCol]) || 0;
-    const earlier = byUser.get(userId);
-    if (earlier) {
-      problems.push('Rows ' + earlier.row + ' and ' + row + ' are the same student; ' +
-        'used the higher attempt');
-      if (earlier.attempt > attempt) return;
-    }
-    const answers = items
-      .filter((item) => /^essay$/i.test(String(cells[item.typeCol] || '').trim()) &&
-        !/^not attempted$/i.test(String(cells[item.statusCol] || '').trim()))
-      .map((item) => ({ number: item.number, question: item.question,
-        text: quizText_(cells[item.answerCol] || '') }))
-      .filter((answer) => answer.text !== '');
-    byUser.set(userId, { row, userId, name: String(cells[nameCol] || '').trim(), attempt, answers });
-  });
-  return { students: [...byUser.values()], problems };
+    const answerCol = i;
+    const essay = dataRows.some((cells) => /<\/?[a-z][^>]*>/i.test(String(cells[answerCol] || '')));
+    items.push({ number: items.length + 1, answerCol, essay, question: quizText_(match[1]) });
+  }
+  if (nameCol === -1 || idCol === -1 || items.length === 0) return { error: NOT_A_QUIZ_REPORT };
+  if (!items.some((item) => item.essay)) {
+    return { error: 'Classic Quiz report: no essay answers found (essays are recognized by ' +
+      'their formatting, and no answer had any)' };
+  }
+  return {
+    classic: true, nameCol, idCol, attemptCol: header.indexOf('attempt'), items,
+    isEssayAnswer: (item) => item.essay,
+  };
 }
 
 /**

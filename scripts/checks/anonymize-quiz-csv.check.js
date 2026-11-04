@@ -1,6 +1,6 @@
 /**
  * scripts/checks/anonymize-quiz-csv.check.js
- * Purpose: offline check of the New Quiz report reader (anonymize-submissions/QuizCsv.js),
+ * Purpose: offline check of the New and Classic Quiz report readers (anonymize-submissions/QuizCsv.js),
  *   using a MADE-UP report only: fake students, IDs, and answers (nothing is sent anywhere;
  *   Canvas and Google are not called). Run with the others: npm run check-offline.
  *   Repo helper only: not part of any Apps Script project; never clasp-pushed.
@@ -83,7 +83,43 @@ check('Windows-garbled dash and space repaired',
   'sprouts (autotroph)—or mealworms.');
 
 check('not a quiz report', c.parseQuizReport_('Name,Score\nX,1').error,
-  'Not a New Quiz Student Analysis report (no Name, ID, and ItemID columns)');
+  'Not a quiz Student Analysis report (no name, ID, and question columns)');
+check('New Quiz report: no essay list (types come from ItemType)', report.essayNumbers, []);
+
+// --- Classic Quiz report (same layout as a real header, made-up questions and students) ---
+const classicHeader = ['name', 'id', 'sis_id', 'section', 'section_id', 'section_sis_id',
+  'submitted', 'attempt', '9001: In your own words, what is the purpose?', '2.0',
+  '9002: Which is the acid?', '1.0', '9003: Name the dependent variable.', '1.0',
+  '9004: Write a Claim, with "reasoning", for this experiment.', '3.0',
+  'n correct', 'n incorrect', 'score'];
+const classicRow = (name, id, attempt, answers) =>
+  [name, id, 's', 'Bio', '1', 's1', '2026-01-01', attempt, ...answers.flatMap((a) => [a, '']), 1, 0, 1];
+const classicCsv = [
+  classicHeader,
+  classicRow('Ann Test', '201', 1, ['<p>To test buffers.</p>', 'HCl', 'pH change', '<p>Liver is best &amp; why.</p>']),
+  classicRow('Ben Test', '202', 1, ['', 'NaOH', 'pH', '<p>Potato.</p><p>Little change.</p>']),
+  classicRow('Cat Test', '203', 1, ['', 'HCl', '', '']),
+  classicRow('Ann Test', '201', 2, ['<p>Second try.</p>', 'HCl', 'pH', '']),
+].map((row) => row.map(quote).join(',')).join('\n');
+const classic = c.parseQuizReport_(classicCsv);
+check('Classic: recognized, essays = questions with formatted answers', [classic.classic, classic.essayNumbers],
+  [true, [1, 4]]);
+check('Classic: higher attempt kept; blank and plain-text answers left out',
+  classic.students.map((s) => [s.userId, s.answers.map((a) => a.number + ':' + a.text)]),
+  [['201', ['1:Second try.']], ['202', ['4:Potato.\nLittle change.']], ['203', []]]);
+check('Classic: question text without the Canvas question ID', classic.students[1].answers[0].question,
+  'Write a Claim, with "reasoning", for this experiment.');
+check('Classic: same student twice reported', classic.problems,
+  ['Rows 2 and 5 are the same student; used the higher attempt']);
+check('Classic: tab-separated header (pasted from a sheet) works too',
+  c.parseQuizReport_(classicCsv.split('\n').map((line) => c.parseCsv_(line)[0].join('\t')).join('\n')).essayNumbers,
+  [1, 4]);
+check('Classic with no formatted answers is refused, not guessed',
+  c.parseQuizReport_(classicHeader.map(quote).join(',') + '\n' +
+    classicRow('Ann Test', '201', 1, ['plain', 'HCl', 'pH', 'plain']).map(quote).join(',')).error,
+  'Classic Quiz report: no essay answers found (essays are recognized by their formatting, and no answer had any)');
+check('Classic question with no points column is refused',
+  Boolean(c.parseQuizReport_('name,id,attempt,9001: Q?,n correct\nA,1,1,x,0').error), true);
 check('columns in a different order are refused',
   Boolean(c.parseQuizReport_('Name,ID,ItemID,Status,Q,EarnedPoints,ItemType\n').error), true);
 

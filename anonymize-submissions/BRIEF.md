@@ -26,8 +26,9 @@ then set the passphrase once in each copy (User Properties belong to one script 
 
 B1 holds the link to the course's AI grading folder. Each assignment's Canvas download
 goes in its own subfolder. **Refresh folder list** adds a row per new subfolder:
-Folder (linked name), Short name (defaults to the folder name), Assignment ID (Lara
-types it), Anonymized and Matched (status + time, written by the script), Folder ID.
+Folder (linked name), Short name (defaults to the folder name), Quiz/Assignment ID
+(Lara types it; any Canvas number unique to that quiz or assignment works, because it
+is only used to make the codes and is never sent to Canvas; header renamed 11/4), Anonymized and Matched (status + time, written by the script), Folder ID.
 Lara clicks a row, then **Anonymize selected row** or **Match AI results for selected
 row**: no prompts. The same three functions can be assigned to drawn buttons:
 `refreshFolderList`, `anonymizeSelectedRow`, `matchSelectedRow`. Checks: row is on the
@@ -96,8 +97,7 @@ AI instructions: section C of the Gemini skill `gems/grading/SKILL.md` (all thre
 courses; created in Gemini 11/1 as `@grading`) and of the older Gem copy
 `gems/BioGrading.md` (Gems end no sooner than June 1, 2027 on school accounts). Changes
 to the table formats must go in both, and in the Gemini copy of the skill.
-**Skill status (11/1):** seems to work in a quick check, but not yet tested with an
-anonymized assignment in any class; keep the Gem until it is. **To do:** the Sheet's
+**Skill status (11/4):** Lara used `@grading` on a real quiz answers file and it worked. **To do:** the Sheet's
 Instructions tab still points to the Gem. Switch it to the skill once Google lets
 skills be shared (not available as of 11/1, "coming weeks").
 **Q numbers are the report's column order, not each student's order** (New Quizzes
@@ -112,15 +112,22 @@ student) to scan each student's whole quiz. Problem rows stay on top; Reviewed
 checkmarks move with their rows. Strong/OK/Weak ordering within a question was
 considered and skipped: it wouldn't match SpeedGrader's student order.
 
-**Possible add-on (not started; Lara, 11/1: workflow still evolving): Classic Quiz
-reports.** Today a Classic Student Analysis CSV is flagged ("Not a New Quiz…") and not
-used. Its layout (from memory; check a real header row first): lowercase `name`, `id`,
-`sis_id`, `section`, `submitted`, `attempt`, then two columns per question (answer under
-`<id>: <question text>`, score under its points possible, like `2.0`). No question-type
-column, so essays can't be told from multiple choice: either keep every non-blank answer
-and let the Gem skip multiple choice, or have Lara list the essay question numbers on the
-Index row. Only the reader changes; answers file, Gem, Match, and Review stay the same. Offline check:
-`scripts/checks/anonymize-quiz-csv.check.js` (made-up data).
+## Classic Quiz reports (QuizCsv.js, added 11/4)
+
+A Classic Quiz's **Student Analysis** report works the same way: put the .csv in the
+quiz's folder, and type the number from the quiz's address (`/quizzes/<id>`) on the
+Index row. Layout (from Lara's real header row, 11/4): lowercase `name`, `id` (Canvas
+user ID), `sis_id`, `section`, `section_id`, `section_sis_id`, `submitted`, `attempt`,
+then two columns per question (answer under `<question id>: <question text>`, score
+under its points possible, like `2.0`), then `n correct`, `n incorrect`, `score`.
+- There is no question-type column. **A question counts as an essay if any student's
+  answer to it has HTML tags** (essays are typed in Canvas's editor; multiple-choice
+  and fill-in answers are plain text). The Done message lists the questions read as
+  essays so Lara can check them. If no answer has HTML, the report is flagged ("no
+  essay answers found"), not guessed. **Not yet verified on a real Classic report.**
+- Blank answers (question not drawn, or skipped) are left out. The answers file,
+  `@grading`, Match, and Review are the same as for New Quizzes.
+- Offline check: `scripts/checks/anonymize-quiz-csv.check.js` (made-up data).
 
 ## One set of tabs per assignment (Assignments.js)
 

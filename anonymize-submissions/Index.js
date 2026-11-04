@@ -2,7 +2,7 @@
  * Index.js
  * Purpose: the Index tab and the Anonymize menu. B1 holds the link to this course's AI
  *   grading folder; each subfolder of it (one per assignment, holding the Canvas
- *   download) gets a row: Folder, Short name, Assignment ID, Anonymized, Matched,
+ *   download) gets a row: Folder, Short name, Quiz/Assignment ID, Anonymized, Matched,
  *   Folder ID. Lara clicks a row, then "Anonymize selected row" or "Match AI results
  *   for selected row" (menu items, or buttons drawn on the Index assigned to
  *   anonymizeSelectedRow / matchSelectedRow / refreshFolderList). "Archive selected
@@ -16,7 +16,7 @@
  */
 
 const INDEX_SHEET_NAME = 'Index';
-const INDEX_HEADERS = ['Folder', 'Short name', 'Assignment ID', 'Anonymized', 'Matched',
+const INDEX_HEADERS = ['Folder', 'Short name', 'Quiz/Assignment ID', 'Anonymized', 'Matched',
   'Folder ID'];
 const INDEX_HEADER_ROW = 3;
 const INDEX_FIRST_ROW = INDEX_HEADER_ROW + 1;
@@ -44,6 +44,9 @@ function refreshFolderList() {
   try {
     const sheet = getOrCreateIndex_();
     sheet.activate();
+    // Index tabs made before 11/4 say "Assignment ID"; any Canvas number works there.
+    const idHeader = sheet.getRange(INDEX_HEADER_ROW, COL.ASSIGNMENT_ID);
+    if (idHeader.getDisplayValue() === 'Assignment ID') idHeader.setValue(INDEX_HEADERS[COL.ASSIGNMENT_ID - 1]);
     // A pasted link may show as the folder's title; the URL is then behind the text.
     const linkCell = sheet.getRange('B1');
     const rich = linkCell.getRichTextValue();
@@ -92,7 +95,8 @@ function refreshFolderList() {
       row++;
     }
     ui.alert(found.length
-      ? 'Added ' + found.length + ' folder(s). Type the Canvas assignment ID on each new row.'
+      ? 'Added ' + found.length + ' folder(s). Type the quiz or assignment ID (the number at the ' +
+        'end of its Canvas address) on each new row.'
       : 'No new folders. Make a subfolder for each assignment inside the course folder.');
   } catch (err) {
     console.error('refreshFolderList failed: ' + err.message);
@@ -200,8 +204,8 @@ function selectedJob_(ui) {
 
   const assignmentId = assignmentText.trim();
   if (!/^\d+$/.test(assignmentId)) {
-    ui.alert('Type the Canvas assignment ID (digits only) in column C of row ' + row + '.\n\n' +
-      'It\'s the number after /assignments/ in the assignment\'s address.');
+    ui.alert('Type the quiz or assignment ID (digits only) in column C of row ' + row + '.\n\n' +
+      'It\'s the number after /quizzes/ or /assignments/ in its Canvas address.');
     return null;
   }
   if (!folderId) {
@@ -213,8 +217,8 @@ function selectedJob_(ui) {
     .map(([id], i) => ({ id: id.trim(), row: INDEX_FIRST_ROW + i }))
     .filter((r) => r.id === assignmentId && r.row !== row);
   if (otherRows.length) {
-    ui.alert('Assignment ' + assignmentId + ' is also on row ' + otherRows[0].row +
-      '. Each assignment ID should be on one row only.');
+    ui.alert('ID ' + assignmentId + ' is also on row ' + otherRows[0].row +
+      '. Each quiz or assignment ID should be on one row only.');
     return null;
   }
 

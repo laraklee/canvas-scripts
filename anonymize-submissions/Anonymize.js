@@ -11,12 +11,12 @@
  *   (text entry) submissions, name[_LATE]_userID_text.html, are converted to PDF by
  *   Google so AI tools accept them; and a file with no extension gets one from its
  *   first bytes (PDF, JPEG, PNG, GIF, HEIC, Word/PowerPoint/Excel) or is flagged.
- *   A .csv is read as a New Quiz Student Analysis report instead (see QuizCsv.js).
+ *   A .csv is read as a quiz Student Analysis report instead, New or Classic (QuizCsv.js).
  *   Originals are only read, never changed, moved, or renamed.
  *   Re-running is safe: files already in the Key tab for that assignment are skipped,
  *   so a run that stops at the time limit can simply be run again.
  *   Started from a row of the Index tab (Index.js), which supplies the folder,
- *   assignment ID, and short name.
+ *   quiz/assignment ID, and short name.
  * Canvas endpoints called: none (works on files already downloaded to Drive).
  * Canvas write operations: none.
  * Required User/Script Properties: User Property ANON_PASSPHRASE (see Passphrase.js).
@@ -164,7 +164,9 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
 
     const quizLines = quizzes.map((quiz) => '\n\nQuiz report: ' + quiz.answers +
       ' essay answers saved in "' + quiz.outName + '" (anonymized folder).' +
-      (quiz.noEssay ? ' ' + quiz.noEssay + ' student(s) had no essay answers and were left out.' : ''));
+      (quiz.noEssay ? ' ' + quiz.noEssay + ' student(s) had no essay answers and were left out.' : '') +
+      (quiz.essayNumbers.length ? '\nClassic Quiz: read as essays (answers with formatting): Q' +
+        quiz.essayNumbers.join(', Q') + '. Check that these are your essay questions.' : ''));
     ui.alert(stoppedEarly ? 'Paused at the time limit' : 'Done',
       (quizzes.length ? 'Students added to the Key' : 'Copied') + ': ' + copied + '\n' +
       'Already done before (skipped): ' + skipped + '\n' +
