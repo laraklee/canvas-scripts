@@ -31,6 +31,7 @@
 >   (2) picture check (who owns each file, hidden/locked, other course, personal files,
 >   outside site); (3) later, editing groups from the sheet (writes: spell out first,
 >   `canvasWrite_`, dry run). A whole-course picture scan can come later (Lara).
+>   Another way to do (3): rebuild a QTI from the sheet (idea, 11/5; see "Later / maybe").
 >   **Step 1 built and tested 2026-10-26 (commit c45a0b6; pushed to Biology only):** new
 >   `QuizReport.js`, `runQuizReport` (menu: Canvas Tools › Quiz report (this tab)). A1
 >   "Quiz link:", **B1 = the whole Classic quiz link** (not the bare ID); works on any tab
@@ -267,6 +268,16 @@
 > - **Later / maybe:** email tools (wait and see); assignment dropdowns for the grading
 >   sheet tools (skipped: the list got too long); tidy unused `ref_Config` cells (see
 >   "`ref_Config` finished" in the running log).
+>   **Idea (Lara, 2026-11-05 morning, not started): edit quiz questions in the sheet,
+>   then rebuild a Classic QTI to import into Canvas.** Classic quiz with question groups
+>   is fine; no New Quizzes item banks. Background: Quiz report reads the quiz through
+>   the **API**, not QTI. The QTI exports were only read by hand in a scratch folder
+>   (picture findings, 11/1). Those exports did show the full group structure, so QTI
+>   could work as the way back in. Open questions: does the script make a QTI .zip that
+>   Lara imports by hand (no Canvas write by the script), or does it upload it
+>   (`content_migrations`, a write: spell out first, `canvasWrite_`, dry run)? Where does
+>   the .zip go (Drive, which may need a new permission)? Do pictures and bank questions
+>   survive the round trip? Compare with step 3 above (editing groups through the API).
 > - **Pushing (from `course-manager-jupiter/`; always commit first, ask Lara first):**
 >   Biology = plain `clasp push` (`.clasp.json`). AI9 / Gastronomy: on the PC (Git Bash
 >   or PowerShell) `clasp push -P 'C:\Users\18087\Projects\canvas-scripts\course-manager-jupiter\.clasp-ai9.json'`
