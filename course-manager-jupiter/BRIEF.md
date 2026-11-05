@@ -278,6 +278,10 @@
 >   (`content_migrations`, a write: spell out first, `canvasWrite_`, dry run)? Where does
 >   the .zip go (Drive, which may need a new permission)? Do pictures and bank questions
 >   survive the round trip? Compare with step 3 above (editing groups through the API).
+>   **Why it matters (Lara, 11/5):** this could fix the clunky way teacher teams edit
+>   questions together today, especially since Canvas's own quiz print-to-PDF is a mess.
+>   Teachers would edit questions in a sheet, then a QTI file is made that's easy to
+>   share with everyone, and each teacher imports it into their own course.
 > - **Pushing (from `course-manager-jupiter/`; always commit first, ask Lara first):**
 >   Biology = plain `clasp push` (`.clasp.json`). AI9 / Gastronomy: on the PC (Git Bash
 >   or PowerShell) `clasp push -P 'C:\Users\18087\Projects\canvas-scripts\course-manager-jupiter\.clasp-ai9.json'`
