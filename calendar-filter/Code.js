@@ -1,144 +1,130 @@
+/**
+ * Code.js
+ * School Calendar Filter: pulls the school's faculty calendar into this Sheet, lets each
+ * teacher keep or hide events, and syncs the kept events to a Google Calendar of their own.
+ *
+ * This file: the menu, tab setup, and reading the Settings tab.
+ * Other files: Feed.js (download and parse the ICS feed), Events.js (the Events and
+ * Hide Rules tabs), Sync.js (writes to Google Calendar, nightly trigger).
+ *
+ * Endpoints: the public ICS feed URL in Settings (read-only).
+ * Write calls: Google Calendar only, in Sync.js, and only when "Preview only" is unchecked.
+ * Script Properties: none. All settings live in the Settings tab of each copy of the Sheet.
+ */
+
+const DEFAULT_FEED_URL =
+  'https://calendar.google.com/calendar/ical/acg4tehdnkv29rfpasrt7eo1kb81qv0l%40import.calendar.google.com/public/basic.ics';
+const DEFAULT_CALENDAR_NAME = 'Faculty Calendar (filtered)';
+
+const SHEET_SETTINGS = 'Settings';
+const SHEET_RULES = 'Hide Rules';
+const SHEET_EVENTS = 'Events';
+const SHEET_INSTRUCTIONS = 'Instructions';
+
+const SETTING_FEED = 'School calendar feed (ICS URL)';
+const SETTING_AFTER = 'Only events on or after (optional)';
+const SETTING_BEFORE = 'Only events on or before (optional)';
+const SETTING_CALENDAR = 'My Google Calendar name';
+const SETTING_PREVIEW = 'Preview only (no calendar changes)';
+
 function onOpen() {
   SpreadsheetApp.getUi()
-    .createMenu('ICS Tools')
-    .addItem('Import ICS file', 'showIcsUploadDialog')
-    //.addItem('Enhance Events Table', 'enhanceEventSheet')
-    //.addItem('Format Table Layout', 'formatEventSheetSimple')
-    .addItem('Export as ICS', 'exportSheetToICS') // <- added export
+    .createMenu('School Calendar')
+    .addItem('1. Refresh events from school calendar', 'refreshEvents')
+    .addItem('2. Apply hide rules', 'applyHideRules')
+    .addItem('3. Sync kept events to my calendar', 'syncToCalendar')
+    .addSeparator()
+    .addItem('Turn on nightly refresh + sync', 'turnOnNightlySync')
+    .addItem('Turn off nightly refresh + sync', 'turnOffNightlySync')
+    .addSeparator()
+    .addItem('Set up / repair tabs', 'setupTabs')
     .addToUi();
 }
 
+/** Creates any missing tabs. Never overwrites settings or rules that already exist. */
+function setupTabs() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-// Show ICS file upload dialog
-function showIcsUploadDialog() {
-  var html = HtmlService.createHtmlOutputFromFile('IcsUploader')
-    .setWidth(400)
-    .setHeight(200);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Upload ICS File');
+  let settings = ss.getSheetByName(SHEET_SETTINGS);
+  if (!settings) {
+    settings = ss.insertSheet(SHEET_SETTINGS);
+    settings.getRange(1, 1, 6, 2).setValues([
+      ['Setting', 'Value'],
+      [SETTING_FEED, DEFAULT_FEED_URL],
+      [SETTING_AFTER, ''],
+      [SETTING_BEFORE, ''],
+      [SETTING_CALENDAR, DEFAULT_CALENDAR_NAME],
+      [SETTING_PREVIEW, true],
+    ]);
+    settings.getRange('B6').insertCheckboxes();
+    settings.getRange('B3:B4').setNumberFormat('m/d/yyyy');
+    settings.getRange('A1:B1').setFontWeight('bold');
+    settings.setColumnWidth(1, 280);
+    settings.setColumnWidth(2, 420);
+    settings.setFrozenRows(1);
+  }
+
+  let rules = ss.getSheetByName(SHEET_RULES);
+  if (!rules) {
+    rules = ss.insertSheet(SHEET_RULES);
+    rules.getRange(1, 1, 1, 2).setValues([['Hide events whose title contains', 'Notes (optional)']])
+      .setFontWeight('bold');
+    rules.setColumnWidth(1, 300);
+    rules.setColumnWidth(2, 300);
+    rules.setFrozenRows(1);
+  }
+
+  writeInstructions_(ss);
+  if (!ss.getSheetByName(SHEET_EVENTS)) ss.insertSheet(SHEET_EVENTS);
 }
 
-// Parse uploaded ICS and write to active sheet
-function processIcsFile(formData) {
-  var data = formData.icsFile.split(',')[1];
-  var decoded = Utilities.newBlob(Utilities.base64Decode(data)).getDataAsString();
-  var events = decoded.split('BEGIN:VEVENT').slice(1);
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+function writeInstructions_(ss) {
+  const sheet = ss.getSheetByName(SHEET_INSTRUCTIONS) || ss.insertSheet(SHEET_INSTRUCTIONS, 0);
   sheet.clear();
-  sheet.appendRow(['SUMMARY', 'DESCRIPTION', 'LOCATION', 'DTSTART', 'DTEND', 'UID']);
-
-  events.forEach(function (eventData) {
-    var summary = match(/SUMMARY:(.*?)\r?\n/, eventData);
-    var desc = match(/DESCRIPTION:(.*?)\r?\n/, eventData);
-    var location = match(/LOCATION:(.*?)\r?\n/, eventData);
-    var dtstart = match(/DTSTART(?:;[^:]+)?:([^\r\n]+)/, eventData);
-    var dtend = match(/DTEND(?:;[^:]+)?:([^\r\n]+)/, eventData);
-    var uid = match(/UID:(.*?)\r?\n/, eventData);
-    sheet.appendRow([summary, desc, location, dtstart, dtend, uid]);
-  });
-
-  function match(pattern, str) {
-    var res = str.match(pattern);
-    return res ? res[1] : '';
-  }
+  const rows = [
+    ['How to use this sheet'],
+    [''],
+    ['First time: File > Make a copy, then open the School Calendar menu in your copy. Google will ask for permission the first time.'],
+    ['1. School Calendar > Refresh events. This downloads the faculty calendar into the Events tab.'],
+    ['2. Uncheck "Keep" for events you do not want. Do not delete rows: a refresh would bring them back.'],
+    ['   Faster: add words to the Hide Rules tab (for example "Athletics"), then School Calendar > Apply hide rules.'],
+    ['3. School Calendar > Sync kept events. With "Preview only" checked in Settings, this only reports what it would do.'],
+    ['   Uncheck "Preview only" to really sync. Events go into the calendar named in Settings (created if missing).'],
+    [''],
+    ['Refreshing again keeps your checkmarks. New events start checked unless a hide rule matches them.'],
+    ['Syncing again updates changed events and removes ones you unchecked or the school cancelled.'],
+    ['Sync only changes events it created. Anything you add to that calendar yourself is left alone.'],
+    ['Optional: "Turn on nightly refresh + sync" keeps your calendar up to date automatically.'],
+  ];
+  sheet.getRange(1, 1, rows.length, 1).setValues(rows);
+  sheet.getRange('A1').setFontWeight('bold').setFontSize(14);
+  sheet.setColumnWidth(1, 900);
 }
 
-// Enhance the event table with checkboxes/filtering
-function enhanceEventSheet() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var dataRange = sheet.getDataRange();
-  var values = dataRange.getValues();
+/** Reads the Settings tab into an object, creating tabs first if this is a fresh copy. */
+function readSettings_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss.getSheetByName(SHEET_SETTINGS)) setupTabs();
+  const values = ss.getSheetByName(SHEET_SETTINGS).getDataRange().getValues();
+  const byLabel = new Map(values.map(function (r) { return [String(r[0]).trim(), r[1]]; }));
 
-  sheet.insertColumnBefore(1);
-  sheet.getRange(1, 1).setValue("Select");
-  if (sheet.getLastRow() > 1) {
-    sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).insertCheckboxes();
-  }
-  sheet.getRange(1, 2, 1, values[0].length).setValues([values[0]]);
-  if (values.length > 1) {
-    sheet.getRange(2, 2, values.length - 1, values[0].length).setValues(values.slice(1));
-  }
-  sheet.autoResizeColumns(1, sheet.getLastColumn());
-  sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).createFilter();
+  const preview = byLabel.get(SETTING_PREVIEW);
+  return {
+    feedUrl: String(byLabel.get(SETTING_FEED) || DEFAULT_FEED_URL).trim(),
+    after: byLabel.get(SETTING_AFTER) instanceof Date ? byLabel.get(SETTING_AFTER) : null,
+    before: byLabel.get(SETTING_BEFORE) instanceof Date ? byLabel.get(SETTING_BEFORE) : null,
+    calendarName: String(byLabel.get(SETTING_CALENDAR) || DEFAULT_CALENDAR_NAME).trim(),
+    // Anything other than an unchecked box counts as preview, so a missing row is safe.
+    preview: preview !== false,
+  };
 }
 
-// Format table columns and dates
-function formatEventSheetSimple() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  sheet.setColumnWidth(1, 40);    // Checkbox
-  sheet.autoResizeColumn(2);      // SUMMARY
-  sheet.setColumnWidth(3, 100);   // DESCRIPTION
-  sheet.setColumnWidth(4, 100);   // LOCATION
-  sheet.setColumnWidth(7, 100);   // UID
-  var lastRow = sheet.getLastRow();
-  for (var r = 2; r <= lastRow; r++) {
-    var val = sheet.getRange(r, 5).getValue();
-    var dateOut = '';
-    var match = String(val).match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})Z?)?/);
-    if (match) {
-      var yy = Number(match[1]), mm = Number(match[2]), dd = Number(match[3]);
-      if (match[4] && match[5]) {
-        var hh = match[4], min = match[5];
-        dateOut = Utilities.formatDate(new Date(Date.UTC(yy, mm-1, dd, hh, min)), Session.getScriptTimeZone(), "MM/dd/yy HH:mm");
-      } else {
-        dateOut = Utilities.formatDate(new Date(Date.UTC(yy, mm-1, dd)), Session.getScriptTimeZone(), "MM/dd/yy");
-      }
-      sheet.getRange(r, 5).setValue(dateOut);
-    }
+/** Shows a message in a dialog when someone is looking, or just logs it (nightly trigger). */
+function notify_(message) {
+  Logger.log(message);
+  try {
+    SpreadsheetApp.getUi().alert(message);
+  } catch {
+    // No UI when running from a trigger.
   }
 }
-
-function exportSheetToICS() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var lastRow = sheet.getLastRow();
-  var dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
-  var data = dataRange.getValues();
-
-  // Find column indices for headers
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  var idxSummary = headers.indexOf("SUMMARY");
-  var idxDescription = headers.indexOf("DESCRIPTION");
-  var idxLocation = headers.indexOf("LOCATION");
-  var idxDTSTART = headers.indexOf("DTSTART");
-  var idxDTEND = headers.indexOf("DTEND");
-  var idxUID = headers.indexOf("UID");
-  var idxSelect = headers.indexOf("Select"); // If you have a checkbox column
-
-  var icsContent = [];
-  icsContent.push("BEGIN:VCALENDAR");
-  icsContent.push("VERSION:2.0");
-  icsContent.push("CALSCALE:GREGORIAN");
-  icsContent.push("PRODID:-//Your Organization//Sheet Export//EN");
-
-  for (var i = 0; i < data.length; i++) {
-    // If you want to filter by checkbox, uncomment the following lines:
-    // if (idxSelect > -1 && data[i][idxSelect] !== true) continue; // skip unselected
-
-    var summary = data[i][idxSummary] || "";
-    var description = data[i][idxDescription] || "";
-    var location = data[i][idxLocation] || "";
-    var dtstart = String(data[i][idxDTSTART]).replace(/[^0-9TZ]/g,''); // Clean format, keep original
-    var dtend = String(data[i][idxDTEND]).replace(/[^0-9TZ]/g,'');
-    var uid = data[i][idxUID] || ('row'+(i+2)+'@sheet-export');
-
-    if (!summary || !dtstart) continue; // Skip blank rows
-
-    icsContent.push("BEGIN:VEVENT");
-    icsContent.push("SUMMARY:" + summary);
-    if (description) icsContent.push("DESCRIPTION:" + description);
-    if (location) icsContent.push("LOCATION:" + location);
-    icsContent.push("DTSTART:" + dtstart);
-    if (dtend) icsContent.push("DTEND:" + dtend);
-    icsContent.push("UID:" + uid);
-    icsContent.push("END:VEVENT");
-  }
-
-  icsContent.push("END:VCALENDAR");
-
-  var finalICS = icsContent.join("\r\n");
-
-  // Save to Drive and/or prompt download
-  var fileName = "exported_events_" + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyyMMdd_HHmm") + ".ics";
-  var file = DriveApp.createFile(fileName, finalICS, MimeType.PLAIN_TEXT);
-  SpreadsheetApp.getUi().alert("ICS file created in your Google Drive: " + file.getName());
-}
-
