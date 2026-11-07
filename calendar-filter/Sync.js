@@ -21,8 +21,9 @@ function syncToCalendar() {
   try {
     const settings = readSettings_();
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const rows = readEventRows_(ss.getSheetByName(SHEET_EVENTS));
-    if (!rows.length) return notify_('The Events tab is empty. Run "Refresh events" first.');
+    // Uses the latest picks, words, and overrides, even if "Update choices" was not run.
+    const rows = applyChoices_();
+    if (!rows || !rows.length) return notify_('The Events tab is empty or out of date. Run "Refresh events" first.');
 
     const items = rows.map(function (r) { return toSyncItem_(r, ss.getSpreadsheetTimeZone()); });
     // Only look at calendar events inside the Events tab's date range. Past events that

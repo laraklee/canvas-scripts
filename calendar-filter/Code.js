@@ -4,8 +4,8 @@
  * teacher keep or hide events, and syncs the kept events to a Google Calendar of their own.
  *
  * This file: the menu, tab setup, and reading the settings on the Start Here tab.
- * Other files: Feed.js (read the school calendar), Events.js (the Events and Hide Rules
- * tabs), Sync.js (writes to Google Calendar, nightly trigger).
+ * Other files: Feed.js (read the school calendar), Events.js (the Events and Pick Titles
+ * tabs, and deciding what syncs), Sync.js (writes to Google Calendar, nightly trigger).
  *
  * Endpoints: Google Calendar (read), or a public ICS link if one is entered (read-only).
  * Write calls: Google Calendar only, in Sync.js, and only when "Preview only" is unchecked.
@@ -19,7 +19,9 @@ const OLD_DEFAULT_FEED_URL =
 const DEFAULT_CALENDAR_NAME = 'Faculty Calendar (filtered)';
 
 const SHEET_START = 'Start Here';
-const SHEET_RULES = 'Hide Rules';
+const SHEET_TITLES = 'Pick Titles';
+const SHEET_WORDS = 'Keep & Hide Words';
+const OLD_SHEET_RULES = 'Hide Rules'; // Earlier version: hide words only, in column A.
 const SHEET_EVENTS = 'Events';
 
 const SETTING_SOURCE = 'Copy FROM: school calendar (Calendar ID or ICS link)';
@@ -33,7 +35,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('School Calendar')
     .addItem('1. Refresh events from school calendar', 'refreshEvents')
-    .addItem('2. Apply hide rules', 'applyHideRules')
+    .addItem('2. Update "Will sync" after changing choices', 'updateChoices')
     .addItem('3. Sync kept events to my calendar', 'syncToCalendar')
     .addSeparator()
     .addItem('Turn on nightly refresh + sync', 'turnOnNightlySync')
@@ -51,16 +53,34 @@ function setupTabs() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   buildStartTab_(ss);
 
-  if (!ss.getSheetByName(SHEET_RULES)) {
-    const rules = ss.insertSheet(SHEET_RULES);
-    rules.getRange(1, 1, 1, 2).setValues([['Hide events whose title contains', 'Notes (optional)']])
-      .setFontWeight('bold');
-    rules.setColumnWidth(1, 300);
-    rules.setColumnWidth(2, 300);
-    rules.setFrozenRows(1);
-  }
-
+  if (!ss.getSheetByName(SHEET_TITLES)) ss.insertSheet(SHEET_TITLES, 1);
+  if (!ss.getSheetByName(SHEET_WORDS)) buildWordsTab_(ss);
   if (!ss.getSheetByName(SHEET_EVENTS)) ss.insertSheet(SHEET_EVENTS);
+}
+
+/** Keep words in column A, hide words in column B. Carries over an old Hide Rules tab. */
+function buildWordsTab_(ss) {
+  const old = ss.getSheetByName(OLD_SHEET_RULES);
+  let hideWords = [];
+  let sheet;
+  if (old) {
+    if (old.getLastRow() > 1) {
+      hideWords = old.getRange(2, 1, old.getLastRow() - 1, 1).getValues().filter(function (r) { return String(r[0]).trim(); });
+    }
+    sheet = old.setName(SHEET_WORDS);
+    sheet.clear();
+  } else {
+    sheet = ss.insertSheet(SHEET_WORDS, 2);
+  }
+  sheet.getRange(1, 1, 1, 3).setValues([[
+    'Keep: titles containing', 'Hide: titles containing', 'Picked titles always sync. Hide words only make exceptions to keep words.',
+  ]]).setFontWeight('bold');
+  sheet.getRange('C1').setFontWeight('normal').setFontStyle('italic').setFontColor('#666666');
+  if (hideWords.length) sheet.getRange(2, 2, hideWords.length, 1).setValues(hideWords);
+  sheet.setColumnWidth(1, 260);
+  sheet.setColumnWidth(2, 260);
+  sheet.setColumnWidth(3, 460);
+  sheet.setFrozenRows(1);
 }
 
 /** The first tab: settings (yellow boxes) at the top, instructions underneath. */
@@ -112,13 +132,17 @@ function buildStartTab_(ss) {
     ['• Using your own copy: File > Make a copy, then use the School Calendar menu in your copy. Google asks for permission the first time.'],
     [''],
     ['How to use'],
-    ['1. School Calendar > Refresh events. This copies the school calendar into the Events tab.'],
-    ['2. Uncheck "Keep" for events you do not want. Do not delete rows: a refresh would bring them back.'],
-    ['    Faster: add words to the Hide Rules tab (for example "Athletics"), then School Calendar > Apply hide rules.'],
+    ['1. School Calendar > Refresh events. Nothing is picked at first, so nothing will sync yet.'],
+    ['2. Pick Titles tab: check each kind of event you want. Checking a title keeps every event with that title.'],
+    ['    Titles are sorted by how often they happen. Use the filter arrow on the Title column to search.'],
+    ['    Optional, Keep & Hide Words tab: a keep word (for example "7-12") picks every title containing it, including'],
+    ['    events the school adds later. A hide word makes exceptions to keep words.'],
+    ['    One-off exceptions: on the Events tab, set Override to Keep or Hide for that single event.'],
     ['3. School Calendar > Sync kept events. With "Preview only" checked, this only reports what it would do.'],
+    ['    Sync always uses your latest choices. "Update Will sync" just refreshes the Events tab so you can check first.'],
     [''],
-    ['Refreshing again keeps your checkmarks. New events start checked unless a hide rule matches them.'],
-    ['Syncing again updates changed events and removes ones you unchecked or the school cancelled.'],
+    ['Refreshing again keeps your picks, words, and overrides.'],
+    ['Syncing again updates changed events and removes ones you no longer pick or the school cancelled.'],
     ['Sync only changes events it created. Anything you add to that calendar yourself is left alone.'],
     ['Optional: "Turn on nightly refresh + sync" keeps your calendar up to date automatically.'],
   ];
