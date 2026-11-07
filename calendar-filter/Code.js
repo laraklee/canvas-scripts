@@ -53,9 +53,16 @@ function setupTabs() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   buildStartTab_(ss);
 
-  if (!ss.getSheetByName(SHEET_TITLES)) ss.insertSheet(SHEET_TITLES, 1);
+  if (!ss.getSheetByName(SHEET_TITLES)) addPlaceholderTab_(ss, SHEET_TITLES, 1);
   if (!ss.getSheetByName(SHEET_WORDS)) buildWordsTab_(ss);
-  if (!ss.getSheetByName(SHEET_EVENTS)) ss.insertSheet(SHEET_EVENTS);
+  if (!ss.getSheetByName(SHEET_EVENTS)) addPlaceholderTab_(ss, SHEET_EVENTS);
+}
+
+/** An empty tab that says how it gets filled. Refresh replaces the note. */
+function addPlaceholderTab_(ss, name, position) {
+  const sheet = position === undefined ? ss.insertSheet(name) : ss.insertSheet(name, position);
+  sheet.getRange('A1').setValue('This tab fills in when you run School Calendar > 1. Refresh events.')
+    .setFontStyle('italic').setFontColor('#666666');
 }
 
 /** Keep words in column A, hide words in column B. Carries over an old Hide Rules tab. */
