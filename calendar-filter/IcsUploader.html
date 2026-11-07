@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+    <h3>Select your .ics calendar file:</h3>
+    <input type="file" id="icsFileInput" accept=".ics"/>
+    <br><br>
+    <button onclick="uploadIcs()">Upload</button>
+    <script>
+      function uploadIcs() {
+        var fileInput = document.getElementById('icsFileInput');
+        if (!fileInput.files.length) {
+          alert('Please select an ICS file.');
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          google.script.run
+            .withSuccessHandler(function() {
+              alert('ICS file processed!');
+              google.script.host.close();
+            })
+            .withFailureHandler(function(error) {
+              alert('Upload failed: ' + error);
+            })
+            .processIcsFile({ icsFile: e.target.result });
+        };
+        reader.onerror = function(e) {
+          alert('File reading error: ' + e.target.error);
+        };
+        // <<<< MAKE SURE THIS USES [0]!
+        reader.readAsDataURL(fileInput.files[0]);
+      }
+    </script>
+  </body>
+</html>
+

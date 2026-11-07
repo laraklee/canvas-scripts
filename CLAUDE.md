@@ -1,8 +1,11 @@
 # Canvas Scripts — Standards for Claude
 
-This folder holds Lara's Google Apps Script projects that call the Canvas LMS API.
-Each project lives in its own subfolder (for example `course-manager/`) and is synced
-to Google with `clasp`. The whole `canvas-scripts` folder is one Git repository.
+This folder holds Lara's Google Apps Script projects, most of which call the Canvas
+LMS API. Each project lives in its own subfolder (for example `course-manager/`) and
+is synced to Google with `clasp`. The whole `canvas-scripts` folder is one Git
+repository. The Canvas-specific rules below apply to any project that calls Canvas.
+`calendar-filter/` does not call Canvas yet: it filters the school calendar (an ICS
+import into a Sheet) and exports a new ICS. The school calendar is not student data.
 
 Lara is a high school science teacher, new to Claude Code and the command line.
 Explain commands in plain language when you propose them, and prefer small,
