@@ -23,6 +23,7 @@ const SHEET_TITLES = 'Pick Titles';
 const SHEET_WORDS = 'Keep & Hide Words';
 const OLD_SHEET_RULES = 'Hide Rules'; // Earlier version: hide words only, in column A.
 const SHEET_EVENTS = 'Events';
+const SHEET_PREVIEW = 'Sync Preview'; // Written by Sync in preview mode only.
 
 const SETTING_SOURCE = 'Copy FROM: school calendar (Calendar ID or ICS link)';
 const SETTING_CALENDAR = 'Copy TO: my Google Calendar (name or Calendar ID)';
@@ -145,7 +146,8 @@ function buildStartTab_(ss) {
     ['    Optional, Keep & Hide Words tab: a keep word (for example "7-12") picks every title containing it, including'],
     ['    events the school adds later. A hide word makes exceptions to keep words.'],
     ['    One-off exceptions: on the Events tab, set Override to Keep or Hide for that single event.'],
-    ['3. School Calendar > Sync kept events. With "Preview only" checked, this only reports what it would do.'],
+    ['3. School Calendar > Sync kept events. With "Preview only" checked, this only reports what it would do,'],
+    ['    and lists every add, match, update, and removal on the Sync Preview tab so you can check them first.'],
     ['    Sync always uses your latest choices. "Update Will sync" just refreshes the Events tab so you can check first.'],
     [''],
     ['Refreshing again keeps your picks, words, and overrides.'],

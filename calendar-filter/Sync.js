@@ -73,7 +73,9 @@ function syncToCalendar() {
 
     const plan = describePlan_(settings.calendar, calendar, adds, adopts, updates, removes);
     if (settings.preview) {
+      const listed = writePreviewSheet_(ss, adds, adopts, updates, removes);
       return notify_('PREVIEW ONLY: nothing was changed.\n\n' + plan +
+        (listed ? '\n\nEvery change is listed on the ' + SHEET_PREVIEW + ' tab.' : '') +
         '\n\nTo really sync, uncheck "Preview only" on the Start Here tab and run Sync again.');
     }
     if (!adds.length && !adopts.length && !updates.length && !removes.length) return notify_(plan);
@@ -165,6 +167,58 @@ function createCalendarEvent_(calendar, item) {
   else ev = calendar.createAllDayEvent(item.title, item.start, item.end, options);
   ev.setTag(TAG_UID, item.uid);
   ev.setTag(TAG_HASH, item.hash);
+}
+
+/**
+ * Lists every planned change on the Sync Preview tab, one row per event, so a big first
+ * sync can be checked line by line. Returns the number of rows written.
+ */
+function writePreviewSheet_(ss, adds, adopts, updates, removes) {
+  const headers = ['Action', 'Title', 'Start', 'End', 'Location', 'Now in your calendar as'];
+  const rows = [];
+  const describeExisting = function (ev) {
+    const when = ev.isAllDayEvent() ? ev.getAllDayStartDate() : ev.getStartTime();
+    const format = ev.isAllDayEvent() ? 'EEE M/d/yy' : 'EEE M/d/yy h:mm a';
+    return ev.getTitle() + '  (' + Utilities.formatDate(when, Session.getScriptTimeZone(), format) + ')';
+  };
+  // All-day items end on the day after; show the last day instead.
+  const lastDay = function (item) {
+    return item.allDay && !item.singleDay ? new Date(item.end.getTime() - 86400000) : item.end;
+  };
+  adds.forEach(function (i) { rows.push(['Add', i.title, i.start, lastDay(i), i.location, '', i.allDay]); });
+  adopts.forEach(function (a) {
+    rows.push(['Match (no copy added)', a.item.title, a.item.start, lastDay(a.item), a.item.location, describeExisting(a.ev), a.item.allDay]);
+  });
+  updates.forEach(function (u) {
+    rows.push(['Update (changed at school)', u.item.title, u.item.start, lastDay(u.item), u.item.location, describeExisting(u.ev), u.item.allDay]);
+  });
+  removes.forEach(function (ev) {
+    const allDay = ev.isAllDayEvent();
+    rows.push(['Remove', ev.getTitle(), allDay ? ev.getAllDayStartDate() : ev.getStartTime(),
+      allDay ? new Date(ev.getAllDayEndDate().getTime() - 86400000) : ev.getEndTime(), ev.getLocation(), describeExisting(ev), allDay]);
+  });
+  rows.sort(function (a, b) { return a[0].localeCompare(b[0]) || a[2] - b[2]; });
+
+  const sheet = ss.getSheetByName(SHEET_PREVIEW) || ss.insertSheet(SHEET_PREVIEW);
+  resetSheet_(sheet);
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+  sheet.setFrozenRows(1);
+  if (rows.length) {
+    sheet.getRange(2, 1, rows.length, headers.length).setValues(rows.map(function (r) { return r.slice(0, headers.length); }));
+    sheet.getRange(2, 3, rows.length, 2).setNumberFormats(rows.map(function (r) {
+      const f = r[6] ? 'ddd m/d/yy' : 'ddd m/d/yy h:mm am/pm';
+      return [f, f];
+    }));
+  } else {
+    sheet.getRange('A2').setValue('Nothing to change: your calendar already matches your choices.').setFontStyle('italic');
+  }
+  sheet.getRange(1, 1, Math.max(rows.length, 1) + 1, headers.length).createFilter();
+  sheet.setColumnWidth(1, 190);
+  sheet.setColumnWidth(2, 320);
+  sheet.setColumnWidths(3, 2, 150);
+  sheet.setColumnWidth(5, 200);
+  sheet.setColumnWidth(6, 380);
+  return rows.length;
 }
 
 /** Same shape as a sync item's matchKey: title (ignoring case and "CHANGED:" notes) + start. */
