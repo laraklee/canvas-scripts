@@ -5,7 +5,9 @@
  * Write calls: Google Calendar (create calendar, create/delete events), and only when
  * "Preview only" is unchecked on the Start Here tab. Each event the sync creates is tagged with the
  * school's event UID; the sync only ever changes or deletes events carrying that tag, so
- * anything added to the calendar by hand is left alone.
+ * anything added to the calendar by hand is left alone. The one exception: an untagged event
+ * with the same title and start time as a kept event (say, from an old ICS import) is
+ * "adopted" by tagging it, instead of adding a duplicate.
  * Script Properties: none.
  */
 
@@ -36,32 +38,45 @@ function syncToCalendar() {
       return notify_('"Copy TO" is the same calendar as "Copy FROM". Pick a different calendar on the Start Here tab.');
     }
     const existing = new Map();
+    const untagged = new Map(); // Match key -> events not created by the sync.
     const removes = [];
     if (calendar) {
       calendar.getEvents(windowStart, windowEnd).forEach(function (ev) {
         const uid = ev.getTag(TAG_UID);
-        if (!uid) return;
+        if (!uid) {
+          if (ev.isRecurringEvent()) return; // Never adopt part of someone's repeating event.
+          const key = calendarMatchKey_(ev);
+          if (!untagged.has(key)) untagged.set(key, []);
+          untagged.get(key).push(ev);
+          return;
+        }
         if (existing.has(uid)) removes.push(ev); // A duplicate, e.g. from an interrupted run.
         else existing.set(uid, ev);
       });
     }
 
     const adds = [];
+    const adopts = [];
     const updates = [];
     items.filter(function (i) { return i.keep; }).forEach(function (item) {
       const ev = existing.get(item.uid);
-      if (!ev) return adds.push(item);
-      existing.delete(item.uid);
-      if (ev.getTag(TAG_HASH) !== item.hash) updates.push({ item: item, ev: ev });
+      if (ev) {
+        existing.delete(item.uid);
+        if (ev.getTag(TAG_HASH) !== item.hash) updates.push({ item: item, ev: ev });
+        return;
+      }
+      const match = (untagged.get(item.matchKey) || []).shift();
+      if (match) adopts.push({ item: item, ev: match });
+      else adds.push(item);
     });
     existing.forEach(function (ev) { removes.push(ev); }); // Unchecked, or gone from the feed.
 
-    const plan = describePlan_(settings.calendar, calendar, adds, updates, removes);
+    const plan = describePlan_(settings.calendar, calendar, adds, adopts, updates, removes);
     if (settings.preview) {
       return notify_('PREVIEW ONLY: nothing was changed.\n\n' + plan +
         '\n\nTo really sync, uncheck "Preview only" on the Start Here tab and run Sync again.');
     }
-    if (!adds.length && !updates.length && !removes.length) return notify_(plan);
+    if (!adds.length && !adopts.length && !updates.length && !removes.length) return notify_(plan);
 
     if (!calendar) {
       calendar = CalendarApp.createCalendar(settings.calendar);
@@ -69,9 +84,17 @@ function syncToCalendar() {
     }
 
     const deadline = Date.now() + SYNC_TIME_LIMIT_MS;
-    const done = { added: 0, updated: 0, removed: 0 };
+    const done = { added: 0, adopted: 0, updated: 0, removed: 0 };
     const outOfTime = function () { return Date.now() > deadline; };
 
+    for (const a of adopts) {
+      if (outOfTime()) break;
+      // Keep the event as it is (with any reminders or notes) and just mark it as synced.
+      a.ev.setTag(TAG_UID, a.item.uid);
+      a.ev.setTag(TAG_HASH, a.item.hash);
+      done.adopted++;
+      Utilities.sleep(PAUSE_BETWEEN_WRITES_MS);
+    }
     for (const ev of removes) {
       if (outOfTime()) break;
       ev.deleteEvent();
@@ -94,8 +117,9 @@ function syncToCalendar() {
     }
 
     const summary = 'Synced to "' + calendar.getName() + '": added ' + done.added +
-      ', updated ' + done.updated + ', removed ' + done.removed + '.';
-    const finished = done.added === adds.length && done.updated === updates.length && done.removed === removes.length;
+      ', matched ' + done.adopted + ' already there, updated ' + done.updated + ', removed ' + done.removed + '.';
+    const finished = done.added === adds.length && done.adopted === adopts.length &&
+      done.updated === updates.length && done.removed === removes.length;
     notify_(finished ? summary : summary + '\n\nRan out of time before finishing. Run Sync again to do the rest.');
   } finally {
     lock.releaseLock();
@@ -125,6 +149,7 @@ function toSyncItem_(row, sheetTz) {
     startKey = item.start.toISOString();
     endKey = item.end.toISOString();
   }
+  item.matchKey = titleKey_(item.title) + '|' + startKey;
   // A fingerprint of everything that shows up in the calendar, to spot changed events.
   const fingerprint = JSON.stringify([item.title, item.location, item.description, item.allDay, startKey, endKey]);
   item.hash = Utilities.base64Encode(
@@ -142,7 +167,15 @@ function createCalendarEvent_(calendar, item) {
   ev.setTag(TAG_HASH, item.hash);
 }
 
-function describePlan_(calendarName, calendar, adds, updates, removes) {
+/** Same shape as a sync item's matchKey: title (ignoring case and "CHANGED:" notes) + start. */
+function calendarMatchKey_(ev) {
+  const start = ev.isAllDayEvent()
+    ? ymdKey_(ymdFromCell_(ev.getAllDayStartDate(), Session.getScriptTimeZone()))
+    : ev.getStartTime().toISOString();
+  return titleKey_(ev.getTitle()) + '|' + start;
+}
+
+function describePlan_(calendarName, calendar, adds, adopts, updates, removes) {
   const examples = function (titles) {
     if (!titles.length) return '';
     const shown = titles.slice(0, 5).join('; ');
@@ -151,6 +184,10 @@ function describePlan_(calendarName, calendar, adds, updates, removes) {
   const lines = [];
   if (!calendar) lines.push('Create a new calendar named "' + calendarName + '".');
   lines.push('Add ' + adds.length + ' event(s)' + examples(adds.map(function (i) { return i.title; })));
+  if (adopts.length) {
+    lines.push('Match ' + adopts.length + ' event(s) already in the calendar, instead of adding copies' +
+      examples(adopts.map(function (a) { return a.item.title; })));
+  }
   lines.push('Update ' + updates.length + ' event(s)' + examples(updates.map(function (u) { return u.item.title; })));
   lines.push('Remove ' + removes.length + ' event(s)' + examples(removes.map(function (ev) { return ev.getTitle(); })));
   return lines.join('\n');
