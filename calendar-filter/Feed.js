@@ -2,7 +2,7 @@
  * Feed.js
  * Downloads the school calendar's public ICS feed and turns it into plain event objects.
  *
- * Endpoints: the ICS URL in the Settings tab (read-only GET). No write calls.
+ * Endpoints: the "Copy FROM" ICS link on the Start Here tab (read-only GET). No write calls.
  * Script Properties: none.
  */
 
@@ -12,7 +12,7 @@ function fetchFeedEvents_(url) {
   const code = response.getResponseCode();
   const text = response.getContentText();
   if (code !== 200 || text.indexOf('BEGIN:VCALENDAR') === -1) {
-    throw new Error('Could not read the calendar feed (HTTP ' + code + '). Check the URL in the Settings tab.');
+    throw new Error('Could not read the calendar feed (HTTP ' + code + '). Check the "Copy FROM" link on the Start Here tab.');
   }
   return parseIcs_(text);
 }

@@ -3,7 +3,7 @@
  * Copies the kept rows of the Events tab into the user's own Google Calendar.
  *
  * Write calls: Google Calendar (create calendar, create/delete events), and only when
- * "Preview only" is unchecked in Settings. Each event the sync creates is tagged with the
+ * "Preview only" is unchecked on the Start Here tab. Each event the sync creates is tagged with the
  * school's event UID; the sync only ever changes or deletes events carrying that tag, so
  * anything added to the calendar by hand is left alone.
  * Script Properties: none.
@@ -30,7 +30,7 @@ function syncToCalendar() {
     const windowStart = new Date(Math.min.apply(null, items.map(function (i) { return i.start.getTime(); })));
     const windowEnd = new Date(Math.max.apply(null, items.map(function (i) { return i.end.getTime(); })) + 86400000);
 
-    let calendar = CalendarApp.getOwnedCalendarsByName(settings.calendarName)[0] || null;
+    let calendar = findTargetCalendar_(settings.calendar);
     const existing = new Map();
     const removes = [];
     if (calendar) {
@@ -52,15 +52,15 @@ function syncToCalendar() {
     });
     existing.forEach(function (ev) { removes.push(ev); }); // Unchecked, or gone from the feed.
 
-    const plan = describePlan_(settings.calendarName, calendar, adds, updates, removes);
+    const plan = describePlan_(settings.calendar, calendar, adds, updates, removes);
     if (settings.preview) {
       return notify_('PREVIEW ONLY: nothing was changed.\n\n' + plan +
-        '\n\nTo really sync, uncheck "Preview only" in the Settings tab and run Sync again.');
+        '\n\nTo really sync, uncheck "Preview only" on the Start Here tab and run Sync again.');
     }
     if (!adds.length && !updates.length && !removes.length) return notify_(plan);
 
     if (!calendar) {
-      calendar = CalendarApp.createCalendar(settings.calendarName);
+      calendar = CalendarApp.createCalendar(settings.calendar);
       calendar.setTimeZone(Session.getScriptTimeZone());
     }
 
@@ -89,7 +89,7 @@ function syncToCalendar() {
       Utilities.sleep(PAUSE_BETWEEN_WRITES_MS);
     }
 
-    const summary = 'Synced to "' + settings.calendarName + '": added ' + done.added +
+    const summary = 'Synced to "' + calendar.getName() + '": added ' + done.added +
       ', updated ' + done.updated + ', removed ' + done.removed + '.';
     const finished = done.added === adds.length && done.updated === updates.length && done.removed === removes.length;
     notify_(finished ? summary : summary + '\n\nRan out of time before finishing. Run Sync again to do the rest.');
@@ -152,6 +152,22 @@ function describePlan_(calendarName, calendar, adds, updates, removes) {
   return lines.join('\n');
 }
 
+/**
+ * The "Copy TO" setting can be a Calendar ID (has an @) or a name. Returns null only for
+ * a name with no matching calendar yet, which the sync then creates.
+ */
+function findTargetCalendar_(nameOrId) {
+  if (nameOrId.indexOf('@') !== -1) {
+    const byId = CalendarApp.getCalendarById(nameOrId);
+    if (!byId) {
+      throw new Error('Could not find a calendar with the ID "' + nameOrId + '". Check the "Copy TO" box ' +
+        'on the Start Here tab, and make sure you can make changes to that calendar.');
+    }
+    return byId;
+  }
+  return CalendarApp.getOwnedCalendarsByName(nameOrId)[0] || null;
+}
+
 function ymdFromCell_(date, tz) {
   const parts = Utilities.formatDate(date, tz, 'yyyy-MM-dd').split('-');
   return { y: +parts[0], m: +parts[1], d: +parts[2] };
@@ -164,7 +180,7 @@ function turnOnNightlySync() {
   ScriptApp.newTrigger('nightlyRefreshAndSync').timeBased().everyDays(1).atHour(3).create();
   const preview = readSettings_().preview;
   notify_('Nightly refresh + sync is on (around 3 a.m.).' +
-    (preview ? '\n\n"Preview only" is still checked in Settings, so the nightly run will not change your calendar until you uncheck it.' : ''));
+    (preview ? '\n\n"Preview only" is still checked on the Start Here tab, so the nightly run will not change your calendar until you uncheck it.' : ''));
 }
 
 function turnOffNightlySync() {
