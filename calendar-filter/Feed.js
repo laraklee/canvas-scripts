@@ -1,20 +1,80 @@
 /**
  * Feed.js
- * Downloads the school calendar's public ICS feed and turns it into plain event objects.
+ * Reads the school calendar and turns it into plain event objects. The "Copy FROM" setting
+ * is either a Google Calendar ID (read directly, the default) or a public ICS link (downloaded).
  *
- * Endpoints: the "Copy FROM" ICS link on the Start Here tab (read-only GET). No write calls.
- * Script Properties: none.
+ * Endpoints: the ICS link, if one is used (read-only GET). Otherwise Google Calendar (read-only).
+ * Write calls: none. Script Properties: none.
  */
 
-/** Fetches the feed and returns parsed events (cancelled events are left out). */
-function fetchFeedEvents_(url) {
-  const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
-  const code = response.getResponseCode();
-  const text = response.getContentText();
-  if (code !== 200 || text.indexOf('BEGIN:VCALENDAR') === -1) {
-    throw new Error('Could not read the calendar feed (HTTP ' + code + '). Check the "Copy FROM" link on the Start Here tab.');
+const FETCH_ATTEMPTS = 4;
+
+/** Returns events from the "Copy FROM" source, limited to the date range in settings. */
+function fetchSourceEvents_(settings) {
+  const source = settings.source.replace(/^webcal:\/\//i, 'https://');
+  if (/^https?:\/\//i.test(source)) return fetchFeedEvents_(source);
+  return readCalendarEvents_(source, settings);
+}
+
+/** Reads a Google Calendar the user has in their calendar list. */
+function readCalendarEvents_(calendarId, settings) {
+  const calendar = CalendarApp.getCalendarById(calendarId);
+  if (!calendar) {
+    throw new Error('Could not open the school calendar "' + calendarId + '". Add it to your Google Calendar first ' +
+      '(see "Before you start" on the Start Here tab), then try again.');
   }
-  return parseIcs_(text);
+  // Calendar needs a date range. Without one in settings, go well past both ends of the school year.
+  const day = 86400000;
+  const start = settings.after || new Date(Date.now() - 365 * day);
+  const end = settings.before ? new Date(settings.before.getTime() + day) : new Date(Date.now() + 548 * day);
+
+  const tz = Session.getScriptTimeZone();
+  const ymdOf = function (date) {
+    const parts = Utilities.formatDate(date, tz, 'yyyy-MM-dd').split('-');
+    return { y: +parts[0], m: +parts[1], d: +parts[2] };
+  };
+
+  return calendar.getEvents(start, end).map(function (ev) {
+    const out = {
+      // Every occurrence of a repeating event shares one ID, so add the start time to tell them apart.
+      uid: ev.isRecurringEvent() ? ev.getId() + '|' + ev.getStartTime().toISOString() : ev.getId(),
+      title: ev.getTitle() || '(no title)',
+      location: ev.getLocation(),
+      description: ev.getDescription(),
+      allDay: ev.isAllDayEvent(),
+    };
+    if (out.allDay) {
+      // Both are midnight in the script's time zone; the end is the day AFTER the last day.
+      out.start = ymdOf(ev.getAllDayStartDate());
+      out.end = addDays_(ymdOf(ev.getAllDayEndDate()), -1);
+      if (ymdKey_(out.end) < ymdKey_(out.start)) out.end = out.start;
+    } else {
+      out.start = ev.getStartTime();
+      out.end = ev.getEndTime();
+    }
+    return out;
+  });
+}
+
+/** Downloads an ICS feed and returns parsed events (cancelled events are left out). */
+function fetchFeedEvents_(url) {
+  let code = 0;
+  for (let attempt = 1; attempt <= FETCH_ATTEMPTS; attempt++) {
+    const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
+    code = response.getResponseCode();
+    if (code === 200) {
+      const text = response.getContentText();
+      if (text.indexOf('BEGIN:VCALENDAR') !== -1) return parseIcs_(text);
+      break;
+    }
+    // 429 = too many requests, 5xx = server trouble: both are worth waiting out.
+    if (code !== 429 && code < 500) break;
+    if (attempt < FETCH_ATTEMPTS) Utilities.sleep(2000 * Math.pow(2, attempt - 1));
+  }
+  const hint = code === 429
+    ? 'Google is limiting downloads right now. Wait a few minutes, or use the calendar\'s ID instead of its link.'
+    : 'Check the "Copy FROM" box on the Start Here tab.';
+  throw new Error('Could not read the calendar feed (HTTP ' + code + '). ' + hint);
 }
 
 /**

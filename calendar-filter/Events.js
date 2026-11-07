@@ -20,7 +20,7 @@ function refreshEvents() {
     const afterKey = settings.after ? Utilities.formatDate(settings.after, tz, 'yyyy-MM-dd') : '';
     const beforeKey = settings.before ? Utilities.formatDate(settings.before, tz, 'yyyy-MM-dd') : '';
 
-    const events = fetchFeedEvents_(settings.feedUrl).filter(function (ev) {
+    const events = fetchSourceEvents_(settings).filter(function (ev) {
       const key = ev.allDay ? ymdKey_(ev.start) : Utilities.formatDate(ev.start, tz, 'yyyy-MM-dd');
       return (!afterKey || key >= afterKey) && (!beforeKey || key <= beforeKey);
     });

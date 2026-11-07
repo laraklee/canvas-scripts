@@ -4,15 +4,17 @@
  * teacher keep or hide events, and syncs the kept events to a Google Calendar of their own.
  *
  * This file: the menu, tab setup, and reading the settings on the Start Here tab.
- * Other files: Feed.js (download and parse the ICS feed), Events.js (the Events and
- * Hide Rules tabs), Sync.js (writes to Google Calendar, nightly trigger).
+ * Other files: Feed.js (read the school calendar), Events.js (the Events and Hide Rules
+ * tabs), Sync.js (writes to Google Calendar, nightly trigger).
  *
- * Endpoints: the public ICS feed URL on the Start Here tab (read-only).
+ * Endpoints: Google Calendar (read), or a public ICS link if one is entered (read-only).
  * Write calls: Google Calendar only, in Sync.js, and only when "Preview only" is unchecked.
  * Script Properties: none. All settings live on the Start Here tab of each copy of the Sheet.
  */
 
-const DEFAULT_FEED_URL =
+const DEFAULT_SOURCE = 'acg4tehdnkv29rfpasrt7eo1kb81qv0l@import.calendar.google.com';
+// The first version of Start Here defaulted to the ICS link; "Set up / repair tabs" swaps it for the ID.
+const OLD_DEFAULT_FEED_URL =
   'https://calendar.google.com/calendar/ical/acg4tehdnkv29rfpasrt7eo1kb81qv0l%40import.calendar.google.com/public/basic.ics';
 const DEFAULT_CALENDAR_NAME = 'Faculty Calendar (filtered)';
 
@@ -20,11 +22,12 @@ const SHEET_START = 'Start Here';
 const SHEET_RULES = 'Hide Rules';
 const SHEET_EVENTS = 'Events';
 
-const SETTING_FEED = 'Copy FROM: school calendar (public ICS link)';
+const SETTING_SOURCE = 'Copy FROM: school calendar (Calendar ID or ICS link)';
 const SETTING_CALENDAR = 'Copy TO: my Google Calendar (name or Calendar ID)';
 const SETTING_AFTER = 'Only events on or after (optional)';
 const SETTING_BEFORE = 'Only events on or before (optional)';
 const SETTING_PREVIEW = 'Preview only (no calendar changes)';
+const SETTINGS_FIRST_ROW = 4; // Settings fill rows 4-8, in the order above.
 
 function onOpen() {
   SpreadsheetApp.getUi()
@@ -40,10 +43,13 @@ function onOpen() {
     .addToUi();
 }
 
-/** Creates any missing tabs. Never overwrites settings or rules that already exist. */
+/**
+ * Creates missing tabs and redraws Start Here with the latest labels and instructions,
+ * keeping whatever was typed in its yellow boxes. Never touches rules or events.
+ */
 function setupTabs() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss.getSheetByName(SHEET_START)) buildStartTab_(ss);
+  buildStartTab_(ss);
 
   if (!ss.getSheetByName(SHEET_RULES)) {
     const rules = ss.insertSheet(SHEET_RULES);
@@ -59,21 +65,35 @@ function setupTabs() {
 
 /** The first tab: settings (yellow boxes) at the top, instructions underneath. */
 function buildStartTab_(ss) {
-  const sheet = ss.insertSheet(SHEET_START, 0);
+  let sheet = ss.getSheetByName(SHEET_START);
+  let saved = [DEFAULT_SOURCE, DEFAULT_CALENDAR_NAME, '', '', true];
+  if (sheet) {
+    if (String(sheet.getRange(SETTINGS_FIRST_ROW, 1).getValue()).indexOf('Copy FROM') === 0) {
+      saved = sheet.getRange(SETTINGS_FIRST_ROW, 2, saved.length, 1).getValues().map(function (r) { return r[0]; });
+      if (saved[0] === OLD_DEFAULT_FEED_URL || !saved[0]) saved[0] = DEFAULT_SOURCE;
+    }
+    sheet.clear();
+    sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).clearDataValidations();
+  } else {
+    sheet = ss.insertSheet(SHEET_START, 0);
+  }
+
   sheet.getRange('A1').setValue('School Calendar Filter').setFontWeight('bold').setFontSize(16);
   sheet.getRange('A2').setValue('Fill in the yellow boxes, then use the School Calendar menu at the top of the screen.')
     .setFontStyle('italic');
 
   const settings = [
-    [SETTING_FEED, DEFAULT_FEED_URL,
-      'Already filled in with the faculty calendar. To use a different one, paste its public .ics link (Google Calendar > Settings > the calendar > Integrate calendar > "Public address in iCal format").'],
-    [SETTING_CALENDAR, DEFAULT_CALENDAR_NAME,
-      'Type a name and the sheet creates that calendar for you (recommended). Or paste the Calendar ID of a calendar you already have (Google Calendar > Settings > the calendar > Integrate calendar > Calendar ID).'],
-    [SETTING_AFTER, '', 'Leave blank to include everything in the feed.'],
-    [SETTING_BEFORE, '', 'Leave blank to include everything in the feed.'],
-    [SETTING_PREVIEW, true, 'While checked, Sync only reports what it would do. Uncheck it when the preview looks right.'],
+    [SETTING_SOURCE, saved[0],
+      'Already filled in with the Faculty Calendar. You must have it in your Google Calendar first (see "Before you start" below). ' +
+      'You can also paste any calendar\'s ID, or a public .ics link.'],
+    [SETTING_CALENDAR, saved[1],
+      'Type a name and the sheet creates that calendar for you (recommended). Or paste the Calendar ID of a calendar you already have ' +
+      '(Google Calendar > Settings > the calendar > Integrate calendar > Calendar ID).'],
+    [SETTING_AFTER, saved[2], 'Leave blank to include everything.'],
+    [SETTING_BEFORE, saved[3], 'Leave blank to include everything.'],
+    [SETTING_PREVIEW, saved[4] !== false, 'While checked, Sync only reports what it would do. Uncheck it when the preview looks right.'],
   ];
-  const first = 4;
+  const first = SETTINGS_FIRST_ROW;
   sheet.getRange(first, 1, settings.length, 3).setValues(settings);
   sheet.getRange(first, 1, settings.length, 1).setFontWeight('bold');
   sheet.getRange(first, 2, settings.length, 1).setBackground('#fff2cc')
@@ -83,9 +103,16 @@ function buildStartTab_(ss) {
   sheet.getRange(first + 4, 2).insertCheckboxes();
 
   const steps = [
+    ['Before you start'],
+    ['• Add the Faculty Calendar to your Google Calendar, if it is not already listed under "Other calendars":'],
+    ['    open calendar.google.com > next to "Other calendars" on the left, click + > Subscribe to calendar >'],
+    ['    paste the ID from the "Copy FROM" box above > press Enter. It then appears under "Other calendars".'],
+    ['• The school calendar only keeps about one month of past events. Set this up early in the year (August is ideal).'],
+    ['    Events already synced to your calendar stay there, even after they drop off the school calendar.'],
+    ['• Using your own copy: File > Make a copy, then use the School Calendar menu in your copy. Google asks for permission the first time.'],
+    [''],
     ['How to use'],
-    ['First time: File > Make a copy, then use the School Calendar menu in your copy. Google will ask for permission the first time.'],
-    ['1. School Calendar > Refresh events. This downloads the school calendar into the Events tab.'],
+    ['1. School Calendar > Refresh events. This copies the school calendar into the Events tab.'],
     ['2. Uncheck "Keep" for events you do not want. Do not delete rows: a refresh would bring them back.'],
     ['    Faster: add words to the Hide Rules tab (for example "Athletics"), then School Calendar > Apply hide rules.'],
     ['3. School Calendar > Sync kept events. With "Preview only" checked, this only reports what it would do.'],
@@ -97,7 +124,7 @@ function buildStartTab_(ss) {
   ];
   const stepsRow = first + settings.length + 2;
   sheet.getRange(stepsRow, 1, steps.length, 1).setValues(steps);
-  sheet.getRange(stepsRow, 1).setFontWeight('bold').setFontSize(12);
+  [0, 8].forEach(function (i) { sheet.getRange(stepsRow + i, 1).setFontWeight('bold').setFontSize(12); });
 
   sheet.setColumnWidth(1, 360);
   sheet.setColumnWidth(2, 420);
@@ -105,6 +132,7 @@ function buildStartTab_(ss) {
   sheet.getRange(first, 2, settings.length, 2).setWrap(true).setVerticalAlignment('top');
   sheet.getRange(first, 1, settings.length, 1).setVerticalAlignment('top');
   ss.setActiveSheet(sheet);
+  ss.moveActiveSheet(1);
 }
 
 /** Reads the Start Here settings into an object, creating tabs first if this is a fresh copy. */
@@ -114,14 +142,22 @@ function readSettings_() {
   const values = ss.getSheetByName(SHEET_START).getRange('A1:B20').getValues();
   const byLabel = new Map(values.map(function (r) { return [String(r[0]).trim(), r[1]]; }));
 
-  const preview = byLabel.get(SETTING_PREVIEW);
+  // Tabs drawn by an older version have different labels; fall back to the row position.
+  const valueAt = function (label, index) {
+    if (byLabel.has(label)) return byLabel.get(label);
+    return values[SETTINGS_FIRST_ROW - 1 + index][1];
+  };
+  let source = String(valueAt(SETTING_SOURCE, 0) || DEFAULT_SOURCE).trim();
+  if (source === OLD_DEFAULT_FEED_URL) source = DEFAULT_SOURCE;
+  const after = valueAt(SETTING_AFTER, 2);
+  const before = valueAt(SETTING_BEFORE, 3);
   return {
-    feedUrl: String(byLabel.get(SETTING_FEED) || DEFAULT_FEED_URL).trim(),
-    calendar: String(byLabel.get(SETTING_CALENDAR) || DEFAULT_CALENDAR_NAME).trim(),
-    after: byLabel.get(SETTING_AFTER) instanceof Date ? byLabel.get(SETTING_AFTER) : null,
-    before: byLabel.get(SETTING_BEFORE) instanceof Date ? byLabel.get(SETTING_BEFORE) : null,
+    source: source,
+    calendar: String(valueAt(SETTING_CALENDAR, 1) || DEFAULT_CALENDAR_NAME).trim(),
+    after: after instanceof Date ? after : null,
+    before: before instanceof Date ? before : null,
     // Anything other than an unchecked box counts as preview, so a missing row is safe.
-    preview: preview !== false,
+    preview: valueAt(SETTING_PREVIEW, 4) !== false,
   };
 }
 

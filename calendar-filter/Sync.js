@@ -31,6 +31,9 @@ function syncToCalendar() {
     const windowEnd = new Date(Math.max.apply(null, items.map(function (i) { return i.end.getTime(); })) + 86400000);
 
     let calendar = findTargetCalendar_(settings.calendar);
+    if (calendar && calendar.getId() === settings.source) {
+      return notify_('"Copy TO" is the same calendar as "Copy FROM". Pick a different calendar on the Start Here tab.');
+    }
     const existing = new Map();
     const removes = [];
     if (calendar) {
