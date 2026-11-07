@@ -84,10 +84,13 @@ function applyChoices_() {
   const picks = readPicks_();
   const words = readWords_();
 
-  const decisions = values.map(function (r) { return decide_(r[COL.TITLE], r[COL.OVERRIDE], picks, words); });
-  sheet.getRange(2, COL.SYNC + 1, values.length, 2).setValues(decisions.map(function (d) {
-    return [d.keep ? SYNC_MARK : '', d.why];
-  }));
+  const decisions = values.map(function (r) {
+    const d = decide_(r[COL.TITLE], r[COL.OVERRIDE], picks, words);
+    r[COL.SYNC] = d.keep ? SYNC_MARK : '';
+    r[COL.WHY] = d.why;
+    return [r[COL.SYNC], r[COL.WHY]];
+  });
+  sheet.getRange(2, COL.SYNC + 1, values.length, 2).setValues(decisions);
 
   const titles = ss.getSheetByName(SHEET_TITLES);
   if (titles && titles.getLastRow() > 1) {
@@ -98,9 +101,9 @@ function applyChoices_() {
   }
 
   return values
-    .map(function (r, i) {
+    .map(function (r) {
       return {
-        keep: decisions[i].keep,
+        keep: r[COL.SYNC] === SYNC_MARK,
         title: String(r[COL.TITLE]),
         start: r[COL.START],
         end: r[COL.END] instanceof Date ? r[COL.END] : r[COL.START],
