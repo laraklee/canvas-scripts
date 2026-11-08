@@ -1,9 +1,11 @@
 /**
  * Passphrase.js
- * Purpose: the "Set passphrase" and "Check passphrase" menu items. The passphrase is
- *   the secret key for the HMAC that turns a student's Canvas user ID into a code.
- *   It is saved in this user's User Properties, where other editors of the script
- *   cannot read it. It is never shown, logged, or put in a message.
+ * Purpose: the "Set passphrase", "Check passphrase", and "Show my passphrase" menu
+ *   items. The passphrase is the secret key for the HMAC that turns a student's Canvas
+ *   user ID into a code. It is saved in this user's User Properties, where other editors
+ *   of the script cannot read it. It is never logged or put in any other message; "Show
+ *   my passphrase" displays it only to the user who saved it, after a warning (Lara,
+ *   2026-11-08: so teachers can copy it into a new workbook without keeping a record).
  * Canvas endpoints called: none.
  * Canvas write operations: none.
  * Required User/Script Properties: writes User Property ANON_PASSPHRASE.
@@ -30,8 +32,9 @@ function setPassphrase() {
     }
     const response = ui.prompt('Set passphrase',
       'Enter a passphrase of at least ' + MIN_PASSPHRASE_LENGTH + ' characters. ' +
-      'Keep a copy in your password manager: the same passphrase always gives the ' +
-      'same codes.',
+      'Use the same one in each of your workbooks: the same passphrase always gives ' +
+      'the same codes. Never write it on the sheet. To copy it into another workbook ' +
+      'later, use Anonymize › Show my passphrase here.',
       ui.ButtonSet.OK_CANCEL);
     if (response.getSelectedButton() !== ui.Button.OK) return;
     const passphrase = response.getResponseText().trim();
@@ -54,4 +57,24 @@ function checkPassphrase() {
   ui.alert(getPassphrase_()
     ? 'A passphrase is saved for your account.'
     : 'No passphrase is saved yet. Use Anonymize › Set passphrase.');
+}
+
+/**
+ * Menu: Anonymize › Show my passphrase. Shows the current user's own saved passphrase
+ * (from their User Properties), after a warning, so they can copy it into Set
+ * passphrase in another workbook. Never logged; other users only ever see their own.
+ */
+function showPassphrase() {
+  const ui = SpreadsheetApp.getUi();
+  const passphrase = getPassphrase_();
+  if (!passphrase) {
+    ui.alert('No passphrase is saved yet. Use Anonymize › Set passphrase.');
+    return;
+  }
+  const confirm = ui.alert('Show my passphrase?',
+    'Your passphrase will appear on screen. Make sure no one else can see it, and ' +
+    'don\'t paste it anywhere except Set passphrase in another of your workbooks.' +
+    '\n\nShow it?', ui.ButtonSet.YES_NO);
+  if (confirm !== ui.Button.YES) return;
+  ui.alert('Your passphrase', passphrase, ui.ButtonSet.OK);
 }

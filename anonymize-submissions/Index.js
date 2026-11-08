@@ -9,7 +9,7 @@
  *   row…" deletes that assignment's Key, AI, and Flagged tabs (after asking), keeps
  *   Review but hides it, and marks the row Archived so it can't be re-run by mistake.
  *   "Sort Review by question / by student" re-sort the open quiz Review tab
- *   (MatchResults.js).
+ *   (MatchResults.js). "❓ User guide" opens UserGuide.html (showUserGuide, below).
  * Canvas endpoints called: none.
  * Canvas write operations: none.
  * Required User/Script Properties: none here (see Passphrase.js, Assignments.js).
@@ -35,7 +35,22 @@ function onOpen() {
     .addSeparator()
     .addItem('Set passphrase', 'setPassphrase')
     .addItem('Check passphrase', 'checkPassphrase')
+    .addItem('Show my passphrase', 'showPassphrase')
+    .addSeparator()
+    .addItem('❓ User guide', 'showUserGuide')
     .addToUi();
+}
+
+/**
+ * Menu: Anonymize › ❓ User guide. Opens UserGuide.html in a window over the sheet.
+ * The window doesn't block the sheet, so teachers can keep it open while they work.
+ * No Canvas or Drive calls; the page holds only the guide text.
+ */
+function showUserGuide() {
+  const html = HtmlService.createHtmlOutputFromFile('UserGuide')
+    .setWidth(900)
+    .setHeight(650);
+  SpreadsheetApp.getUi().showModelessDialog(html, 'AI Grading Helper — User Guide');
 }
 
 /** Menu/button: adds a row for each assignment subfolder not already on the Index. */

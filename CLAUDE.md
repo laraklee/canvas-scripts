@@ -97,7 +97,7 @@ reviewable steps over large multi-file changes.
   the project, opened from the project's menu (**User guide**, which calls
   `showUserGuide()`). That file is then the only master copy: no `USER-GUIDE.md` and no
   Google Doc copy to update. The same-commit rule above still applies. So far:
-  `gastronomy-badges/`, `assign-sheet/`, `course-manager-jupiter/`.
+  `gastronomy-badges/`, `assign-sheet/`, `course-manager-jupiter/`, `anonymize-submissions/`.
 - Commit small, focused changes with clear messages.
 - To publish changes to Google: show the diff, commit, confirm with Lara, then
   `clasp push` from that project's folder. Always commit before `clasp push` so the

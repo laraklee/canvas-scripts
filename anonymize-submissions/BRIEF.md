@@ -2,26 +2,55 @@
 
 Pseudonymizes a Canvas "Download Submissions" set so student work can be shared or
 reviewed without names. A script bound to a Google Sheet; menu **Anonymize**.
-One Sheet per course: copy a clean template (Instructions tab only) for each course,
-then set the passphrase once in each copy (User Properties belong to one script copy).
+One Sheet per course: copy a clean template for each course, then set the passphrase
+once in each copy (User Properties belong to one script copy).
 
-**Scripts (each workbook copy has its own):**
+**User guide (in the workbook since 2026-11-08):** `UserGuide.html`, opened by
+**Anonymize › ❓ User guide** (`showUserGuide` in Index.js). It replaces the hand-made
+**Instructions** tab, which was out of date (no quiz reports, Sort Review, or Archive;
+old prompt-based steps). Rewritten from this brief and the code, not from the old tab.
+It includes generic AI instructions for colleagues (versions A and C of
+`gems/grading/SKILL.md`, without Lara's course list), because the `@grading` skill can't
+be shared yet; keep them in step with the skill. Marked "Work in progress" (Lara's AI
+group knows). Same-commit rule as CLAUDE.md. **Never put a passphrase in the guide or
+the sheet:** on 11/8 Lara's old Instructions tab turned out to show her passphrase in
+plain text; Claude advised removing it and setting a new one in each workbook (Lara's to
+do; never record the passphrase anywhere in this repo).
+**Show my passphrase (11/8, Lara's request):** a menu item that shows the current user's
+own saved passphrase (User Properties) after a "no one watching" warning, so a teacher
+can copy it into Set passphrase in a new workbook instead of keeping a record. Never
+logged; other users see only their own. This replaces the earlier "never shown" rule.
+
+**Template (clean copy for new courses):** spreadsheet
+`1blak2cQg4LiU4FETz2ITnsnLlg0zCSJc8tps9y4p9ww`, script
+`13cU3kzCNWurdIeBdA2kJAaMKttnYmG9wJG4aT8XKyYIHmNcwrT1zQT2i`, push file
+`.clasp-template.json`, pushed **last**. On 11/8 it held older code (from before quiz
+reports, no `QuizCsv.js`); same layout-only manifest difference, so `--force` the first
+time. Claude never opens the template's sheet.
+
+**Scripts (each workbook copy has its own; push files added 11/8):**
 - **AI9** AI grading workbook ("AI Grading 10.18.26", the original):
   `18bnY2Po0yf0T9SgMEEMTW0KYnkvUQpy0H4syDaVBrzZf1tekT2cXbPiH`. This is the one
   `.clasp.json` here points at, so a plain `clasp push` from this folder goes to **AI9
   only**. 11/1: matched commit `985e56b` (checked read-only); pushed `ee722cf`.
 - **Biology** AI grading workbook: `1BcbprgAzhTFBvU8vNtZJgvvmXU5_gHZOJYfpmG-2cNxVoGWFVxnxvSsc`.
-  Lara's main one. To push there without changing `.clasp.json`: `clasp clone` it into a
-  scratch folder, copy this folder's `.js` files in (keep its own `appsscript.json`), then
-  `clasp push` from there. 11/1: it matched commit `985e56b`; pushed `d0e4fbc` (quiz CSV),
+  Lara's main one. Push with
+  `clasp push -P 'C:\Users\lalee\Code\canvas-scripts\anonymize-submissions\.clasp-biology.json'`
+  (replaces the old clone-into-scratch routine). Its `appsscript.json` differed only in
+  layout (same three scopes, checked 11/8), so the first push uses `--force`.
+  11/1: it matched commit `985e56b`; pushed `d0e4fbc` (quiz CSV),
   then `8e404ef` (Match for quiz answers) and `ee722cf` (last-name order).
 - **Gastronomy** AI grading workbook: `18X8wcEFb0o4wMvivgWG_Gd6fLYPV4Y3hb-EtmDAaw4kSIpvPkiq7kWQK`.
-  11/1: matched commit `985e56b` (checked read-only); pushed `ee722cf`.
+  Push file `.clasp-gastronomy.json` (same layout-only manifest difference, `--force`
+  the first time). 11/1: matched commit `985e56b` (checked read-only); pushed `ee722cf`.
 - **11/1: all three run the latest commit** (quiz CSV, Match for quiz answers, last-name order,
   question text in Review, bold question text, shading, sort by question/student).
 - **11/4: Biology only** got `45eb8d8` (Classic Quiz reports, Quiz/Assignment ID header);
   before the push it matched the 11/1 code, and a fresh clone after matches `45eb8d8`.
   AI9 and Gastronomy are still on the 11/1 code until Lara tests it on a real Classic quiz.
+- **11/8: Lara chose to push the latest code (Classic Quiz reading included) to all three
+  and the template with the user guide**, before her Classic test: her AI group knows
+  it's a work in progress. Like the other projects: three courses plus a template.
 - All three courses should run the same code (Lara, 11/1). Same order as the other
   projects: test on Biology first, then push to the others after Lara's OK.
 
@@ -100,9 +129,10 @@ AI instructions: section C of the Gemini skill `gems/grading/SKILL.md` (all thre
 courses; created in Gemini 11/1 as `@grading`) and of the older Gem copy
 `gems/BioGrading.md` (Gems end no sooner than June 1, 2027 on school accounts). Changes
 to the table formats must go in both, and in the Gemini copy of the skill.
-**Skill status (11/4):** Lara used `@grading` on a real quiz answers file and it worked. **To do:** the Sheet's
-Instructions tab still points to the Gem. Switch it to the skill once Google lets
-skills be shared (not available as of 11/1, "coming weeks").
+**Skill status (11/4):** Lara used `@grading` on a real quiz answers file and it worked. **To do:** once Google lets
+skills be shared (not available as of 11/1, "coming weeks"), point the user guide's
+section 5 at the skill. (The old Instructions tab pointed to the Gem; the guide replaces
+it, 11/8.)
 **Q numbers are the report's column order, not each student's order** (New Quizzes
 shuffle questions and draw from banks; the report doesn't record who saw what when).
 So Review shows the start of each question's text, for matching in SpeedGrader (11/1,
@@ -169,7 +199,8 @@ approved AI tool by hand. The script never calls an AI service.
 
 ## Decisions
 
-- **Passphrase lives in User Properties (`ANON_PASSPHRASE`), not Script Properties.**
+- **Passphrase lives in User Properties (`ANON_PASSPHRASE`), not Script Properties** (and
+  never on a tab; Show my passphrase reads it back for its own user only).
   CLAUDE.md rule 1: anyone who can edit the script can read Script Properties, and with
   the passphrase and a class list they could re-identify every code. Consequence: codes
   depend on whose account runs it. The same teacher with the same passphrase always
