@@ -161,6 +161,10 @@ It asks to:</p>
 The <i>Config</i> tab is laid out the same way in all our Canvas workbooks, and other
 tools (such as Course Manager) do use them.</p>
 
+<div class="note"><b>Using a copy?</b> The cells may still hold the original teacher's
+information. Replace every one with yours before you run anything, then run
+<b>Set Canvas token</b> and <b>Test Canvas connection</b>.</div>
+
 <h3>Dry run</h3>
 
 <p><b>Dry run</b> is a practice mode. When it's <b>ON</b>, the Canvas tools do everything
@@ -396,6 +400,13 @@ fix.</p>
   <tr><td><i>The Course ID in *Config* B4 is missing or not a number</i></td><td>Put just
     the course number in B4.</td></tr>
   <tr><td><i>Canvas is busy</i></td><td>Wait a minute and try again.</td></tr>
+  <tr><td>Nothing was posted, or some rows were skipped</td><td>Column H or I already
+    has a link or "View …" text from an earlier post, so that part is skipped. Clear
+    those cells and run it again.</td></tr>
+  <tr><td>Something else seems wrong (the wrong course, odd results)</td><td>Check that
+    every cell on <i>Config</i> holds your information (B4 especially). Run <b>⚙️ Setup ›
+    Test Canvas connection</b>, then <b>🔄 Update schedule from Master</b>. Then try once
+    more with dry run ON.</td></tr>
   <tr><td><i>Unexpected error</i></td><td>Note what you clicked and what the message said,
     then try once more. If it happens again, tell whoever shared the sheet with
     you.</td></tr>
