@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<!--
+  UserGuide.html: the Assignment Sheet user guide, written for other teachers.
+  Shown inside the sheet by Canvas Tools > ❓ User guide (showUserGuide in 00_Config.js).
+  This file is the master copy of the guide; there is no separate Google Doc to update.
+  The same code (and so this guide) goes to Biology, Gastronomy, AI9, and the template.
+  Canvas endpoints: none. Write operations: none. Properties: none.
+  Update it in the same commit as any change a teacher would see (menu labels, columns,
+  colors, statuses, messages). Never put student data in this file.
+-->
+<html>
+<head>
+  <base target="_blank">
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #202124;
+      margin: 0 auto;
+      padding: 4px 16px 32px;
+      max-width: 820px;
+    }
+    h1 { font-size: 22px; margin: 8px 0 4px; }
+    h2 {
+      font-size: 18px;
+      margin: 28px 0 8px;
+      padding-top: 12px;
+      border-top: 1px solid #dadce0;
+    }
+    h3 { font-size: 15px; margin: 18px 0 6px; }
+    p, ul, ol { margin: 6px 0 10px; }
+    li { margin: 3px 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: #f1f3f4;
+      padding: 0 3px;
+      border-radius: 3px;
+    }
+    table { border-collapse: collapse; margin: 8px 0 14px; width: 100%; }
+    th, td {
+      border: 1px solid #dadce0;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f1f3f4; }
+    .note {
+      background: #fef7e0;
+      border-left: 4px solid #f9ab00;
+      padding: 8px 12px;
+      margin: 12px 0;
+    }
+    .contents {
+      background: #f8f9fa;
+      border: 1px solid #dadce0;
+      padding: 8px 16px;
+      margin: 12px 0;
+    }
+    .contents ol { margin: 4px 0; }
+    .contents a { color: #1a73e8; text-decoration: none; cursor: pointer; }
+    .contents a:hover { text-decoration: underline; }
+    .menu { font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h1>Assignment Sheet — User Guide</h1>
+
+<p>For teachers using a course Assignment sheet (Biology, Gastronomy, AI9, or a copy).
+Everything here is on the <b>Canvas Tools</b> menu at the top of the sheet, next to Help.
+If you don't see the menu, reload the page and wait a few seconds. This guide is always
+at <span class="menu">Canvas Tools › ❓ User guide</span>, and you can keep it open while
+you work in the sheet.</p>
+
+<p>The sheet does two jobs:</p>
+
+<ul>
+  <li><b>Keeps your quarter schedules</b> (Q1–Q4 tabs) in step with the school's master
+    calendar. The Q tabs come with the workbook; the script refreshes the data they
+    read.</li>
+  <li><b>Sends things to Canvas:</b> calendar events, announcements, and assignment
+    dates.</li>
+</ul>
+
+<div class="note"><b>Which tools change Canvas?</b> Only two: <i>Post selected
+calendarEvents rows to Canvas</i> and <i>Send changed dates to Canvas</i>. Everything
+else only reads Canvas or works inside the sheet. The tools that change Canvas always
+show you what they will do and ask <b>Yes/No</b> before sending.</div>
+
+<div class="contents">
+  <b>Contents</b>
+  <ol>
+    <li><a data-target="setup">First-time setup</a></li>
+    <li><a data-target="schedule">Schedule tools</a></li>
+    <li><a data-target="events">📅 Calendar events and announcements</a></li>
+    <li><a data-target="dates">📝 Assignment dates</a></li>
+    <li><a data-target="problems">When something goes wrong</a></li>
+  </ol>
+</div>
+
+<h2 id="setup">1. First-time setup</h2>
+
+<p>Do this once per sheet, per teacher.</p>
+
+<h3>Your Canvas token</h3>
+
+<p>The sheet talks to Canvas using your own <b>access token</b>, a long password-like code
+that Canvas makes for you. It is saved to <b>your Google account only</b>: other people
+who can edit the sheet cannot see it, and it is never shown on the sheet.</p>
+
+<ol>
+  <li>In Canvas, go to <b>Account › Settings</b>, scroll to <b>Approved Integrations</b>,
+    and click <b>+ New Access Token</b>. Give it a purpose (for example "Assignment
+    sheet") and copy the token. Canvas only shows it once.</li>
+  <li>In the sheet: <span class="menu">Canvas Tools › ⚙️ Setup › Set Canvas token</span>.</li>
+  <li>Box 1 of 2 asks for your Canvas web address: the start of the address bar when you
+    are logged in to Canvas (for example
+    <code>https://yourschool.instructure.com</code>).</li>
+  <li>Box 2 of 2: paste the token.</li>
+  <li>Check it: <span class="menu">Canvas Tools › ⚙️ Setup › Test Canvas connection</span>
+    should say <b>Connected</b>.</li>
+</ol>
+
+<p>To change either one later, run <b>Set Canvas token</b> again; leave a box blank to keep
+what's saved. If you ever think your token was exposed, delete it in Canvas
+(Account › Settings › Approved Integrations) and make a new one.</p>
+
+<h3>Google's permission screen</h3>
+
+<p>The first time you use any Canvas Tools item, Google asks you to authorize the script.
+It asks to:</p>
+
+<ul>
+  <li>see and edit <b>this spreadsheet only</b> (not your other files);</li>
+  <li>show menus and pop-up boxes in the sheet;</li>
+  <li>connect to an external service (Canvas).</li>
+</ul>
+
+<h3>The <i>Config</i> tab</h3>
+
+<table>
+  <tr><th>Cell</th><th>What goes there</th></tr>
+  <tr><td><b>B2</b></td><td>Your school's Canvas web address (the same one you give
+    <b>Set Canvas token</b>).</td></tr>
+  <tr><td><b>B3</b></td><td>Your Canvas user ID. To find it: in your course, open
+    <b>People</b> and click your own name. Your profile's web address ends in your ID,
+    for example <code>.../courses/1234/users/5678</code> → <b>5678</b>.</td></tr>
+  <tr><td><b>B4</b></td><td>Your Canvas <b>course ID</b>: the number after
+    <code>/courses/</code> in the course's web address. Numbers only.</td></tr>
+  <tr><td><b>B5</b></td><td>An email address to copy on messages.</td></tr>
+  <tr><td><b>D3</b></td><td>The master calendar's spreadsheet ID (used by the schedule
+    tools).</td></tr>
+  <tr><td><b>D5</b></td><td>The master calendar tab for this school year.</td></tr>
+  <tr><td><b>E2:F5</b></td><td>Checkboxes for the period pairs you teach (1,2 · 3,4 · 5,6
+    · 7,8).</td></tr>
+</table>
+
+<p>Please fill in B2, B3, and B5 even though this sheet's menu tools don't use them yet.
+The <i>Config</i> tab is laid out the same way in all our Canvas workbooks, and other
+tools (such as Course Manager) do use them.</p>
+
+<h3>Dry run</h3>
+
+<p><b>Dry run</b> is a practice mode. When it's <b>ON</b>, the Canvas tools do everything
+except actually send: they check your rows and write "Dry run OK" where a link or status
+would go. Nothing changes in Canvas.</p>
+
+<ul>
+  <li><span class="menu">Canvas Tools › ⚙️ Setup › Dry run: show status</span> tells you
+    which mode you're in.</li>
+  <li><b>Dry run: switch on/off</b> flips it (it asks first).</li>
+  <li>Dry run is a setting <b>for the whole sheet</b>, not per teacher. If you share a
+    sheet, check the status before you post.</li>
+  <li>Every "Post" or "Send" confirmation box also says whether dry run is on.</li>
+</ul>
+
+<p>A good habit when trying something new: turn dry run ON, run the tool, check the
+results, then turn it OFF and run it for real.</p>
+
+<h2 id="schedule">2. Schedule tools</h2>
+
+<h3>🔄 Update schedule from Master</h3>
+
+<p>Pulls the latest school days, schedules, holidays, and drills from the master calendar
+so your Q1–Q4 tabs show them. Run it when the master calendar changes. It does not create
+or redesign the Q tabs; it refreshes the data their formulas read.</p>
+
+<ul>
+  <li>Steps 1–5 show in the bottom-right corner as it runs; wait for <b>Full Schedule
+    Update Complete!</b></li>
+  <li>It rebuilds the helper tabs <code>*scheduleLookup*</code>,
+    <code>AssignmentMaster</code>, and <code>AssignmentLookupFinal</code>, then nudges the
+    formulas on each Q tab (cells A4 and B2) so they recalculate. Don't type in the helper
+    tabs; your typing will be replaced.</li>
+  <li>Only the period pairs checked in <i>Config</i> E2:F5 are included.</li>
+  <li><b>Does not touch Canvas.</b></li>
+</ul>
+
+<p><b>Afterward:</b> on each Q tab, check columns <b>A–E</b> to make sure every period
+pair you want is filled in. You may need to unhide those columns first (right-click the
+column letters › Unhide columns).</p>
+
+<h3>Your Q1–Q4 tabs</h3>
+
+<table>
+  <tr><th>Columns</th><th>Use</th></tr>
+  <tr><td><b>A–E</b></td><td>Filled in from the master calendar. Look, don't
+    type.</td></tr>
+  <tr><td><b>F–G</b></td><td>Yours: lesson content, anything you like, including
+    links.</td></tr>
+  <tr><td><b>H</b></td><td>Yours. For example, check off a row once its content is set up
+    in Canvas.</td></tr>
+  <tr><td><b>I</b></td><td>Notes.</td></tr>
+  <tr><td><b>J and beyond</b></td><td>You can add your own columns here if you need
+    them.</td></tr>
+</table>
+
+<div class="note"><b>Never add or delete rows on a Q tab.</b> Each row is tied to a
+calendar date, so an extra row shifts every date below it. Don't insert columns between A
+and I either.</div>
+
+<h3>🔗 Reset Master connection</h3>
+
+<p>Use this if the <code>*simpleSchedule*</code> tab shows <code>#REF!</code> or is empty,
+or after changing <i>Config</i> D3 or D5. It re-links <code>*simpleSchedule*</code> to the
+master calendar.</p>
+
+<ul>
+  <li>Afterward, look at <code>*simpleSchedule*</code> cell <b>A1</b>. If it shows
+    <code>#REF!</code>, click the cell and choose <b>Allow access</b>.</li>
+  <li>Then run <b>🔄 Update schedule from Master</b>.</li>
+  <li><b>Does not touch Canvas.</b></li>
+</ul>
+
+<h3>☑️ Toggle checkboxes</h3>
+
+<p>Select a block of checkboxes (on any tab) and run this: if they're all checked, it
+unchecks them; otherwise it checks them all. Handy for the calendarEvents and Assignment
+Dates tabs.</p>
+
+<h2 id="events">3. 📅 Calendar events and announcements</h2>
+
+<p><span class="menu">Canvas Tools › 📅 Calendar &amp; announcements › Post selected
+calendarEvents rows to Canvas</span> (also the drawn <b>Post selected rows to Canvas</b>
+button on the tab).</p>
+
+<p>Posts rows of the <b>calendarEvents</b> tab to your course as all-day calendar events,
+announcements, or both. <b>This changes Canvas</b> (dry run applies).</p>
+
+<h3>The tab</h3>
+
+<p>Row 2 is the header row; your rows start on row 3.</p>
+
+<table>
+  <tr><th>Column</th><th>What it does</th></tr>
+  <tr><td><b>A Calendar</b> ☐</td><td>Check to make a calendar event.</td></tr>
+  <tr><td><b>B Announcement</b> ☐</td><td>Check to make an announcement.</td></tr>
+  <tr><td><b>C Title</b></td><td>Required. Rows with no title are ignored.</td></tr>
+  <tr><td><b>D Body</b></td><td>The text of the event or announcement.</td></tr>
+  <tr><td><b>E Calendar Date</b></td><td>Required if Calendar is checked.</td></tr>
+  <tr><td><b>F Delayed Post</b></td><td>Optional: when the announcement should appear.
+    Blank = right away.</td></tr>
+  <tr><td><b>G Replies?</b> ☐</td><td>Check to let students reply to the
+    announcement.</td></tr>
+  <tr><td><b>H</b></td><td>Filled in by the tool: <b>View Event</b> link (or
+    status).</td></tr>
+  <tr><td><b>I</b></td><td>Filled in by the tool: <b>View Announcement</b> link (or
+    status).</td></tr>
+</table>
+
+<h3>Steps</h3>
+
+<ol>
+  <li>Fill in the rows and check Calendar and/or Announcement.</li>
+  <li><b>Select the rows</b> you want to post (click and drag down the row numbers, or any
+    cells in those rows).</li>
+  <li>Run the menu item or click the button.</li>
+  <li>Read the confirmation (course number, how many events and announcements, dry run on
+    or off) and click <b>Yes</b>.</li>
+</ol>
+
+<h3>What you'll see</h3>
+
+<ul>
+  <li><b>View Event / View Announcement</b> in H or I: posted; click to open it in
+    Canvas.</li>
+  <li><b>Dry run OK</b>: checked but not sent (dry run was on).</li>
+  <li><b>Failed: …</b>: that item didn't post; the pop-up says why.</li>
+</ul>
+
+<h3>Good to know</h3>
+
+<ul>
+  <li><b>No duplicates:</b> if H or I already has a link (or "View …" text), that part is
+    skipped. To post it again, clear that cell first.</li>
+  <li>If a row has Calendar checked but no date, nothing is sent until you fix it.</li>
+  <li>It only runs on the calendarEvents tab.</li>
+  <li>Editing a row after posting does <b>not</b> update Canvas. Edit the event or
+    announcement in Canvas directly.</li>
+</ul>
+
+<h2 id="dates">4. 📝 Assignment dates</h2>
+
+<p>Change open, due, and lock dates for many assignments at once, in a sheet instead of
+one at a time in Canvas. Uses the <b>Assignment Dates</b> tab.</p>
+
+<h3>Load assignment dates from Canvas</h3>
+
+<p><span class="menu">Canvas Tools › 📝 Assignment dates › Load assignment dates from
+Canvas</span></p>
+
+<p>Fills the Assignment Dates tab with every assignment in the course (<i>Config</i> B4).
+<b>Read-only:</b> it does not change Canvas. Running it again replaces everything from row
+2 down with fresh data from Canvas, so any unsent edits are lost.</p>
+
+<table>
+  <tr><th>Column</th><th>Meaning</th></tr>
+  <tr><td><b>A Update?</b> ☐</td><td>Check the rows you want to send.</td></tr>
+  <tr><td><b>B–E</b> (gray)</td><td>ID, name (click to open in Canvas), submission type,
+    points. Reference only: never sent.</td></tr>
+  <tr><td><b>F–G Open</b> (green)</td><td>When students can start ("available
+    from").</td></tr>
+  <tr><td><b>H Schedule Info</b> (purple)</td><td>The school schedule for the due date
+    (from the master calendar). "No Match" means the due date isn't a school day in the
+    calendar.</td></tr>
+  <tr><td><b>I–J Due</b> (blue)</td><td>Due date and time.</td></tr>
+  <tr><td><b>K–L Lock</b> (red)</td><td>When it closes ("until").</td></tr>
+  <tr><td><b>M Sync Status</b></td><td>What happened to this row.</td></tr>
+</table>
+
+<h3>Editing dates</h3>
+
+<ul>
+  <li><b>Date cells:</b> double-click for a calendar, or type like <code>8/12/26</code>.
+    The cell rejects anything that isn't a date.</li>
+  <li><b>Time cells:</b> type it, like <code>4:00 pm</code> or <code>11:59 pm</code>.
+    (Google Sheets has no time picker.)</li>
+  <li>Every date needs a time, so nothing lands at midnight by accident.</li>
+  <li>To <b>remove</b> a date, clear both the date and the time.</li>
+</ul>
+
+<h3>Send changed dates to Canvas</h3>
+
+<p><span class="menu">Canvas Tools › 📝 Assignment dates › Send changed dates to
+Canvas</span></p>
+
+<p><b>This changes Canvas</b> (dry run applies). Students see the new dates.</p>
+
+<ol>
+  <li>Check <b>Update?</b> on the rows you changed.</li>
+  <li>Run the menu item. It checks Canvas first and only sends the dates that are actually
+    different.</li>
+  <li>Read the confirmation (how many assignments and dates will change, dry run on or
+    off) and click <b>Yes</b>.</li>
+</ol>
+
+<p>Only the open, due, and lock dates are sent. Changing a name or points on this tab does
+nothing; change those in Canvas.</p>
+
+<h3>Sync Status (column M)</h3>
+
+<table>
+  <tr><th>Status</th><th>Meaning</th></tr>
+  <tr><td><b>Loaded (date time)</b></td><td>Just loaded from Canvas.</td></tr>
+  <tr><td><b>Updated (date time)</b></td><td>Sent. The Update? box unchecks
+    itself.</td></tr>
+  <tr><td><b>Dry run OK (n date(s))</b></td><td>Checked but not sent (dry run was
+    on).</td></tr>
+  <tr><td><b>No changes</b></td><td>The row was checked but its dates already match
+    Canvas.</td></tr>
+  <tr><td><b>Has section dates: edit in Canvas</b></td><td>This assignment has different
+    dates for different sections. The sheet can't edit those; use Canvas.</td></tr>
+  <tr><td><b>Not found in Canvas: fetch again</b></td><td>The assignment was deleted or the
+    course changed. Load again.</td></tr>
+  <tr><td><b>Failed: …</b></td><td>Not sent; the reason follows.</td></tr>
+</table>
+
+<p>If a date or time is typed wrong, nothing is sent and a pop-up lists the rows to
+fix.</p>
+
+<h2 id="problems">5. When something goes wrong</h2>
+
+<table>
+  <tr><th>Message</th><th>What to do</th></tr>
+  <tr><td><i>Your Canvas address or token is not saved yet</i></td><td>Run <b>⚙️ Setup ›
+    Set Canvas token</b>.</td></tr>
+  <tr><td><i>Canvas did not accept your token (401)</i></td><td>Your token expired or was
+    mistyped. Make a new one in Canvas and run <b>Set Canvas token</b>.</td></tr>
+  <tr><td><i>Could not reach Canvas</i></td><td>Check the Canvas address in <b>Set Canvas
+    token</b>.</td></tr>
+  <tr><td><i>Canvas says your account is not allowed to do this (403)</i></td><td>Your
+    Canvas account can't make this change in this course. Check <i>Config</i> B4 is your
+    course.</td></tr>
+  <tr><td><i>The Course ID in *Config* B4 is missing or not a number</i></td><td>Put just
+    the course number in B4.</td></tr>
+  <tr><td><i>Canvas is busy</i></td><td>Wait a minute and try again.</td></tr>
+  <tr><td><i>Unexpected error</i></td><td>Note what you clicked and what the message said,
+    then try once more. If it happens again, tell whoever shared the sheet with
+    you.</td></tr>
+  <tr><td>No <b>Canvas Tools</b> menu</td><td>Reload the page; wait a few
+    seconds.</td></tr>
+</table>
+
+<script>
+  // Contents links: scroll within this window (plain #links can misbehave inside
+  // Google's pop-up frame).
+  document.querySelectorAll('.contents a').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const target = document.getElementById(link.dataset.target);
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+
+</body>
+</html>

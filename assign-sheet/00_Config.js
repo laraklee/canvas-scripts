@@ -23,7 +23,21 @@ function onOpen() {
       .addItem('Test Canvas connection', 'testCanvasConnection') // 05_CanvasApi.js
       .addItem('Dry run: show status', 'showDryRunStatus')
       .addItem('Dry run: switch on/off', 'toggleDryRun'))
+    .addSeparator()
+    .addItem('❓ User guide', 'showUserGuide')
     .addToUi();
+}
+
+/**
+ * Opens the user guide (UserGuide.html) in a window over the sheet. The window
+ * doesn't block the sheet, so teachers can keep it open while they work.
+ * No Canvas calls; the page holds only the guide text.
+ */
+function showUserGuide() {
+  const html = HtmlService.createHtmlOutputFromFile('UserGuide')
+    .setWidth(900)
+    .setHeight(650);
+  SpreadsheetApp.getUi().showModelessDialog(html, 'Assignment Sheet — User Guide');
 }
 
 /**

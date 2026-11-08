@@ -41,17 +41,23 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 > - **Docs updated:** `course-manager-jupiter/docs/still-in-legacy.md`, the function map,
 >   and the porting summary record that calendar events, announcements, and assignment
 >   dates now live here.
-> - **User guide (2026-10-27):** `USER-GUIDE.md` first draft, written for other
->   teachers. Lara skimmed it; real testing waits for a new user. Keep it updated in the
->   same commit as any change a teacher would see (CLAUDE.md rule). **Google Doc copy:**
+> - **User guide (in the sheet since 2026-11-08):** `UserGuide.html`, written for other
+>   teachers, opened by **Canvas Tools › ❓ User guide** (`showUserGuide`) in a window
+>   that doesn't block the sheet. That file is the only master copy (Lara's decision
+>   11/8: keep docs self-contained, like calendar-filter). Keep it updated in the same
+>   commit as any change a teacher would see (CLAUDE.md rule). Fixed 11/8: calendarEvents
+>   rows start on row 3 (the guide used to say row 4). History: first drafted 10/27 as
+>   `USER-GUIDE.md` (removed 11/8; still in Git history). The old Google Doc copy
 >   "Assignment Sheet — User Guide", ID `1Dq_05RfbhIUwW_0yK3RuiO0Hn9ud0Hbl6mFx1ba7vXw`, in
->   Drive folder TeacherTools. Replace its contents (same link) at push time; strip the
->   `<!-- -->` notes first.
-> - **Next: template copy (plan, Lara 2026-10-27, not started).** Lara makes a copy of a
+>   Drive folder TeacherTools, gets a one-line note pointing to the menu item; it is no
+>   longer updated.
+> - **Template copy (made by Lara 2026-11-08):** script ID
+>   `1cbhPxZa7b7DcBOixCWN6aYCyatLujRDW_xu6RmarQJb0miacPXe13DAk`, settings file
+>   `.clasp-template.json`. Claude never opens the template's sheet (Lara does the scrub
+>   and the final Ctrl+F check). It is pushed **last** (Biology → Gastronomy, AI9 →
+>   template). The original plan, for reference: Lara makes a copy of a
 >   live Assignment sheet, scrubs the copy (never the live sheet), and keeps it in her
->   **Shared** folder in Drive for other teachers. Its script ID gets its own clasp file
->   (like `.clasp-gastronomy.json`), and it is pushed **last** (Biology → Gastronomy, AI9 →
->   template); ask before the first push. Scrub: *Config* B2–B5, calendarEvents rows,
+>   **Shared** folder in Drive for other teachers. Scrub: *Config* B2–B5, calendarEvents rows,
 >   the Assignment Dates tab, Q tabs columns F–I; keep D3/D5 if the master calendar is
 >   shared. Set dry run ON in the template. Share it view-only, with a `/copy` link.
 >   clasp updates code only: tab or label changes go onto the template by hand. How
@@ -66,10 +72,11 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 first, then push to Gastronomy and AI9.
 
 Gastronomy and AI9 Assignment sheets run the same code (pushed from commit `b918fff`
-on 2026-10-20). Settings files: `.clasp-gastronomy.json`, `.clasp-ai9.json`.
+on 2026-10-20), and so does the template copy (from 2026-11-08). Settings files:
+`.clasp-gastronomy.json`, `.clasp-ai9.json`, `.clasp-template.json` (template last).
 Push from `assign-sheet/` after pushing Biology:
 `clasp push -P 'C:\Users\lalee\Code\canvas-scripts\assign-sheet\.clasp-gastronomy.json'`
-(same for `-ai9`). On Windows, clasp 3.4.1 needs the full backslash path (relative paths
+(same for `-ai9`, then `-template`). On Windows, clasp 3.4.1 needs the full backslash path (relative paths
 and `/` fail its security check). On the Mac, use the full path. After the first push to
 each sheet: reload, **Set Canvas token**, check dry run is ON, one dry run.
 If `appsscript.json` changed, clasp says "Skipping push": that's its manifest question
@@ -101,6 +108,7 @@ Grouped by what each item works on; "Load from" / "Send to" says which way data 
 - 🔄 Update schedule from Master · 🔗 Reset Master connection · ☑️ Toggle checkboxes
 - **⚙️ Setup ›** Set Canvas token · Test Canvas connection · Dry run: show status /
   switch on/off
+- ❓ User guide (`showUserGuide`): opens `UserGuide.html` in a window over the sheet.
 
 Labels can change freely. Function names must not change (drawn buttons call them).
 Messages that name a menu path (e.g. "Run Canvas Tools › ⚙️ Setup › Set Canvas token")
