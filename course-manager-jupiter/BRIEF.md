@@ -136,14 +136,14 @@
 >   (Lara, 11/8: start from the draft, collect new users' questions; she'll help the first
 >   few users herself, since some setup was done by hand and may be missing). Rule (in
 >   CLAUDE.md): update it in the same commit as any change a teacher would see.
->   **Pushed to Biology only so far (11/8)**; AI9 and Gastronomy wait until Lara makes the
->   template, then all three get it (template last).
+>   **Live in all four workbooks (11/8):** Biology (tested by Lara), then AI9, Gastronomy,
+>   and the template (commit `e0b1d78`).
 >   History: first drafted 2026-10-27 as `USER-GUIDE.md` (from the old quick-start
 >   `docs/user-manual.md`; removed 11/8, still in Git history). The old **Google Doc
 >   copy** "Course Manager (Jupiter edition) — User Guide", ID
 >   `1kljRuoqQT1q4YVXbRJBsnfyXtSdxZ-oCqzByUl8AhwQ`, in Drive folder TeacherTools
->   (`1TDwmuQh4buJ6VTMIpEFKqwE8rl5JU2zm`), gets a one-line "moved into the workbook" note
->   once all three workbooks have the guide; it is no longer updated. **Google connectors
+>   (`1TDwmuQh4buJ6VTMIpEFKqwE8rl5JU2zm`), got a bold one-line "moved into the workbook"
+>   note at the top on 11/8; it is no longer updated. **Google connectors
 >   (Lara, 2026-10-29):** Drive, Docs and Sheets are connected; Lara set **all their tools,
 >   read-only and write, to Needs approval** in Settings › Connectors, so the app asks her
 >   before every Drive/Docs/Sheets call. CLAUDE.md hard rule 7 also limits them to files
