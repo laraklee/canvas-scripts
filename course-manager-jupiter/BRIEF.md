@@ -148,7 +148,9 @@
 >   read-only and write, to Needs approval** in Settings › Connectors, so the app asks her
 >   before every Drive/Docs/Sheets call. CLAUDE.md hard rule 7 also limits them to files
 >   named in a BRIEF or in chat (this Doc is one).
-> - **Template copy (plan, Lara 2026-10-27; Lara making it after the 11/8 Biology push).**
+> - **Template copy (made by Lara 2026-11-08):** script ID
+>   `1h8UfPPxPzwOKmOfQE-K7_p7ESkaHO3B_DrBhwMZOiNeujzDw0UJZexBX`, settings file
+>   `.clasp-template.json`. Claude never opens the template's sheet. The plan it followed:
 >   Lara makes a copy of a live
 >   workbook, scrubs the copy (never the live one), and keeps it in her **Shared** folder
 >   in Drive for other teachers. Its script ID gets its own clasp file (like the AI9 and
@@ -461,6 +463,11 @@
 >   Push from `course-manager-jupiter/` after Biology is tested:
 >   `clasp push -P 'C:\Users\lalee\Code\canvas-scripts\course-manager-jupiter\.clasp-ai9.json'`
 >   (same for `-gastronomy`; full backslash path on Windows, as in assign-sheet).
+>   **Template (made by Lara 2026-11-08):** `.clasp-template.json`, pushed **last**
+>   (Biology → AI9, Gastronomy → template). It was copied from Biology after commit
+>   `0096237`, so it started with the in-workbook guide. Google reformatted its
+>   `appsscript.json` on copy (same scopes and Drive service), so its first push needs
+>   `--force`.
 >   **Live (Lara, 2026-10-22):** both connected (Canvas token set, authorized), functions
 >   run in each, and the legacy workbooks retired. Not yet pushed from clasp (they hold
 >   the code they were copied with, which matches Git).
