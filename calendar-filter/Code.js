@@ -115,7 +115,9 @@ function buildStartTab_(ss) {
       'Already filled in with the Faculty Calendar. You must have it in your Google Calendar first (see "Before you start" below). ' +
       'You can also paste any calendar\'s ID, or a public .ics link.'],
     [SETTING_CALENDAR, saved[1],
-      'Type a name and the sheet creates that calendar for you (recommended). Or paste the Calendar ID of a calendar you already have ' +
+      'Recommended: type a name (for example "Synced"). The sheet creates a calendar with that name in your own Google account, ' +
+      'so every copy of this sheet gets its own calendar and never changes anyone else\'s. ' +
+      'Or paste the Calendar ID of a calendar you already have ' +
       '(Google Calendar > Settings > the calendar > Integrate calendar > Calendar ID).'],
     [SETTING_AFTER, saved[2], 'Leave blank to include everything.'],
     [SETTING_BEFORE, saved[3], 'Leave blank to include everything.'],
@@ -138,6 +140,7 @@ function buildStartTab_(ss) {
     ['• The school calendar only keeps about one month of past events. Set this up early in the year (August is ideal).'],
     ['    Events already synced to your calendar stay there, even after they drop off the school calendar.'],
     ['• Using your own copy: File > Make a copy, then use the School Calendar menu in your copy. Google asks for permission the first time.'],
+    ['    Keep a name (not a Calendar ID) in the "Copy TO" box. Your first real sync creates that calendar in your own account.'],
     [''],
     ['How to use'],
     ['1. School Calendar > Refresh events. Nothing is picked at first, so nothing will sync yet.'],
@@ -157,7 +160,7 @@ function buildStartTab_(ss) {
   ];
   const stepsRow = first + settings.length + 2;
   sheet.getRange(stepsRow, 1, steps.length, 1).setValues(steps);
-  [0, 8].forEach(function (i) { sheet.getRange(stepsRow + i, 1).setFontWeight('bold').setFontSize(12); });
+  [0, 9].forEach(function (i) { sheet.getRange(stepsRow + i, 1).setFontWeight('bold').setFontSize(12); });
 
   sheet.setColumnWidth(1, 360);
   sheet.setColumnWidth(2, 420);
