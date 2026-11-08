@@ -130,7 +130,8 @@
 > - **User guide (in the workbook since 2026-11-08):** `UserGuide.html` (this folder),
 >   written for **other teachers who weren't here**: setup, permissions, safety, then one
 >   section per tool. Opened by **Canvas Tools › ❓ User guide** (`showUserGuide` in
->   Menus.js) in a window that doesn't block the sheet; a Home-tab button can call
+>   Menus.js) in the side panel (since 11/8, commit `396699a`; "Open in a large window" link calls
+>   `showUserGuideLarge`); a Home-tab button can call
 >   `showUserGuide` too. That file is the only master copy (Lara's decision 11/8: keep docs
 >   self-contained, like calendar-filter). **Stays a draft until a new teacher tests it**
 >   (Lara, 11/8: start from the draft, collect new users' questions; she'll help the first

@@ -6,8 +6,7 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
 > **NEXT (Lara, 2026-11-08): the overrides question in the Assignment Dates editor.**
-> This is the next task Lara wants to work on (before the side-panel rollout for the
-> other projects). Today, assignments with section-specific dates (`has_overrides`) are
+> This is the next task Lara wants to work on. Today, assignments with section-specific dates (`has_overrides`) are
 > marked "Has section dates: edit in Canvas" and skipped; per-section editing was shelved
 > on 10/20 (see "Assignment Dates" below). Start by asking Lara what she needs (for
 > example: see each section's dates, edit them, or add new section dates), then plan.
@@ -51,8 +50,9 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 >   and the porting summary record that calendar events, announcements, and assignment
 >   dates now live here.
 > - **User guide (in the sheet since 2026-11-08):** `UserGuide.html`, written for other
->   teachers, opened by **Canvas Tools › ❓ User guide** (`showUserGuide`) in a window
->   that doesn't block the sheet. That file is the only master copy (Lara's decision
+>   teachers, opened by **Canvas Tools › ❓ User guide** (`showUserGuide`) in the side
+>   panel on the right; its "Open in a large window" link calls `showUserGuideLarge`
+>   (side panel live in all four sheets 11/8, commit `396699a`). That file is the only master copy (Lara's decision
 >   11/8: keep docs self-contained, like calendar-filter). Keep it updated in the same
 >   commit as any change a teacher would see (CLAUDE.md rule). Fixed 11/8: calendarEvents
 >   rows start on row 3 (the guide used to say row 4). History: first drafted 10/27 as

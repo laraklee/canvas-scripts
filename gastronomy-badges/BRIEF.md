@@ -12,8 +12,9 @@ code exactly as it was in Google. It was written before CLAUDE.md, so it doesn't
 all of the code standards yet (see Clean-up list).
 
 **User guide (in the sheet since 11/8):** `UserGuide.html`, written for other teachers,
-opened by **Canvas Tools › User guide** (`showUserGuide`) in a window that doesn't block
-the sheet. It covers setup, the roster tab layout, Update Etoilles (including how to read
+opened by **Canvas Tools › User guide** (`showUserGuide`) in the side panel on the right
+(since 11/8, commit `396699a`; its "Open in a large window" link calls
+`showUserGuideLarge`). It covers setup, the roster tab layout, Update Etoilles (including how to read
 the pop-up), the data refresh, and messages. That file is the only master copy (Lara's
 decision 11/8: keep docs self-contained, like calendar-filter). Update it in the same
 commit as any change a teacher would see (CLAUDE.md rule). If the Clean-up list changes

@@ -100,10 +100,10 @@ reviewable steps over large multi-file changes.
   `gastronomy-badges/`, `assign-sheet/`, `course-manager-jupiter/`, `anonymize-submissions/`.
   **Side panel (2026-11-08):** Lara prefers the guide docked on the right (`showSidebar`,
   with an "Open in a large window" link calling `showUserGuideLarge`, and narrow-screen
-  CSS) so teachers can follow steps while working. Done in `anonymize-submissions/`
-  (Biology only so far; see its BRIEF). Planned for the other three projects, one at a
-  time, after Lara's OK. (Lara's next task before that: Assignment Dates overrides in
-  `assign-sheet/`; see the NEXT note in its BRIEF.)
+  CSS) so teachers can follow steps while working. **Live in all four projects and every
+  workbook (11/8, commits `601d03b` and `396699a`).** Any new in-sheet guide should work
+  the same way. Lara's next task: Assignment Dates overrides in `assign-sheet/` (see the
+  NEXT note in its BRIEF).
 - Commit small, focused changes with clear messages.
 - To publish changes to Google: show the diff, commit, confirm with Lara, then
   `clasp push` from that project's folder. Always commit before `clasp push` so the
