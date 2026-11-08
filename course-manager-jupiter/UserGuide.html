@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<!--
+  UserGuide.html: the Course Manager (Jupiter edition) user guide, written for other
+  teachers. Shown inside the workbook by Canvas Tools > ❓ User guide (showUserGuide in
+  Menus.js). This file is the master copy of the guide; there is no separate Google Doc
+  to update. The same code (and so this guide) goes to Biology, AI9, Gastronomy, and the
+  template once it exists.
+  Canvas endpoints: none. Write operations: none. Properties: none.
+  Update it in the same commit as any change a teacher would see (menu labels, tabs,
+  columns, colors, statuses, messages). Never put student data in this file.
+-->
+<html>
+<head>
+  <base target="_blank">
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #202124;
+      margin: 0 auto;
+      padding: 4px 16px 32px;
+      max-width: 820px;
+    }
+    h1 { font-size: 22px; margin: 8px 0 4px; }
+    h2 {
+      font-size: 18px;
+      margin: 28px 0 8px;
+      padding-top: 12px;
+      border-top: 1px solid #dadce0;
+    }
+    h3 { font-size: 15px; margin: 18px 0 6px; }
+    p, ul, ol { margin: 6px 0 10px; }
+    li { margin: 3px 0; }
+    li > ul { margin: 4px 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: #f1f3f4;
+      padding: 0 3px;
+      border-radius: 3px;
+    }
+    table { border-collapse: collapse; margin: 8px 0 14px; width: 100%; }
+    th, td {
+      border: 1px solid #dadce0;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f1f3f4; }
+    .note {
+      background: #fef7e0;
+      border-left: 4px solid #f9ab00;
+      padding: 8px 12px;
+      margin: 12px 0;
+    }
+    .contents {
+      background: #f8f9fa;
+      border: 1px solid #dadce0;
+      padding: 8px 16px;
+      margin: 12px 0;
+    }
+    .contents ol { margin: 4px 0; }
+    .contents ul { margin: 2px 0 4px; }
+    .contents a { color: #1a73e8; text-decoration: none; cursor: pointer; }
+    .contents a:hover { text-decoration: underline; }
+    .menu { font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h1>Course Manager (Jupiter edition) — User Guide</h1>
+
+<div class="note"><b>Draft.</b> Written for teachers new to the workbook; not yet tried by
+one. If a step doesn't match what you see, note where and what you saw.</div>
+
+<p>This guide is always at <span class="menu">Canvas Tools › ❓ User guide</span>, and you
+can keep it open while you work in the workbook.</p>
+
+<p>This workbook connects a Google Sheet to one Canvas course. It can:</p>
+
+<ul>
+  <li><b>create</b> assignments, discussions, quizzes, section dates (overrides), and
+    groups;</li>
+  <li><b>reorder</b> assignments;</li>
+  <li><b>pull scores and post comments</b> for one assignment;</li>
+  <li><b>export grades</b> for Jupiter;</li>
+  <li><b>back up</b> course content to Google Docs;</li>
+  <li><b>report</b> on a Classic quiz, check the course for setup mistakes, build rubrics
+    for Canvas to import, and build a seating chart.</li>
+</ul>
+
+<p>It <b>never changes grades</b> in Canvas and <b>never deletes</b> anything there.</p>
+
+<div class="contents">
+  <b>Contents</b>
+  <ol>
+    <li><a data-target="setup">First-time setup</a></li>
+    <li><a data-target="where">Where things are</a></li>
+    <li><a data-target="data">Keeping data current</a></li>
+    <li><a data-target="create">Creating items in Canvas</a>
+      <ul>
+        <li><a data-target="createbyrow">createByRow</a> ·
+          <a data-target="makeassignment">makeAssignment</a> ·
+          <a data-target="questions">Quiz questions</a></li>
+      </ul>
+    </li>
+    <li><a data-target="grading">Grading tools</a>
+      <ul>
+        <li><a data-target="jupiter">Jupiter grades</a> ·
+          <a data-target="oneassignment">Pull scores and Post comments</a></li>
+      </ul>
+    </li>
+    <li><a data-target="other">Other tools</a>
+      <ul>
+        <li><a data-target="order">Assignment order</a> ·
+          <a data-target="groups">Groups</a> ·
+          <a data-target="rubrics">Rubrics</a> ·
+          <a data-target="backup">Course backup</a> ·
+          <a data-target="quizreport">Quiz report</a> ·
+          <a data-target="seating">Seating chart</a> ·
+          <a data-target="coursecheck">Course check</a></li>
+      </ul>
+    </li>
+    <li><a data-target="problems">When something goes wrong</a></li>
+  </ol>
+</div>
+
+<h2 id="setup">1. First-time setup</h2>
+
+<h3>Your own copy</h3>
+
+<p>Each course gets its own copy of the workbook (<b>File › Make a copy</b>). The scripts
+come with the copy. On <b>ref_Config</b>, set these. If you copied someone else's
+workbook, they may still hold their information: replace every one with yours.</p>
+
+<table>
+  <tr><th>Named cell</th><th>What goes there</th></tr>
+  <tr><td><code>cfg_CourseID</code></td><td>The Canvas course number: the digits after
+    <code>/courses/</code> in the course's web address. <b>Every tool works on this
+    course.</b></td></tr>
+  <tr><td><code>cfg_UserID</code></td><td>Your Canvas user ID. In your course, open
+    <b>People</b> and click your own name; the web address ends in your ID
+    (<code>.../users/5678</code> → 5678).</td></tr>
+  <tr><td><code>cfg_CcEmail</code></td><td>An email address to copy on messages.</td></tr>
+  <tr><td><code>cfg_MasterCalendarDocID</code>, <code>cfg_SchoolYearTab</code></td><td>The
+    school master calendar and this year's tab (used for schedules, times, and Course
+    check).</td></tr>
+  <tr><td><code>cfg_TermQuarters</code></td><td>The quarters this course covers:
+    <code>2</code>, <code>1-2</code>, or <code>1-4</code>. Update it each new
+    term.</td></tr>
+</table>
+
+<p>The tab is laid out the same way as the <i>Config</i> tab in the Assignment sheet.</p>
+
+<h3>Each teacher, each workbook</h3>
+
+<ol>
+  <li>Open the workbook. Google asks you to <b>authorize</b> the script (see "Permissions"
+    below). Review and allow.</li>
+  <li><span class="menu">Setup &amp; Data › Setup &amp; safety › Set Canvas token</span>.
+    Enter the school's Canvas address, then paste your own Canvas token. Both are saved
+    for <b>you only</b>; other editors can't see them. (Make a token in Canvas:
+    <b>Account › Settings › Approved Integrations › + New Access Token</b>. Canvas shows
+    it only once.)</li>
+  <li><span class="menu">Setup &amp; Data › Setup &amp; safety › Test Canvas
+    connection</span>. It should say <b>Connected</b>.</li>
+  <li>On <b>ref_Config</b>, check <code>cfg_CourseID</code> is the course you mean to work
+    in.</li>
+  <li><span class="menu">Setup &amp; Data › Refresh all tables</span>. You should see a ✓
+    for each table.</li>
+  <li><span class="menu">Setup &amp; Data › Setup &amp; safety › Check setup</span>. It
+    should say the setup is OK.</li>
+</ol>
+
+<h3>Permissions</h3>
+
+<p>Google lists what the script may do. It asks to:</p>
+
+<ul>
+  <li>see and edit <b>this spreadsheet only</b>;</li>
+  <li>show menus and pop-up boxes;</li>
+  <li>connect to an external service (Canvas);</li>
+  <li>edit <b>Google Slides</b> (only used by Build seating chart);</li>
+  <li>see and make <b>only the Drive files it creates itself</b> (Export to Google Docs).
+    It can't see your other files.</li>
+</ul>
+
+<h3>Safety rules</h3>
+
+<ul>
+  <li><b>Dry run</b> (<span class="menu">Setup &amp; Data › Setup &amp; safety › Dry run:
+    show status / switch on/off</span>): while it's <b>ON</b>, tools that would change
+    Canvas only show what they <i>would</i> send. A new copy starts with dry run ON. Turn
+    it OFF only when you mean to create things, and back ON afterward. It's one setting
+    for the whole workbook, not per teacher.</li>
+  <li><b>Check the course.</b> Every tool works on <code>cfg_CourseID</code>. Try new
+    things in a test course first.</li>
+  <li><b>Preview first.</b> Tools that create things have a Preview: it fills
+    <b>Payload</b> (what would be sent) and <b>Status</b> without sending anything.</li>
+  <li><b>Every tool that changes Canvas asks Yes/No first</b>, and says which course and
+    whether dry run is on.</li>
+  <li><b>Student privacy.</b> Never paste or screenshot student names, emails, IDs, grades,
+    or comments into an AI tool or email when asking for help. Describe the layout
+    instead.</li>
+</ul>
+
+<h2 id="where">2. Where things are</h2>
+
+<ul>
+  <li><b>🏠 Home tab:</b> buttons for the everyday tools. <span class="menu">Canvas Tools ›
+    🏠 Go to Home page</span> jumps there from anywhere.</li>
+  <li><b>Canvas Tools menu:</b> everything that <i>does</i> something, and this guide.</li>
+  <li><b>Setup &amp; Data menu:</b> refreshing reference tables, Jupiter categories, token,
+    dry run, and checks.</li>
+  <li><b>ref_ tabs</b> (red): reference tables the tools read. Refresh them; don't edit
+    them.</li>
+  <li><b>ref_Index:</b> a linked list of every tab. Click a name to jump there.</li>
+  <li>Many tools say <b>(this tab)</b>: they work on whichever tab you're looking at, so
+    you can keep several copies of a tab (for example one makeAssignment tab per kind of
+    item).</li>
+</ul>
+
+<h3>Which tools change Canvas?</h3>
+
+<table>
+  <tr><th>Changes Canvas (dry run applies)</th><th>Reads Canvas only</th></tr>
+  <tr><td>Post selected rows (createByRow)</td><td>Preview (either create tool)</td></tr>
+  <tr><td>makeAll (makeAssignment)</td><td>Refresh tables, Jupiter categories</td></tr>
+  <tr><td>Push reorder</td><td>Update Grades, CreateRoster</td></tr>
+  <tr><td>Create group category, Create groups, Put students in groups</td><td>Pull
+    scores, Pull groups, List groups and members</td></tr>
+  <tr><td>Post comments</td><td>List course content, Export to Google Docs</td></tr>
+  <tr><td></td><td>Quiz report, Course check, Build seating chart</td></tr>
+</table>
+
+<h2 id="data">3. Keeping data current (Setup &amp; Data)</h2>
+
+<table>
+  <tr><th>Menu item</th><th>Use it when</th></tr>
+  <tr><td>Refresh all tables</td><td>Start of a session, or after changes in Canvas (new
+    students, sections, assignments).</td></tr>
+  <tr><td>Refresh course list / people list / assignment groups / section list / sheet
+    index</td><td>Just one table needs updating.</td></tr>
+  <tr><td>Refresh Jupiter categories</td><td>Canvas assignment groups changed. Then check
+    the ticks on ref_Config (ticked = exported to Jupiter). It's not part of Refresh all,
+    on purpose.</td></tr>
+</table>
+
+<p><b>Reference tabs hide themselves.</b> After a refresh, ref_CourseIDs, ref_peopleList,
+ref_assignmentGroups, and ref_SectionLookup are hidden to keep them out of the way, unless
+you're looking at that tab when it refreshes. To see one, use <b>View › Hidden sheets</b>,
+or the <b>≡ (All sheets)</b> button at the bottom left, where hidden tabs are grayed out.
+It hides again at its next refresh. ref_Index always stays visible. While <b>Refresh all
+tables</b> runs, the message at the bottom right shows each step ("Refreshing people list…
+(2 of 5)").</p>
+
+<h2 id="create">4. Creating items in Canvas</h2>
+
+<p><b>Types:</b> <code>A</code> = assignment, <code>D</code> = graded discussion,
+<code>CQ</code> = Classic quiz, <code>NQ</code> = New Quiz.</p>
+
+<p><b>Blank times:</b> Due and Lock = 11:59 PM on that date; Unlock = 12:00 AM (the start
+of that day).</p>
+
+<p><b>Published:</b> only a <b>ticked</b> box publishes. Unticked, blank, or no Published
+column makes a draft. New Quizzes always start as drafts (Canvas decides).</p>
+
+<p><b>Descriptions:</b> your Description Text appears bold, with your line breaks kept.
+Each link becomes a green "🚀" button with your Link Text (blank = "Open Resource"). A
+Google Doc or Drive link also shows a full-width preview of the Doc underneath.</p>
+
+<h3 id="createbyrow">createByRow: many items, no section dates</h3>
+
+<ol>
+  <li>On the <b>createByRow</b> tab, fill one row per item (from row 4). Columns are found
+    by their row 3 labels, so you can move them around: <code>name</code>,
+    <code>Type</code>, <code>points_possible</code>, <code>Due Date</code>, <code>Due
+    Time</code>, <code>Unlock Date</code>, <code>Unlock Time</code>, <code>Lock
+    Date</code>, <code>Lock Time</code>, <code>Description Text</code>, <code>Doc
+    Link</code>, <code>Link Text</code>, <code>Published</code>. The tool fills
+    <code>CanvasID</code>, <code>Canvas Link</code>, <code>Payload</code>, and
+    <code>Status</code>.</li>
+  <li>Select the rows. <span class="menu">Canvas Tools › Create in Canvas › Preview
+    selected rows</span>. Read Status for each row.</li>
+  <li><b>Post selected rows.</b> Rows with a CanvasID are skipped, so nothing is made
+    twice.</li>
+</ol>
+
+<p>Classic quizzes are made as empty shells (points come from the questions you add in
+Canvas). New Quizzes need points above 0.</p>
+
+<h3 id="makeassignment">makeAssignment: one item with section dates (and quiz
+questions)</h3>
+
+<p>Make a copy of a makeAssignment tab for each kind of item you make often; each copy
+keeps its own defaults. Every button works on the tab you're looking at.</p>
+
+<ol>
+  <li><b>Clear IDs, Status, Payload</b> to start fresh (keeps everything else).</li>
+  <li>Fill the red cells: name, points, dates, Type, Type of Submission (Type A only),
+    Published, instructions.</li>
+  <li>Overrides: one row per section (Section ID, Period, Due Date, times). <b>Get
+    Times</b> fills the Due Time dropdowns with that period's start and end on that day,
+    plus School Start / School End / After School / Night. You can also type a time like
+    11:59 PM.</li>
+  <li><b>Quizzes (CQ or NQ):</b> fill the Questions table (below).</li>
+  <li><b>Preview assignment</b>, read Status, then <b>makeAll</b>. It asks first.</li>
+  <li>If the item already exists (canvasID filled in), makeAll only adds overrides and
+    questions that don't have an ID yet.</li>
+</ol>
+
+<h3 id="questions">Quiz questions (Questions table on CQ / NQ tabs)</h3>
+
+<table>
+  <tr><th>Question Type</th><th>Answer column</th></tr>
+  <tr><td>multiple_choice_question</td><td>the correct option number, e.g.
+    <code>2</code></td></tr>
+  <tr><td>multiple_answers_question</td><td>the correct option numbers, e.g.
+    <code>1,3</code> (New Quizzes give partial credit)</td></tr>
+  <tr><td>true_false_question</td><td><code>True</code> or <code>False</code></td></tr>
+  <tr><td>essay_question</td><td>leave blank</td></tr>
+</table>
+
+<ul>
+  <li>Options go in Opt 1 to Opt 5. A row with no <b>Question</b> text is skipped.</li>
+  <li>New Quizzes need Points above 0.</li>
+  <li>If a run stops near Google's 6-minute limit, click makeAll again; it continues.</li>
+</ul>
+
+<h2 id="grading">5. Grading tools</h2>
+
+<h3 id="jupiter">Jupiter grades</h3>
+
+<ol>
+  <li>On your grading sheet (e.g. <b>Comments</b>), click <b>CreateRoster</b> (or
+    <span class="menu">Canvas Tools › Jupiter › CreateRoster</span>). The first time, it
+    fills columns A–E, sorted by Period, then name.</li>
+  <li>Type each student's <b>Jupiter ID</b> into column F (from a Jupiter export).
+    <ul>
+      <li><b>After adds and drops, run CreateRoster again.</b> Each row stays with its
+        student. A new student gets a whole new row (type their Jupiter ID in F; the
+        pop-up gives the row number). A dropped student's row turns light red, and you're
+        asked before it's deleted (No changes nothing).</li>
+      <li>If a student changed period, the pop-up gives the row. Keep multi-section sheets
+        sorted by Period, then name, so new students land in the right spot.</li>
+    </ul>
+  </li>
+  <li>Click <b>Update Grades</b>. Choose how many days back to look (default: since the
+    last sync in B1). It fills <b>JupiterExport</b> with recently graded work from the
+    categories ticked on ref_Config. Scores are Canvas's final scores (after any late
+    penalty).</li>
+  <li>If the summary says some students have no matching Jupiter ID, fix column F and run
+    it again.</li>
+  <li>Open <b>JupiterExport</b>, copy it, and paste it into Jupiter.</li>
+</ol>
+
+<h3 id="oneassignment">One assignment: Pull scores and Post comments</h3>
+
+<p>On the grading sheet, for one assignment at a time:</p>
+
+<ul>
+  <li>Put the Canvas <b>assignment ID</b> in <b>row 2</b> of a column (the number at the
+    end of the assignment's web address). Students start on row 3, with their Canvas user
+    ID in column A (CreateRoster sets this up).</li>
+  <li>Click any cell in that column.</li>
+</ul>
+
+<p><b>Pull scores into this column</b> (<span class="menu">Canvas Tools › Grading
+sheet</span>) reads every student's score into the column: Canvas's final score, blank if
+excused or not graded. It asks before replacing cells that already have something in
+them. Rows without a user ID (like Average rows) are never touched.
+<b>Read-only.</b></p>
+
+<p><b>Post comments from this column</b> posts each student's comment from the column to
+their submission for that assignment. <b>This changes Canvas</b> (dry run applies), and
+Canvas notifies students as their settings say. Comments only, never grades.</p>
+
+<ul>
+  <li>If a student submitted more than once, the comment goes on their <b>latest</b>
+    submission, where they'll see it right away.</li>
+  <li>Each comment cell gets a <b>note</b> with its result. A refused cell turns light
+    red. The row 1 cell gets a summary note.</li>
+  <li>A cell whose note starts with "Commented" is skipped, so nothing posts twice. Delete
+    the note to send it again.</li>
+  <li>It stops itself after about 5 minutes; run it again to continue.</li>
+</ul>
+
+<h2 id="other">6. Other tools</h2>
+
+<h3 id="order">Assignment order</h3>
+
+<p><span class="menu">Canvas Tools › Assignment order</span>: <b>Open reorder tool</b>,
+number the rows you want (<b>Number selected rows 1, 2, 3…</b>), <b>Preview reorder</b>,
+then <b>Push reorder</b>.</p>
+
+<h3 id="groups">Groups</h3>
+
+<p>On the <b>createGroups</b> tab (buttons there, or <span class="menu">Canvas Tools ›
+Groups</span>):</p>
+
+<ol>
+  <li><b>Clear group data</b> to start a new set (clears the category ID, link, and
+    GroupIDs).</li>
+  <li>Type the group category name in <b>C2</b>, then <b>Create group category</b>. Its
+    ID and link appear in D2 and E2.</li>
+  <li>List the group names under <b>Group Names</b> (from row 5), then <b>Create
+    groups</b>. Each new group's ID appears in the GroupID column; rows that already have
+    one are skipped.</li>
+</ol>
+
+<p>Groups are created empty (no students are added).</p>
+
+<p><b>See who is in which group (Pull groups into this column).</b> On your grading sheet
+(e.g. <b>Comments</b>):</p>
+
+<ul>
+  <li>Put the group set's <b>category ID</b> in <b>row 2</b> of an empty column (G or
+    later). It's the number in D2 of createGroups, or the number after <code>#tab-</code>
+    in the web address when you open that set on Canvas's People › Groups page. Students
+    start on row 3, with their Canvas user ID in column A (CreateRoster sets this
+    up).</li>
+  <li>Click any cell in that column, then <span class="menu">Canvas Tools › Groups › Pull
+    groups into this column</span>.</li>
+</ul>
+
+<p>Each student's row gets the name of the group they're in now (blank if none), and
+every student cell gets a <b>dropdown</b> of the set's group names, so you can pick names
+instead of typing them. If no one is in a group yet, you just get the dropdowns. It asks
+before replacing cells that already have something in them, and rows without a user ID
+are never touched. <b>Read-only.</b> The summary also says if a group member has no row
+on the sheet, or if two groups share a name.</p>
+
+<p><b>Put students in groups from this column.</b> After Pull groups, pick a group for
+each student from the dropdowns (clear a cell to take a student out of their group). Then
+click in the column and choose <span class="menu">Canvas Tools › Groups › Put students in
+groups from this column</span>. <b>This changes Canvas</b> (dry run applies).</p>
+
+<ul>
+  <li>It compares each cell with Canvas and changes only the students who differ:
+    <b>add</b> (in no group yet), <b>move</b> (a different group picked), or
+    <b>remove</b> (cell blank). Students who aren't on this sheet (another section, the
+    Test Student) are never changed.</li>
+  <li>It shows the counts and the groups affected, and asks before sending.</li>
+  <li>If a cell names a group that isn't in the set, it stops before sending anything and
+    lists the rows. Pick from the dropdown instead (run Pull groups to refresh it).</li>
+  <li>A student Canvas refuses turns light red, and the cell's note says why; the rest
+    still go.</li>
+  <li>It stops itself after about 5 minutes. Running it again is safe: it only does what
+    still differs.</li>
+</ul>
+
+<p><b>List groups and members (this tab).</b> A quick way to check a group set, group by
+group. <b>Read-only.</b> Use a new, empty tab.</p>
+
+<ol>
+  <li>Type the <b>course ID</b> in <b>B1</b> (leave it blank for this workbook's course)
+    and the group set's <b>category ID</b> in <b>B2</b>. Don't know the ID? Leave B2 blank
+    and run it: you get a list of the course's group sets with their IDs. Copy one into
+    B2.</li>
+  <li>Choose <span class="menu">Canvas Tools › Groups › List groups and members (this
+    tab)</span>.</li>
+</ol>
+
+<p>The group set's name appears in <b>C2</b>, next to its ID, so you can check it's the
+right set. Row 3 stays blank. From row 5, each group has a <b>light blue</b> row with its
+name, how many members it has, and its group ID, followed by its members by last name. At
+the bottom, a <b>light red "Not in any group"</b> block lists students in the course who
+aren't in any group of this set. Running it again replaces everything from row 4 down. It
+won't run on a tab whose row 4 already has something else in it (a grading sheet, for
+example).</p>
+
+<h3 id="rubrics">Rubrics (Canvas import)</h3>
+
+<ol>
+  <li>Copy the rubric template tab and fill it in: title under "Rubric Title"; criterion
+    names in the row above "Criterion Description"; Rating N Name / Description /
+    Points.</li>
+  <li>Click <b>makeRubric</b> (or <span class="menu">Canvas Tools › Rubrics › Export rubric
+    for Canvas</span>). Empty criteria are skipped. If something's missing, it names the
+    cell to fix.</li>
+  <li>Open <b>rubricCanvasExport</b> › <b>File › Download › Comma-separated values
+    (.csv)</b>.</li>
+  <li>In Canvas: <b>Rubrics › Import</b>, choose the file. Attach the rubric to an
+    assignment in Canvas.</li>
+</ol>
+
+<h3 id="backup">Course backup: List course content and Export to Google Docs</h3>
+
+<p>Copies assignment, discussion, and page content (plus the syllabus and course home
+page) into Google Docs, one Doc per item. Both steps are <b>read-only</b> in Canvas.</p>
+
+<p><b>Tab setup</b> (the <b>Export to Google Docs</b> tab, or a copy):</p>
+
+<ul>
+  <li><b>B1:</b> the folder name you want. <b>C1:</b> the folder's link, filled in the
+    first time the folder is made (in My Drive; you can move or rename it later).</li>
+  <li><b>A2 "Course ID:", B2:</b> a course number to list, or blank for this workbook's
+    course. You can back up any course you teach from one workbook.</li>
+  <li><b>Row 3 labels:</b> <code>Canvas Link</code> and <code>Google Doc</code> are needed;
+    <code>Name</code>, <code>Type</code>, <code>Published</code>, <code>Canvas
+    Updated</code>, <code>Back up?</code>, and <code>Exported</code> are used when
+    present.</li>
+</ul>
+
+<p><b>Steps:</b></p>
+
+<ol>
+  <li><span class="menu">Canvas Tools › List course content (this tab)</span>. Adds one
+    row per item, each with an unticked <b>Back up?</b> box. Run it again any time:
+    existing rows stay put (only Name, Type, Published, and Canvas Updated refresh), and
+    new items are added at the bottom. Classic and New Quizzes aren't listed.</li>
+  <li>Tick <b>Back up?</b> for the items you want.</li>
+  <li><span class="menu">Canvas Tools › Export to Google Docs (this tab)</span>. It asks
+    Yes/No with the count. Each Doc gets the item's title, a link back to Canvas, and its
+    content, including pictures stored in Canvas. Docs go into Assignments / Discussions
+    / Pages subfolders.</li>
+</ol>
+
+<p><b>Good to know:</b></p>
+
+<ul>
+  <li>Only <b>ticked</b> rows export, and rows that already have a Google Doc link are
+    skipped. To export one again, delete its Google Doc link.</li>
+  <li>You can also paste a Canvas link into a row yourself (assignment, discussion, page,
+    syllabus, or course home); tick Back up? to export it.</li>
+  <li>A <b>light yellow</b> Google Doc cell with the note "Changed in Canvas since export"
+    means the item was edited in Canvas after its Doc was made. Delete the link and export
+    again if you want the newer version. (Discussions and the syllabus have no Canvas
+    date, so they're never marked.)</li>
+  <li>Discussions: only your prompt is copied, never student replies.</li>
+</ul>
+
+<h3 id="quizreport">Quiz report (Classic quizzes)</h3>
+
+<p>Shows one Classic quiz's question groups ("pick 3 of 7") and their questions in one
+place. <b>Read-only.</b></p>
+
+<ol>
+  <li>On a tab whose <b>A1</b> says <code>Quiz link:</code>, paste the quiz's Canvas link
+    in <b>B1</b>. (If you're on any other tab, it uses, or makes, a tab named <b>Quiz
+    report</b>.)</li>
+  <li><span class="menu">Canvas Tools › Quiz report (this tab)</span>.</li>
+  <li>Row 3 down is replaced each run: a summary (title, points in Canvas vs. points
+    found), then each group followed by its questions, in quiz order.</li>
+</ol>
+
+<p>If the points don't match, a group probably pulls from a <b>question bank</b>; the
+report can't see those questions.</p>
+
+<h3 id="seating">Build seating chart</h3>
+
+<p>Adds a text box for each student (first name over last name, in the period's color) to
+a Google Slides deck, one slide per period. On ref_Config, <code>cfg_SeatingDeckID</code>
+holds the deck's ID and <code>cfg_SeatingPeriods</code> lists period | color | slide
+number. It refreshes the student list first. <b>It only adds boxes: running it twice gives
+two sets</b>, so clear the slides first if you're rebuilding.</p>
+
+<h3 id="coursecheck">Course check (possible setup mistakes)</h3>
+
+<p><span class="menu">Canvas Tools › Course check</span>. <b>Read-only.</b> Run it after
+setting up a term, or any time. It refreshes the assignment list, then fills the
+<b>Course Check</b> tab with possible problems:</p>
+
+<ul>
+  <li><b>Missing due date</b>, and <b>Unpublished</b> items.</li>
+  <li><b>No-school day:</b> due on a weekend, during a break, or on a holiday
+    (<code>H</code>) or PD day in ref_simpleSchedule.</li>
+  <li><b>Outside the term:</b> often dates left over from last term's course copy.</li>
+  <li><b>Big item on SAC review day:</b> something worth 50+ points due on a day the
+    master calendar notes "SAC Review Day".</li>
+  <li><b>After No Homework Weekend:</b> anything due on the first school day after a
+    weekend the master calendar notes "No Homework Weekend".</li>
+  <li><b>Group not checked for Jupiter:</b> a group with assignments worth points that
+    isn't ticked in the Jupiter categories (skipped if no category is ticked).</li>
+</ul>
+
+<p>The first <b>Info</b> row shows which term dates were used (from
+<code>cfg_TermQuarters</code>; if it's blank, Canvas's term dates, which for a quarter
+course means the whole semester).</p>
+
+<p><b>OK as is:</b> tick it for anything that's fine on purpose (for example, a
+Sunday-night due date, or No Homework Weekend items in a course with no homework). Next
+time, that row is listed last, in gray, and isn't counted. If the due date changes, it
+shows up again. Fixed problems simply disappear on the next run. Only the ticks are kept;
+anything else typed on the tab is replaced.</p>
+
+<h2 id="problems">7. When something goes wrong</h2>
+
+<table>
+  <tr><th>What you see</th><th>What to do</th></tr>
+  <tr><td><b>"Not ready: …"</b> in a Status cell</td><td>That row has a problem (the
+    message says what). Nothing was sent for it.</td></tr>
+  <tr><td><b>"Script function … not found"</b> from a button</td><td>The button's
+    assigned script name is wrong. Right-click the button › three dots › Assign script,
+    and check the name.</td></tr>
+  <tr><td>Labels problem</td><td><span class="menu">Setup &amp; Data › Setup &amp; safety ›
+    Check createByRow labels</span> or <b>Check makeAssignment labels (this tab)</b>.
+    Labels must match exactly, including capitals and colons.</td></tr>
+  <tr><td>Token rejected / not saved</td><td>Make a new token in Canvas and run <b>Set
+    Canvas token</b>. <b>Test Canvas connection</b> checks it.</td></tr>
+  <tr><td>Not allowed (403)</td><td>Your Canvas account can't do that in this course.
+    Check <code>cfg_CourseID</code>.</td></tr>
+  <tr><td>Canvas is busy</td><td>Wait a minute and try again.</td></tr>
+  <tr><td>No <b>Canvas Tools</b> menu</td><td>Reload the page; wait a few
+    seconds.</td></tr>
+  <tr><td>Anything else</td><td>Note the button or menu item and the exact message (no
+    student data), then tell whoever shared the workbook with you.</td></tr>
+</table>
+
+<script>
+  // Contents links: scroll within this window (plain #links can misbehave inside
+  // Google's pop-up frame).
+  document.querySelectorAll('.contents a').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const target = document.getElementById(link.dataset.target);
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+
+</body>
+</html>

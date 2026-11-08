@@ -1,7 +1,8 @@
 # Getting started again (paste onto the Home tab)
 
 For coming back to the code after a long break. Using the workbook day to day needs none
-of this; see `USER-GUIDE.md` in the project folder.
+of this; see **Canvas Tools › ❓ User guide** in the workbook (`UserGuide.html` in the
+project folder).
 
 ## Mac
 

@@ -121,39 +121,46 @@
 >   first built by mistake in legacy `course-manager/` and pushed there, commits a1731ef
 >   and 8ac4478; harmless, read-only.) Pushed to AI9 2026-11-02 (7fc4c4c). Google Doc
 >   guide synced the same day: its Groups section had been missing Pull groups and Put
->   students in groups too, so the whole section now matches USER-GUIDE.md.
+>   students in groups too, so the whole section now matches the user guide.
 >   **Considered and rejected (Lara, 2026-11-02): moving students from the List groups
 >   tab** (a "Move to" dropdown per student plus a "Send moves" item reusing Put
 >   students in groups' writes). Reason: it would mostly redo what Canvas's own People ›
 >   Groups page already does. Don't re-propose unless Lara brings it up. Still open
 >   separately: testing Put students in groups (dry run in AI9, then 2–3 real moves).
-> - **User guide: first draft 2026-10-27.** `USER-GUIDE.md` (this folder), written for
->   **other teachers who weren't here**: setup, permissions, safety, then one section per
->   tool. Built from the old quick-start `docs/user-manual.md` (moved here and renamed)
->   plus the tools added since 2026-10-21 (grading sheet, course backup, Quiz report,
->   seating chart). **Stays a draft until a new teacher tests it** (Lara). Rule (in
->   CLAUDE.md): update it in the same commit as any change a teacher would see. **Google
->   Doc copy** (made 2026-10-27, so new teachers can read it in Docs): "Course Manager
->   (Jupiter edition) — User Guide", ID `1kljRuoqQT1q4YVXbRJBsnfyXtSdxZ-oCqzByUl8AhwQ`, in
->   Drive folder TeacherTools (`1TDwmuQh4buJ6VTMIpEFKqwE8rl5JU2zm`). When the guide
->   changes, edit this Doc in place (same link) at push time. Made by uploading the
->   Markdown (comments stripped) through the Google Drive connector; 4-byte emoji (🏠 🚀)
->   show as squares, which Lara accepts. Maybe link it from the Home tab later.
->   **2026-10-29:** latest-submission bullet (Post comments) added to the Doc in place with
->   the Google Docs connector (Drive alone can't edit a Doc's text). **Google connectors
+> - **User guide (in the workbook since 2026-11-08):** `UserGuide.html` (this folder),
+>   written for **other teachers who weren't here**: setup, permissions, safety, then one
+>   section per tool. Opened by **Canvas Tools › ❓ User guide** (`showUserGuide` in
+>   Menus.js) in a window that doesn't block the sheet; a Home-tab button can call
+>   `showUserGuide` too. That file is the only master copy (Lara's decision 11/8: keep docs
+>   self-contained, like calendar-filter). **Stays a draft until a new teacher tests it**
+>   (Lara, 11/8: start from the draft, collect new users' questions; she'll help the first
+>   few users herself, since some setup was done by hand and may be missing). Rule (in
+>   CLAUDE.md): update it in the same commit as any change a teacher would see.
+>   **Pushed to Biology only so far (11/8)**; AI9 and Gastronomy wait until Lara makes the
+>   template, then all three get it (template last).
+>   History: first drafted 2026-10-27 as `USER-GUIDE.md` (from the old quick-start
+>   `docs/user-manual.md`; removed 11/8, still in Git history). The old **Google Doc
+>   copy** "Course Manager (Jupiter edition) — User Guide", ID
+>   `1kljRuoqQT1q4YVXbRJBsnfyXtSdxZ-oCqzByUl8AhwQ`, in Drive folder TeacherTools
+>   (`1TDwmuQh4buJ6VTMIpEFKqwE8rl5JU2zm`), gets a one-line "moved into the workbook" note
+>   once all three workbooks have the guide; it is no longer updated. **Google connectors
 >   (Lara, 2026-10-29):** Drive, Docs and Sheets are connected; Lara set **all their tools,
 >   read-only and write, to Needs approval** in Settings › Connectors, so the app asks her
 >   before every Drive/Docs/Sheets call. CLAUDE.md hard rule 7 also limits them to files
 >   named in a BRIEF or in chat (this Doc is one).
-> - **Template copy (plan, Lara 2026-10-27, not started).** Lara makes a copy of a live
+> - **Template copy (plan, Lara 2026-10-27; Lara making it after the 11/8 Biology push).**
+>   Lara makes a copy of a live
 >   workbook, scrubs the copy (never the live one), and keeps it in her **Shared** folder
 >   in Drive for other teachers. Its script ID gets its own clasp file (like the AI9 and
 >   Gastronomy ones) and it is pushed **last** (Biology → AI9, Gastronomy → template); ask
 >   before the first push. clasp updates code only: new tabs, labels, or buttons go onto
 >   the template by hand. How teachers' own copies get updates: later (copies are frozen
 >   when made).
->   **Scrub list:** student data (ref_peopleList; grading sheet columns A–F, scores,
->   comments, and their "Commented…" notes; JupiterExport); hidden tabs and columns;
+>   **Scrub list (expanded 11/8; checklist given to Lara in chat):** student data
+>   (ref_peopleList; every grading sheet, e.g. Comments: columns A–F, scores, comments,
+>   Pull groups columns, and the cell notes Post comments leaves; JupiterExport; any
+>   List groups and members tab; createGroups names if they hold student names);
+>   hand-typed Home links that point at Biology's full web address; hidden tabs and columns;
 >   ref_Config `cfg_CourseID`, `cfg_UserID`, `cfg_CcEmail`, `cfg_SeatingDeckID` (the deck
 >   has student names); course leftovers (CanvasID / Canvas Link / Payload / Status on
 >   createByRow and makeAssignment tabs, Course Check, Quiz report tabs, Export to Google

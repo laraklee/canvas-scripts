@@ -8,7 +8,8 @@
  *   - Canvas Tools: doing things (create, reorder, groups, rubrics, Jupiter, grading
  *     sheet one-assignment tools, list course content and export to Google
  *     Docs, Classic quiz report, seating),
- *     and Course check (read-only report, CourseCheck.js) at the bottom.
+ *     and Course check (read-only report, CourseCheck.js) near the bottom, then
+ *     ❓ User guide (showUserGuide, below; opens UserGuide.html).
  *   - Setup & Data: refreshing reference tables, Jupiter categories (manual, on purpose),
  *     and setup / safety checks.
  *   Also here: goToHomePage (jumps to the Home tab) and refreshAllTables (every ref_
@@ -67,6 +68,8 @@ function buildMenus_() {
     .addItem('Build seating chart', 'buildSeatingChart')
     .addSeparator()
     .addItem('Course check (possible setup mistakes)', 'runCourseCheck')
+    .addSeparator()
+    .addItem('❓ User guide', 'showUserGuide')
     .addToUi();
 
   ui.createMenu('Setup & Data')
@@ -102,6 +105,19 @@ function goToHomePage() {
     return;
   }
   ss.getSheetByName(home).activate();
+}
+
+/**
+ * Menu: Canvas Tools › ❓ User guide. Opens UserGuide.html in a window over the sheet.
+ * The window doesn't block the sheet, so teachers can keep it open while they work.
+ * No Canvas calls; the page holds only the guide text. A Home-tab button can call it too.
+ */
+function showUserGuide() {
+  const html = HtmlService.createHtmlOutputFromFile('UserGuide')
+    .setWidth(900)
+    .setHeight(650);
+  SpreadsheetApp.getUi().showModelessDialog(html,
+    'Course Manager (Jupiter edition) — User Guide');
 }
 
 /** The name of the Home tab: "Home" once emoji, symbols, and spaces are ignored. */
