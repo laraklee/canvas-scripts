@@ -51,6 +51,8 @@ time. Claude never opens the template's sheet.
 - **11/8: Lara chose to push the latest code (Classic Quiz reading included) to all three
   and the template with the user guide**, before her Classic test: her AI group knows
   it's a work in progress. Like the other projects: three courses plus a template.
+  **Done 11/8:** all four run commit `28c02a7` (Biology tested by Lara: guide, Show my
+  passphrase; then AI9, Gastronomy, template pushed).
 - All three courses should run the same code (Lara, 11/1). Same order as the other
   projects: test on Biology first, then push to the others after Lara's OK.
 
