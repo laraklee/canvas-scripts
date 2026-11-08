@@ -29,11 +29,21 @@ function onOpen() {
 }
 
 /**
- * Opens the user guide (UserGuide.html) in a window over the sheet. The window
- * doesn't block the sheet, so teachers can keep it open while they work.
- * No Canvas calls; the page holds only the guide text.
+ * Menu: Canvas Tools › ❓ User guide. Opens UserGuide.html in the side panel, docked on
+ * the right, so teachers can follow the steps while they work (Lara, 2026-11-08). The
+ * panel has a link to showUserGuideLarge. No Canvas calls; the page holds only the guide.
  */
 function showUserGuide() {
+  const html = HtmlService.createHtmlOutputFromFile('UserGuide')
+    .setTitle('Assignment Sheet — User Guide');
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+/**
+ * Called from the side panel's "Open in a large window" link (google.script.run), so it
+ * has no trailing underscore. Opens the same guide in a big window over the sheet.
+ */
+function showUserGuideLarge() {
   const html = HtmlService.createHtmlOutputFromFile('UserGuide')
     .setWidth(900)
     .setHeight(650);

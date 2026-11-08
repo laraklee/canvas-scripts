@@ -9,7 +9,8 @@
  *     sheet one-assignment tools, list course content and export to Google
  *     Docs, Classic quiz report, seating),
  *     and Course check (read-only report, CourseCheck.js) near the bottom, then
- *     ❓ User guide (showUserGuide, below; opens UserGuide.html).
+ *     ❓ User guide (showUserGuide, below; opens UserGuide.html in the side panel, with
+ *     showUserGuideLarge for the big window).
  *   - Setup & Data: refreshing reference tables, Jupiter categories (manual, on purpose),
  *     and setup / safety checks.
  *   Also here: goToHomePage (jumps to the Home tab) and refreshAllTables (every ref_
@@ -108,11 +109,22 @@ function goToHomePage() {
 }
 
 /**
- * Menu: Canvas Tools › ❓ User guide. Opens UserGuide.html in a window over the sheet.
- * The window doesn't block the sheet, so teachers can keep it open while they work.
- * No Canvas calls; the page holds only the guide text. A Home-tab button can call it too.
+ * Menu: Canvas Tools › ❓ User guide. Opens UserGuide.html in the side panel, docked on
+ * the right, so teachers can follow the steps while they work (Lara, 2026-11-08). The
+ * panel has a link to showUserGuideLarge. No Canvas calls; the page holds only the guide
+ * text. A Home-tab button can call showUserGuide too.
  */
 function showUserGuide() {
+  const html = HtmlService.createHtmlOutputFromFile('UserGuide')
+    .setTitle('Course Manager (Jupiter edition) — User Guide');
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+/**
+ * Called from the side panel's "Open in a large window" link (google.script.run), so it
+ * has no trailing underscore. Opens the same guide in a big window over the sheet.
+ */
+function showUserGuideLarge() {
   const html = HtmlService.createHtmlOutputFromFile('UserGuide')
     .setWidth(900)
     .setHeight(650);
