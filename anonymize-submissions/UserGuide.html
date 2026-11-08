@@ -12,6 +12,7 @@
 <head>
   <base target="_blank">
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
       font-family: Arial, Helvetica, sans-serif;
@@ -79,17 +80,45 @@
     .contents a { color: #1a73e8; text-decoration: none; cursor: pointer; }
     .contents a:hover { text-decoration: underline; }
     .menu { font-weight: bold; }
+    .large-link {
+      display: none;
+      margin: 4px 0 8px;
+      padding: 6px 10px;
+      background: #e8f0fe;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .large-link a { color: #1a73e8; cursor: pointer; text-decoration: underline; }
+
+    /* Side panel (about 300px wide): smaller type, tighter tables, long words wrap. */
+    @media (max-width: 500px) {
+      body { font-size: 13px; padding: 2px 8px 24px; overflow-wrap: break-word; }
+      h1 { font-size: 17px; }
+      h2 { font-size: 15px; margin: 20px 0 6px; padding-top: 8px; }
+      h3 { font-size: 13.5px; margin: 14px 0 4px; }
+      ul, ol { padding-left: 20px; }
+      th, td { padding: 4px 5px; font-size: 12px; }
+      .note, .warn { padding: 6px 8px; }
+      .warn ul { padding-left: 16px; }
+      .copybox { font-size: 11.5px; padding: 8px; }
+      .contents { padding: 6px 10px; }
+      .large-link { display: block; }
+    }
   </style>
 </head>
 <body>
+
+<div class="large-link">Wide tables hard to read here?
+  <a id="open-large">Open in a large window</a></div>
 
 <h1>AI Grading Helper — User Guide</h1>
 
 <div class="note"><b>Work in progress.</b> Written for teachers in our AI grading group.
 If a step doesn't match what you see, note where and what you saw.</div>
 
-<p>This guide is always at <span class="menu">Anonymize › ❓ User guide</span>, and you can
-keep it open while you work in the sheet.</p>
+<p>This guide is always at <span class="menu">Anonymize › ❓ User guide</span>. It opens in
+a panel on the right, so you can follow the steps while you work in the sheet. Close it
+with the ✕ at its top.</p>
 
 <h3>What it does</h3>
 
@@ -426,6 +455,15 @@ same folder again.</b> Without the Key, every file is copied a second time.</div
       const target = document.getElementById(link.dataset.target);
       if (target) target.scrollIntoView({ behavior: 'smooth' });
     });
+  });
+
+  // Side panel only (the link is hidden in the large window): open the big window.
+  const openLarge = document.getElementById('open-large');
+  openLarge.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (typeof google !== 'undefined' && google.script) {
+      google.script.run.showUserGuideLarge();
+    }
   });
 </script>
 

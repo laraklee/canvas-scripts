@@ -9,7 +9,8 @@
  *   row…" deletes that assignment's Key, AI, and Flagged tabs (after asking), keeps
  *   Review but hides it, and marks the row Archived so it can't be re-run by mistake.
  *   "Sort Review by question / by student" re-sort the open quiz Review tab
- *   (MatchResults.js). "❓ User guide" opens UserGuide.html (showUserGuide, below).
+ *   (MatchResults.js). "❓ User guide" opens UserGuide.html in the side panel
+ *   (showUserGuide, below; showUserGuideLarge for the big window).
  * Canvas endpoints called: none.
  * Canvas write operations: none.
  * Required User/Script Properties: none here (see Passphrase.js, Assignments.js).
@@ -42,11 +43,23 @@ function onOpen() {
 }
 
 /**
- * Menu: Anonymize › ❓ User guide. Opens UserGuide.html in a window over the sheet.
- * The window doesn't block the sheet, so teachers can keep it open while they work.
- * No Canvas or Drive calls; the page holds only the guide text.
+ * Menu: Anonymize › ❓ User guide. Opens UserGuide.html in the side panel, docked on the
+ * right, so teachers can follow the steps while they work in the sheet (Lara,
+ * 2026-11-08: the big window covered the sheet). The panel has a link to
+ * showUserGuideLarge for reading straight through. No Canvas or Drive calls; the page
+ * holds only the guide text.
  */
 function showUserGuide() {
+  const html = HtmlService.createHtmlOutputFromFile('UserGuide')
+    .setTitle('AI Grading Helper — User Guide');
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+/**
+ * Called from the side panel's "Open in a large window" link (google.script.run), so it
+ * has no trailing underscore. Opens the same guide in a big window over the sheet.
+ */
+function showUserGuideLarge() {
   const html = HtmlService.createHtmlOutputFromFile('UserGuide')
     .setWidth(900)
     .setHeight(650);
