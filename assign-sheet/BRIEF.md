@@ -5,6 +5,15 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
+> **NEXT (Lara, 2026-11-08): the overrides question in the Assignment Dates editor.**
+> This is the next task Lara wants to work on (before the side-panel rollout for the
+> other projects). Today, assignments with section-specific dates (`has_overrides`) are
+> marked "Has section dates: edit in Canvas" and skipped; per-section editing was shelved
+> on 10/20 (see "Assignment Dates" below). Start by asking Lara what she needs (for
+> example: see each section's dates, edit them, or add new section dates), then plan.
+> Any new Canvas write goes through `canvasWrite_` with DRY_RUN, and is called out to
+> Lara first (CLAUDE.md rule 3). Update `UserGuide.html` in the same commit.
+
 > **Where we left off (2026-10-20)**
 >
 > - **Step 1 done, pushed, tested:** `05_CanvasApi.js` (`canvasGet_`, `canvasWrite_`,
@@ -132,8 +141,9 @@ date), I/J Due, K/L Lock, M Sync Status.
   `due_at` / `lock_at` that differ (to the minute). Asks before sending.
 - A date needs a time (no accidental midnight). Clear both to remove a date. 11:59 pm is
   sent as 11:59:59 pm.
-- Section-specific dates (`has_overrides`) are marked and skipped. Per-section editing is
-  shelved: Lara has no overrides this year.
+- Section-specific dates (`has_overrides`) are marked and skipped. Per-section editing was
+  shelved on 10/20 (Lara had no overrides then); **it's the next task as of 11/8** (see
+  NEXT at the top).
 
 ## Code notes
 

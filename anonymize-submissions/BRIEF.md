@@ -53,6 +53,12 @@ time. Claude never opens the template's sheet.
   it's a work in progress. Like the other projects: three courses plus a template.
   **Done 11/8:** all four run commit `28c02a7` (Biology tested by Lara: guide, Show my
   passphrase; then AI9, Gastronomy, template pushed).
+- **Where we left off (11/8, end of day): Biology is one step ahead.** It runs `601d03b`
+  (the guide opens in a **side panel** docked on the right, with an "Open in a large
+  window" link; narrow-screen layout). Lara tried it: "looks good overall." **Next:** push
+  `601d03b` to AI9, Gastronomy, and the template (ask first). Lara replaced the old
+  Instructions tab with a short **Start Here** tab (what it does, privacy, "open the
+  guide") in all four workbooks; the old passphrase is gone from them.
 - All three courses should run the same code (Lara, 11/1). Same order as the other
   projects: test on Biology first, then push to the others after Lara's OK.
 

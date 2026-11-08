@@ -98,6 +98,12 @@ reviewable steps over large multi-file changes.
   `showUserGuide()`). That file is then the only master copy: no `USER-GUIDE.md` and no
   Google Doc copy to update. The same-commit rule above still applies. So far:
   `gastronomy-badges/`, `assign-sheet/`, `course-manager-jupiter/`, `anonymize-submissions/`.
+  **Side panel (2026-11-08):** Lara prefers the guide docked on the right (`showSidebar`,
+  with an "Open in a large window" link calling `showUserGuideLarge`, and narrow-screen
+  CSS) so teachers can follow steps while working. Done in `anonymize-submissions/`
+  (Biology only so far; see its BRIEF). Planned for the other three projects, one at a
+  time, after Lara's OK. (Lara's next task before that: Assignment Dates overrides in
+  `assign-sheet/`; see the NEXT note in its BRIEF.)
 - Commit small, focused changes with clear messages.
 - To publish changes to Google: show the diff, commit, confirm with Lara, then
   `clasp push` from that project's folder. Always commit before `clasp push` so the
