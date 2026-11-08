@@ -93,6 +93,11 @@ reviewable steps over large multi-file changes.
   not the code. The review summary says which guide sections changed, or why none
   needed to. The Markdown file is the master copy; when the change is pushed to
   Google, also update the shared Google Doc copy of the guide.
+- **In-sheet guides:** a project may instead keep its guide as `UserGuide.html` inside
+  the project, opened from the project's menu (**User guide**, which calls
+  `showUserGuide()`). That file is then the only master copy: no `USER-GUIDE.md` and no
+  Google Doc copy to update. The same-commit rule above still applies. So far:
+  `gastronomy-badges/`.
 - Commit small, focused changes with clear messages.
 - To publish changes to Google: show the diff, commit, confirm with Lara, then
   `clasp push` from that project's folder. Always commit before `clasp push` so the

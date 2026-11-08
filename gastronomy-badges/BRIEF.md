@@ -11,17 +11,18 @@ Brought into this repo 10/29 with `clasp clone`; the first commit (`86811ca`) is
 code exactly as it was in Google. It was written before CLAUDE.md, so it doesn't follow
 all of the code standards yet (see Clean-up list).
 
-**User guide (10/31):** `USER-GUIDE.md` first draft, written for other teachers: setup,
-the roster tab layout, Update Etoilles (including how to read the pop-up), the data
-refresh, and messages. Update it in the same commit as any change a teacher would see
-(CLAUDE.md rule). **Google Doc copy:** "Gastronomy Badges — User Guide", ID
+**User guide (in the sheet since 11/8):** `UserGuide.html`, written for other teachers,
+opened by **Canvas Tools › User guide** (`showUserGuide`) in a window that doesn't block
+the sheet. It covers setup, the roster tab layout, Update Etoilles (including how to read
+the pop-up), the data refresh, and messages. That file is the only master copy (Lara's
+decision 11/8: keep docs self-contained, like calendar-filter). Update it in the same
+commit as any change a teacher would see (CLAUDE.md rule). If the Clean-up list changes
+the token menu (item 1), the guide's setup section changes too.
+History: first drafted 10/31 as `USER-GUIDE.md` (removed 11/8; still in Git history);
+reviewed by Lara 11/1. The old Google Doc copy "Gastronomy Badges — User Guide", ID
 `1cfWBB9xwD20B9ZMLBizmh295gKyKpm8dlNptelTZTRE`, in Drive folder TeacherTools
-(`1TDwmuQh4buJ6VTMIpEFKqwE8rl5JU2zm`). Made by uploading the Markdown (closing comment
-stripped) through the Google Drive connector. When the guide changes, edit this Doc in
-place (same link) with the Google Docs connector at push time. If the Clean-up list
-changes the token menu (item 1), the guide's setup section changes too.
-**Reviewed by Lara 11/1:** good enough until there are real users; the tool is mostly
-for her, so no further polish is planned.
+(`1TDwmuQh4buJ6VTMIpEFKqwE8rl5JU2zm`), gets a one-line note at push time pointing to
+the menu item; it is no longer updated.
 
 ## Menu
 
@@ -46,6 +47,7 @@ for her, so no further polish is planned.
   `*Config*`!B6, then rebuilds the `*peopleList*` and `*assignmentGroups*` tabs.
   Update Etoilles no longer needs it: it asks Canvas for the Etoilles assignments
   directly.
+- **User guide** (`showUserGuide`): opens `UserGuide.html` in a window over the sheet.
 
 ## Sheet tabs
 

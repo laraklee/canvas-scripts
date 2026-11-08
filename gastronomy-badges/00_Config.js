@@ -23,8 +23,23 @@ function onOpen() {
     .addItem('Update Etoilles', 'syncRosterGradesAndEtoilles')
     .addSeparator()
     .addItem('1. Set API Key and Base URL', 'setUserProperties')
-    .addItem('2. Run FULL Data Refresh (Master Setup)', 'runFullDataRefresh') 
+    .addItem('2. Run FULL Data Refresh (Master Setup)', 'runFullDataRefresh')
+    .addSeparator()
+    .addItem('User guide', 'showUserGuide')
     .addToUi();
+}
+
+
+/**
+ * Opens the user guide (UserGuide.html) in a window over the sheet. The window
+ * doesn't block the sheet, so teachers can keep it open while they work.
+ * No Canvas calls; the page holds only the guide text.
+ */
+function showUserGuide() {
+  const html = HtmlService.createHtmlOutputFromFile('UserGuide')
+    .setWidth(900)
+    .setHeight(650);
+  SpreadsheetApp.getUi().showModelessDialog(html, 'Gastronomy Badges — User Guide');
 }
 
 
