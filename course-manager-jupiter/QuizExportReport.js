@@ -22,7 +22,11 @@ const QUIZ_EXPORT_TITLE = 'Quiz report from export file';
 const QUIZ_EXPORT_MAX_CHARS = 20 * 1000 * 1000;
 const QUIZ_EXPORT_MAX_FILES = 20000;
 
-/** Menu: Canvas Tools › Quiz report from export file. Opens the upload window. */
+/**
+ * Was Menu: Canvas Tools › Quiz report from export file; off the menu since 2026-11-09
+ * (Lara): a single-quiz export can hide other courses' pictures. Opens the upload window
+ * (sheet only; adding the menu line back in Menus.js brings it back).
+ */
 function showQuizExportUpload() {
   const html = HtmlService.createHtmlOutputFromFile('QuizExportUpload').setWidth(460).setHeight(300);
   SpreadsheetApp.getUi().showModalDialog(html, QUIZ_EXPORT_TITLE);

@@ -67,7 +67,11 @@ const QUIZ_TYPE_NAMES = Object.freeze({
   text_only_question: 'Text (no question)',
 });
 
-/** Menu: Canvas Tools › Quiz report (this tab). */
+/**
+ * Was Menu: Canvas Tools › Quiz report (this tab); off the menu since 2026-11-09 (Lara):
+ * it can't see banks or New Quizzes. It needs the sheet open (alerts), so it can't be run
+ * from the Apps Script editor; adding the menu line back in Menus.js brings it back.
+ */
 function runQuizReport() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();

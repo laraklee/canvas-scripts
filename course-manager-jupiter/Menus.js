@@ -7,7 +7,7 @@
  *   every button keeps working.
  *   - Canvas Tools: doing things (create, reorder, groups, rubrics, Jupiter, grading
  *     sheet one-assignment tools, list course content and export to Google
- *     Docs, Classic quiz report, seating),
+ *     Docs, seating; the two quiz reports were taken off on 2026-11-09),
  *     and Course check (read-only report, CourseCheck.js) near the bottom, then
  *     ❓ User guide (showUserGuide, below; opens UserGuide.html in the side panel, with
  *     showUserGuideLarge for the big window).
@@ -64,8 +64,11 @@ function buildMenus_() {
       .addItem('Post comments from this column (ID in row 2)', 'postCommentsForActiveColumn'))
     .addItem('List course content (this tab)', 'listCourseContent')
     .addItem('Export to Google Docs (this tab)', 'exportCanvasToDocs')
-    .addItem('Quiz report (this tab)', 'runQuizReport')
-    .addItem('Quiz report from export file', 'showQuizExportUpload')
+    // Quiz report (runQuizReport) and Quiz report from export file (showQuizExportUpload)
+    // are off the menu (Lara, 2026-11-09): neither sees everything a course export shows
+    // (banks, New Quizzes, other courses' pictures), so teachers would have to guess what
+    // they miss. The code stays (put a line back to bring one back); the course-export
+    // quiz check will take their place.
     .addSeparator()
     .addItem('Build seating chart', 'buildSeatingChart')
     .addSeparator()
