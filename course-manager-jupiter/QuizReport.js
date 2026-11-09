@@ -18,6 +18,8 @@
  *   availability dates, another course's or someone's personal files, an old question-bank
  *   file, an outside site, a file that can't be opened, and size (1 MB+ "shrink it",
  *   500 KB+ "worth shrinking"). Each file and folder is looked up once per run.
+ *   Check also flags blank answer choices. Any row with something in Check is shaded
+ *   light red (QUIZ_REPORT_CHECK_COLOR) so problems stand out (Lara, 2026-11-08).
  *   Quiz questions only: never student answers, submissions, or quiz statistics.
  * Canvas endpoints called (GET via canvasGet_; the course comes from the link):
  *   /api/v1/courses/:course/quizzes/:quiz
@@ -34,6 +36,7 @@ const QUIZ_REPORT_LABEL = 'Quiz link:';
 const QUIZ_REPORT_FIRST_ROW = 3;
 const QUIZ_REPORT_MAX_TEXT = 5000; // a Sheets cell holds 50,000 characters at most
 const QUIZ_REPORT_GROUP_COLOR = '#eeeeee';
+const QUIZ_REPORT_CHECK_COLOR = '#f4cccc'; // light red: a row with something in Check
 const QUIZ_REPORT_HEADERS = Object.freeze(['Kind', 'Group', 'Pick', 'Of', 'Points each',
   'Source', '#', 'Question Type', 'Points', 'Question Name', 'Question', 'Choices',
   'Correct', 'Pictures', 'Check', 'Group ID', 'Question ID']);
@@ -184,7 +187,8 @@ function buildQuizReport_(quiz, questions, groups, checkPictures) {
     const pictures = checkPictures ? checkPictures(q) : { cell: '', problems: [] };
     const check = [!text ? 'No question text' :
       (QUIZ_CHOICE_TYPES.includes(q.question_type) && !answers.correct ?
-        'No correct answer marked' : '')].concat(pictures.problems).filter(Boolean).join('\n');
+        'No correct answer marked' : ''), quizBlankChoices_(q)]
+      .concat(pictures.problems).filter(Boolean).join('\n');
     if (check) counts.checks++;
     rows.push(['Question', groupName, '', '', '', '', number,
       QUIZ_TYPE_NAMES[q.question_type] || q.question_type || '', points,
@@ -474,6 +478,22 @@ function quizMinPosition_(list) {
 }
 
 /**
+ * "Blank answer choice (#4)" (or "choices (#2, #4)") for a multiple choice, true/false,
+ * or multiple answers question with an empty choice; '' otherwise. Canvas fills an empty
+ * choice with "No answer text provided.", so that counts as blank too.
+ */
+function quizBlankChoices_(question) {
+  if (!QUIZ_CHOICE_TYPES.includes(question.question_type)) return '';
+  const answers = Array.isArray(question.answers) ? question.answers : [];
+  const blank = answers.map((a, i) => {
+    const text = quizAnswerText_(a).trim();
+    return !text || /^No answer text provided\.?$/i.test(text) ? `#${i + 1}` : '';
+  }).filter(Boolean);
+  if (!blank.length) return '';
+  return `Blank answer choice${blank.length > 1 ? 's' : ''} (${blank.join(', ')})`;
+}
+
+/**
  * A question's answers as two cells: choices ("1) text" per line) and correct (the
  * numbers of the correct choices, only for multiple choice, true/false, and multiple
  * answers).
@@ -559,6 +579,14 @@ function writeQuizReport_(sheet, report, now) {
   table.setValues(report.rows).setVerticalAlignment('top');
   report.groupRows.forEach(i => sheet.getRange(headerRow + 1 + i, 1, 1, width)
     .setBackground(QUIZ_REPORT_GROUP_COLOR).setFontWeight('bold'));
+  // Rows needing attention (anything in Check) are light red, group rows included. The
+  // table is rewritten each run, so plain shading is used, not conditional formatting.
+  const checkIndex = QUIZ_REPORT_HEADERS.indexOf('Check');
+  report.rows.forEach((row, i) => {
+    if (String(row[checkIndex]).trim()) {
+      sheet.getRange(headerRow + 1 + i, 1, 1, width).setBackground(QUIZ_REPORT_CHECK_COLOR);
+    }
+  });
   const widths = { Question: 400, Choices: 250, Pictures: 300, Check: 300 };
   Object.keys(widths).forEach(label => {
     const col = QUIZ_REPORT_HEADERS.indexOf(label) + 1;

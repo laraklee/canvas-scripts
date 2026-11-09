@@ -9,9 +9,14 @@
 >   bug in `/quiz-check` (questions after a group's end were counted into that group; 9
 >   questions are loose, 16 pts), now fixed. Same run showed an **older Quiz report bug**:
 >   Sheets turned Correct "1, 2, 3" into a date ("1, 2, 2003"); fixed by setting the text
->   columns (`QUIZ_REPORT_TEXT_COLUMNS`) to plain text before writing. **Next:** commit
->   these two fixes, push Biology, Lara reruns (expect "1, 2, 3" on Q9 and Q12), then
->   push AI9 and Gastronomy. Original notes: New **Pictures** column (before Check): per picture, name · size · Published
+>   columns (`QUIZ_REPORT_TEXT_COLUMNS`) to plain text before writing (2156bc9; Lara's
+>   rerun showed "1, 2, 3" and all pictures clean after her shrinks). **Then (Lara's ask):**
+>   rows with anything in Check are shaded light red (plain shading, not conditional
+>   formatting, since the table is rewritten each run), and Check flags **blank answer
+>   choices** (Canvas fills them with "No answer text provided."). 3.2 Test: the
+>   anaerobic-respiration question (Lactic Acid group) has a blank 4th choice; the HDL
+>   diagram question moved to the end after Lara's picture swap. **Next:** commit, push
+>   Biology, Lara reruns, then push AI9 and Gastronomy. Original notes: New **Pictures** column (before Check): per picture, name · size · Published
 >   / Link only / Unpublished, plus "(old tag: course …)" when `data-api-endpoint` names
 >   another course. Check column gains picture problems: 1 MB+ "shrink it", 500 KB+ "worth
 >   shrinking", file or any parent folder unpublished, availability dates (file or folder),

@@ -245,6 +245,28 @@ check('text columns: Group, Question Name, Question, Choices, Correct, Pictures,
   calls.filter(x => x.name === 'setNumberFormat' && x.arg === '@').map(x => HEADERS[x.col - 1]),
   ['Group', 'Question Name', 'Question', 'Choices', 'Correct', 'Pictures', 'Check']);
 
+// Blank answer choices and red shading (made-up questions).
+const blankOne = mc(1, 1, null, '<p>Where?</p>', [100, 0, 0, 0]);
+blankOne.answers[3].text = 'No answer text provided.';
+const blankTwo = mc(2, 3, null, '<p>Which?</p>', [100, 0, 0]);
+blankTwo.answers[1].text = '';
+blankTwo.answers[2].text = '  ';
+check('blank choice: Canvas\'s filler text counts', c.quizBlankChoices_(blankOne), 'Blank answer choice (#4)');
+check('blank choices: empty and spaces', c.quizBlankChoices_(blankTwo), 'Blank answer choices (#2, #3)');
+check('essay answers are not checked for blanks',
+  c.quizBlankChoices_({ question_type: 'essay_question', answers: [{ text: '' }] }), '');
+const shaded = c.buildQuizReport_({ title: 'T', points_possible: 3 },
+  [blankOne, mc(3, 2, null, '<p>Fine</p>', [100, 0]), blankTwo], new Map());
+check('blank choice lands in Check',
+  shaded.rows.map(r => r[CHECK]), ['Blank answer choice (#4)', '', 'Blank answer choices (#2, #3)']);
+calls.length = 0;
+c.writeQuizReport_(fakeSheet, shaded, new Date(2026, 10, 8));
+const firstDataRow = calls.find(x => x.name === 'setValues' && x.cols === HEADERS.length && x.rows === 3).row;
+check('rows with a Check are shaded light red, full width; clean rows are not',
+  calls.filter(x => x.name === 'setBackground' && x.arg === '#f4cccc')
+    .map(x => [x.row - firstDataRow + 1, x.col, x.cols]),
+  [[1, 1, HEADERS.length], [3, 1, HEADERS.length]]);
+
 check('401 on one picture means "not allowed", not "bad token"',
   c.quizPictureFailure_({ canvasType: 'TOKEN_REJECTED' }), 'NOT_ALLOWED');
 let stopped = '';
