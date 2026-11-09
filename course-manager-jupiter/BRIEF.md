@@ -1,7 +1,35 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-11-08 afternoon)**
+> **Where we left off (current state, 2026-11-08 night, PC)**
 >
+> - **NEXT SESSION: plan "Quiz check from course export" (Lara, 11/8 night).** Decision:
+>   the **course export** (.imscc, Settings › Export Course Content › Course; Lara's
+>   regular backup) becomes the main pre-test check, because it is the stricter test.
+>   Findings that night (read in the scratchpad, quiz/bank files only, no other names):
+>   - Lara's 11/8 backup (573 MB, 47 quizzes, **95 banks**; quiz+bank text 6.4 MB): every
+>     Classic banked quiz resolved, e.g. **3.9-3.10D Data Scramble 25/25, pick 5 of 11 and
+>     5 of 14**; 3.2 Test 0 pictures flagged (after Lara's shrinks).
+>   - **Unit 2 New Quiz: the real cause of the "epic fail".** In the course export 21 of
+>     its pictures link to **course 4230 = last year's Biology** (Lara confirmed) and aren't
+>     packed. Students in this year's course can't open them; Lara can, which is why the
+>     quiz's own export (made with her access) packed them and looked clean, and why
+>     "basically nothing worked" that day. **This corrects the 11/1 note below** ("mainly
+>     a loading problem … busy Wi-Fi"): it was cross-course pictures. Single-quiz exports
+>     hide this; course exports show it.
+>   - Course exports keep each quiz's full QTI in `non_cc_assessments/<id>.xml.qti` (next
+>     to the banks), with `<id>/assessment_meta.xml`; QtiReader needs that mapping (tested
+>     in the scratchpad). Also seen: "Bonus: AI Feedback and Q1 Reflection" 9 vs 5 points,
+>     one "Grade Check: 11/09 - 11/13" 1 vs 0; "Unit 1 Test 26.27" exists twice.
+>   **Plan sketch to refine:** window reads only the zip's table of contents and the
+>   quiz/bank files (File.slice; ~6 MB, so tablets too), accepts .imscc; an **overview
+>   tab** (one row per quiz: points, banks found, pictures, rows to look at, red if
+>   anything); choose a quiz for the detailed report (current layout). Keep "Quiz report
+>   from export file" for a quick single-quiz check, with a guide note that the course
+>   export is stricter; keep Quiz report (live) for published/hidden status. Guide also:
+>   tablets work in desktop-site mode (Lara does this), portrait is tight; widen "Chrome or
+>   Edge" to Safari 16.4+/Firefox. /quiz-check could read .imscc directly too. Tabled by
+>   Lara: tidier data-table display; New Quiz "⋮ › Export" wording is fine. **After that:**
+>   Assignment Dates overrides in assign-sheet.
 > - **Upload button tested by Lara in Biology (ae0c6e1, 11/8 ~6 PM) on the Unit 2 export:
 >   worked** (50/50, 21 banks listed, 10 red rows, shading fine). One bug from that run:
 >   New Quizzes writes hex character codes (`&#x2014;`, `&#x2019;`) that showed as codes;
