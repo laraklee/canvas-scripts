@@ -145,6 +145,7 @@ with the ✕ at its top.</p>
           <a data-target="rubrics">Rubrics</a> ·
           <a data-target="backup">Course backup</a> ·
           <a data-target="quizreport">Quiz report</a> ·
+          <a data-target="quizexport">Quiz report from export</a> ·
           <a data-target="seating">Seating chart</a> ·
           <a data-target="coursecheck">Course check</a></li>
       </ul>
@@ -258,7 +259,8 @@ workbook, they may still hold their information: replace every one with yours.</
   <tr><td>Create group category, Create groups, Put students in groups</td><td>Pull
     scores, Pull groups, List groups and members</td></tr>
   <tr><td>Post comments</td><td>List course content, Export to Google Docs</td></tr>
-  <tr><td></td><td>Quiz report, Course check, Build seating chart</td></tr>
+  <tr><td></td><td>Quiz report, Quiz report from export file, Course check, Build seating
+    chart</td></tr>
 </table>
 
 <h2 id="data">3. Keeping data current (Setup &amp; Data)</h2>
@@ -582,7 +584,8 @@ run freezes them again). The <b>Question Name</b> column is hidden because it al
 just says "Question"; click the small arrows between the column letters to show it.</p>
 
 <p>If the points don't match, a group probably pulls from a <b>question bank</b>; the
-report can't see those questions (or their pictures). If the report finds <i>more</i>
+report can't see those questions (or their pictures). For a quiz with banks, or a New
+Quiz, use <a data-target="quizexport">Quiz report from export file</a>. If the report finds <i>more</i>
 points than Canvas shows, open the quiz, choose <b>Edit</b>, then <b>Save</b>, and run
 the report again.</p>
 
@@ -621,6 +624,51 @@ needs a look.)</p>
 
 <p>When replacing a picture in the question editor, pick <b>Course</b> files (not
 <b>User</b> files), click <b>Update Question</b>, then <b>Save</b> the quiz.</p>
+
+<h3 id="quizexport">Quiz report from export file (New Quizzes, question banks)</h3>
+
+<p>Canvas doesn't let the workbook look inside <b>New Quizzes</b> or <b>question
+banks</b>, but a quiz's <b>export file</b> carries them. This makes the same report as
+Quiz report (red rows, frozen columns, Pictures and Check) from that file.
+<b>Read-only:</b> nothing in Canvas changes.</p>
+
+<ol>
+  <li>In Canvas, export the quiz. <b>New Quiz:</b> open the quiz, then its <b>⋮</b> menu ›
+    <b>Export</b>. <b>Classic quiz:</b> course <b>Settings</b> › <b>Export Course
+    Content</b> › <b>Quiz</b>, tick the quiz, <b>Create Export</b>, then download it when
+    it's ready. Either way you get a <b>.zip</b> file (a New Quiz's has a long code for a
+    name).</li>
+  <li><span class="menu">Canvas Tools › Quiz report from export file</span>. In the window,
+    <b>Choose file</b>, pick the .zip, then <b>Check</b>.</li>
+  <li>The report goes on the <b>Quiz export report</b> tab (or the tab you're on, if its
+    <b>A1</b> says <code>Quiz export:</code>). <b>B1</b> shows the file's name. Row 3 down
+    is replaced each run.</li>
+</ol>
+
+<p>The file is read on your computer; only the question text and picture sizes go to
+the workbook. Use a current Chrome or Edge.</p>
+
+<p><b>What's different from Quiz report:</b></p>
+
+<ul>
+  <li><b>Bank questions are listed</b> under their group. <b>Source</b> shows <b>In
+    quiz</b>, <b>Bank: (name)</b>, or <b>Bank not in export</b>.</li>
+  <li><b>Bank not in export</b> (red): exporting a single <b>Classic</b> quiz leaves its
+    question banks out, so those questions and pictures aren't checked. New Quiz exports
+    include their item banks.</li>
+  <li>The <b>Pictures</b> column shows each picture's name and size, but <b>not</b>
+    whether it's published: an export can't tell. For a Classic quiz, check its pictures
+    in <b>Files</b>. Pictures added in the New Quizzes editor aren't in Files, so there's
+    nothing to check there.</li>
+  <li>New Quiz picture names are random codes, and report numbers (#) won't match
+    Canvas's, so find a question by its wording. Fix a bank question in its <b>item
+    bank</b>.</li>
+  <li><b>Picture isn't in the export</b>: Canvas couldn't copy it, so students may not
+    see it either. Upload it again into the question.</li>
+</ul>
+
+<p>The Check messages otherwise mean the same as in <a data-target="quizreport">Quiz
+report</a>. Export the quiz again after fixing things, then check the new file.</p>
 
 <h3 id="seating">Build seating chart</h3>
 
@@ -683,9 +731,9 @@ anything else typed on the tab is replaced.</p>
 </table>
 
 <script>
-  // Contents links: scroll within this window (plain #links can misbehave inside
-  // Google's pop-up frame).
-  document.querySelectorAll('.contents a').forEach((link) => {
+  // Section links (the contents list and links in the text): scroll within this window
+  // (plain #links can misbehave inside Google's pop-up frame).
+  document.querySelectorAll('a[data-target]').forEach((link) => {
     link.addEventListener('click', (event) => {
       event.preventDefault();
       const target = document.getElementById(link.dataset.target);

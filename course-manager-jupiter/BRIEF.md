@@ -2,8 +2,29 @@
 
 > **Where we left off (current state, 2026-11-08 afternoon)**
 >
-> - **Export reader for New Quizzes (and banked quizzes), step 1 of 2, written 11/8; not
->   yet committed.** Lara's decision: Quiz report (API) stays the tool for Classic quizzes
+> - **"Quiz report from export file" (step 2) built 11/8 evening; not yet committed or
+>   pushed.** Menu: Canvas Tools › Quiz report from export file (`showQuizExportUpload`,
+>   new `QuizExportReport.js` + `QuizExportUpload.html`). The window reads the zip **in
+>   the browser** with the built-in `DecompressionStream` (no outside library): sizes from
+>   the zip's table of contents, only .xml/.qti unpacked; sends `{ fileName, texts, sizes }`
+>   to `receiveQuizExport`, which runs `qtiReadExport_` → `qtiQuizReport_` →
+>   `writeQuizReport_` (same layout as Quiz report; summary row 2 is "Settings" instead of
+>   "Published"). Tab "Quiz export report" (or the active tab if A1 says "Quiz export:"),
+>   B1 = file name. **Canvas's export zips are ZIP64** (sizes 0xffffffff, real ones in the
+>   extra field): the reader handles it; the first try on real zips caught this. Checked
+>   on Lara's three real zips: identical to a normal unzip; 3.2 Test 51/51 with 3 pictures
+>   flagged, Data Scramble 25/25 with 2 missing banks, Unit 2 50/50 with 10 red rows;
+>   uploads carry only 200–270 KB of text. Limits: 20 M characters / 20,000 files, then a
+>   "too large (whole-course export?)" message. Offline check
+>   `scripts/checks/quiz-export.check.js` (builds its own zip, ZIP64 entries included).
+>   Guide: new "Quiz report from export file" section, contents link, read-only tools
+>   table, a pointer from Quiz report; section links in the text now work (the click
+>   handler covers every `a[data-target]`, not just the contents list). No new
+>   permissions (`script.container.ui` already listed). **Next:** commit, push Biology,
+>   Lara tests with the Unit 2 export, then AI9, Gastronomy, template, `git push`. Unsure
+>   until tested: the New Quiz "⋮ › Export" wording, and google.script.run's size limit.
+> - **Export reader for New Quizzes (and banked quizzes), step 1 of 2: commit 7d95c33.**
+>   Lara's decision: Quiz report (API) stays the tool for Classic quizzes
 >   without banks; banks and New Quizzes go through a **QTI export**, because the export
 >   carries item-bank questions (the API shows neither Classic bank nor New Quiz item-bank
 >   contents). New `QtiReader.js` (pure functions, runs in Apps Script and Node; reuses

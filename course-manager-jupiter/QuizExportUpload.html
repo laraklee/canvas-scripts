@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<!--
+  QuizExportUpload.html: the "Quiz report from export file" window (opened by
+  showQuizExportUpload in QuizExportReport.js; Lara, 2026-11-08). The teacher picks a
+  Canvas quiz export (.zip). The zip is read here, in the browser, with the browser's own
+  unzip (DecompressionStream; no outside library): every file's size comes from the zip's
+  table of contents, and only the .xml/.qti question files are unpacked. Only that text,
+  the sizes, and the zip's file name go to receiveQuizExport; pictures never leave the
+  computer. Messages are shown as plain text (textContent), never as HTML.
+  Canvas endpoints: none. Write operations: none (the script writes the report tab).
+  Properties: none. An export holds quiz content only, no student data.
+-->
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 14px; color: #202124; margin: 12px 16px; }
+    p { margin: 0 0 12px; line-height: 1.4; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    button { font-size: 14px; padding: 6px 14px; }
+    #status { white-space: pre-wrap; line-height: 1.4; }
+    #status.problem { color: #b3261e; }
+  </style>
+</head>
+<body>
+  <p>Choose a quiz export (.zip) from Canvas. For a New Quiz: open the quiz, then its
+    <b>⋮</b> menu › <b>Export</b>. The file is read here on your computer; only the
+    question text and picture sizes go to the workbook.</p>
+  <div class="row">
+    <input type="file" id="file" accept=".zip,application/zip">
+    <button id="go" disabled>Check</button>
+  </div>
+  <div id="status" role="status" aria-live="polite"></div>
+  <div class="row"><button id="close" hidden>Close</button></div>
+
+  <script id="zip-reader">
+    // Reads a .zip (ArrayBuffer) into { texts: { path: text } for .xml/.qti files,
+    // sizes: { path: bytes } for every file }. Sizes come from the zip's table of
+    // contents (central directory), so pictures are never unpacked. Throws Error with a
+    // message for the teacher when the file isn't a zip it can read.
+    const ZIP_MAX_TEXT_CHARS = 20 * 1000 * 1000;
+    async function readQuizExportZip(buffer) {
+      const bytes = new Uint8Array(buffer);
+      const view = new DataView(buffer);
+      const notZip = () => new Error('That file isn\'t a .zip this window can read. Choose the export .zip from Canvas.');
+      let end = -1;
+      for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 22 - 65535); i--) {
+        if (view.getUint32(i, true) === 0x06054b50) { end = i; break; }
+      }
+      if (end < 0) throw notZip();
+      // 8-byte numbers (ZIP64) as plain numbers; exports are far below where that loses precision.
+      const big = i => view.getUint32(i, true) + view.getUint32(i + 4, true) * 4294967296;
+      let count = view.getUint16(end + 10, true);
+      let at = view.getUint32(end + 16, true);
+      if (count === 0xffff || at === 0xffffffff) {
+        // ZIP64 table of contents: its locator sits just before the normal end record.
+        if (end < 20 || view.getUint32(end - 20, true) !== 0x07064b50) throw notZip();
+        const end64 = big(end - 12);
+        if (end64 + 56 > bytes.length || view.getUint32(end64, true) !== 0x06064b50) throw notZip();
+        count = big(end64 + 32);
+        at = big(end64 + 48);
+      }
+      const decoder = new TextDecoder('utf-8');
+      const texts = Object.create(null);
+      const sizes = Object.create(null);
+      let chars = 0;
+      for (let n = 0; n < count; n++) {
+        if (at + 46 > bytes.length || view.getUint32(at, true) !== 0x02014b50) throw notZip();
+        const method = view.getUint16(at + 10, true);
+        let packed = view.getUint32(at + 20, true);
+        let size = view.getUint32(at + 24, true);
+        const nameLength = view.getUint16(at + 28, true);
+        const extraLength = view.getUint16(at + 30, true);
+        const commentLength = view.getUint16(at + 32, true);
+        let local = view.getUint32(at + 42, true);
+        const name = decoder.decode(bytes.subarray(at + 46, at + 46 + nameLength)).replace(/\\/g, '/');
+        // Canvas writes ZIP64 entries: sizes of 0xffffffff mean "the real value is in the
+        // ZIP64 extra field (id 1)", in this order: size, packed size, local header offset.
+        for (let x = at + 46 + nameLength; x + 4 <= at + 46 + nameLength + extraLength;) {
+          const id = view.getUint16(x, true);
+          const length = view.getUint16(x + 2, true);
+          if (id === 1) {
+            let v = x + 4;
+            if (size === 0xffffffff) { size = big(v); v += 8; }
+            if (packed === 0xffffffff) { packed = big(v); v += 8; }
+            if (local === 0xffffffff) { local = big(v); }
+          }
+          x += 4 + length;
+        }
+        at += 46 + nameLength + extraLength + commentLength;
+        if (name.endsWith('/')) continue;
+        sizes[name] = size;
+        if (!/\.(xml|qti)$/i.test(name)) continue;
+        if (local + 30 > bytes.length || view.getUint32(local, true) !== 0x04034b50) throw notZip();
+        const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
+        const data = bytes.subarray(start, start + packed);
+        let raw;
+        if (method === 0) {
+          raw = data;
+        } else if (method === 8) {
+          const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+          raw = new Uint8Array(await new Response(stream).arrayBuffer());
+        } else {
+          throw new Error('That .zip uses a kind of packing this window can\'t read. Use the export straight from Canvas.');
+        }
+        const text = decoder.decode(raw);
+        chars += text.length;
+        if (chars > ZIP_MAX_TEXT_CHARS) {
+          throw new Error('That export is too large to check here (a whole-course export?). Export just the quiz.');
+        }
+        texts[name] = text;
+      }
+      return { texts, sizes };
+    }
+  </script>
+
+  <script>
+    const fileInput = document.getElementById('file');
+    const go = document.getElementById('go');
+    const statusBox = document.getElementById('status');
+    const closeButton = document.getElementById('close');
+    const say = (message, problem) => {
+      statusBox.textContent = message;
+      statusBox.className = problem ? 'problem' : '';
+    };
+    fileInput.addEventListener('change', () => {
+      go.disabled = !fileInput.files.length;
+      say('');
+    });
+    closeButton.addEventListener('click', () => google.script.host.close());
+    go.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      go.disabled = true;
+      fileInput.disabled = true;
+      say('Reading the export…');
+      try {
+        if (typeof DecompressionStream === 'undefined') {
+          throw new Error('This browser can\'t unzip files here. Use a current version of Chrome or Edge.');
+        }
+        const zip = await readQuizExportZip(await file.arrayBuffer());
+        say('Checking the questions and pictures…');
+        google.script.run
+          .withSuccessHandler(result => {
+            say(result.message, !result.ok);
+            closeButton.hidden = false;
+            go.disabled = false;
+            fileInput.disabled = false;
+          })
+          .withFailureHandler(() => {
+            say('The workbook couldn\'t take the export (it may be too large). Nothing was changed.', true);
+            go.disabled = false;
+            fileInput.disabled = false;
+          })
+          .receiveQuizExport({ fileName: file.name, texts: { ...zip.texts }, sizes: { ...zip.sizes } });
+      } catch (error) {
+        say(error.message || 'The file couldn\'t be read.', true);
+        go.disabled = false;
+        fileInput.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

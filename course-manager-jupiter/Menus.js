@@ -65,6 +65,7 @@ function buildMenus_() {
     .addItem('List course content (this tab)', 'listCourseContent')
     .addItem('Export to Google Docs (this tab)', 'exportCanvasToDocs')
     .addItem('Quiz report (this tab)', 'runQuizReport')
+    .addItem('Quiz report from export file', 'showQuizExportUpload')
     .addSeparator()
     .addItem('Build seating chart', 'buildSeatingChart')
     .addSeparator()
