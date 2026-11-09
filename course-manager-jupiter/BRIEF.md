@@ -1,7 +1,29 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-10-29 morning)**
+> **Where we left off (current state, 2026-11-08 afternoon)**
 >
+> - **Quiz report picture check (step 2) written 2026-11-08, PC; not yet committed or
+>   pushed.** New **Pictures** column (before Check): per picture, name · size · Published
+>   / Link only / Unpublished, plus "(old tag: course …)" when `data-api-endpoint` names
+>   another course. Check column gains picture problems: 1 MB+ "shrink it", 500 KB+ "worth
+>   shrinking", file or any parent folder unpublished, availability dates (file or folder),
+>   another course's / personal / group files, can't be opened, old `/assessment_questions/`
+>   file, outside site. Answer-choice pictures are checked too; math (`/equation_images/`)
+>   skipped. Summary gains a **Pictures** row (yellow when anything is flagged). New GETs:
+>   `/files/:id` and `/folders/:id` (each once per run via `quizPictureLoader_`). Canvas
+>   answers 401 for files the teacher can't open, which `fetchCanvas_` calls TOKEN_REJECTED;
+>   the loader treats that as NOT_ALLOWED for one picture (the quiz was just read with the
+>   same token). In-sheet guide's Quiz report section rewritten. Offline check extended
+>   (42 pass). **Plan (Lara OK'd):** commit → push **Biology only** → test on the **3.2
+>   Test** (expected: 19 pictures / 14 files from the export; Q3 now small after Lara's
+>   shrink; the 727 KB FRQ 1 photo and Q49's 584 KB screenshot "worth shrinking"; nothing
+>   unpublished) → push AI9 and Gastronomy. The test also settles **3.2 Test points:** the
+>   QTI export's groups sum to 35, but the quiz's saved total said 51 (stale until re-saved?).
+>   Canvas file fields used (`size`, `locked`, `hidden`, `unlock_at`, `lock_at`,
+>   `folder_id`; folder `context_type`/`context_id`/`parent_folder_id`/`locked`) are from
+>   Canvas's docs, not yet seen live: check the first run. Related: the read-only
+>   `/quiz-check` skill (`.claude/skills/quiz-check/`, commit 833f01c) does the same for a
+>   QTI export, and still covers bank questions and the vocab cross-check.
 > - **All three workbooks unified 2026-10-29 (Lara: "push both").** Before: Biology had
 >   everything (7ebff5d); AI9 lacked the comment latest-attempt fix; Gastronomy lacked
 >   Quiz report, both groups tools, and that fix. Pushed AI9 and Gastronomy from the Mac,
