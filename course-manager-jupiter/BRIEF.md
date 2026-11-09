@@ -1,6 +1,36 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-11-08 night, PC)**
+> **Where we left off (current state, 2026-11-09, Mac)**
+>
+> - **Both quiz reports are off the menu (commit b4a5916, live in all four workbooks,
+>   11/9).** Lara: teachers shouldn't have to guess what a report misses. Quiz report
+>   (live) can't see banks or New Quizzes; a single-quiz export hid Unit 2's other-course
+>   pictures. Code stays (one menu line brings either back; neither runs from the
+>   editor). Guide: their sections removed, short "Quiz checks" note (`#quizcheck`) says
+>   a course-export check is coming. **No quiz check on the menu until that's built.**
+> - **11/9 export (`~/code/course-exports/`, outside the repo; Mac Downloads is blocked to
+>   Claude, so Lara drags exports there):** Unit 2 still has 23 course-4230 pictures (16
+>   files, 12 of 21 banks). Course exports **do** carry published state: quizzes
+>   (`assessment_meta.xml` `workflow_state`) and files/folders (`course_settings/
+>   files_meta.xml`: `hidden` = link only, `locked` = unpublished; files keyed by
+>   identifier → `imsmanifest.xml` href). File availability dates: none in the course,
+>   so unconfirmed. Prototype: existing `qtiReadExport_` reads all 47 quizzes / all banks
+>   once `non_cc_assessments/<id>.xml.qti` is passed as `<id>/<id>.xml`; 17 quizzes have
+>   flags (9 "worth shrinking", 5 picture not in export, 4 outside site, 3 shrink it,
+>   3 other-course: 3483 ×2 and 4230, 1 blank choice, 1 pick > size; points differ on
+>   Bonus AI Feedback 9 vs 5 and Grade Check 11/09 1 vs 0). Needed text ≈ 6.7 MB.
+> - **NEXT: build "Quiz check from course export", plan agreed 11/9.** Step 1 reader:
+>   course-export layout, quiz published state, unpublished file/folder flag, plainer
+>   other-course message ("students in this course can't see it"), offline check,
+>   /quiz-check reads .imscc. Step 2 window: accept .imscc, File.slice (TOC + quiz/bank
+>   files only, not the whole 573 MB in memory); test google.script.run with ~6.7 MB,
+>   send in pieces if it fails. Step 3: overview tab (one row per quiz, red if anything)
+>   + window stays open with a quiz list for the detailed report. Step 4: menu item +
+>   guide section, Biology first. **Open questions for Lara (before step 3):** "worth
+>   shrinking" red or just a note (Claude suggests note); overview all quizzes with a
+>   Published column, or published only; menu name ("Quiz check (course export)"?).
+>
+> **Earlier (2026-11-08 night, PC)**
 >
 > - **NEXT SESSION: plan "Quiz check from course export" (Lara, 11/8 night).** Decision:
 >   the **course export** (.imscc, Settings › Export Course Content › Course; Lara's
