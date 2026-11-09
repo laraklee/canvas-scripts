@@ -19,8 +19,10 @@
 >   Biology, Lara: "Looks right." **Then (Lara's choice of two):** freeze the header row
 >   and the columns through Question; small columns slimmed and Question Name hidden so
 >   the frozen part is ~935 px (`QUIZ_REPORT_WIDTHS`, `quizReportLayout_`); guide says how
->   to unfreeze on a small screen. **Next:** commit, push Biology, Lara reruns, then push
->   AI9 and Gastronomy, then `git push`. Original notes: New **Pictures** column (before Check): per picture, name · size · Published
+>   to unfreeze on a small screen. Committed 7e86e8b; Lara: "That's fine." **Live in all
+>   four workbooks (11/8, 2:46 PM):** Biology, then AI9, Gastronomy, and the template
+>   (normal push; its one-time `--force` was earlier); a read-only `clasp clone` of each
+>   matched 7e86e8b exactly (22 files). No manifest change. **Left:** `git push`. Original notes: New **Pictures** column (before Check): per picture, name · size · Published
 >   / Link only / Unpublished, plus "(old tag: course …)" when `data-api-endpoint` names
 >   another course. Check column gains picture problems: 1 MB+ "shrink it", 500 KB+ "worth
 >   shrinking", file or any parent folder unpublished, availability dates (file or folder),
