@@ -227,8 +227,10 @@ const fakeRange = (row, col, rows, cols) => {
 const fakeSheet = {
   getMaxColumns: () => 30, getMaxRows: () => 100, insertColumnsAfter: () => {},
   getRange: (row, col, rows = 1, cols = 1) => fakeRange(row, col, rows, cols),
-  setColumnWidth: () => {},
 };
+['setColumnWidth', 'hideColumns', 'setFrozenRows', 'setFrozenColumns'].forEach(name => {
+  fakeSheet[name] = (a, b) => calls.push({ name, a, b });
+});
 const multi = c.buildQuizReport_({ title: 'T', points_possible: 1 }, [{
   id: 1, position: 1, question_type: 'multiple_answers_question', question_text: '<p>Pick</p>',
   points_possible: 1, answers: [1, 2, 3].map(n => ({ text: `c${n}`, weight: 100 })),
@@ -266,6 +268,24 @@ check('rows with a Check are shaded light red, full width; clean rows are not',
   calls.filter(x => x.name === 'setBackground' && x.arg === '#f4cccc')
     .map(x => [x.row - firstDataRow + 1, x.col, x.cols]),
   [[1, 1, HEADERS.length], [3, 1, HEADERS.length]]);
+
+// Layout: frozen header row and columns through Question; frozen part fits a laptop.
+const headerAt = calls.find(x => x.name === 'setValues' && x.rows === 1 &&
+  Array.isArray(x.arg[0]) && x.arg[0][0] === 'Kind').row;
+const one = name => calls.filter(x => x.name === name).map(x => x.a);
+check('frozen rows: through the header row', one('setFrozenRows'), [headerAt]);
+check('frozen columns: through Question', one('setFrozenColumns'), [HEADERS.indexOf('Question') + 1]);
+check('Question Name hidden', one('hideColumns'), [HEADERS.indexOf('Question Name') + 1]);
+const widthOf = new Map(calls.filter(x => x.name === 'setColumnWidth').map(x => [x.a, x.b]));
+const frozenWidth = HEADERS.slice(0, HEADERS.indexOf('Question') + 1)
+  .filter(h => h !== 'Question Name').reduce((sum, h) => sum + (widthOf.get(HEADERS.indexOf(h) + 1) || 100), 0);
+check('frozen columns are 1,000 pixels or less (every one given a width)',
+  [frozenWidth <= 1000, HEADERS.slice(0, HEADERS.indexOf('Question') + 1)
+    .filter(h => h !== 'Question Name').every(h => widthOf.has(HEADERS.indexOf(h) + 1))], [true, true]);
+calls.length = 0;
+c.writeQuizReport_(fakeSheet, c.buildQuizReport_({ title: 'Empty', points_possible: 0 }, [], new Map()),
+  new Date(2026, 10, 8));
+check('empty quiz still gets the frozen layout', one('setFrozenColumns').length, 1);
 
 check('401 on one picture means "not allowed", not "bad token"',
   c.quizPictureFailure_({ canvasType: 'TOKEN_REJECTED' }), 'NOT_ALLOWED');

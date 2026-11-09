@@ -40,7 +40,11 @@ const QUIZ_REPORT_CHECK_COLOR = '#f4cccc'; // light red: a row with something in
 const QUIZ_REPORT_HEADERS = Object.freeze(['Kind', 'Group', 'Pick', 'Of', 'Points each',
   'Source', '#', 'Question Type', 'Points', 'Question Name', 'Question', 'Choices',
   'Correct', 'Pictures', 'Check', 'Group ID', 'Question ID']);
-const QUIZ_REPORT_TEXT_COLUMNS = Object.freeze(['Group', 'Question Name', 'Question',
+// Pixel widths; Kind through Question (minus the hidden Question Name) are frozen.
+const QUIZ_REPORT_WIDTHS = Object.freeze({ Kind: 70, Group: 160, Pick: 45, Of: 40,
+  'Points each': 55, Source: 70, '#': 35, 'Question Type': 110, Points: 50, Question: 300,
+  Choices: 250, Correct: 70, Pictures: 300, Check: 300 });
+const QUIZ_REPORT_TEXT_COLUMNS =Object.freeze(['Group', 'Question Name', 'Question',
   'Choices', 'Correct', 'Pictures', 'Check']);
 const QUIZ_PICTURE_BIG =1000 * 1000;  // "shrink it" (Unit 2's failing pictures were near 1 MB)
 const QUIZ_PICTURE_LARGE = 500 * 1000; // "worth shrinking"
@@ -570,7 +574,10 @@ function writeQuizReport_(sheet, report, now) {
   const headerRow = first + summary.length + 1;
   sheet.getRange(headerRow, 1, 1, width).setValues([QUIZ_REPORT_HEADERS.slice()])
     .setFontWeight('bold');
-  if (!report.rows.length) return;
+  if (!report.rows.length) {
+    quizReportLayout_(sheet, headerRow);
+    return;
+  }
   // Text columns stay plain text, so Sheets can't turn "1, 2, 3" (Correct) or a name like
   // "11/20" into a date. Must be set before the values go in.
   QUIZ_REPORT_TEXT_COLUMNS.forEach(label => sheet.getRange(headerRow + 1,
@@ -587,10 +594,24 @@ function writeQuizReport_(sheet, report, now) {
       sheet.getRange(headerRow + 1 + i, 1, 1, width).setBackground(QUIZ_REPORT_CHECK_COLOR);
     }
   });
-  const widths = { Question: 400, Choices: 250, Pictures: 300, Check: 300 };
-  Object.keys(widths).forEach(label => {
-    const col = QUIZ_REPORT_HEADERS.indexOf(label) + 1;
-    sheet.getRange(headerRow + 1, col, report.rows.length, 1).setWrap(true);
-    sheet.setColumnWidth(col, widths[label]);
-  });
+  ['Question', 'Choices', 'Pictures', 'Check'].forEach(label => sheet.getRange(headerRow + 1,
+    QUIZ_REPORT_HEADERS.indexOf(label) + 1, report.rows.length, 1).setWrap(true));
+  quizReportLayout_(sheet, headerRow);
+}
+
+/**
+ * Column widths and frozen panes (Lara, 2026-11-08): the header row and everything above
+ * it stay put, and so do the columns through Question, so a question stays beside its
+ * Pictures and Check while scrolling. The small columns are slimmed and Question Name
+ * (always "Question" in practice) is hidden so the frozen part (about 935 pixels) fits a
+ * laptop screen.
+ */
+function quizReportLayout_(sheet, headerRow) {
+  const width = QUIZ_REPORT_HEADERS.length;
+  sheet.getRange(headerRow, 1, 1, width).setWrap(true).setVerticalAlignment('bottom');
+  Object.keys(QUIZ_REPORT_WIDTHS).forEach(label =>
+    sheet.setColumnWidth(QUIZ_REPORT_HEADERS.indexOf(label) + 1, QUIZ_REPORT_WIDTHS[label]));
+  sheet.hideColumns(QUIZ_REPORT_HEADERS.indexOf('Question Name') + 1);
+  sheet.setFrozenRows(headerRow);
+  sheet.setFrozenColumns(QUIZ_REPORT_HEADERS.indexOf('Question') + 1);
 }
