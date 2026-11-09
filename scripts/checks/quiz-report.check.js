@@ -38,6 +38,9 @@ check('HTML to text: breaks, pictures, &-codes, extra spaces',
   c.quizHtmlText_('<p>Which  cell&nbsp;part?</p><p><img src="/files/1/preview" alt="x">' +
     '</p><div>A &lt; B &amp; C&#39;s</div>'),
   'Which cell part?\n[picture]\nA < B & C\'s');
+check('character codes: hex (New Quizzes) and decimal, bad ones left as written',
+  c.quizHtmlText_('<p>2C2H6 &#x2014;&gt; 4CO2; plant&#x2019;s &#8217; &#X1F331; &#x110000;</p>'),
+  '2C2H6 —> 4CO2; plant’s ’ 🌱 &#x110000;');
 check('formula-looking text gets an apostrophe', c.quizCellText_('=2+2'), '\'=2+2');
 check('long text is cut', c.quizCellText_('x'.repeat(5003)).length, 5000 + ' …(cut)'.length);
 

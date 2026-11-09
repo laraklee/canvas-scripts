@@ -136,6 +136,10 @@ check('counts: questions, picture uses, files, flagged files', quiz.counts,
   { questions: 7, pictures: 5, pictureFiles: 5, flagged: 5 });
 check('media no question uses', result.unusedMedia, ['Uploaded Media/unused.png']);
 check('loose questions keep their own points', [loose1.question.points, loose2.question.points], [1, 4]);
+const coded = c.qtiReadItem_(choiceItem('h1', 'multiple_choice_question', '1.0',
+  '<p>2C2H6 + 7O2 &#x2014;&gt; 4CO2 and the plant&#x2019;s</p>', ['&#x2014;', 'B'], [0]), 1, {}, new Set());
+check('New Quiz hex character codes become characters (question and choices)',
+  [coded.text, coded.choices], ['2C2H6 + 7O2 —> 4CO2 and the plant’s', ['—', 'B']]);
 check('no quiz in a folder without one', c.qtiReadExport_({ texts: { 'imsmanifest.xml': '' }, sizes: {} }).quizzes, []);
 
 if (failures) {

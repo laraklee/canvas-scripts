@@ -2,8 +2,15 @@
 
 > **Where we left off (current state, 2026-11-08 afternoon)**
 >
-> - **"Quiz report from export file" (step 2) built 11/8 evening; not yet committed or
->   pushed.** Menu: Canvas Tools › Quiz report from export file (`showQuizExportUpload`,
+> - **Upload button tested by Lara in Biology (ae0c6e1, 11/8 ~6 PM) on the Unit 2 export:
+>   worked** (50/50, 21 banks listed, 10 red rows, shading fine). One bug from that run:
+>   New Quizzes writes hex character codes (`&#x2014;`, `&#x2019;`) that showed as codes;
+>   `quizHtmlText_` and `qtiUnescape_` now decode hex as well as decimal (`quizCodePoint_`),
+>   which also fixes Quiz report on live quizzes. Not yet committed. Optional, not done:
+>   data-table questions show one cell per line (tall rows). Still to confirm with Lara:
+>   the New Quiz "⋮ › Export" wording in the guide. **Next:** commit, push Biology, then
+>   AI9, Gastronomy, template, `git push`.
+> - **"Quiz report from export file" (step 2) built 11/8 evening: commit ae0c6e1.** Menu: Canvas Tools › Quiz report from export file (`showQuizExportUpload`,
 >   new `QuizExportReport.js` + `QuizExportUpload.html`). The window reads the zip **in
 >   the browser** with the built-in `DecompressionStream` (no outside library): sizes from
 >   the zip's table of contents, only .xml/.qti unpacked; sends `{ fileName, texts, sizes }`

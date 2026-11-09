@@ -293,6 +293,7 @@ function qtiUnescape_(text) {
   return String(text || '')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
     .replace(/&apos;|&#39;/g, '\'')
-    .replace(/&#(\d+);/g, (all, code) => String.fromCharCode(Number(code)))
+    .replace(/&#(\d+);/g, (all, code) => quizCodePoint_(Number(code), all))
+    .replace(/&#x([0-9a-f]+);/gi, (all, code) => quizCodePoint_(parseInt(code, 16), all))
     .replace(/&amp;/g, '&');
 }

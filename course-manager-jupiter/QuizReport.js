@@ -538,8 +538,15 @@ function quizHtmlText_(html) {
     .replace(/<img\b[^>]*>/gi, ' [picture] ')
     .replace(/<[^>]*>/g, '')
     .replace(/&(nbsp|amp|lt|gt|quot|apos);/g, (all, name) => named[name])
-    .replace(/&#(\d+);/g, (all, code) => String.fromCharCode(Number(code)))
+    // Character codes, decimal (&#8217;) or hex (&#x2019;, which New Quizzes writes).
+    .replace(/&#(\d+);/g, (all, code) => quizCodePoint_(Number(code), all))
+    .replace(/&#x([0-9a-f]+);/gi, (all, code) => quizCodePoint_(parseInt(code, 16), all))
     .split('\n').map(line => line.replace(/[ \t]+/g, ' ').trim()).filter(Boolean).join('\n');
+}
+
+/** The character for a code number, or the original text if it isn't a valid character. */
+function quizCodePoint_(code, original) {
+  return Number.isInteger(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : original;
 }
 
 /**
