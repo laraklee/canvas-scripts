@@ -6,10 +6,12 @@
 >   worked** (50/50, 21 banks listed, 10 red rows, shading fine). One bug from that run:
 >   New Quizzes writes hex character codes (`&#x2014;`, `&#x2019;`) that showed as codes;
 >   `quizHtmlText_` and `qtiUnescape_` now decode hex as well as decimal (`quizCodePoint_`),
->   which also fixes Quiz report on live quizzes. Not yet committed. Optional, not done:
->   data-table questions show one cell per line (tall rows). Still to confirm with Lara:
->   the New Quiz "⋮ › Export" wording in the guide. **Next:** commit, push Biology, then
->   AI9, Gastronomy, template, `git push`.
+>   which also fixes Quiz report on live quizzes (commit 3c3cde2). **Live in all four
+>   workbooks (11/8, 9:20–9:22 PM, Lara: "Push all four"):** Biology, AI9, Gastronomy,
+>   template; a read-only `clasp clone` of each matched 3c3cde2 (25 files, no manifest
+>   change). Optional, not done: data-table questions show one cell per line (tall rows).
+>   Still to confirm with Lara: the New Quiz "⋮ › Export" wording in the guide. Classic
+>   banks: Lara still deciding. **Left:** `git push`.
 > - **"Quiz report from export file" (step 2) built 11/8 evening: commit ae0c6e1.** Menu: Canvas Tools › Quiz report from export file (`showQuizExportUpload`,
 >   new `QuizExportReport.js` + `QuizExportUpload.html`). The window reads the zip **in
 >   the browser** with the built-in `DecompressionStream` (no outside library): sizes from
