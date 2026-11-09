@@ -2,6 +2,32 @@
 
 > **Where we left off (current state, 2026-11-08 afternoon)**
 >
+> - **Export reader for New Quizzes (and banked quizzes), step 1 of 2, written 11/8; not
+>   yet committed.** Lara's decision: Quiz report (API) stays the tool for Classic quizzes
+>   without banks; banks and New Quizzes go through a **QTI export**, because the export
+>   carries item-bank questions (the API shows neither Classic bank nor New Quiz item-bank
+>   contents). New `QtiReader.js` (pure functions, runs in Apps Script and Node; reuses
+>   QuizReport.js's picture helpers): `qtiReadExport_({ texts, sizes })` → quizzes with
+>   groups in order (bank questions listed under their group when the bank's
+>   `non_cc_assessments/*.xml.qti` is present), loose questions, points check, pictures
+>   with sizes ($IMS-CC-FILEBASE$ → `web_resources/` in Classic, top-level `Uploaded
+>   Media/` in New Quiz exports), problems (big/missing/outside/old bank/personal
+>   pictures, blank choice, no correct answer, picks > size, bank not in export). Never
+>   reads the access code's value. `/quiz-check`'s script is now a thin wrapper around it.
+>   Tested: offline `scripts/checks/qti-reader.check.js` (made-up export, 19 pass) and
+>   three real exports in the scratchpad: 3.2 Test (51/51, 19 pictures, same flags as
+>   before), "3.9-3.10D Data Scramble Quiz" (Classic, 2 bank groups + 2 loose, 25/25;
+>   single-quiz export leaves banks out → flagged), and "Raw Score Unit 2 Test 25.26"
+>   (New Quiz: 21 item banks, 69 bank questions included, 50/50; flags match the 11/1
+>   hand check: 2 old `/assessment_questions/` files in FRQ 1 Plant, 4 outside sites,
+>   plus a 1.0 MB picture in Light Reactions and four 500–775 KB). **Classic banks:** Lara
+>   is deciding how to handle them ("a pain"); a full course export includes banks but
+>   every file too. **Step 2 (next):** "Quiz report from export file" in Course Manager,
+>   an **upload button** (Lara OK'd): dialog unzips in the browser, sends only the
+>   .xml/.qti text and file sizes to the script, results in the Quiz report layout (red
+>   rows, frozen columns), guide updated. No new Google permissions expected; check
+>   google.script.run size limits on a big export. Correction: the 3.2 Test's Q7 has no
+>   "t he" typo (an artifact of my first rough pass).
 > - **Quiz report picture check (step 2): commit e001cca, pushed to Biology 2026-11-08
 >   and tested by Lara on the 3.2 Test: works.** Q3's new 101 KB screenshot clean; 2
 >   flagged "worth shrinking" (Q49 584 KB, FRQ 1 photo 727 KB), both seen by every

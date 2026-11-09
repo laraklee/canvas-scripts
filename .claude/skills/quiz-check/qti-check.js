@@ -1,15 +1,19 @@
 /**
- * qti-check.js: read-only checker for a Canvas Classic quiz QTI export (already unzipped).
- * Purpose: list question groups, every picture (with size and which question uses it),
- * and flag pictures or questions likely to cause trouble for students. Also writes the
- * plain text of every question to a file for the vocab cross-check.
+ * qti-check.js: read-only checker for a Canvas quiz QTI export (Classic or New Quizzes),
+ * already unzipped. A thin wrapper: the reading is done by Course Manager's
+ * course-manager-jupiter/QtiReader.js (with QuizReport.js's picture helpers), the same
+ * code the workbook's planned "Quiz report from export file" upload will use.
+ * Prints the quiz settings, groups (with bank questions when the bank is in the export),
+ * loose questions, every picture by question with its size, and a FLAGS list. Optionally
+ * writes every question's plain text (bank questions included) for the vocab cross-check.
  * Canvas endpoints: none (reads local files only). Write calls: none.
- * Properties: none. Never prints the quiz access code.
+ * Properties: none. Never prints the quiz access code (the reader only notes if one is set).
  *
  * Usage: node qti-check.js <unzipped-export-folder> [question-text-output-file]
  */
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 const root = process.argv[2];
 const textOut = process.argv[3];
@@ -18,189 +22,94 @@ if (!root || !fs.existsSync(root)) {
   process.exit(1);
 }
 
-const BIG = 1000 * 1000;      // flag as too big (Unit 2 trouble started near 1 MB)
-const LARGE = 500 * 1000;     // worth shrinking
+// Load the shared reader the way the offline checks do (Apps Script files, no Google calls).
+const PROJECT = path.join(__dirname, '..', '..', '..', 'course-manager-jupiter');
+const context = {};
+vm.createContext(context);
+vm.runInContext(['QuizReport.js', 'QtiReader.js']
+  .map(file => fs.readFileSync(path.join(PROJECT, file), 'utf8')).join('\n'), context);
 
-const unescape1 = s => s
-  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
-  .replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
-const plain = h => unescape1(unescape1(h))
-  .replace(/<img\b[^>]*>/gi, ' [picture] ').replace(/<[^>]+>/g, ' ')
-  .replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
-const kb = n => (n >= BIG ? (n / 1e6).toFixed(1) + ' MB' : Math.round(n / 1000) + ' KB');
-const attr = (s, name) => (s.match(new RegExp(name + '="([^"]*)"')) || [])[1];
-
-function walkFiles(dir) {
+// The export as the reader wants it: text of .xml/.qti files, size of every file.
+function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => {
     const p = path.join(dir, e.name);
-    return e.isDirectory() ? walkFiles(p) : [p];
+    return e.isDirectory() ? walk(p) : [p];
   });
 }
-
-const allFiles = walkFiles(root);
-const allText = allFiles.filter(f => /\.(xml|qti)$/i.test(f)).map(f => fs.readFileSync(f, 'utf8')).join('\n');
-
-// Quiz files: <id>/<id>.xml next to assessment_meta.xml
-const quizFiles = allFiles.filter(f => {
-  const dir = path.dirname(f);
-  return path.basename(f) === path.basename(dir) + '.xml' &&
-    fs.existsSync(path.join(dir, 'assessment_meta.xml'));
+const files = { texts: {}, sizes: {} };
+walk(root).forEach(full => {
+  const rel = path.relative(root, full).split(path.sep).join('/');
+  files.sizes[rel] = fs.statSync(full).size;
+  if (/\.(xml|qti)$/i.test(rel)) files.texts[rel] = fs.readFileSync(full, 'utf8');
 });
-if (!quizFiles.length) {
-  console.error('No Classic quiz found in this folder (expected <id>/<id>.xml with assessment_meta.xml).');
+
+const result = context.qtiReadExport_(files);
+if (!result.quizzes.length) {
+  console.error('No quiz found in this folder (expected <id>/<id>.xml next to assessment_meta.xml).');
   process.exit(1);
 }
 
 const textLines = [];
-const usedFiles = new Set();
-
-for (const qf of quizFiles) {
-  const xml = fs.readFileSync(qf, 'utf8');
-  const meta = fs.readFileSync(path.join(path.dirname(qf), 'assessment_meta.xml'), 'utf8');
-  const tag = t => (meta.match(new RegExp('<' + t + '>([^<]*)</' + t + '>')) || [])[1];
-
+// Q numbers won't match Canvas's, and New Quiz picture names are random, so each line
+// also starts the question's wording to find it by.
+const snippet = q => {
+  const text = q.text.replace(/\[picture\]/g, '').replace(/\s+/g, ' ').trim();
+  return text.length > 60 ? `${text.slice(0, 60)}…` : text;
+};
+const where = (q, group) => `Q${q.number} "${snippet(q)}" (${group ? group.title : 'not in a group: every student'})`;
+result.quizzes.forEach(quiz => {
   console.log('==================================================================');
-  console.log(`QUIZ: ${unescape1(tag('title') || '(no title)')}`);
-  console.log(`Points: ${tag('points_possible')} | LockDown Browser: ${tag('require_lockdown_browser')} | ` +
-    `time limit: ${tag('time_limit') || 'none'} | access code: ${tag('access_code') ? 'set (not shown)' : 'none'}`);
-  textLines.push(`QUIZ: ${unescape1(tag('title') || '')}`);
+  console.log(`QUIZ: ${quiz.title}`);
+  console.log(`Points: ${quiz.points} | LockDown Browser: ${quiz.lockdown} | time limit: ` +
+    `${quiz.timeLimit || 'none'} | access code: ${quiz.accessCode ? 'set (not shown)' : 'none'}`);
+  textLines.push(`QUIZ: ${quiz.title}`);
 
-  const flags = [];
-  const pictures = [];
-  const groups = [];
-  const open = []; // sections we're inside: a group object, or null for the quiz's outer section
-  let current = null;
-  let q = 0;
-  let loosePoints = 0;
-  let looseCount = 0;
+  const groups = quiz.entries.filter(e => e.kind === 'group').map(e => e.group);
+  const loose = quiz.entries.filter(e => e.kind === 'question').map(e => e.question);
+  console.log(`\nGROUPS (${groups.length}), ${quiz.counts.questions} questions in all:`);
+  groups.forEach(g => {
+    const bank = !g.bankRef ? '' : (g.bankFound ? ` | bank "${g.bankTitle}"` : ' | BANK NOT IN EXPORT');
+    console.log(`  ${g.title}: pick ${g.pick} of ${g.bankRef && !g.bankFound ? '?' : g.size}, ${g.pointsEach} pts each${bank}`);
+  });
+  if (loose.length) {
+    console.log(`  Not in a group (every student gets these): ${loose.length} question(s), ` +
+      `${loose.reduce((sum, q) => sum + q.points, 0)} pts`);
+  }
+  console.log(`  Points found: ${quiz.pointsFound} | quiz settings say: ${quiz.points}`);
 
-  // Groups END at </section>: questions after it are loose (every student gets them).
-  const re = /<section\b([^>]*)>([\s\S]*?)(?=<item\b|<section\b|<\/section>)|<item\b([^>]*)>([\s\S]*?)<\/item>|(<\/section>)/g;
-  let m;
-  while ((m = re.exec(xml))) {
-    if (m[5] !== undefined) {
-      open.pop();
-      current = open.length ? open[open.length - 1] : null;
-      if (!current) textLines.push('\n=== (not in a group: every student gets these)');
-      continue;
-    }
-    if (m[1] !== undefined) {
-      const title = attr(m[1], 'title');
-      if (!title) { // the quiz's outer section
-        open.push(null);
-        current = null;
-        continue;
+  const flags = quiz.flags.slice();
+  const pictureLines = [];
+  const visit = (q, group) => {
+    textLines.push(`Q${q.number} [${q.type}] ${q.text.replace(/\s+/g, ' ')}`);
+    if (q.choices.length) textLines.push(`   choices: ${q.choices.join(' | ')}`);
+    if (q.correct.length) textLines.push(`   correct: ${q.correct.join(', ')}`);
+    q.pictures.forEach(p => pictureLines.push(`  ${where(q, group)}: ${p.label}`));
+    q.problems.forEach(problem => flags.push(`${where(q, group)}: ${problem}`));
+  };
+  quiz.entries.forEach(e => {
+    if (e.kind === 'question') {
+      if (textLines[textLines.length - 1] !== '\n=== (not in a group: every student gets these)') {
+        textLines.push('\n=== (not in a group: every student gets these)');
       }
-      const head = m[2];
-      current = {
-        title: unescape1(title),
-        pick: Number((head.match(/<selection_number>(\d+)/) || [])[1] || 0),
-        points: (head.match(/<points_per_item>([^<]+)/) || [])[1],
-        bank: (head.match(/<sourcebank_ref>([^<]*)/) || [])[1],
-        items: 0,
-      };
-      open.push(current);
-      groups.push(current);
-      textLines.push(`\n=== ${current.title}`);
-      continue;
+      visit(e.question, null);
+      return;
     }
-    q++;
-    const body = m[4];
-    if (current) {
-      current.items++;
-    } else {
-      looseCount++;
-      loosePoints += Number((body.match(/points_possible<\/fieldlabel>\s*<fieldentry>([^<]*)/) || [])[1] || 0);
-    }
-    const where = `Q${q} (${current ? current.title : 'not in a group: every student'})`;
-    const type = (body.match(/question_type<\/fieldlabel>\s*<fieldentry>([^<]*)/) || [])[1];
-    const texts = [...body.matchAll(/<mattext[^>]*>([\s\S]*?)<\/mattext>/g)].map(x => plain(x[1]));
-    textLines.push(`Q${q} [${type}] ${texts[0] || ''}`);
-    if (texts.length > 1) textLines.push(`   choices: ${texts.slice(1).join(' | ')}`);
+    const g = e.group;
+    textLines.push(`\n=== ${g.title}${g.bankTitle ? ` (bank: ${g.bankTitle})` : ''} | pick ${g.pick}`);
+    g.problems.forEach(problem => flags.push(`Group "${g.title}": ${problem}`));
+    g.questions.forEach(q => visit(q, g));
+  });
 
-    if (!texts[0]) flags.push(`${where}: question has no text`);
-    texts.slice(1).forEach(t => {
-      if (!t || /^No answer text provided\.?$/i.test(t)) flags.push(`${where}: a blank answer choice ("No answer text provided")`);
-    });
-
-    const html = unescape1(body);
-    for (const img of html.match(/<img\b[^>]*>/gi) || []) {
-      const src = unescape1(attr(img, 'src') || '');
-      const endpoint = attr(img, 'data-api-endpoint');
-      const pic = { where, src, size: null, file: null };
-      if (src.startsWith('$IMS-CC-FILEBASE$/')) {
-        const rel = decodeURIComponent(src.replace('$IMS-CC-FILEBASE$/', '').split('?')[0]);
-        const full = path.join(root, 'web_resources', rel);
-        pic.file = rel;
-        if (fs.existsSync(full)) {
-          pic.size = fs.statSync(full).size;
-          usedFiles.add(path.resolve(full));
-          if (pic.size >= BIG) flags.push(`${where}: picture "${rel}" is ${kb(pic.size)}; shrink it`);
-          else if (pic.size >= LARGE) flags.push(`${where}: picture "${rel}" is ${kb(pic.size)}; worth shrinking`);
-        } else {
-          flags.push(`${where}: picture "${rel}" is named in the question but missing from the export`);
-        }
-      } else if (/\/assessment_questions\//.test(src)) {
-        flags.push(`${where}: picture points at an old question-bank file (broken for students)`);
-      } else if (/^https?:\/\//i.test(src) && !/instructure\.com|\/courses\/|\/files\//.test(src)) {
-        flags.push(`${where}: picture comes from an outside site: ${src.split('/')[2]}`);
-      } else if (/\/users\/\d+/.test(src)) {
-        flags.push(`${where}: picture is in someone's personal files (students can't see it)`);
-      } else if (/\/courses\/\d+/.test(src)) {
-        flags.push(`${where}: picture links to course ${src.match(/\/courses\/(\d+)/)[1]} (not packed; may be another course)`);
-      } else {
-        flags.push(`${where}: picture was not packed into the export: ${src.slice(0, 80)}`);
-      }
-      if (endpoint && /\/courses\/(\d+)/.test(endpoint)) {
-        pic.endpoint = endpoint.match(/\/courses\/(\d+)/)[1];
-      }
-      pictures.push(pic);
-    }
-  }
-
-  console.log(`\nGROUPS (${groups.length}), ${q} questions in all:`);
-  for (const g of groups) {
-    const bankNote = g.bank
-      ? ` | BANK ${g.bank} (${allText.includes(`ident="${g.bank}"`) ? 'included in export' : 'NOT in export'})`
-      : '';
-    console.log(`  ${g.title}: pick ${g.pick || '-'} of ${g.items}${g.points ? `, ${g.points} pts each` : ''}${bankNote}`);
-    if (!g.bank && g.pick > g.items) flags.push(`Group "${g.title}" picks ${g.pick} but only has ${g.items} questions`);
-    if (g.bank && !allText.includes(`ident="${g.bank}"`)) flags.push(`Group "${g.title}" pulls from a bank that isn't in the export; its pictures weren't checked`);
-  }
-
-  const groupPoints = groups.reduce((sum, g) => sum + (g.pick || 0) * Number(g.points || 0), 0);
-  const quizPoints = Number(tag('points_possible') || 0);
-  const found = Math.round((groupPoints + loosePoints) * 100) / 100;
-  if (looseCount) console.log(`  Not in a group (every student gets these): ${looseCount} question(s), ${loosePoints} pts`);
-  console.log(`  Points found: ${found} (groups ${groupPoints} + loose ${loosePoints}) | quiz settings say: ${quizPoints}`);
-  if (Math.abs(found - quizPoints) > 0.001) {
-    flags.push(`Questions add up to ${found} points but the quiz says ${quizPoints}` +
-      (groups.some(g => g.bank) ? ' (bank groups may explain it)' : '') +
-      '; confirm with Quiz report or the quiz\'s Questions tab');
-  }
-
-  console.log(`\nPICTURES (${pictures.length} uses):`);
-  for (const p of pictures) {
-    const size = p.size != null ? kb(p.size) : '?';
-    const name = p.file || p.src;
-    console.log(`  ${p.where}: ${name} [${size}]${p.endpoint ? ` (leftover tag: course ${p.endpoint})` : ''}`);
-  }
-  const endpoints = [...new Set(pictures.filter(p => p.endpoint).map(p => p.endpoint))];
-  if (endpoints.length > 1) {
-    flags.push(`Pictures carry leftover tags for more than one course (${endpoints.join(', ')}); usually harmless if the picture is packed, but worth a look`);
-  }
-
+  console.log(`\nPICTURES (${quiz.counts.pictures} uses, ${quiz.counts.pictureFiles} files):`);
+  pictureLines.forEach(line => console.log(line));
   console.log(`\nFLAGS (${flags.length}):`);
   if (!flags.length) console.log('  none');
-  for (const f of flags) console.log(`  - ${f}`);
-}
+  flags.forEach(f => console.log(`  - ${f}`));
+});
 
-const unused = allFiles.filter(f => f.includes(`${path.sep}web_resources${path.sep}`) && !usedFiles.has(path.resolve(f)));
-if (unused.length) {
-  console.log(`\nFiles in the export no question uses (${unused.length}): ` +
-    unused.map(f => path.relative(path.join(root, 'web_resources'), f)).join(', '));
+if (result.unusedMedia.length) {
+  console.log(`\nFiles in the export no question uses (${result.unusedMedia.length}): ${result.unusedMedia.join(', ')}`);
 }
-
 if (textOut) {
   fs.writeFileSync(textOut, textLines.join('\n') + '\n');
   console.log(`\nQuestion text written to ${textOut}`);
