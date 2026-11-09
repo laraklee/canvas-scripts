@@ -2,8 +2,16 @@
 
 > **Where we left off (current state, 2026-11-08 afternoon)**
 >
-> - **Quiz report picture check (step 2) written 2026-11-08, PC; not yet committed or
->   pushed.** New **Pictures** column (before Check): per picture, name · size · Published
+> - **Quiz report picture check (step 2): commit e001cca, pushed to Biology 2026-11-08
+>   and tested by Lara on the 3.2 Test: works.** Q3's new 101 KB screenshot clean; 2
+>   flagged "worth shrinking" (Q49 584 KB, FRQ 1 photo 727 KB), both seen by every
+>   student; all pictures Published or Link only; points 51 = 51. The 35-vs-51 worry was a
+>   bug in `/quiz-check` (questions after a group's end were counted into that group; 9
+>   questions are loose, 16 pts), now fixed. Same run showed an **older Quiz report bug**:
+>   Sheets turned Correct "1, 2, 3" into a date ("1, 2, 2003"); fixed by setting the text
+>   columns (`QUIZ_REPORT_TEXT_COLUMNS`) to plain text before writing. **Next:** commit
+>   these two fixes, push Biology, Lara reruns (expect "1, 2, 3" on Q9 and Q12), then
+>   push AI9 and Gastronomy. Original notes: New **Pictures** column (before Check): per picture, name · size · Published
 >   / Link only / Unpublished, plus "(old tag: course …)" when `data-api-endpoint` names
 >   another course. Check column gains picture problems: 1 MB+ "shrink it", 500 KB+ "worth
 >   shrinking", file or any parent folder unpublished, availability dates (file or folder),

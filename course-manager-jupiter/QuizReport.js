@@ -37,7 +37,9 @@ const QUIZ_REPORT_GROUP_COLOR = '#eeeeee';
 const QUIZ_REPORT_HEADERS = Object.freeze(['Kind', 'Group', 'Pick', 'Of', 'Points each',
   'Source', '#', 'Question Type', 'Points', 'Question Name', 'Question', 'Choices',
   'Correct', 'Pictures', 'Check', 'Group ID', 'Question ID']);
-const QUIZ_PICTURE_BIG = 1000 * 1000;  // "shrink it" (Unit 2's failing pictures were near 1 MB)
+const QUIZ_REPORT_TEXT_COLUMNS = Object.freeze(['Group', 'Question Name', 'Question',
+  'Choices', 'Correct', 'Pictures', 'Check']);
+const QUIZ_PICTURE_BIG =1000 * 1000;  // "shrink it" (Unit 2's failing pictures were near 1 MB)
 const QUIZ_PICTURE_LARGE = 500 * 1000; // "worth shrinking"
 const QUIZ_FOLDER_MAX_DEPTH = 20;
 // Question types whose correct choice(s) are worth showing (weight above 0 = correct).
@@ -549,6 +551,10 @@ function writeQuizReport_(sheet, report, now) {
   sheet.getRange(headerRow, 1, 1, width).setValues([QUIZ_REPORT_HEADERS.slice()])
     .setFontWeight('bold');
   if (!report.rows.length) return;
+  // Text columns stay plain text, so Sheets can't turn "1, 2, 3" (Correct) or a name like
+  // "11/20" into a date. Must be set before the values go in.
+  QUIZ_REPORT_TEXT_COLUMNS.forEach(label => sheet.getRange(headerRow + 1,
+    QUIZ_REPORT_HEADERS.indexOf(label) + 1, report.rows.length, 1).setNumberFormat('@'));
   const table = sheet.getRange(headerRow + 1, 1, report.rows.length, width);
   table.setValues(report.rows).setVerticalAlignment('top');
   report.groupRows.forEach(i => sheet.getRange(headerRow + 1 + i, 1, 1, width)

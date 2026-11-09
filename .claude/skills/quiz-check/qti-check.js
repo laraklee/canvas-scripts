@@ -68,15 +68,29 @@ for (const qf of quizFiles) {
   const flags = [];
   const pictures = [];
   const groups = [];
+  const open = []; // sections we're inside: a group object, or null for the quiz's outer section
   let current = null;
   let q = 0;
+  let loosePoints = 0;
+  let looseCount = 0;
 
-  const re = /<section\b([^>]*)>([\s\S]*?)(?=<item\b|<section\b|<\/section>)|<item\b([^>]*)>([\s\S]*?)<\/item>/g;
+  // Groups END at </section>: questions after it are loose (every student gets them).
+  const re = /<section\b([^>]*)>([\s\S]*?)(?=<item\b|<section\b|<\/section>)|<item\b([^>]*)>([\s\S]*?)<\/item>|(<\/section>)/g;
   let m;
   while ((m = re.exec(xml))) {
+    if (m[5] !== undefined) {
+      open.pop();
+      current = open.length ? open[open.length - 1] : null;
+      if (!current) textLines.push('\n=== (not in a group: every student gets these)');
+      continue;
+    }
     if (m[1] !== undefined) {
       const title = attr(m[1], 'title');
-      if (!title) continue; // the quiz's outer section
+      if (!title) { // the quiz's outer section
+        open.push(null);
+        current = null;
+        continue;
+      }
       const head = m[2];
       current = {
         title: unescape1(title),
@@ -85,14 +99,20 @@ for (const qf of quizFiles) {
         bank: (head.match(/<sourcebank_ref>([^<]*)/) || [])[1],
         items: 0,
       };
+      open.push(current);
       groups.push(current);
       textLines.push(`\n=== ${current.title}`);
       continue;
     }
     q++;
     const body = m[4];
-    if (current) current.items++;
-    const where = `Q${q}${current ? ` (${current.title})` : ''}`;
+    if (current) {
+      current.items++;
+    } else {
+      looseCount++;
+      loosePoints += Number((body.match(/points_possible<\/fieldlabel>\s*<fieldentry>([^<]*)/) || [])[1] || 0);
+    }
+    const where = `Q${q} (${current ? current.title : 'not in a group: every student'})`;
     const type = (body.match(/question_type<\/fieldlabel>\s*<fieldentry>([^<]*)/) || [])[1];
     const texts = [...body.matchAll(/<mattext[^>]*>([\s\S]*?)<\/mattext>/g)].map(x => plain(x[1]));
     textLines.push(`Q${q} [${type}] ${texts[0] || ''}`);
@@ -150,12 +170,13 @@ for (const qf of quizFiles) {
 
   const groupPoints = groups.reduce((sum, g) => sum + (g.pick || 0) * Number(g.points || 0), 0);
   const quizPoints = Number(tag('points_possible') || 0);
-  const ungrouped = q - groups.reduce((sum, g) => sum + g.items, 0);
-  console.log(`  Points from groups (pick x points each): ${groupPoints}` +
-    (ungrouped ? ` plus ${ungrouped} questions outside groups (not added)` : '') +
-    ` | quiz settings say: ${quizPoints}`);
-  if (!ungrouped && Math.abs(groupPoints - quizPoints) > 0.001) {
-    flags.push(`Groups add up to ${groupPoints} points but the quiz says ${quizPoints}; confirm with Quiz report or the quiz's Questions tab`);
+  const found = Math.round((groupPoints + loosePoints) * 100) / 100;
+  if (looseCount) console.log(`  Not in a group (every student gets these): ${looseCount} question(s), ${loosePoints} pts`);
+  console.log(`  Points found: ${found} (groups ${groupPoints} + loose ${loosePoints}) | quiz settings say: ${quizPoints}`);
+  if (Math.abs(found - quizPoints) > 0.001) {
+    flags.push(`Questions add up to ${found} points but the quiz says ${quizPoints}` +
+      (groups.some(g => g.bank) ? ' (bank groups may explain it)' : '') +
+      '; confirm with Quiz report or the quiz\'s Questions tab');
   }
 
   console.log(`\nPICTURES (${pictures.length} uses):`);

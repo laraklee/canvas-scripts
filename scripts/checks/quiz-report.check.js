@@ -211,6 +211,40 @@ check('live loader: each file/folder asked once; 401 = not allowed; odd IDs neve
   [asked, answers.map(a => a.failed || 'ok')],
   [['/files/30', '/folders/2', '/files/31'], ['ok', 'ok', 'ok', 'NOT_ALLOWED', 'BAD_ID', 'BAD_ID']]);
 
+// Writing the report: a stand-in sheet records calls in order (no Google calls).
+const calls = [];
+const fakeRange = (row, col, rows, cols) => {
+  const range = {};
+  ['setValues', 'setNumberFormat', 'setVerticalAlignment', 'setBackground', 'setFontWeight',
+    'setWrap', 'clear', 'clearNote'].forEach(name => {
+    range[name] = arg => {
+      calls.push({ name, row, col, rows, cols, arg });
+      return range;
+    };
+  });
+  return range;
+};
+const fakeSheet = {
+  getMaxColumns: () => 30, getMaxRows: () => 100, insertColumnsAfter: () => {},
+  getRange: (row, col, rows = 1, cols = 1) => fakeRange(row, col, rows, cols),
+  setColumnWidth: () => {},
+};
+const multi = c.buildQuizReport_({ title: 'T', points_possible: 1 }, [{
+  id: 1, position: 1, question_type: 'multiple_answers_question', question_text: '<p>Pick</p>',
+  points_possible: 1, answers: [1, 2, 3].map(n => ({ text: `c${n}`, weight: 100 })),
+}], new Map());
+check('multiple answers: correct is the text "1, 2, 3"', multi.rows[0][12], '1, 2, 3');
+c.writeQuizReport_(fakeSheet, multi, new Date(2026, 10, 8));
+const correctCol = HEADERS.indexOf('Correct') + 1;
+const tableAt = calls.findIndex(x => x.name === 'setValues' && x.cols === HEADERS.length && x.rows === 1 &&
+  Array.isArray(x.arg[0]) && x.arg[0][0] === 'Question');
+const textAt = calls.findIndex(x => x.name === 'setNumberFormat' && x.arg === '@' && x.col === correctCol);
+check('Correct column set to plain text before the rows are written',
+  [textAt >= 0, tableAt >= 0, textAt < tableAt], [true, true, true]);
+check('text columns: Group, Question Name, Question, Choices, Correct, Pictures, Check',
+  calls.filter(x => x.name === 'setNumberFormat' && x.arg === '@').map(x => HEADERS[x.col - 1]),
+  ['Group', 'Question Name', 'Question', 'Choices', 'Correct', 'Pictures', 'Check']);
+
 check('401 on one picture means "not allowed", not "bad token"',
   c.quizPictureFailure_({ canvasType: 'TOKEN_REJECTED' }), 'NOT_ALLOWED');
 let stopped = '';

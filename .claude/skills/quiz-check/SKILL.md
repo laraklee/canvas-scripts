@@ -32,7 +32,9 @@ this skill's folder with the export folder as an argument.
    anything flagged: question, group, file, size. Sizes: about 1 MB and up = shrink it
    (the Unit 2 New Quiz failures on iPads in LockDown Browser involved near-1 MB images);
    500 KB to 1 MB = worth shrinking; under 500 KB is fine. Mention how many questions
-   each group picks, so Lara knows how many students see a flagged question.
+   each group picks, so Lara knows how many students see a flagged question. Questions
+   **not in a group** go to every student (the checker labels them); don't assume a
+   question belongs to the group printed above it.
 4. **Remind what the export can't show:** whether each file is hidden or locked. Lara
    checks in Files: green check or eye-with-slash ("Only available to students with
    link") = fine; gray circle-slash (unpublished) or calendar dates that miss test day =
