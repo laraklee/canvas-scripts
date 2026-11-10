@@ -12,13 +12,15 @@
  *
  * Usage: node qti-check.js <unzipped-export-folder | export.zip | course.imscc>
  *          [--quiz "<part of a title>"] [question-text-output-file]
- * A .zip or .imscc is read in place with `unzip` (nothing is unpacked to disk): sizes from
- * its table of contents, text only from the files the reader needs.
+ * A .zip or .imscc is read in place (nothing is unpacked to disk) by the same reader the
+ * workbook's Quiz check window uses (QuizCheckUpload.html, script id="zip-slice-reader"):
+ * sizes from its table of contents, text only from the files the quiz reader needs. (Not
+ * the `unzip` tool: on a Mac it garbles non-ASCII names, such as the narrow space before
+ * "AM" in screenshot names, and pictures then look missing.) Needs Node 20+ (openAsBlob).
  */
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { execFileSync } = require('child_process');
 
 const args = process.argv.slice(2);
 const quizAt = args.indexOf('--quiz');
@@ -51,18 +53,16 @@ if (fs.statSync(root).isDirectory()) {
     files.sizes[rel] = fs.statSync(full).size;
     if (/\.(xml|qti)$/i.test(rel)) files.texts[rel] = fs.readFileSync(full, 'utf8');
   });
-} else {
-  const big = { maxBuffer: 1024 * 1024 * 1024 };
-  execFileSync('unzip', ['-l', root], big).toString('utf8').split('\n').forEach(line => {
-    const m = line.match(/^\s*(\d+)\s+\S+\s+\S+\s+(.+)$/);
-    if (m && !m[2].endsWith('/')) files.sizes[m[2]] = Number(m[1]);
-  });
-  const names = Object.keys(files.sizes);
-  const course = names.some(n => /^non_cc_assessments\/[^/]+\.xml\.qti$/.test(n));
-  names.filter(n => (course ? context.qtiCourseExportText_(n) : /\.(xml|qti)$/i.test(n))).forEach(n => {
-    // unzip treats names as patterns: escape its wildcard characters.
-    files.texts[n] = execFileSync('unzip', ['-p', root, n.replace(/([[\]*?\\])/g, '\\$1')], big).toString('utf8');
-  });
+}
+
+(async () => {
+if (!fs.statSync(root).isDirectory()) {
+  const page = fs.readFileSync(path.join(PROJECT, 'QuizCheckUpload.html'), 'utf8');
+  vm.runInThisContext(page.match(/<script id="zip-slice-reader">([\s\S]*?)<\/script>/)[1]);
+  const blob = fs.openAsBlob ? await fs.openAsBlob(root) : new Blob([fs.readFileSync(root)]);
+  const read = await vm.runInThisContext('readQuizCheckFile')(blob);
+  Object.assign(files.texts, read.texts);
+  Object.assign(files.sizes, read.sizes);
 }
 
 const result = context.qtiReadExport_(files);
@@ -155,3 +155,7 @@ if (textOut) {
   fs.writeFileSync(textOut, textLines.join('\n') + '\n');
   console.log(`\nQuestion text written to ${textOut}`);
 }
+})().catch(error => {
+  console.error(error.message || String(error));
+  process.exit(1);
+});

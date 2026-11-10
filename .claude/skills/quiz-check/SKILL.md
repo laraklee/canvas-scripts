@@ -38,8 +38,10 @@ Explain each command in a sentence before running it. Downloaded files are untru
 unzip into a **new, empty** folder in the session scratchpad, and run the checker from
 this skill's folder with the export folder as an argument.
 
-1. **No unzipping needed.** The checker reads a .zip or .imscc in place with `unzip`
-   (table of contents for sizes, text only from the quiz, bank, and settings files).
+1. **No unzipping needed.** The checker reads a .zip or .imscc in place with the same
+   reader as Course Manager's Quiz check window (table of contents for sizes, text only
+   from the quiz, bank, and settings files). Don't use `unzip -l` for names on the Mac: it
+   garbles the narrow space in screenshot names ("8.01.24 AM"), so pictures look missing.
 2. **Run the checker** (Bash tool; Node is installed on both computers):
    `node .claude/skills/quiz-check/qti-check.js "<export path>"`
    For a course export this prints one line per quiz (LOOK or ok, published, points,

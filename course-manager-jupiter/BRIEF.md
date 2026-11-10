@@ -19,6 +19,18 @@
 >   flags (9 "worth shrinking", 5 picture not in export, 4 outside site, 3 shrink it,
 >   3 other-course: 3483 ×2 and 4230, 1 blank choice, 1 pick > size; points differ on
 >   Bonus AI Feedback 9 vs 5 and Grade Check 11/09 1 vs 0). Needed text ≈ 6.7 MB.
+> - **Step 1 done (069d95f), step 2 built 11/9 (window + receiveCourseExport, summary in the
+>   window only; menu item "Quiz check (course export)", guide note "Being built").** Window
+>   reads the .imscc by File.slice (59 ms, ~110 MB memory in Node on the 573 MB export),
+>   sends gzip+base64: **0.79 M chars** for 6.7 M chars of text. **Correction to the counts
+>   below: 15 quizzes to look at, not 17.** The trial (and step 1's /quiz-check) listed files
+>   with Mac `unzip`, which garbles the narrow no-break space in screenshot names
+>   ("8.01.24 AM"), so 79 pictures looked missing. Corrected kinds (quizzes): 10 worth
+>   shrinking, 4 shrink it, 3 outside site, 1 not in export (Unit 2, FRQ 1 Plant), other
+>   course: Unit 2 (4230) and both Unit 1 Test copies (3483), 1 blank choice, 1 pick > size,
+>   2 points mismatches. /quiz-check now uses the window's reader (one reader for both).
+>   **Still to test in Google:** google.script.run with ~0.8 MB, Apps Script parse time,
+>   Safari/iPad.
 > - **NEXT: build "Quiz check from course export", plan agreed 11/9.** Step 1 reader:
 >   course-export layout, quiz published state, unpublished file/folder flag, plainer
 >   other-course message ("students in this course can't see it"), offline check,

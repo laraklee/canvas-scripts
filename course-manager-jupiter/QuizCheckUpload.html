@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<!--
+  QuizCheckUpload.html: the "Quiz check (course export)" window (opened by showQuizCheck in
+  QuizCheck.js; Lara, 2026-11-09). The teacher picks a Canvas course export (.imscc; a
+  single-quiz .zip works too). The file is read here, in the browser, a piece at a time
+  (File.slice), so a 600 MB export is never loaded whole: the zip's table of contents
+  gives every file's size, and only the files the quiz reader needs are unpacked (quiz,
+  bank, and settings files: about 7 MB of text for a big course). That text and the
+  sizes are packed into one gzip (CompressionStream; about 1 MB) and sent to
+  receiveCourseExport. Pictures never leave the computer. Messages are shown as plain
+  text (textContent), never as HTML.
+  Canvas endpoints: none. Write operations: none. Properties: none.
+  An export holds course content only (quizzes, pages, files), no student data.
+-->
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 14px; color: #202124; margin: 12px 16px; }
+    p { margin: 0 0 12px; line-height: 1.4; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    button { font-size: 14px; padding: 6px 14px; }
+    input[type=file] { max-width: 100%; }
+    #status { white-space: pre-wrap; line-height: 1.4; }
+    #status.problem { color: #b3261e; }
+  </style>
+</head>
+<body>
+  <p>Choose your <b>course export</b> (.imscc) from Canvas: course <b>Settings</b> ›
+    <b>Export Course Content</b> › <b>Course</b>, then download it when it's ready. The file
+    is read here on your computer; only the quiz text and picture sizes go to the
+    workbook.</p>
+  <div class="row">
+    <input type="file" id="file" accept=".imscc,.zip,application/zip">
+    <button id="go" disabled>Check</button>
+  </div>
+  <div id="status" role="status" aria-live="polite"></div>
+  <div class="row"><button id="close" hidden>Close</button></div>
+
+  <script id="zip-slice-reader">
+    // Reads a Canvas export (a File or Blob) a slice at a time. readQuizCheckFile(file,
+    // onProgress) → { texts: { path: text }, sizes: { path: bytes }, courseExport }.
+    // Course export: texts are only the files the quiz reader needs (same list as
+    // qtiCourseExportText_ in QtiReader.js). Single-quiz export: every .xml/.qti file.
+    // Throws Error with a message for the teacher when the file can't be read.
+    const QUIZ_CHECK_MAX_TEXT_CHARS = 20 * 1000 * 1000;
+    const notZipError = () => new Error('That file isn\'t a Canvas export this window can read. Choose the .imscc file from Canvas\'s course export.');
+
+    async function zipSlice(file, start, end) {
+      return new Uint8Array(await file.slice(start, end).arrayBuffer());
+    }
+    const zipView = bytes => new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    // 8-byte numbers (ZIP64) as plain numbers; exports are far below where that loses precision.
+    const zipBig = (view, i) => view.getUint32(i, true) + view.getUint32(i + 4, true) * 4294967296;
+
+    // Every entry in the zip's table of contents: { name, size, packed, method, local }.
+    async function zipEntries(file) {
+      const tailStart = Math.max(0, file.size - 22 - 65535 - 20);
+      const tail = await zipSlice(file, tailStart, file.size);
+      const tv = zipView(tail);
+      let end = -1;
+      for (let i = tail.length - 22; i >= 0; i--) {
+        if (tv.getUint32(i, true) === 0x06054b50) { end = i; break; }
+      }
+      if (end < 0) throw notZipError();
+      let count = tv.getUint16(end + 10, true);
+      let dirSize = tv.getUint32(end + 12, true);
+      let at = tv.getUint32(end + 16, true);
+      if (count === 0xffff || dirSize === 0xffffffff || at === 0xffffffff) {
+        // ZIP64 table of contents: its locator sits just before the normal end record.
+        if (end < 20 || tv.getUint32(end - 20, true) !== 0x07064b50) throw notZipError();
+        const end64 = zipBig(tv, end - 12);
+        const record = await zipSlice(file, end64, end64 + 56);
+        const rv = zipView(record);
+        if (record.length < 56 || rv.getUint32(0, true) !== 0x06064b50) throw notZipError();
+        count = zipBig(rv, 32);
+        dirSize = zipBig(rv, 40);
+        at = zipBig(rv, 48);
+      }
+      if (at + dirSize > file.size) throw notZipError();
+      const dir = await zipSlice(file, at, at + dirSize);
+      const view = zipView(dir);
+      const decoder = new TextDecoder('utf-8');
+      const entries = [];
+      let p = 0;
+      for (let n = 0; n < count; n++) {
+        if (p + 46 > dir.length || view.getUint32(p, true) !== 0x02014b50) throw notZipError();
+        const method = view.getUint16(p + 10, true);
+        let packed = view.getUint32(p + 20, true);
+        let size = view.getUint32(p + 24, true);
+        const nameLength = view.getUint16(p + 28, true);
+        const extraLength = view.getUint16(p + 30, true);
+        const commentLength = view.getUint16(p + 32, true);
+        let local = view.getUint32(p + 42, true);
+        const name = decoder.decode(dir.subarray(p + 46, p + 46 + nameLength)).replace(/\\/g, '/');
+        // Canvas writes ZIP64 entries: 0xffffffff means "the real value is in the ZIP64
+        // extra field (id 1)", in this order: size, packed size, local header offset.
+        for (let x = p + 46 + nameLength; x + 4 <= p + 46 + nameLength + extraLength;) {
+          const id = view.getUint16(x, true);
+          const length = view.getUint16(x + 2, true);
+          if (id === 1) {
+            let v = x + 4;
+            if (size === 0xffffffff) { size = zipBig(view, v); v += 8; }
+            if (packed === 0xffffffff) { packed = zipBig(view, v); v += 8; }
+            if (local === 0xffffffff) { local = zipBig(view, v); }
+          }
+          x += 4 + length;
+        }
+        p += 46 + nameLength + extraLength + commentLength;
+        if (!name.endsWith('/')) entries.push({ name, size, packed, method, local });
+      }
+      return entries;
+    }
+
+    // One entry's text, read from its own slice of the file.
+    async function zipText(file, entry) {
+      const head = await zipSlice(file, entry.local, entry.local + 30);
+      const hv = zipView(head);
+      if (head.length < 30 || hv.getUint32(0, true) !== 0x04034b50) throw notZipError();
+      const start = entry.local + 30 + hv.getUint16(26, true) + hv.getUint16(28, true);
+      const data = await zipSlice(file, start, start + entry.packed);
+      let raw;
+      if (entry.method === 0) {
+        raw = data;
+      } else if (entry.method === 8) {
+        const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+        raw = new Uint8Array(await new Response(stream).arrayBuffer());
+      } else {
+        throw new Error('That file uses a kind of packing this window can\'t read. Use the export straight from Canvas.');
+      }
+      return new TextDecoder('utf-8').decode(raw);
+    }
+
+    // The files the quiz reader needs from a course export (keep in step with
+    // qtiCourseExportText_ in QtiReader.js; the offline check compares them).
+    function quizCheckWantsText(name) {
+      return /^non_cc_assessments\/[^/]+\.xml\.qti$/.test(name) || /^[^/]+\/assessment_meta\.xml$/.test(name) ||
+        ['course_settings/context.xml', 'course_settings/files_meta.xml', 'imsmanifest.xml'].includes(name);
+    }
+
+    async function readQuizCheckFile(file, onProgress) {
+      const entries = await zipEntries(file);
+      const names = new Set(entries.map(e => e.name));
+      // A course export keeps each quiz as non_cc_assessments/<id>.xml.qti next to <id>/assessment_meta.xml.
+      const courseExport = entries.some(e => {
+        const m = e.name.match(/^([^/]+)\/assessment_meta\.xml$/);
+        return m && names.has(`non_cc_assessments/${m[1]}.xml.qti`);
+      });
+      const wanted = entries.filter(e => (courseExport ? quizCheckWantsText(e.name) : /\.(xml|qti)$/i.test(e.name)));
+      const texts = Object.create(null);
+      const sizes = Object.create(null);
+      entries.forEach(e => { sizes[e.name] = e.size; });
+      let chars = 0;
+      for (let i = 0; i < wanted.length; i++) {
+        if (onProgress && i % 20 === 0) onProgress(i, wanted.length);
+        const text = await zipText(file, wanted[i]);
+        chars += text.length;
+        if (chars > QUIZ_CHECK_MAX_TEXT_CHARS) {
+          throw new Error('That export has more quiz text than the workbook can take at once (over 20 million characters). Nothing was sent.');
+        }
+        texts[wanted[i].name] = text;
+      }
+      return { texts, sizes, courseExport };
+    }
+
+    // Some text as gzip, then base64 (one string google.script.run can carry).
+    async function quizCheckGzipBase64(text) {
+      const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
+      const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      }
+      return btoa(binary);
+    }
+  </script>
+
+  <script>
+    const fileInput = document.getElementById('file');
+    const go = document.getElementById('go');
+    const statusBox = document.getElementById('status');
+    const closeButton = document.getElementById('close');
+    const say = (message, problem) => {
+      statusBox.textContent = message;
+      statusBox.className = problem ? 'problem' : '';
+    };
+    const ready = () => {
+      go.disabled = !fileInput.files.length;
+      fileInput.disabled = false;
+    };
+    fileInput.addEventListener('change', () => {
+      ready();
+      say('');
+    });
+    closeButton.addEventListener('click', () => google.script.host.close());
+    go.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      go.disabled = true;
+      fileInput.disabled = true;
+      say('Reading the export…');
+      try {
+        if (typeof DecompressionStream === 'undefined' || typeof CompressionStream === 'undefined') {
+          throw new Error('This browser can\'t unzip files here. Use a current Chrome, Edge, Safari (16.4 or later), or Firefox.');
+        }
+        const read = await readQuizCheckFile(file, (i, n) => say(`Reading the export… (${i} of ${n} quiz files)`));
+        say('Sending the quiz text to the workbook…');
+        const gzip = await quizCheckGzipBase64(JSON.stringify({ texts: read.texts, sizes: read.sizes }));
+        say('Checking the quizzes…');
+        google.script.run
+          .withSuccessHandler(result => {
+            say(result.message, !result.ok);
+            closeButton.hidden = false;
+            ready();
+          })
+          .withFailureHandler(() => {
+            say('The workbook couldn\'t take the export (it may be too large, or the connection dropped). Nothing was changed. Try once more; if it fails again, see Extensions › Apps Script › Executions.', true);
+            ready();
+          })
+          .receiveCourseExport({ fileName: file.name, gzip });
+      } catch (error) {
+        say(error.message || 'The file couldn\'t be read.', true);
+        ready();
+      }
+    });
+  </script>
+</body>
+</html>
