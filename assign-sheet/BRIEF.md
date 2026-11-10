@@ -6,6 +6,9 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
 > **IN PROGRESS (2026-11-09): section dates (overrides) in Assignment Dates.**
+> **Paused 11/9 evening:** steps 1, 2, 2b, sorting, and gray rows are live on **Biology
+> only** (commit `2e721c2`). Gastronomy, AI9, and the template still run the 11/8
+> code (`396699a`); push to them after step 3 is done and tested. Next: step 3 (Remove).
 > Lara's decisions 11/9: see, edit, add, and remove section dates; shown as "↳" rows
 > under each assignment; student overrides are editable and (changed 11/9 after the first
 > test) show the students' names ("↳ Jane Doe", 3 max then "+ n more"), on the sheet
@@ -15,9 +18,9 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 > because Canvas folds override dates into the assignment's own unless
 > `override_assignment_dates=false` is sent (now in `DATES_FETCH_QUERY`).
 > Three steps, each committed, guide-updated, and tested in sandbox 4573 first:
-> 1. **Load + edit** (code written 11/9, not yet pushed or tested): see "Assignment
+> 1. **Load + edit** (pushed to Biology and tested by Lara 11/9: works): see "Assignment
 >    Dates" below.
-> 2. **Add** (code written 11/9, not yet pushed or tested): menu item "Add section dates
+> 2. **Add** (pushed to Biology and tested 11/9): menu item "Add section dates
 >    below selected assignment" (`addSectionDatesRow`) reads the assignment's overrides
 >    and the course sections, inserts a gray row under the group with a dropdown of
 >    sections that have no override yet ("↳ name"), dates copied from the assignment
@@ -28,7 +31,7 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 >    date omitted if the assignment has none, else null). After a real send: N gets the
 >    new override ID, C loses its dropdown, status "Created". **Pushed and tested by Lara
 >    11/9: works.**
-> 2b. **Add student dates** (Lara asked 11/9; code written, not yet pushed or tested):
+> 2b. **Add student dates** (pushed to Biology, commit `2e721c2`, tested by Lara 11/9: works):
 >    `addStudentDatesRow` shares `addOverrideRow_` (kinds in `DATES_NEW_KINDS`). Asks how
 >    many students (`askStudentCount_`) and inserts one row per student (Lara's choice
 >    11/9 after testing: comma-typing lost the dropdown; Apps Script can't make
@@ -40,7 +43,7 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 >    this run). Messages give counts only, never names. POST sends `student_ids` and title
 >    "n student(s)" (Canvas requires a title). Editing the students on an existing
 >    override stays in Canvas.
-> 3. **Remove:** menu item "Remove section dates on selected rows", confirm, then
+> 3. **Remove (NEXT, not started):** menu item "Remove section dates on selected rows", confirm, then
 >    `DELETE …/assignments/:id/overrides/:id` (a separate item so a deleted or filtered
 >    row can never remove anything).
 
