@@ -7,22 +7,25 @@
  *   Ported from course-manager/03d.AssignmentDates.js. Keep the two public function
  *   names: drawn buttons on row 1 of the sheet can call them.
  * Canvas endpoints called:
- *   GET /api/v1/courses/:course/assignments?include[]=overrides (read; by fetch, and
- *     again by push to compare)
+ *   GET /api/v1/courses/:course/assignments?include[]=overrides&override_assignment_dates=false
+ *     (read; by fetch, and again by push to compare)
  *   PUT /api/v1/courses/:course/assignments/:id (write) for an assignment row ("Everyone
  *     else" dates). Sends only the unlock_at / due_at / lock_at that differ from Canvas.
  *   PUT /api/v1/courses/:course/assignments/:id/overrides/:override_id (write) for a
  *     section-date row ("↳"). Canvas un-sets any override date left out, so this sends
  *     every date the override already sets plus the changed ones; for a student override
  *     it re-sends the same student_ids so the same students stay on it.
+ *   GET /api/v1/courses/:course/users?user_ids[]=… (read; by fetch only, and only when
+ *     an assignment has student dates): the names shown on those "↳" rows.
  *   Both writes go through canvasWrite_, so DRY_RUN applies. Name, points, and
  *   submission type on the sheet are for reference only.
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
  *   Script Property DRY_RUN. Course ID comes from the *Config* sheet, cell B4.
  *
  * Section dates (overrides) appear as "↳" rows under their assignment, with the override
- * ID in the last column. A student override shows only a count ("↳ 2 students"); student
- * names and IDs never go on the sheet or into logs. A date the override doesn't set uses
+ * ID in the last column. A student override shows the students' names ("↳ Jane Doe"; Lara's
+ * choice 11/9). Names go only on the sheet: never into logs, error messages, or alerts,
+ * and student IDs never go on the sheet. A date the override doesn't set uses
  * the assignment's date: it is shown in italics with a note, and stays un-set on push
  * unless it is changed.
  */
@@ -40,7 +43,12 @@ const DATES_FIELDS = Object.freeze([
   { field: 'due_at', label: 'due', dateCol: 9, timeCol: 10 },
   { field: 'lock_at', label: 'lock', dateCol: 11, timeCol: 12 },
 ]);
-const DATES_FETCH_QUERY = Object.freeze({ 'include[]': 'overrides' });
+// override_assignment_dates=false: without it Canvas folds section dates into the
+// assignment's own dates, so the "Everyone else" row would show a section's dates.
+const DATES_FETCH_QUERY = Object.freeze({ 'include[]': 'overrides',
+  override_assignment_dates: false });
+const DATES_MAX_NAMES = 3; // student names shown on one "↳" row before "+ n more"
+const DATES_NAME_BATCH = 50; // student IDs per users request (keeps the URL short)
 const DATES_EDIT_IN_CANVAS = 'Edit in Canvas (not a section, group, or student date)';
 const DATES_INHERITED_NOTE = 'Not set separately for this row: it uses the assignment\'s ' +
   '("Everyone else") date. Change it here to give this row its own date.';
@@ -55,7 +63,8 @@ function fetchCanvasAssignmentDates() {
     ss.toast('Fetching assignments from Canvas...', 'Assignment Dates', -1);
     const assignments = canvasGet_(`/courses/${courseId}/assignments`, DATES_FETCH_QUERY);
     const sheet = ss.getSheetByName(DATES_SHEET_NAME) || ss.insertSheet(DATES_SHEET_NAME);
-    writeDatesSheet_(sheet, assignments, ss.getSpreadsheetTimeZone());
+    const studentNames = getOverrideStudentNames_(courseId, assignments);
+    writeDatesSheet_(sheet, assignments, studentNames, ss.getSpreadsheetTimeZone());
     const overrideCount = assignments.reduce((sum, a) => sum + (a.overrides || []).length, 0);
     console.log(`Fetch assignment dates: ${assignments.length} assignment(s), ` +
       `${overrideCount} section-date row(s) loaded.`);
@@ -148,7 +157,7 @@ function getDatesCourseId_() {
 }
 
 /** Clears row 2 down (row 1 keeps any drawn buttons) and writes the assignment table. */
-function writeDatesSheet_(sheet, assignments, tz) {
+function writeDatesSheet_(sheet, assignments, studentNames, tz) {
   const filter = sheet.getFilter();
   if (filter) filter.remove();
   if (sheet.getLastRow() >= DATES_HEADER_ROW) {
@@ -208,7 +217,7 @@ function writeDatesSheet_(sheet, assignments, tz) {
         dates[f.field] = overrideDate_(override, item, f.field);
         if (!(f.field in override)) inherited.push(f.field);
       });
-      addRow(item, dates, overrideLabel_(override),
+      addRow(item, dates, overrideLabel_(override, studentNames),
         overrideKind_(override) ? loaded : DATES_EDIT_IN_CANVAS, override.id, inherited);
     });
   });
@@ -328,6 +337,24 @@ function sendDateUpdates_(sheet, jobs, tz) {
   return result;
 }
 
+/**
+ * Map of student ID -> name for every student on a student-date override, read from the
+ * course's users in batches. Empty when no assignment has student dates. Names are only
+ * for the sheet: never log them.
+ */
+function getOverrideStudentNames_(courseId, assignments) {
+  const ids = [...new Set(assignments.flatMap(a => (a.overrides || [])
+    .flatMap(o => o.student_ids || []).map(String)))];
+  const names = new Map();
+  for (let i = 0; i < ids.length; i += DATES_NAME_BATCH) {
+    canvasGet_(`/courses/${courseId}/users`, {
+      'user_ids[]': ids.slice(i, i + DATES_NAME_BATCH),
+      'enrollment_state[]': ['active', 'invited', 'inactive', 'completed'],
+    }).forEach(user => names.set(String(user.id), user.name));
+  }
+  return names;
+}
+
 /** Who a section-date override is for: 'section', 'students', 'group', or null (other). */
 function overrideKind_(override) {
   if (override.course_section_id) return 'section';
@@ -337,16 +364,20 @@ function overrideKind_(override) {
 }
 
 /**
- * Name-column text for a section-date row. Students show only a count and groups no name
- * (group names are sometimes student names). The "↳" also stops a section name that
+ * Name-column text for a section-date row. Students show their names from studentNames
+ * (a Map of ID -> name), up to DATES_MAX_NAMES then "+ n more"; a student Canvas didn't
+ * return is counted as "student". Groups show no name. The "↳" also stops a name that
  * starts with "=" from turning into a formula.
  */
-function overrideLabel_(override) {
+function overrideLabel_(override, studentNames) {
   const kind = overrideKind_(override);
   if (kind === 'section') return '↳ ' + (override.title || 'Section');
   if (kind === 'students') {
-    const n = override.student_ids.length;
-    return `↳ ${n} student${n === 1 ? '' : 's'}`;
+    const names = override.student_ids.map(id => studentNames.get(String(id)) || 'student');
+    if (!names.length) return '↳ 0 students';
+    const shown = names.slice(0, DATES_MAX_NAMES).join(', ');
+    const more = names.length - DATES_MAX_NAMES;
+    return '↳ ' + shown + (more > 0 ? ` + ${more} more` : '');
   }
   if (kind === 'group') return '↳ Group';
   return '↳ Other (see Canvas)';

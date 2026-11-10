@@ -7,8 +7,13 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 
 > **IN PROGRESS (2026-11-09): section dates (overrides) in Assignment Dates.**
 > Lara's decisions 11/9: see, edit, add, and remove section dates; shown as "↳" rows
-> under each assignment; student overrides show a count only ("↳ 2 students", no names
-> or IDs on the sheet or in logs) and are editable; group rows say "↳ Group" (no name).
+> under each assignment; student overrides are editable and (changed 11/9 after the first
+> test) show the students' names ("↳ Jane Doe", 3 max then "+ n more"), on the sheet
+> only: never in logs, errors, or alerts; student IDs never on the sheet. Lara crops or
+> hides column C in screenshots she sends Claude. Group rows say "↳ Group" (no name).
+> **Fixed after first test (11/9):** the assignment row showed the student's dates,
+> because Canvas folds override dates into the assignment's own unless
+> `override_assignment_dates=false` is sent (now in `DATES_FETCH_QUERY`).
 > Three steps, each committed, guide-updated, and tested in sandbox 4573 first:
 > 1. **Load + edit** (code written 11/9, not yet pushed or tested): see "Assignment
 >    Dates" below.
@@ -149,7 +154,9 @@ date), I/J Due, K/L Lock, M Sync Status, N Override ID (blank on assignment rows
   `due_at` / `lock_at` that differ (to the minute). Asks before sending.
 - A date needs a time (no accidental midnight). Clear both to remove a date. 11:59 pm is
   sent as 11:59:59 pm.
-- **Section dates (step 1, 11/9):** fetch and push use `include[]=overrides`. Each
+- **Section dates (step 1, 11/9):** fetch and push use `include[]=overrides` and
+  `override_assignment_dates=false`. Student names come from
+  `GET /courses/:c/users?user_ids[]=…` (fetch only, batches of 50). Each
   override is a "↳" row under its assignment (same date columns; N = override ID). The
   assignment row is "Everyone else" and is now sent even when the assignment has
   overrides (an assignment PUT without `assignment_overrides` leaves them alone). An
