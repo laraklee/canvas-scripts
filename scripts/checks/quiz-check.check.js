@@ -1,6 +1,6 @@
 /**
  * scripts/checks/quiz-check.check.js
- * Purpose: offline check of "Quiz check (course export)": the window's slice-by-slice zip
+ * Purpose: offline check of "Quiz Check": the window's slice-by-slice zip
  *   reader (QuizCheckUpload.html, script id="zip-slice-reader") on a MADE-UP course export
  *   this check builds itself (ZIP64 records, like Canvas's), the gzip it sends, and
  *   QuizCheck.js unpacking it and summing up each quiz. Nothing is sent anywhere; Canvas
@@ -95,8 +95,55 @@ const html = fs.readFileSync(path.join(PROJECT, 'QuizCheckUpload.html'), 'utf8')
 vm.runInThisContext(html.match(/<script id="zip-slice-reader">([\s\S]*?)<\/script>/)[1]);
 const win = name => vm.runInThisContext(name);
 
+/**
+ * A pretend workbook: tabs are { name, cells: { 'r,c': value }, colors: { 'r,c': color },
+ * frozen: [rows, cols], active }. Only the calls QuizCheck.js makes are here; ranges are
+ * chainable and record values, backgrounds, and A1.
+ */
+function makeWorkbook() {
+  const tabs = [];
+  const makeTab = name => {
+    const tab = { name, cells: {}, colors: {}, frozen: [0, 0], maxRows: 1000, maxCols: 26, active: false };
+    const range = (row, col, rows = 1, cols = 1) => {
+      const r = {
+        setValues: values => { values.forEach((line, i) => line.forEach((v, j) => { tab.cells[`${row + i},${col + j}`] = v; })); return r; },
+        setBackgrounds: colors => { colors.forEach((line, i) => line.forEach((v, j) => { tab.colors[`${row + i},${col + j}`] = v; })); return r; },
+        getDisplayValue: () => String(tab.cells[`${row},${col}`] ?? ''),
+      };
+      ['setNumberFormat', 'setFontWeight', 'setWrap', 'setVerticalAlignment', 'setHorizontalAlignment']
+        .forEach(fn => { r[fn] = () => r; });
+      return r;
+    };
+    tab.sheet = {
+      getName: () => tab.name,
+      getRange: (a, ...rest) => (a === 'A1' ? range(1, 1) : range(a, ...rest)),
+      clear: () => { tab.cells = {}; tab.colors = {}; },
+      setFrozenRows: n => { tab.frozen[0] = n; },
+      setFrozenColumns: n => { tab.frozen[1] = n; },
+      getMaxRows: () => tab.maxRows,
+      getMaxColumns: () => tab.maxCols,
+      insertRowsAfter: (at, n) => { tab.maxRows += n; },
+      insertColumnsAfter: (at, n) => { tab.maxCols += n; },
+      setColumnWidth: () => {},
+      activate: () => { tabs.forEach(t => { t.active = t === tab; }); },
+    };
+    tabs.push(tab);
+    return tab;
+  };
+  return {
+    tabs,
+    makeTab,
+    app: { getActiveSpreadsheet: () => ({
+      getSheetByName: name => (tabs.find(t => t.name === name) || {}).sheet || null,
+      insertSheet: name => makeTab(name).sheet,
+    }) },
+  };
+}
+let workbook = makeWorkbook();
+
 // The workbook side: QuizReport.js + QtiReader.js + QuizExportReport.js + QuizCheck.js.
 const context = {
+  SpreadsheetApp: { getActiveSpreadsheet: () => workbook.app.getActiveSpreadsheet() },
   sheetProblem_: message => Object.assign(new Error(message), { isSheetProblem: true }),
   console: { log: () => {}, error: () => {} },
   Utilities: {
@@ -177,12 +224,81 @@ const courseZip = new Blob([makeZip(entries, true)]);
   const result = c.receiveCourseExport({ fileName: 'biology-export.imscc', gzip });
   check('workbook: ok, course export, quizzes in order', [result.ok, result.courseExport, result.quizzes.map(q => q.title)],
     [true, true, ['Quiz A', 'Quiz B']]);
-  check('workbook: Quiz A summary (bank picture from another course → look)', result.quizzes[0], {
-    id: 'ga', title: 'Quiz A', published: true, points: 5, pointsFound: 5, pointsOk: true, questions: 2, pictures: 2, rows: 1, look: true });
-  check('workbook: Quiz B summary (points 4 vs 9 → look, unpublished)',
-    [result.quizzes[1].published, result.quizzes[1].pointsOk, result.quizzes[1].rows, result.quizzes[1].look], [false, false, 0, true]);
-  check('workbook: message', result.message, 'Read 2 quiz(zes) from "biology-export.imscc": 2 have something to look at, ' +
-    '0 look fine.\n\n(The overview tab and detailed reports are still being built.)');
+  check('workbook: Quiz A summary (bank picture from another course → red)', result.quizzes[0], {
+    id: 'ga', title: 'Quiz A', published: true, points: 5, pointsFound: 5, pointsOk: true, questions: 2, pictures: 2,
+    rows: 1, level: 'problem', kinds: [['picture from another course', 1]] });
+  check('workbook: Quiz B summary (points 4 vs 9 → red, unpublished)',
+    [result.quizzes[1].published, result.quizzes[1].pointsOk, result.quizzes[1].rows, result.quizzes[1].level,
+      result.quizzes[1].kinds], [false, false, 0, 'problem', [['points add up to 4, not 9', 0]]]);
+  check('workbook: message', result.message, 'Checked 2 quiz(zes) from "biology-export.imscc". See the "Quiz Check" tab: ' +
+    '2 need fixing (red), 0 have suggestions (orange), 0 look fine.\n\n(Detailed reports for each quiz are still being built.)');
+
+  // The overview tab.
+  const tab = workbook.tabs.find(t => t.name === 'Quiz Check');
+  check('tab: made, shown, header and quiz column frozen', [Boolean(tab), tab && tab.active, tab && tab.frozen], [true, true, [4, 1]]);
+  check('tab: top rows', [tab.cells['1,1'], tab.cells['1,2'], tab.cells['2,1'], tab.cells['3,2']],
+    ['Quiz Check:', 'biology-export.imscc', 'Checked', '2: 2 need fixing (red), 0 have suggestions (orange), 0 look fine']);
+  check('tab: headers', [1, 2, 3, 4, 5, 6, 7, 8].map(col => tab.cells[`4,${col}`]),
+    ['Quiz', 'Published', 'Points', 'Points found', 'Questions', 'Pictures', 'Rows to look at', 'What to look at']);
+  check('tab: one row per quiz', [1, 2, 3, 4, 5, 6, 7, 8].map(col => tab.cells[`5,${col}`]),
+    ['Quiz A', 'Yes', 5, 5, 2, 2, 1, 'picture from another course (1)']);
+  check('tab: unpublished, points line', [tab.cells['6,2'], tab.cells['6,8']], ['No', 'points add up to 4, not 9']);
+  check('tab: red rows, whole width', [tab.colors['5,1'], tab.colors['5,8'], tab.colors['6,8']], ['#f4cccc', '#f4cccc', '#f4cccc']);
+
+  // A second run replaces the tab; a "Quiz Check" tab used for something else is left alone.
+  c.receiveCourseExport({ fileName: 'again.imscc', gzip });
+  check('tab: rewritten, not duplicated', [workbook.tabs.filter(t => t.name === 'Quiz Check').length, tab.cells['1,2']],
+    [1, 'again.imscc']);
+  workbook = makeWorkbook();
+  const theirs = workbook.makeTab('Quiz Check');
+  theirs.cells['1,1'] = 'My quiz notes';
+  const blocked = c.receiveCourseExport({ fileName: 'x.imscc', gzip });
+  check('tab: someone else\'s "Quiz Check" tab → asked to rename, untouched',
+    [blocked.ok, blocked.message.startsWith('There\'s already a "Quiz Check" tab'), theirs.cells['1,1']], [false, true, 'My quiz notes']);
+  workbook = makeWorkbook();
+
+  // Red, orange, fine; the order; a short name for each kind of problem.
+  const made = (title, problems, pointsOk = true) => ({ id: title, title, published: true, points: 1, pointsFound: pointsOk ? 1 : 2,
+    pointsOk, counts: { pictures: 0 }, entries: [{ kind: 'question', question: { problems } }] });
+  const levels = [
+    made('Shrink', ['Picture "a.png" is 1.2 MB: shrink it']),
+    made('Worth', ['Picture "a.png" is 600 KB: worth shrinking']),
+    made('Both', ['Picture "a.png" is 600 KB: worth shrinking', 'No correct answer marked']),
+    made('Fine', []),
+    made('Points', [], false),
+  ].map(c.quizCheckSummary_);
+  check('levels: shrink it red, worth shrinking orange, mixed red, fine plain, points red',
+    levels.map(q => q.level), ['problem', 'suggestion', 'problem', '', 'problem']);
+  check('order: red, orange, fine; A–Z with numbers in order', c.quizCheckSort_([
+    { title: 'Unit 10', level: '' }, { title: 'unit 2', level: '' }, { title: 'Z', level: 'suggestion' },
+    { title: 'B', level: 'problem' }, { title: 'a', level: 'problem' }]).map(q => q.title), ['a', 'B', 'Z', 'unit 2', 'Unit 10']);
+  check('orange row colour', c.quizCheckOverview_([levels[1]], 'f', new Date(0)).colors, ['#fce5cd']);
+  check('fine row: no colour', c.quizCheckOverview_([levels[3]], 'f', new Date(0)).colors, [null]);
+  check('short names for every problem the reader writes', [
+    'Picture "a b.png" is named in the question but isn\'t in the export (Canvas couldn\'t copy it, so students may not see it either)',
+    'A picture is an old question-bank file (often broken for students): upload it again into the question',
+    'A picture comes from an outside site (example.com): it can change or disappear; save it and upload it to Canvas',
+    'A picture inside the question is 1.4 MB: shrink it',
+    'A picture is in someone\'s personal files (students can\'t see it)',
+    'A picture is in course 4230\'s files, not this course\'s, so students here can\'t see it: save it and upload it again into the question',
+    'A picture links to a file in this course that wasn\'t in the export (deleted or moved?): check it in Canvas',
+    'A picture links to Canvas files and wasn\'t packed into the export: check it in Canvas',
+    'Picture "a.png" is unpublished in Files, so students can\'t see it: publish it, or set it to "Only available to students with link"',
+    'Picture "a.png" is in an unpublished folder (Pics), so students can\'t see it: publish the folder, or set it to "Only available to students with link"',
+    'Picture "a.png" has availability dates in Files (from 2026-11-01): make sure test day is inside them',
+    'No question text', 'No correct answer marked', 'Blank answer choices (#2, #3)',
+    'Pulls from a question bank that isn\'t in this export, so its questions and pictures weren\'t checked',
+    'Picks 0: students get no question from this group', 'Picks 5 but has only 3 question(s)', 'Something new',
+  ].map(c.quizCheckKind_), ['picture not in export', 'old question-bank picture', 'picture from an outside site',
+    'picture to shrink', 'picture in personal files', 'picture from another course', 'picture not in export',
+    'picture not in export', 'unpublished picture', 'unpublished picture', 'picture with availability dates',
+    'no question text', 'no correct answer', 'blank answer choice', 'bank not in export', 'group picks 0',
+    'group picks more than it has', 'other']);
+  check('a question counts once per kind; kinds in a fixed order', c.quizCheckSummary_({
+    ...made('Many', []), entries: [
+      { kind: 'question', question: { problems: ['No correct answer marked', 'Picture "a" is 2.0 MB: shrink it', 'Picture "b" is 3.0 MB: shrink it'] } },
+      { kind: 'group', group: { questions: [{ problems: ['Picture "c" is 1.1 MB: shrink it'] }], problems: ['Picks 0: students get no question from this group'] } },
+    ] }).kinds, [['picture to shrink', 2], ['no correct answer', 1], ['group picks 0', 1]]);
   const solo = c.receiveCourseExport({ fileName: 'solo.zip',
     gzip: await win('quizCheckGzipBase64')(JSON.stringify({ texts: single.texts, sizes: single.sizes })) });
   check('workbook: single-quiz export says the course export is stricter', [solo.ok, solo.message.includes('single-quiz export')], [true, true]);

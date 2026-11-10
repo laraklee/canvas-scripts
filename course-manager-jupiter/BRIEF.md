@@ -2,6 +2,18 @@
 
 > **Where we left off (current state, 2026-11-09, Mac)**
 >
+> - **Step 3a built 11/9 (PC), not yet pushed or tried in Google:** the check writes a
+>   **"Quiz Check" tab** (A1 "Quiz Check:", B1 file name, Checked, a count line; header row
+>   4; columns Quiz, Published, Points, Points found, Questions, Pictures, Rows to look at,
+>   What to look at). One row per quiz, all of them; red (problem) first, then orange
+>   (only "worth shrinking"), then fine, A–Z with numbers in order. "What to look at" uses
+>   short names (QUIZ_CHECK_KINDS, e.g. "picture from another course (3)"; a points
+>   mismatch reads "points add up to 9, not 5"). The tab is rewritten each run; a "Quiz
+>   Check" tab whose A1 says something else is left alone (teacher asked to rename it).
+>   Menu item and window title are now **"Quiz Check"**; guide note updated (still
+>   "Being built"). Offline check: 30 pass. **Next: Lara tests 3a in Biology, then 3b**
+>   (window keeps the packed text and a quiz list; a click resends it with the quiz id
+>   and writes that quiz's detailed report; orange rows there too).
 > - **Both quiz reports are off the menu (commit b4a5916, live in all four workbooks,
 >   11/9).** Lara: teachers shouldn't have to guess what a report misses. Quiz report
 >   (live) can't see banks or New Quizzes; a single-quiz export hid Unit 2's other-course
