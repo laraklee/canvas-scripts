@@ -29,10 +29,12 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 >    new override ID, C loses its dropdown, status "Created". **Pushed and tested by Lara
 >    11/9: works.**
 > 2b. **Add student dates** (Lara asked 11/9; code written, not yet pushed or tested):
->    `addStudentDatesRow` shares `addOverrideRow_` (kinds in `DATES_NEW_KINDS`). Dropdown
->    of active/invited students without an override on this assignment (≤500, else "use
->    Canvas"); invalid values allowed so several names can be typed with commas. Override
->    ID "new students". Send (`planNewStudentTarget_`) matches names (case/space-
+>    `addStudentDatesRow` shares `addOverrideRow_` (kinds in `DATES_NEW_KINDS`). Asks how
+>    many students (`askStudentCount_`) and inserts one row per student (Lara's choice
+>    11/9 after testing: comma-typing lost the dropdown; Apps Script can't make
+>    multi-select dropdowns, `DataValidationBuilder` has no such option). Dropdown of
+>    active/invited students without an override on this assignment (≤500, else "use
+>    Canvas"), invalid values rejected. Override ID "new students". Send (`planNewStudentTarget_`) matches names (case/space-
 >    insensitive) to `GET /courses/:c/users?enrollment_type[]=student`; refuses unknown
 >    or shared names, or students who already have an override (or are on another new row
 >    this run). Messages give counts only, never names. POST sends `student_ids` and title

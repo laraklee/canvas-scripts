@@ -73,7 +73,7 @@ const DATES_NEW_KINDS = Object.freeze({
     pick: 'a section', help: 'Pick the section that gets its own dates.' }),
   students: Object.freeze({ marker: 'new students', title: 'Add student dates',
     noun: 'student', pick: 'students',
-    help: 'Pick a student, or type several names separated by commas.' }),
+    help: 'Pick the student who gets their own dates.' }),
 });
 const DATES_MAX_CHOICES = 500; // the most items a Sheets dropdown list can hold
 const DATES_SECTION_PREFIX = '↳ ';
@@ -196,13 +196,30 @@ function addSectionDatesRow() {
 }
 
 /**
- * Menu: Add student dates below selected assignment. Like Add section dates, but column C
- * has a dropdown of the course's students who don't have their own dates for it yet.
- * Several names can be typed, separated by commas (Sheets marks that as not in the list,
- * but keeps it). Override ID says "new students"; Send creates one override for them all.
+ * Menu: Add student dates below selected assignment. Like Add section dates, but asks how
+ * many students and adds that many rows, one student each (Lara's choice 11/9: Sheets
+ * scripts can't make multi-select dropdowns). Column C has a dropdown of the course's
+ * students who don't have their own dates for it yet. Override ID says "new students";
+ * Send creates one override per row.
  */
 function addStudentDatesRow() {
   addOverrideRow_(DATES_NEW_KINDS.students);
+}
+
+/**
+ * Asks how many student rows to add (blank = 1). Returns 1..max, or 0 after Cancel or a
+ * bad answer (and says so).
+ */
+function askStudentCount_(ui, max) {
+  const answer = ui.prompt('Add student dates', 'How many students? Each gets their own ' +
+    `row and their own dates (1 to ${max}; blank means 1).`, ui.ButtonSet.OK_CANCEL);
+  if (answer.getSelectedButton() !== ui.Button.OK) return 0;
+  const text = answer.getResponseText().trim();
+  const n = text === '' ? 1 : Number(text);
+  if (Number.isInteger(n) && n >= 1 && n <= max) return n;
+  ui.alert('Add student dates', `Type a whole number from 1 to ${max}. Nothing was changed.`,
+    ui.ButtonSet.OK);
+  return 0;
 }
 
 /** Shared by the two Add menu items. kind is one of DATES_NEW_KINDS. */
@@ -249,6 +266,8 @@ function addOverrideRow_(kind) {
         'for a dropdown. Add these dates in Canvas. Nothing was changed.', ui.ButtonSet.OK);
       return;
     }
+    const howMany = kind === DATES_NEW_KINDS.students ? askStudentCount_(ui, choices.length) : 1;
+    if (!howMany) return;
 
     // Find the assignment row and the last of its "↳" rows right below it.
     const last = sheet.getLastRow();
@@ -262,29 +281,30 @@ function addOverrideRow_(kind) {
     let after = mainRow;
     while (after < last && String(at(after + 1)[0]).trim() === id && isOverride(after + 1)) after++;
 
-    sheet.insertRowAfter(after);
-    const r = after + 1;
+    sheet.insertRowsAfter(after, howMany);
+    const first = after + 1;
     const width = DATES_HEADERS.length;
-    sheet.getRange(r, 1, 1, width).clearContent().clearNote().clearDataValidations();
+    const rows = sheet.getRange(first, 1, howMany, width);
+    rows.clearContent().clearNote().clearDataValidations();
     // Dates, times, formats, and date pickers from the assignment row (Open..Lock, F–L).
-    sheet.getRange(mainRow, 6, 1, 7).copyTo(sheet.getRange(r, 6, 1, 7),
+    sheet.getRange(mainRow, 6, 1, 7).copyTo(sheet.getRange(first, 6, howMany, 7),
       SpreadsheetApp.CopyPasteType.PASTE_NORMAL, false);
-    sheet.getRange(r, 1, 1, width).setBackgrounds([[...DATES_COLORS.section]])
+    rows.setBackgrounds(Array.from({ length: howMany }, () => [...DATES_COLORS.section]))
       .setFontStyle('normal');
-    sheet.getRange(r, 8).setFormula(datesScheduleFormula_(r));
-    sheet.getRange(r, 1).insertCheckboxes().setValue(true);
-    sheet.getRange(r, DATES_COL.id).setValue(id);
-    sheet.getRange(r, DATES_COL.status).setValue(`New: pick ${kind.pick} in column C, ` +
-      'set dates, then Send');
-    sheet.getRange(r, DATES_COL.override).setValue(kind.marker);
-    const nameCell = sheet.getRange(r, 3);
-    // Students: typed lists ("Jane Doe, Sam Lee") are allowed, so invalid values are kept.
-    nameCell.setDataValidation(SpreadsheetApp.newDataValidation()
-      .requireValueInList(choices, true).setAllowInvalid(kind === DATES_NEW_KINDS.students)
+    const each = values => Array.from({ length: howMany }, (_, k) => [values(first + k)]);
+    sheet.getRange(first, 8, howMany, 1).setFormulas(each(r => datesScheduleFormula_(r)));
+    sheet.getRange(first, 1, howMany, 1).insertCheckboxes().setValues(each(() => true));
+    sheet.getRange(first, DATES_COL.id, howMany, 1).setValues(each(() => id));
+    sheet.getRange(first, DATES_COL.status, howMany, 1)
+      .setValues(each(() => `New: pick ${kind.pick} in column C, set dates, then Send`));
+    sheet.getRange(first, DATES_COL.override, howMany, 1).setValues(each(() => kind.marker));
+    const nameCells = sheet.getRange(first, 3, howMany, 1);
+    nameCells.setDataValidation(SpreadsheetApp.newDataValidation()
+      .requireValueInList(choices, true).setAllowInvalid(false)
       .setHelpText(kind.help).build());
-    if (choices.length === 1) nameCell.setValue(choices[0]);
-    nameCell.activate();
-    console.log(`${title}: row inserted, ${choices.length} choice(s).`);
+    if (choices.length === 1) nameCells.setValue(choices[0]);
+    sheet.getRange(first, 3).activate();
+    console.log(`${title}: ${howMany} row(s) inserted, ${choices.length} choice(s).`);
   } catch (error) {
     console.error(`${title} failed: ` + (error.canvasType || error.message));
     ss.toast('', '', 1);
@@ -631,14 +651,16 @@ function planNewSectionTarget_(nameText, sheetRow, assignment, sections, planned
 }
 
 /**
- * Column C of a new student row ("Jane Doe" or "Jane Doe, Sam Lee") -> { target, label,
- * keys } or { problem }. Names match the course's students exactly (ignoring case and
- * extra spaces). Problems give counts, never names (FERPA: no student names in alerts).
+ * Column C of a new student row ("↳ Jane Doe" from the dropdown; a pasted "Jane Doe, Sam
+ * Lee" also works) -> { target, label, keys } or { problem }. Names match the course's
+ * students exactly (ignoring case and extra spaces). The same student on two new rows is
+ * refused. Problems give counts, never names (FERPA: no student names in alerts).
  * Canvas requires a title for student overrides: it gets "n student(s)", not names.
  */
 function planNewStudentTarget_(nameText, sheetRow, assignment, students, planned) {
   const norm = s => String(s).replace(/\s+/g, ' ').trim().toLowerCase();
-  const names = String(nameText).replace(/^↳\s*/, '').split(',').map(norm).filter(Boolean);
+  const names = String(nameText).split(',').map(n => norm(n.replace(/^\s*↳/, '')))
+    .filter(Boolean);
   if (!names.length) return { problem: `Row ${sheetRow}: pick a student in column C.` };
   const byName = new Map();
   students.forEach(s => {
@@ -664,8 +686,9 @@ function planNewStudentTarget_(nameText, sheetRow, assignment, students, planned
     .length;
   if (already) {
     return { problem: `Row ${sheetRow}: ${already} of these students already ` +
-      `${already === 1 ? 'has' : 'have'} their own dates for this assignment. Edit that ` +
-      'row instead, or remove them from this one.' };
+      `${already === 1 ? 'has' : 'have'} their own dates for this assignment, or ` +
+      `${already === 1 ? 'is' : 'are'} picked on another row. Pick someone else, or delete ` +
+      'this row.' };
   }
   const n = chosen.length;
   return {
