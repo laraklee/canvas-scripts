@@ -1,24 +1,32 @@
 /**
- * qti-check.js: read-only checker for a Canvas quiz QTI export (Classic or New Quizzes),
- * already unzipped. A thin wrapper: the reading is done by Course Manager's
+ * qti-check.js: read-only checker for a Canvas quiz QTI export (Classic or New Quizzes) or a
+ * whole-course export (.imscc). A thin wrapper: the reading is done by Course Manager's
  * course-manager-jupiter/QtiReader.js (with QuizReport.js's picture helpers), the same
- * code the workbook's planned "Quiz report from export file" upload will use.
+ * code the workbook's quiz check uses.
  * Prints the quiz settings, groups (with bank questions when the bank is in the export),
  * loose questions, every picture by question with its size, and a FLAGS list. Optionally
  * writes every question's plain text (bank questions included) for the vocab cross-check.
+ * A course export prints one line per quiz unless --quiz picks some by title.
  * Canvas endpoints: none (reads local files only). Write calls: none.
  * Properties: none. Never prints the quiz access code (the reader only notes if one is set).
  *
- * Usage: node qti-check.js <unzipped-export-folder> [question-text-output-file]
+ * Usage: node qti-check.js <unzipped-export-folder | export.zip | course.imscc>
+ *          [--quiz "<part of a title>"] [question-text-output-file]
+ * A .zip or .imscc is read in place with `unzip` (nothing is unpacked to disk): sizes from
+ * its table of contents, text only from the files the reader needs.
  */
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
+const { execFileSync } = require('child_process');
 
-const root = process.argv[2];
-const textOut = process.argv[3];
+const args = process.argv.slice(2);
+const quizAt = args.indexOf('--quiz');
+const quizFilter = quizAt >= 0 ? String(args.splice(quizAt, 2)[1] || '').toLowerCase() : '';
+const root = args[0];
+const textOut = args[1];
 if (!root || !fs.existsSync(root)) {
-  console.error('Usage: node qti-check.js <unzipped-export-folder> [question-text-output-file]');
+  console.error('Usage: node qti-check.js <unzipped-export-folder | export.zip | course.imscc> [--quiz "<title part>"] [question-text-output-file]');
   process.exit(1);
 }
 
@@ -29,7 +37,7 @@ vm.createContext(context);
 vm.runInContext(['QuizReport.js', 'QtiReader.js']
   .map(file => fs.readFileSync(path.join(PROJECT, file), 'utf8')).join('\n'), context);
 
-// The export as the reader wants it: text of .xml/.qti files, size of every file.
+// The export as the reader wants it: text of the files it reads, size of every file.
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => {
     const p = path.join(dir, e.name);
@@ -37,16 +45,49 @@ function walk(dir) {
   });
 }
 const files = { texts: {}, sizes: {} };
-walk(root).forEach(full => {
-  const rel = path.relative(root, full).split(path.sep).join('/');
-  files.sizes[rel] = fs.statSync(full).size;
-  if (/\.(xml|qti)$/i.test(rel)) files.texts[rel] = fs.readFileSync(full, 'utf8');
-});
+if (fs.statSync(root).isDirectory()) {
+  walk(root).forEach(full => {
+    const rel = path.relative(root, full).split(path.sep).join('/');
+    files.sizes[rel] = fs.statSync(full).size;
+    if (/\.(xml|qti)$/i.test(rel)) files.texts[rel] = fs.readFileSync(full, 'utf8');
+  });
+} else {
+  const big = { maxBuffer: 1024 * 1024 * 1024 };
+  execFileSync('unzip', ['-l', root], big).toString('utf8').split('\n').forEach(line => {
+    const m = line.match(/^\s*(\d+)\s+\S+\s+\S+\s+(.+)$/);
+    if (m && !m[2].endsWith('/')) files.sizes[m[2]] = Number(m[1]);
+  });
+  const names = Object.keys(files.sizes);
+  const course = names.some(n => /^non_cc_assessments\/[^/]+\.xml\.qti$/.test(n));
+  names.filter(n => (course ? context.qtiCourseExportText_(n) : /\.(xml|qti)$/i.test(n))).forEach(n => {
+    // unzip treats names as patterns: escape its wildcard characters.
+    files.texts[n] = execFileSync('unzip', ['-p', root, n.replace(/([[\]*?\\])/g, '\\$1')], big).toString('utf8');
+  });
+}
 
 const result = context.qtiReadExport_(files);
 if (!result.quizzes.length) {
-  console.error('No quiz found in this folder (expected <id>/<id>.xml next to assessment_meta.xml).');
+  console.error('No quiz found (expected <id>/<id>.xml or non_cc_assessments/<id>.xml.qti next to <id>/assessment_meta.xml).');
   process.exit(1);
+}
+const picked = quizFilter ? result.quizzes.filter(q => q.title.toLowerCase().includes(quizFilter)) : result.quizzes;
+if (quizFilter && !picked.length) {
+  console.error(`No quiz title contains "${quizFilter}".`);
+  process.exit(1);
+}
+const state = q => (q.published === null ? '' : (q.published ? 'published' : 'UNPUBLISHED'));
+if (result.courseExport && !quizFilter) {
+  // Whole course: one line per quiz; --quiz "<title part>" shows the details.
+  console.log(`COURSE EXPORT (course ${result.courseId || '?'}): ${result.quizzes.length} quizzes. Use --quiz "<title part>" for details.`);
+  result.quizzes.forEach(q => {
+    const all = context.qtiQuestions_(q);
+    const rows = all.filter(x => x.problems.length).length +
+      q.entries.filter(e => e.kind === 'group' && e.group.problems.length).length;
+    const red = rows || !q.pointsOk;
+    console.log(`${red ? 'LOOK' : 'ok  '} ${state(q).padEnd(11)} pts ${q.points}${q.pointsOk ? '' : ` (found ${q.pointsFound})`}` +
+      ` | ${all.length} q | ${q.counts.pictures} pics | ${rows} flagged | ${q.title}`);
+  });
+  process.exit(0);
 }
 
 const textLines = [];
@@ -57,9 +98,9 @@ const snippet = q => {
   return text.length > 60 ? `${text.slice(0, 60)}…` : text;
 };
 const where = (q, group) => `Q${q.number} "${snippet(q)}" (${group ? group.title : 'not in a group: every student'})`;
-result.quizzes.forEach(quiz => {
+picked.forEach(quiz => {
   console.log('==================================================================');
-  console.log(`QUIZ: ${quiz.title}`);
+  console.log(`QUIZ: ${quiz.title}${state(quiz) ? ` (${state(quiz)})` : ''}`);
   console.log(`Points: ${quiz.points} | LockDown Browser: ${quiz.lockdown} | time limit: ` +
     `${quiz.timeLimit || 'none'} | access code: ${quiz.accessCode ? 'set (not shown)' : 'none'}`);
   textLines.push(`QUIZ: ${quiz.title}`);

@@ -1,8 +1,8 @@
 /**
  * scripts/checks/qti-reader.check.js
  * Purpose: offline check of the QTI export reader (course-manager-jupiter/QtiReader.js),
- *   using a MADE-UP export only (a tiny quiz, a bank, and fake picture sizes; nothing is
- *   sent anywhere; Canvas is not called).
+ *   using MADE-UP exports only (a tiny quiz, a bank, and fake picture sizes; plus a tiny
+ *   whole-course export with file settings; nothing is sent anywhere; Canvas is not called).
  *   Run with the others: npm run check-offline.
  *   Repo helper only: not part of any Apps Script project; never clasp-pushed.
  * Canvas endpoints called: none. Canvas write operations: none.
@@ -137,10 +137,79 @@ check('counts: questions, picture uses, files, flagged files', quiz.counts,
 check('media no question uses', result.unusedMedia, ['Uploaded Media/unused.png']);
 check('loose questions keep their own points', [loose1.question.points, loose2.question.points], [1, 4]);
 const coded = c.qtiReadItem_(choiceItem('h1', 'multiple_choice_question', '1.0',
-  '<p>2C2H6 + 7O2 &#x2014;&gt; 4CO2 and the plant&#x2019;s</p>', ['&#x2014;', 'B'], [0]), 1, {}, new Set());
+  '<p>2C2H6 + 7O2 &#x2014;&gt; 4CO2 and the plant&#x2019;s</p>', ['&#x2014;', 'B'], [0]), 1, { sizes: {}, used: new Set() });
 check('New Quiz hex character codes become characters (question and choices)',
   [coded.text, coded.choices], ['2C2H6 + 7O2 —> 4CO2 and the plant’s', ['—', 'B']]);
 check('no quiz in a folder without one', c.qtiReadExport_({ texts: { 'imsmanifest.xml': '' }, sizes: {} }).quizzes, []);
+check('a quiz export is not a course export', [result.courseExport, quiz.published], [false, null]);
+
+// --- A made-up whole-course export (.imscc layout, 2026-11-09) ---
+const pic = file => `<img src="$IMS-CC-FILEBASE$/${file}">`;
+const courseQuizXml = `<?xml version="1.0"?>
+<questestinterop><assessment ident="gc1" title="Course Test"><section ident="root_section">
+${choiceItem('c1', 'multiple_choice_question', '1.0', `<p>Published ${pic('Quiz%20Pics/ok.png')}</p>`, ['A', 'B'], [0])}
+${choiceItem('c2', 'multiple_choice_question', '1.0', `<p>Link only ${pic('Uploaded%20Media%202/hid.png')}</p>`, ['A', 'B'], [0])}
+${choiceItem('c3', 'multiple_choice_question', '1.0', `<p>Unpublished file ${pic('Quiz%20Pics/off.png')}</p>`, ['A', 'B'], [0])}
+${choiceItem('c4', 'multiple_choice_question', '1.0', `<p>Unpublished folder ${pic('Drafts/Sub/d.png')}</p>`, ['A', 'B'], [0])}
+${choiceItem('c5', 'multiple_choice_question', '1.0', `<p>Dates ${pic('Quiz%20Pics/dated.png')}</p>`, ['A', 'B'], [0])}
+${choiceItem('c6', 'multiple_choice_question', '1.0', '<p>Last year <img src="/courses/4230/files/77/preview"></p>', ['A', 'B'], [0])}
+${choiceItem('c7', 'multiple_choice_question', '1.0', '<p>Here but lost <img src="/courses/4791/files/88/download"></p>', ['A', 'B'], [0])}
+<section ident="cs1" title="Bank group">
+  <selection_ordering><selection><sourcebank_ref>cbank</sourcebank_ref><selection_number>1</selection_number><selection_extension><points_per_item>2.0</points_per_item></selection_extension></selection></selection_ordering>
+</section>
+</section></assessment></questestinterop>`;
+const courseBankXml = `<?xml version="1.0"?>
+<questestinterop><objectbank ident="cbank" canvas_item_bank="true">
+  <qtimetadata><qtimetadatafield><fieldlabel>bank_title</fieldlabel><fieldentry>Course bank</fieldentry></qtimetadatafield></qtimetadata>
+${choiceItem('cb1', 'multiple_choice_question', '', '<p>Bank Q <img src="/courses/4230/files/99/preview"></p>', ['X', 'Y'], [0])}
+</objectbank></questestinterop>`;
+const res = (id, href) => `<resource identifier="${id}" type="webcontent" href="${href}"><file href="${href}"/></resource>`;
+const courseFiles = {
+  texts: {
+    'non_cc_assessments/gc1.xml.qti': courseQuizXml,
+    'gc1/assessment_meta.xml': '<quiz><title>Course Test</title><points_possible>9.0</points_possible><workflow_state>unpublished</workflow_state></quiz>',
+    'gc1/assessment_qti.xml': '<questestinterop/>',
+    'non_cc_assessments/cbank.xml.qti': courseBankXml,
+    'course_settings/context.xml': '<context_info><course_id>4791</course_id></context_info>',
+    'imsmanifest.xml': `<manifest><resources>${res('f1', 'web_resources/Quiz Pics/ok.png')}${res('f2', 'web_resources/Uploaded Media 2/hid.png')}` +
+      `${res('f3', 'web_resources/Quiz Pics/off.png')}${res('f4', 'web_resources/Drafts/Sub/d.png')}${res('f5', 'web_resources/Quiz Pics/dated.png')}</resources></manifest>`,
+    'course_settings/files_meta.xml': '<fileMeta><folders><folder path="Uploaded Media 2"><hidden>true</hidden></folder>' +
+      '<folder path="Drafts"><locked>true</locked></folder></folders><files>' +
+      '<file identifier="f1"><display_name>ok.png</display_name></file>' +
+      '<file identifier="f3"><display_name>off.png</display_name><locked>true</locked></file>' +
+      '<file identifier="f5"><display_name>dated.png</display_name><unlock_at>2026-11-12T08:00:00-10:00</unlock_at></file></files></fileMeta>',
+  },
+  sizes: {
+    'web_resources/Quiz Pics/ok.png': 1000, 'web_resources/Uploaded Media 2/hid.png': 1000,
+    'web_resources/Quiz Pics/off.png': 1000, 'web_resources/Drafts/Sub/d.png': 1000,
+    'web_resources/Quiz Pics/dated.png': 1000, 'web_resources/Unused/page-photo.png': 5,
+  },
+};
+const course = c.qtiReadExport_(courseFiles);
+const cq = course.quizzes[0];
+const cp = n => c.qtiQuestions_(cq).find(x => x.number === n);
+check('course export: one quiz (not the assessment_qti.xml copy), course number, published state',
+  [course.courseExport, course.courseId, course.quizzes.length, cq.id, cq.title, cq.published], [true, '4791', 1, 'gc1', 'Course Test', false]);
+check('course export: bank beside the quizzes is found', [cq.entries[7].group.bankFound, cq.entries[7].group.bankTitle], [true, 'Course bank']);
+check('course export: published and link-only pictures are fine',
+  [cp(1).pictures[0].label, cp(1).problems, cp(2).pictures[0].label, cp(2).problems],
+  ['ok.png · 1 KB · published', [], 'hid.png · 1 KB · link only', []]);
+check('course export: unpublished file', [cp(3).pictures[0].label, cp(3).problems], ['off.png · 1 KB · unpublished',
+  ['Picture "off.png" is unpublished in Files, so students can\'t see it: publish it, or set it to "Only available to students with link"']]);
+check('course export: folder above it unpublished', cp(4).problems,
+  ['Picture "d.png" is in an unpublished folder ("Drafts"), so students can\'t see it: publish the folder, or set it to "Only available to students with link"']);
+check('course export: availability dates', cp(5).problems,
+  ['Picture "dated.png" has availability dates in Files (from 2026-11-12T08:00:00-10:00): make sure test day is inside them']);
+check('course export: another course\'s file (quiz and bank)', [cp(6).problems, cp(8).problems].map(p => p[0]), [
+  'A picture is in course 4230\'s files, not this course\'s, so students here can\'t see it: save it and upload it again into the question',
+  'A picture is in course 4230\'s files, not this course\'s, so students here can\'t see it: save it and upload it again into the question']);
+check('course export: this course\'s file left unpacked', cp(7).problems,
+  ['A picture links to a file in this course that wasn\'t in the export (deleted or moved?): check it in Canvas']);
+check('course export: no "unused media" list (other files belong to pages)', course.unusedMedia, []);
+check('course export: only the files the reader needs are text',
+  ['non_cc_assessments/gc1.xml.qti', 'gc1/assessment_meta.xml', 'gc1/assessment_qti.xml', 'course_settings/context.xml',
+    'course_settings/files_meta.xml', 'imsmanifest.xml', 'wiki_content/page.html', 'course_settings/rubrics.xml'].map(c.qtiCourseExportText_),
+  [true, true, false, true, true, true, false, false]);
 
 if (failures) {
   console.log(`\n${failures} check(s) failed.`);

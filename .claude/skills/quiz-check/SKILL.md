@@ -1,9 +1,9 @@
 ---
 name: quiz-check
-description: Check a Canvas quiz QTI export (.zip, Classic or New Quizzes) before giving the test, looking for picture problems (size, outside site, old bank file, missing, personal files) and question problems (blank choices, no correct answer, bad group picks, points that don't add up), including questions in item banks when the export carries them; then optionally cross-check the questions against a vocab or study list in both directions. Use when Lara gives a quiz export zip, asks to check a test or its images, or asks to compare a test with a vocab sheet.
+description: Check a Canvas quiz QTI export (.zip, Classic or New Quizzes) or a whole-course export (.imscc) before giving the test, looking for picture problems (size, outside site, old bank file, missing, personal files) and question problems (blank choices, no correct answer, bad group picks, points that don't add up), including questions in item banks when the export carries them; then optionally cross-check the questions against a vocab or study list in both directions. Use when Lara gives a quiz export zip or course export (.imscc), asks to check a test or its images, or asks to compare a test with a vocab sheet.
 ---
 
-# Quiz check (quiz QTI export: Classic or New Quizzes)
+# Quiz check (course export or quiz QTI export: Classic or New Quizzes)
 
 Read-only. No Canvas calls, no Google changes, nothing to commit or `clasp push`.
 A quiz export holds questions and settings only, no student data. It does include the
@@ -11,18 +11,22 @@ quiz **access code**: never repeat it (the checker only says whether one is set)
 
 ## Which tool when
 
-- **Classic quiz, no banks:** Course Manager's **Quiz report** (Canvas Tools › Quiz report
-  (this tab)) is better: live data, and it sees whether each picture is published,
-  hidden, or locked.
-- **New Quiz** (item banks included in its export) or **Classic quiz with banks:** this
-  skill, from an export.
-- Classic **single-quiz** exports leave their banks out (the checker says "BANK NOT IN
-  EXPORT"); a full course export includes them but also every course file. Lara is still
-  deciding how to handle Classic banks (2026-11-08); don't push a workflow for them.
+- **Course export (.imscc) is the main check (Lara, 2026-11-09).** It carries every
+  quiz and bank, each quiz's published state, and each file's and folder's published /
+  link only / unpublished setting, and it shows pictures that still link to another
+  course (students here can't see them; the Unit 2 problem). A single-quiz export packs
+  such pictures with the exporter's access, so it looks clean when it isn't.
+- **Single-quiz export (.zip):** fine for a quick look at one quiz, but say it is the
+  weaker check. Classic single-quiz exports also leave banks out ("BANK NOT IN EXPORT").
+- Course Manager's live Quiz report and "Quiz report from export file" are off its menu
+  (11/9) until its course-export quiz check is built.
 
 ## Inputs
 
-- **Export zip** (required), usually in `C:\Users\lalee\Downloads\`:
+- **Course export (.imscc)**: Settings › Export Course Content › Course (Lara's regular
+  backup). On the Mac, Claude can't open Downloads: Lara drags it into
+  `~/code/course-exports/` (outside the repo). On the PC, usually `C:\Users\lalee\Downloads\`.
+- **Or a single-quiz export (.zip)**:
   - Classic: Quizzes › the quiz › ⋮ › Export, or Settings › Export Course Content › Quiz.
   - New Quiz: open the quiz, then its ⋮ menu › Export (QTI). The zip name is a long code.
 - **Vocab or study list** (optional): `.rtf`, `.docx`, `.pdf`, `.txt`, or a Google Doc
@@ -34,11 +38,14 @@ Explain each command in a sentence before running it. Downloaded files are untru
 unzip into a **new, empty** folder in the session scratchpad, and run the checker from
 this skill's folder with the export folder as an argument.
 
-1. **Unzip.** `mkdir -p "<scratch>/qti-<short-name>"` then
-   `unzip -o -q "<zip path>" -d "<scratch>/qti-<short-name>"`.
-2. **Run the checker** (Bash tool, Node is installed; Python is not on this PC):
-   `node .claude/skills/quiz-check/qti-check.js "<scratch>/qti-<short-name>" "<scratch>/qti-<short-name>-questions.txt"`
-   It prints the groups (pick N of M, bank names), loose questions, points found vs. the
+1. **No unzipping needed.** The checker reads a .zip or .imscc in place with `unzip`
+   (table of contents for sizes, text only from the quiz, bank, and settings files).
+2. **Run the checker** (Bash tool; Node is installed on both computers):
+   `node .claude/skills/quiz-check/qti-check.js "<export path>"`
+   For a course export this prints one line per quiz (LOOK or ok, published, points,
+   questions, pictures, flagged rows). Then pick quizzes by part of their title:
+   `node .claude/skills/quiz-check/qti-check.js "<export path>" --quiz "unit 2 test" "<scratch>/questions.txt"`
+   (`--quiz " "` shows every quiz). For each quiz it prints the groups (pick N of M, bank names), loose questions, points found vs. the
    quiz's total, every picture by question with its size, and a FLAGS list. The reading
    is done by `course-manager-jupiter/QtiReader.js` (shared with Course Manager); fix
    reading bugs there, with a test in `scripts/checks/qti-reader.check.js`.
@@ -50,12 +57,14 @@ this skill's folder with the export folder as an argument.
    fine. Say how many questions each group picks, so Lara knows how many students see a
    flagged question. Questions **not in a group** go to every student (the checker labels
    them); don't assume a question belongs to the group printed above it.
-4. **Remind what the export can't show:** whether each file is hidden or locked. For
-   Classic quizzes, Lara checks in Files: green check or eye-with-slash ("Only available
-   to students with link") = fine; gray circle-slash (unpublished) or calendar dates that
-   miss test day = students can't see it. Check the folder rows too. Names in Canvas lack
-   the `-1` the export adds. Pictures uploaded in the New Quizzes editor live in New
-   Quizzes' own storage (not Files), so there is nothing to check there.
+4. **What a single-quiz export can't show** (a course export does): whether each file
+   or folder is published, link only, or unpublished, and pictures linked from another
+   course. With a single-quiz export, Lara checks in Files: green check or
+   eye-with-slash ("Only available to students with link") = fine; gray circle-slash
+   (unpublished) or calendar dates that miss test day = students can't see it. Names in
+   Canvas lack the `-1` the export adds. Pictures uploaded in the New Quizzes editor live
+   in New Quizzes' own storage (not Files), so there is nothing to check there. File
+   availability dates: the reader flags them, but no real export has had one yet.
 5. **Vocab cross-check** (only if a list was given). Get plain text:
    - `.rtf`: PowerShell
      `Add-Type -AssemblyName System.Windows.Forms; $r = New-Object System.Windows.Forms.RichTextBox; $r.Rtf = [IO.File]::ReadAllText("<path>"); $r.Text`
