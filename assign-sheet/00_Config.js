@@ -14,6 +14,7 @@ function onOpen() {
       .addItem('Load assignment dates from Canvas', 'fetchCanvasAssignmentDates') // 07_AssignmentDates.js
       .addItem('Send changed dates to Canvas', 'pushAssignmentDatesToCanvas')
       .addSeparator()
+      .addItem('Add section dates below selected assignment', 'addSectionDatesRow')
       .addItem('Sort by selected column (keeps ↳ rows together)', 'sortAssignmentDatesBySelectedColumn'))
     .addSeparator()
     .addItem('🔄 Update schedule from Master', 'runFullScheduleUpdate') // 02_Master_Builder.js (Steps 1-4)

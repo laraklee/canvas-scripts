@@ -19,7 +19,13 @@
  *     it re-sends the same student_ids so the same students stay on it.
  *   GET /api/v1/courses/:course/users?user_ids[]=… (read; by fetch only, and only when
  *     an assignment has student dates): the names shown on those "↳" rows.
- *   Both writes go through canvasWrite_, so DRY_RUN applies. Name, points, and
+ *   GET /api/v1/courses/:course/sections and
+ *   GET /api/v1/courses/:course/assignments/:id/overrides (read; by "Add section dates
+ *     below selected assignment", for its dropdown of sections without their own dates;
+ *     push reads sections again for new rows).
+ *   POST /api/v1/courses/:course/assignments/:id/overrides (write) for a new section-date
+ *     row (Override ID "new"): creates that section's dates (course_section_id + dates).
+ *   All writes go through canvasWrite_, so DRY_RUN applies. Name, points, and
  *   submission type on the sheet are for reference only.
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
  *   Script Property DRY_RUN. Course ID comes from the *Config* sheet, cell B4.
@@ -58,6 +64,8 @@ const DATES_COLORS = Object.freeze({
   assignment: datesRowColors_('#ffffff'),
   section: datesRowColors_('#e8eaed'),
 });
+const DATES_NEW_OVERRIDE = 'new'; // Override ID of a row added by Add section dates, until sent
+const DATES_SECTION_PREFIX = '↳ ';
 const DATES_MAX_NAMES = 3; // student names shown on one "↳" row before "+ n more"
 const DATES_NAME_BATCH = 50; // student IDs per users request (keeps the URL short)
 const DATES_EDIT_IN_CANVAS = 'Edit in Canvas (not a section, group, or student date)';
@@ -114,7 +122,11 @@ function pushAssignmentDatesToCanvas() {
     ss.toast('Comparing with Canvas...', 'Assignment Dates', -1);
     const live = new Map(canvasGet_(`/courses/${courseId}/assignments`, DATES_FETCH_QUERY)
       .map(item => [String(item.id), item]));
-    const plan = planDateUpdates_(sheet, courseId, live, ss.getSpreadsheetTimeZone());
+    let sections = null; // read only if a checked row is a new section-date row
+    const getSections = () => sections ||
+      (sections = canvasGet_(`/courses/${courseId}/sections`));
+    const plan = planDateUpdates_(sheet, courseId, live, getSections,
+      ss.getSpreadsheetTimeZone());
     ss.toast('', '', 1);
 
     if (plan.problems.length) {
@@ -132,7 +144,9 @@ function pushAssignmentDatesToCanvas() {
     const dateCount = plan.toSend.reduce((sum, job) => sum + job.fields.length, 0);
     const answer = ui.alert('Send assignment dates?',
       `Course ${courseId}: ${plan.toSend.length} row(s) will change ` +
-      `(${dateCount} date(s) in all). Students will see the new dates.` +
+      `(${dateCount} date(s) in all)` +
+      (plan.creates ? `, including ${plan.creates} new section date row(s)` : '') +
+      '. Students will see the new dates.' +
       (plan.skipped ? `\n${plan.skipped} row(s) will be skipped; see Sync Status.` : '') +
       '\n\n' + describeDryRun_(isDryRun_()) + '\n\nContinue?',
       ui.ButtonSet.YES_NO);
@@ -154,6 +168,82 @@ function pushAssignmentDatesToCanvas() {
     ss.toast('', '', 1);
     ui.alert('Send assignment dates', 'Could not finish. ' + describeCanvasError_(error),
       ui.ButtonSet.OK);
+  }
+}
+
+/**
+ * Menu: Add section dates below selected assignment. Inserts a new "↳" row under the
+ * selected assignment (and its existing "↳" rows), with a dropdown of the course's
+ * sections that don't have their own dates for it yet, and the assignment's dates as a
+ * starting point. Override ID says "new"; Send creates it in Canvas. Reads Canvas only.
+ */
+function addSectionDatesRow() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getActiveSheet();
+  const title = 'Add section dates';
+  try {
+    const row = sheet.getActiveCell().getRow();
+    const id = sheet.getName() === DATES_SHEET_NAME && row >= DATES_FIRST_DATA_ROW ?
+      String(sheet.getRange(row, DATES_COL.id).getValue()).trim() : '';
+    if (!/^\d+$/.test(id)) {
+      ui.alert(title, `On the ${DATES_SHEET_NAME} tab, click any cell in the assignment's ` +
+        'row and run this again. Nothing was changed.', ui.ButtonSet.OK);
+      return;
+    }
+    const courseId = getDatesCourseId_();
+    if (!courseId) return;
+
+    ss.toast('Getting sections from Canvas...', 'Assignment Dates', -1);
+    const taken = new Set(canvasGet_(`/courses/${courseId}/assignments/${id}/overrides`)
+      .filter(o => o.course_section_id).map(o => String(o.course_section_id)));
+    const choices = canvasGet_(`/courses/${courseId}/sections`)
+      .filter(s => !taken.has(String(s.id))).map(s => DATES_SECTION_PREFIX + s.name);
+    ss.toast('', '', 1);
+    if (!choices.length) {
+      ui.alert(title, 'Every section already has its own dates for this assignment. ' +
+        'Nothing was changed.', ui.ButtonSet.OK);
+      return;
+    }
+
+    // Find the assignment row and the last of its "↳" rows right below it.
+    const last = sheet.getLastRow();
+    const ids = sheet.getRange(DATES_FIRST_DATA_ROW, DATES_COL.id, last - DATES_FIRST_DATA_ROW + 1,
+      DATES_COL.override - DATES_COL.id + 1).getValues();
+    const at = r => ids[r - DATES_FIRST_DATA_ROW];
+    const isOverride = r => String(at(r)[DATES_COL.override - DATES_COL.id]).trim() !== '';
+    let mainRow = row;
+    while (mainRow > DATES_FIRST_DATA_ROW && isOverride(mainRow) &&
+      String(at(mainRow - 1)[0]).trim() === id) mainRow--;
+    let after = mainRow;
+    while (after < last && String(at(after + 1)[0]).trim() === id && isOverride(after + 1)) after++;
+
+    sheet.insertRowAfter(after);
+    const r = after + 1;
+    const width = DATES_HEADERS.length;
+    sheet.getRange(r, 1, 1, width).clearContent().clearNote().clearDataValidations();
+    // Dates, times, formats, and date pickers from the assignment row (Open..Lock, F–L).
+    sheet.getRange(mainRow, 6, 1, 7).copyTo(sheet.getRange(r, 6, 1, 7),
+      SpreadsheetApp.CopyPasteType.PASTE_NORMAL, false);
+    sheet.getRange(r, 1, 1, width).setBackgrounds([[...DATES_COLORS.section]])
+      .setFontStyle('normal');
+    sheet.getRange(r, 8).setFormula(datesScheduleFormula_(r));
+    sheet.getRange(r, 1).insertCheckboxes().setValue(true);
+    sheet.getRange(r, DATES_COL.id).setValue(id);
+    sheet.getRange(r, DATES_COL.status).setValue('New: pick a section in column C, ' +
+      'set dates, then Send');
+    sheet.getRange(r, DATES_COL.override).setValue(DATES_NEW_OVERRIDE);
+    const nameCell = sheet.getRange(r, 3);
+    nameCell.setDataValidation(SpreadsheetApp.newDataValidation()
+      .requireValueInList(choices, true).setAllowInvalid(false)
+      .setHelpText('Pick the section that gets its own dates.').build());
+    if (choices.length === 1) nameCell.setValue(choices[0]);
+    nameCell.activate();
+    console.log(`Add section dates: row inserted, ${choices.length} section choice(s).`);
+  } catch (error) {
+    console.error('Add section dates failed: ' + (error.canvasType || error.message));
+    ss.toast('', '', 1);
+    ui.alert(title, 'Could not finish. ' + describeCanvasError_(error), ui.ButtonSet.OK);
   }
 }
 
@@ -386,15 +476,18 @@ function writeDatesSheet_(sheet, assignments, studentNames, tz) {
 /**
  * Reads checked rows and compares each with Canvas. Returns { toSend, skipped, problems }.
  * Each job: { row, path, fields, payload }. Skipped rows get a reason in Sync Status.
- * A row with an Override ID is a section-date row; the rest are assignment rows.
+ * A row with an Override ID is a section-date row; the rest are assignment rows. Override
+ * ID "new" is a row from Add section dates: it becomes a POST that creates the override.
+ * getSections() returns the course's sections (read once, only when needed).
  */
-function planDateUpdates_(sheet, courseId, live, tz) {
+function planDateUpdates_(sheet, courseId, live, getSections, tz) {
   const count = sheet.getLastRow() - DATES_FIRST_DATA_ROW + 1;
   const values = sheet.getRange(DATES_FIRST_DATA_ROW, 1, count, DATES_HEADERS.length).getValues();
   // Display text, so dates and times are read exactly as shown on the sheet.
   const shown = sheet.getRange(DATES_FIRST_DATA_ROW, 1, count, DATES_HEADERS.length)
     .getDisplayValues();
-  const plan = { toSend: [], skipped: 0, problems: [] };
+  const plan = { toSend: [], skipped: 0, problems: [], creates: 0 };
+  const newSections = new Set(); // "assignment:section" pairs already planned this run
 
   values.forEach((row, i) => {
     if (row[DATES_COL.check - 1] !== true) return;
@@ -407,6 +500,16 @@ function planDateUpdates_(sheet, courseId, live, tz) {
     const overrideId = String(row[DATES_COL.override - 1]).trim();
     const assignment = live.get(id);
     if (!assignment) return skip('Not found in Canvas: fetch again');
+    if (overrideId === DATES_NEW_OVERRIDE) {
+      const job = planNewSectionDates_(shown[i], sheetRow, courseId, assignment,
+        getSections, newSections, tz);
+      if (job.problem) plan.problems.push(job.problem);
+      else {
+        plan.toSend.push(job);
+        plan.creates++;
+      }
+      return;
+    }
     let override = null;
     if (overrideId) {
       override = (assignment.overrides || []).find(o => String(o.id) === overrideId);
@@ -451,17 +554,63 @@ function planDateUpdates_(sheet, courseId, live, tz) {
   return plan;
 }
 
+/**
+ * One new section-date row -> a POST job { row, method, path, fields, payload, section },
+ * or { problem }. The section comes from the dropdown in column C. A date left blank is
+ * not sent when the assignment has none either, so it keeps following the assignment;
+ * blank where the assignment has a date means "no date" for that section.
+ */
+function planNewSectionDates_(shownRow, sheetRow, courseId, assignment, getSections,
+  newSections, tz) {
+  const name = String(shownRow[2]).replace(/^↳\s*/, '').trim();
+  if (!name) return { problem: `Row ${sheetRow}: pick a section in column C.` };
+  const matches = getSections().filter(s => String(s.name).trim() === name);
+  if (matches.length !== 1) {
+    return { problem: `Row ${sheetRow}: ` + (matches.length ?
+      `more than one section is called "${name}"; add it in Canvas instead.` :
+      `no section called "${name}" in this course; pick one from the list.`) };
+  }
+  const sectionId = String(matches[0].id);
+  const key = `${assignment.id}:${sectionId}`;
+  if (newSections.has(key) || (assignment.overrides || [])
+    .some(o => String(o.course_section_id) === sectionId)) {
+    return { problem: `Row ${sheetRow}: "${name}" already has its own dates for this ` +
+      'assignment. Edit that row instead, or delete this one.' };
+  }
+
+  const body = { course_section_id: Number(sectionId) };
+  for (const f of DATES_FIELDS) {
+    const parsed = parseSheetDateTime_(shownRow[f.dateCol - 1], shownRow[f.timeCol - 1], tz);
+    if (parsed.error) return { problem: `Row ${sheetRow}: ${f.label} ${parsed.error}` };
+    if (parsed.date) body[f.field] = parsed.date.toISOString();
+    else if (assignment[f.field]) body[f.field] = null;
+  }
+  newSections.add(key);
+  return { row: sheetRow, method: 'POST', section: name,
+    path: `/courses/${courseId}/assignments/${assignment.id}/overrides`,
+    fields: DATES_FIELDS.map(f => f.field).filter(field => field in body),
+    payload: { assignment_override: body } };
+}
+
 /** Sends each job through canvasWrite_. Stops early on errors that would hit every row. */
 function sendDateUpdates_(sheet, jobs, tz) {
   const result = { sent: 0, failed: 0, dryRun: isDryRun_(), stoppedMessage: '' };
   for (const job of jobs) {
     const status = sheet.getRange(job.row, DATES_COL.status);
     try {
-      canvasWrite_('PUT', job.path, job.payload);
+      const reply = canvasWrite_(job.method || 'PUT', job.path, job.payload);
+      const stamp = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd HH:mm');
       if (result.dryRun) {
-        status.setValue(`Dry run OK (${job.fields.length} date(s))`);
+        status.setValue(job.method === 'POST' ? 'Dry run OK (would create)' :
+          `Dry run OK (${job.fields.length} date(s))`);
+      } else if (job.method === 'POST') {
+        // Now a normal section-date row: real override ID, fixed name (no dropdown).
+        sheet.getRange(job.row, DATES_COL.override).setValue(reply && reply.id ? reply.id : '');
+        sheet.getRange(job.row, 3).clearDataValidations().setValue(DATES_SECTION_PREFIX + job.section);
+        status.setValue(`Created (${stamp})` + (reply && reply.id ? '' : ': load again'));
+        sheet.getRange(job.row, DATES_COL.check).setValue(false);
       } else {
-        status.setValue('Updated (' + Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd HH:mm') + ')');
+        status.setValue(`Updated (${stamp})`);
         sheet.getRange(job.row, DATES_COL.check).setValue(false);
       }
       result.sent++;
@@ -511,7 +660,7 @@ function overrideKind_(override) {
  */
 function overrideLabel_(override, studentNames) {
   const kind = overrideKind_(override);
-  if (kind === 'section') return '↳ ' + (override.title || 'Section');
+  if (kind === 'section') return DATES_SECTION_PREFIX + (override.title || 'Section');
   if (kind === 'students') {
     const names = override.student_ids.map(id => studentNames.get(String(id)) || 'student');
     if (!names.length) return '↳ 0 students';

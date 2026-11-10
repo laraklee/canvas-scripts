@@ -387,7 +387,26 @@ assignment; change it and that row gets its own date. After sending a change to 
 assignment's own dates, load again before editing its ↳ rows, so the italic dates are
 up to date.</p>
 
-<p>Adding or removing section dates is done in Canvas for now.</p>
+<h3>Add section dates</h3>
+
+<p><span class="menu">Canvas Tools › 📝 Assignment dates › Add section dates below selected
+assignment</span></p>
+
+<ol>
+  <li>Click any cell in the assignment's row and run the menu item.</li>
+  <li>A new gray row appears under the assignment (and any ↳ rows it already has). It
+    starts with the assignment's dates, and its Update? box is already checked.</li>
+  <li>In column C, pick the section from the dropdown. The list only shows sections that
+    don't have their own dates for this assignment yet.</li>
+  <li>Change the dates for that section, then run <b>Send changed dates to Canvas</b>.</li>
+</ol>
+
+<p>Until it's sent, the row's Override ID says <b>new</b>. Loading again before you send
+throws the new row away. A date you leave blank where the assignment has one means "no
+date" for that section. To give specific students their own dates, use Canvas (the sheet
+doesn't add students).</p>
+
+<p>Removing section dates is done in Canvas for now.</p>
 
 <h3>Sorting</h3>
 
@@ -442,6 +461,12 @@ nothing; change those in Canvas.</p>
     itself.</td></tr>
   <tr><td><b>Dry run OK (n date(s))</b></td><td>Checked but not sent (dry run was
     on).</td></tr>
+  <tr><td><b>New: pick a section…</b></td><td>Added by <b>Add section dates</b>, not sent
+    yet.</td></tr>
+  <tr><td><b>Created (date time)</b></td><td>The section's dates were created in Canvas.
+    The row is now a normal ↳ row.</td></tr>
+  <tr><td><b>Dry run OK (would create)</b></td><td>A new section row was checked but not
+    sent (dry run was on).</td></tr>
   <tr><td><b>No changes</b></td><td>The row was checked but its dates already match
     Canvas.</td></tr>
   <tr><td><b>Edit in Canvas (not a section, group, or student date)</b></td><td>A rare

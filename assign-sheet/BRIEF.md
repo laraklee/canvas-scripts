@@ -17,11 +17,17 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 > Three steps, each committed, guide-updated, and tested in sandbox 4573 first:
 > 1. **Load + edit** (code written 11/9, not yet pushed or tested): see "Assignment
 >    Dates" below.
-> 2. **Add:** menu item "Add section dates below selected assignment" inserts a row with a
->    dropdown of course sections (`GET /courses/:c/sections`), dates copied from the
->    assignment; Send creates it with `POST …/assignments/:id/overrides`
->    (`assignment_override[course_section_id]`). Refuse a section that already has one.
->    Sections only (adding students would need names).
+> 2. **Add** (code written 11/9, not yet pushed or tested): menu item "Add section dates
+>    below selected assignment" (`addSectionDatesRow`) reads the assignment's overrides
+>    and the course sections, inserts a gray row under the group with a dropdown of
+>    sections that have no override yet ("↳ name"), dates copied from the assignment
+>    row, Update? checked, Override ID "new". Send (`planNewSectionDates_`) matches the
+>    name to a section (refuses blank, unknown, duplicate names, a section that already
+>    has an override, or the same section twice in one run) and sends
+>    `POST …/assignments/:id/overrides` with `course_section_id` and the dates (blank
+>    date omitted if the assignment has none, else null). After a real send: N gets the
+>    new override ID, C loses its dropdown, status "Created". Sections only (adding
+>    students would need names).
 > 3. **Remove:** menu item "Remove section dates on selected rows", confirm, then
 >    `DELETE …/assignments/:id/overrides/:id` (a separate item so a deleted or filtered
 >    row can never remove anything).
@@ -127,7 +133,8 @@ Grouped by what each item works on; "Load from" / "Send to" says which way data 
 
 - **📅 Calendar & announcements ›** Post selected calendarEvents rows to Canvas
 - **📝 Assignment dates ›** Load assignment dates from Canvas · Send changed dates to Canvas
-  · Sort by selected column (keeps ↳ rows together)
+  · Add section dates below selected assignment · Sort by selected column (keeps ↳ rows
+  together)
 - 🔄 Update schedule from Master · 🔗 Reset Master connection · ☑️ Toggle checkboxes
 - **⚙️ Setup ›** Set Canvas token · Test Canvas connection · Dry run: show status /
   switch on/off
