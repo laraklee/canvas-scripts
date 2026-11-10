@@ -49,13 +49,14 @@ const DATES_FIELDS = Object.freeze([
 // assignment's own dates, so the "Everyone else" row would show a section's dates.
 const DATES_FETCH_QUERY = Object.freeze({ 'include[]': 'overrides',
   override_assignment_dates: false });
-// Row backgrounds, columns A–N: plain, open (green), schedule (purple), due (blue), lock
-// (red), plain. Section-date rows use yellow for plain and a deeper shade of each color.
-const datesRowColors_ = (plain, open, schedule, due, lock) => Object.freeze([
-  plain, plain, plain, plain, plain, open, open, schedule, due, due, lock, lock, plain, plain]);
+// Row backgrounds, columns A–N: A–B white, C–E name area, then open (green), schedule
+// (purple), due (blue), lock (red), M–N white. Section-date rows: gray name area only.
+const datesRowColors_ = name => Object.freeze(['#ffffff', '#ffffff', name, name, name,
+  '#e6f4ea', '#e6f4ea', '#f3e5f5', '#e8f0fe', '#e8f0fe', '#fce8e6', '#fce8e6',
+  '#ffffff', '#ffffff']);
 const DATES_COLORS = Object.freeze({
-  assignment: datesRowColors_('#ffffff', '#e6f4ea', '#f3e5f5', '#e8f0fe', '#fce8e6'),
-  section: datesRowColors_('#fff4c2', '#ceead6', '#e8d1f0', '#d2e3fc', '#f9d4cf'),
+  assignment: datesRowColors_('#ffffff'),
+  section: datesRowColors_('#e8eaed'),
 });
 const DATES_MAX_NAMES = 3; // student names shown on one "↳" row before "+ n more"
 const DATES_NAME_BATCH = 50; // student IDs per users request (keeps the URL short)
@@ -376,7 +377,7 @@ function writeDatesSheet_(sheet, assignments, studentNames, tz) {
   sheet.getRange(first, 8, count, 1).setFontColor('#4a148c'); // schedule
   sheet.getRange(first, 9, count, 2).setFontColor('#1a73e8'); // due
   sheet.getRange(first, 11, count, 2).setFontColor('#9c0006'); // lock
-  // Section-date rows get a yellow tint and deeper date colors, so they stand out.
+  // Section-date rows get a gray name area (C–E), so they stand out.
   sheet.getRange(first, 1, count, DATES_HEADERS.length).setBackgrounds(rows.map(row =>
     [...(row[DATES_COL.override - 1] === '' ? DATES_COLORS.assignment : DATES_COLORS.section)]));
   sheet.getRange(DATES_HEADER_ROW, 1, count + 1, DATES_HEADERS.length).createFilter();

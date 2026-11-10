@@ -165,8 +165,9 @@ date), I/J Due, K/L Lock, M Sync Status, N Override ID (blank on assignment rows
   `override_assignment_dates=false`. Student names come from
   `GET /courses/:c/users?user_ids[]=…` (fetch only, batches of 50). Each
   override is a "↳" row under its assignment (same date columns; N = override ID),
-  tinted (Lara's choice 11/9: yellow #fff4c2 in plain columns, deeper date colors;
-  `DATES_COLORS`; backgrounds move with rows when sorting). The
+  tinted (Lara's choice 11/9: gray #e8eaed in C–E only; yellow was too bright; other
+  columns as on assignment rows; `DATES_COLORS`; backgrounds move with rows when
+  sorting). The
   assignment row is "Everyone else" and is now sent even when the assignment has
   overrides (an assignment PUT without `assignment_overrides` leaves them alone). An
   override row sends `PUT …/assignments/:id/overrides/:override_id`. Canvas un-sets any
