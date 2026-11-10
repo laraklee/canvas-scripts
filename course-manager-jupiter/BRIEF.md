@@ -2,6 +2,11 @@
 
 > **Where we left off (current state, 2026-11-09, PC)**
 >
+> - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in
+>   Biology ("looks fine so far"); guide's "Being built" removed; pushed AI9, Gastronomy,
+>   then template (no manifest change). Live Quiz report and export-file report stay off
+>   the menu (Lara asked; Quiz Check covers everything they did; deleting them is an
+>   option for later). File availability dates are read but untested on real data.
 > - **Quiz links pushed to Biology and tested 11/9 (PC; Lara: "They're good").**
 > - **Step 3b built 11/9 (PC), not yet pushed.** Decided (Lara): Quiz Check opens in the
 >   **side panel** (showSidebar), not a modal, so the sheet stays usable; detailed reports
