@@ -38,9 +38,11 @@ const QTI_CHOICE_TYPES = Object.freeze(['multiple_choice_question', 'true_false_
  * <id>/assessment_meta.xml, course_settings/context.xml and files_meta.xml, and
  * imsmanifest.xml (qtiCourseExportText_ says which). Returns { quizzes: [quiz],
  * unusedMedia: [path] (always [] for a course export: its other files belong to pages and
- * assignments), courseExport, courseId } where quiz is { id, title, published (true,
- * false, or null when the export doesn't say), points, pointsFound, pointsOk, lockdown,
- * timeLimit, accessCode (true/false), entries, flags, counts }. entries, in quiz order:
+ * assignments), courseExport, courseId, rootAccountId } where quiz is { id, title,
+ * published (true, false, or null when the export doesn't say), points, pointsFound,
+ * pointsOk, lockdown, timeLimit, accessCode (true/false), assignmentRef (a Classic quiz's
+ * assignment identifier, or ''; a New Quiz's id is its assignment's), entries, flags,
+ * counts }. entries, in quiz order:
  * { kind: 'group', group } or { kind: 'question', question }. group: { title, pick,
  * pointsEach, bankRef, bankTitle, bankFound, size, questions, problems }. question:
  * { number, title, type, points, text, choices, correct (choice numbers), pictures:
@@ -69,7 +71,8 @@ function qtiReadExport_(files) {
     qtiReadQuiz_(f.id, texts[f.path], texts[`${f.id}/assessment_meta.xml`], ctx));
   const unusedMedia = courseExport ? [] : Object.keys(sizes).filter(path =>
     !/\.(xml|qti)$/i.test(path) && !ctx.used.has(path)).sort();
-  return { quizzes, unusedMedia, courseExport, courseId: ctx.courseId };
+  return { quizzes, unusedMedia, courseExport, courseId: ctx.courseId,
+    rootAccountId: courseExport ? qtiRootAccountId_(texts) : '' };
 }
 
 /** True for a file in a course export that qtiReadExport_ needs as text (the rest: sizes only). */
@@ -81,6 +84,15 @@ function qtiCourseExportText_(path) {
 /** The course number a course export came from (course_settings/context.xml), or ''. */
 function qtiCourseId_(texts) {
   return (String(texts['course_settings/context.xml'] || '').match(/<course_id>(\d+)<\/course_id>/) || [])[1] || '';
+}
+
+/**
+ * The school's Canvas account number (course_settings/context.xml), or ''. Its leading
+ * digits are the school's server number, which Canvas puts into the identifiers it writes
+ * (see quizCheckAssignmentKeys_ in QuizCheck.js).
+ */
+function qtiRootAccountId_(texts) {
+  return (String(texts['course_settings/context.xml'] || '').match(/<root_account_id>(\d+)<\/root_account_id>/) || [])[1] || '';
 }
 
 /**
@@ -147,6 +159,7 @@ function qtiReadQuiz_(id, xml, meta, ctx) {
     lockdown: tag('require_lockdown_browser') === 'true',
     timeLimit: tag('time_limit'),
     accessCode: Boolean(tag('access_code')),
+    assignmentRef: (String(meta || '').match(/<assignment\s+identifier="([^"]+)"/) || [])[1] || '',
     entries: [],
     flags: [],
     counts: { questions: 0, pictures: 0, pictureFiles: 0, flagged: 0 },

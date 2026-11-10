@@ -267,9 +267,10 @@ function latestDueAt_(assignment) {
 
 /**
  * Reads ref_assignmentGroups back as a list of
- * { assignmentId, name, groupId, groupName, position, dueAt }, finding columns by header
- * name. IDs come back as text; dueAt is the sheet's due date value (ISO text or blank).
- * Used by the reorder tool.
+ * { assignmentId, name, groupId, groupName, position, dueAt, url }, finding columns by
+ * header name. IDs come back as text; dueAt is the sheet's due date value (ISO text or
+ * blank); url is the Canvas URL ('' if the tab has no such column). Used by the reorder
+ * tool and Quiz Check (links).
  */
 function readAssignmentGroups_() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ASSIGNMENT_GROUPS);
@@ -295,6 +296,7 @@ function readAssignmentGroups_() {
     groupName: column('Group Name'),
     position: column('Position'),
     dueAt: column('Due Date (ISO)'),
+    url: header.indexOf('Canvas URL'), // optional: -1 on an older tab
   };
   const asId = value => String(value).replace(/\.0$/, '').trim();
   return values.slice(1)
@@ -306,6 +308,7 @@ function readAssignmentGroups_() {
       groupName: row[col.groupName],
       position: Number(row[col.position]),
       dueAt: row[col.dueAt],
+      url: col.url === -1 ? '' : String(row[col.url] || ''),
     }));
 }
 

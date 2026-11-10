@@ -2,7 +2,27 @@
 
 > **Where we left off (current state, 2026-11-09, Mac)**
 >
-> - **Step 3a built 11/9 (PC), not yet pushed or tried in Google:** the check writes a
+> - **Quiz links built 11/9 evening (PC), after 3a; not yet pushed.** Lara: quiz names in
+>   column A should link to Canvas for fixing, using the assignment list, refreshed
+>   automatically at the start. How: when the export's course (context.xml) matches
+>   cfg_CourseID, `writeAssignmentGroupsSheet_` refreshes ref_assignmentGroups (read-only;
+>   Course check not run), then each listed assignment's export identifier is worked out
+>   and matched: **"g" + MD5("assignment_" + global id)**, global id = the root account
+>   number's digits above the last 13 (15750 here) + the assignment number padded to 13
+>   digits. A Classic quiz's meta names its assignment (`<assignment identifier>`); a New
+>   Quiz's own identifier is its assignment's. (Classic quiz ids work the same way with
+>   "quizzes:quiz_", not used.) **Checked on Lara's 11/9 Biology export: 45 of 47 link**;
+>   the 2 not linked are ungraded practice quizzes (Unit 3.2, Unit 4: not assignments).
+>   Refresh fails → the list as it was is used and the window says so; other course or
+>   no cfg_CourseID → no links, window says why; single-quiz exports never link.
+>   Rich-text links in column A (https only). `readAssignmentGroups_` now also returns
+>   `url` (Canvas URL column, optional). Offline check 39 pass, using two real pairs.
+>   Note (11/9): while checking this, a scratch script printed one New Quiz's settings
+>   including its access code in the chat ("Raw Score Unit 2 Test 25.26", closed since
+>   10/7); Lara told at commit time and decides whether to change that code. Scratch
+>   scripts now print titles and counts only. **Left:** `git push` so the Mac has this.
+> - **Step 3a built 11/9 (PC), pushed to Biology 11/9 5:44 PM (9c28ea5); Lara: "looks good
+>   as far as it goes."** The check writes a
 >   **"Quiz Check" tab** (A1 "Quiz Check:", B1 file name, Checked, a count line; header row
 >   4; columns Quiz, Published, Points, Points found, Questions, Pictures, Rows to look at,
 >   What to look at). One row per quiz, all of them; red (problem) first, then orange

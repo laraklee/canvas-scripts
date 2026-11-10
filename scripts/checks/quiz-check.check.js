@@ -103,12 +103,16 @@ const win = name => vm.runInThisContext(name);
 function makeWorkbook() {
   const tabs = [];
   const makeTab = name => {
-    const tab = { name, cells: {}, colors: {}, frozen: [0, 0], maxRows: 1000, maxCols: 26, active: false };
+    const tab = { name, cells: {}, colors: {}, links: {}, frozen: [0, 0], maxRows: 1000, maxCols: 26, active: false };
     const range = (row, col, rows = 1, cols = 1) => {
       const r = {
         setValues: values => { values.forEach((line, i) => line.forEach((v, j) => { tab.cells[`${row + i},${col + j}`] = v; })); return r; },
         setBackgrounds: colors => { colors.forEach((line, i) => line.forEach((v, j) => { tab.colors[`${row + i},${col + j}`] = v; })); return r; },
         getDisplayValue: () => String(tab.cells[`${row},${col}`] ?? ''),
+        setRichTextValues: values => { values.forEach((line, i) => line.forEach((v, j) => {
+          tab.cells[`${row + i},${col + j}`] = v.text;
+          tab.links[`${row + i},${col + j}`] = v.url;
+        })); return r; },
       };
       ['setNumberFormat', 'setFontWeight', 'setWrap', 'setVerticalAlignment', 'setHorizontalAlignment']
         .forEach(fn => { r[fn] = () => r; });
@@ -117,7 +121,7 @@ function makeWorkbook() {
     tab.sheet = {
       getName: () => tab.name,
       getRange: (a, ...rest) => (a === 'A1' ? range(1, 1) : range(a, ...rest)),
-      clear: () => { tab.cells = {}; tab.colors = {}; },
+      clear: () => { tab.cells = {}; tab.colors = {}; tab.links = {}; },
       setFrozenRows: n => { tab.frozen[0] = n; },
       setFrozenColumns: n => { tab.frozen[1] = n; },
       getMaxRows: () => tab.maxRows,
@@ -141,15 +145,59 @@ function makeWorkbook() {
 }
 let workbook = makeWorkbook();
 
+/**
+ * Pretend course setup for links (RefSheets.js isn't loaded here): the workbook's course,
+ * the assignment list the refresh would write, and whether the refresh fails. Real pairs
+ * from Lara's 11/9 Biology export (identifiers and numbers only): Classic quiz "PreLab
+ * 1.5D" names assignment g6f7ff8… = 251474; New Quiz "CK12 1.4-1.5" is ga182b8… = 270391.
+ */
+const REAL_CLASSIC_ASSIGNMENT = 'g6f7ff847b3a8e0ee6ae31cc24e2ae8dc';
+const REAL_NEW_QUIZ = 'ga182b825ffcd39b95c6746afae537002';
+const ROOT_ACCOUNT = '157500000000000001';
+const URL_251474 = 'https://canvas.example.edu/courses/4791/assignments/251474';
+let setup = {};
+const resetSetup = () => {
+  setup = {
+    courseId: '4791',
+    refreshFails: false,
+    refreshed: 0,
+    list: [{ assignmentId: '251474', url: URL_251474 }, { assignmentId: '999', url: 'https://canvas.example.edu/x/999' }],
+  };
+};
+resetSetup();
+
 // The workbook side: QuizReport.js + QtiReader.js + QuizExportReport.js + QuizCheck.js.
 const context = {
-  SpreadsheetApp: { getActiveSpreadsheet: () => workbook.app.getActiveSpreadsheet() },
+  SpreadsheetApp: {
+    getActiveSpreadsheet: () => workbook.app.getActiveSpreadsheet(),
+    newRichTextValue: () => {
+      const v = { text: '', url: '' };
+      const b = { setText: t => { v.text = t; return b; }, setLinkUrl: u => { v.url = u; return b; }, build: () => ({ ...v }) };
+      return b;
+    },
+  },
   sheetProblem_: message => Object.assign(new Error(message), { isSheetProblem: true }),
+  describeCanvasError_: error => error.message,
+  getCourseIdForRefresh_: () => {
+    if (!setup.courseId) throw context.sheetProblem_('cfg_CourseID must be a Canvas course number.');
+    return setup.courseId;
+  },
+  writeAssignmentGroupsSheet_: () => {
+    if (setup.refreshFails) throw context.sheetProblem_('Canvas returned an error for the assignment groups request. Not authorized.');
+    setup.refreshed++;
+    return {};
+  },
+  readAssignmentGroups_: () => setup.list,
   console: { log: () => {}, error: () => {} },
   Utilities: {
     base64Decode: text => Buffer.from(text, 'base64'),
     newBlob: bytes => ({ bytes }),
     ungzip: blob => ({ getDataAsString: () => zlib.gunzipSync(blob.bytes).toString('utf8') }),
+    // Apps Script returns signed bytes; so does this.
+    computeDigest: (algorithm, text) => [...require('crypto').createHash(algorithm).update(text, 'utf8').digest()]
+      .map(b => (b > 127 ? b - 256 : b)),
+    DigestAlgorithm: { MD5: 'md5' },
+    Charset: { UTF_8: 'utf8' },
   },
 };
 vm.createContext(context);
@@ -177,13 +225,13 @@ const bank = `<questestinterop><objectbank ident="gbank"><qtimetadata><qtimetada
 <fieldentry>Bank</fieldentry></qtimetadatafield></qtimetadata>${item('k1', '<p>Last year <img src="/courses/4230/files/5/preview"></p>', '')}</objectbank></questestinterop>`;
 const entries = [
   { name: 'ga/', data: Buffer.alloc(0), method: 0 },
-  { name: 'ga/assessment_meta.xml', data: Buffer.from('<quiz><title>Quiz A</title><points_possible>5.0</points_possible><workflow_state>published</workflow_state></quiz>'), method: 8 },
+  { name: 'ga/assessment_meta.xml', data: Buffer.from(`<quiz identifier="ga"><title>Quiz A</title><points_possible>5.0</points_possible><assignment identifier="${REAL_CLASSIC_ASSIGNMENT}"><title>Quiz A</title><workflow_state>published</workflow_state></assignment></quiz>`), method: 8 },
   { name: 'ga/assessment_qti.xml', data: Buffer.from('<questestinterop/>'), method: 8 },
   { name: 'gb/assessment_meta.xml', data: Buffer.from('<quiz><title>Quiz B</title><points_possible>9.0</points_possible><workflow_state>unpublished</workflow_state></quiz>'), method: 0 },
   { name: 'non_cc_assessments/ga.xml.qti', data: Buffer.from(quizA), method: 8, zip64: true },
   { name: 'non_cc_assessments/gb.xml.qti', data: Buffer.from(quizB), method: 8 },
   { name: 'non_cc_assessments/gbank.xml.qti', data: Buffer.from(bank), method: 8 },
-  { name: 'course_settings/context.xml', data: Buffer.from('<context_info><course_id>4791</course_id></context_info>'), method: 8 },
+  { name: 'course_settings/context.xml', data: Buffer.from(`<context_info><course_id>4791</course_id><root_account_id>${ROOT_ACCOUNT}</root_account_id></context_info>`), method: 8 },
   { name: 'course_settings/files_meta.xml', data: Buffer.from('<fileMeta><folders/><files/></fileMeta>'), method: 8 },
   { name: 'course_settings/rubrics.xml', data: Buffer.from('<rubrics/>'), method: 8 },
   { name: 'imsmanifest.xml', data: Buffer.from('<manifest><resource identifier="f1" href="web_resources/Quiz Pics/ok.png"/></manifest>'), method: 8 },
@@ -226,12 +274,15 @@ const courseZip = new Blob([makeZip(entries, true)]);
     [true, true, ['Quiz A', 'Quiz B']]);
   check('workbook: Quiz A summary (bank picture from another course → red)', result.quizzes[0], {
     id: 'ga', title: 'Quiz A', published: true, points: 5, pointsFound: 5, pointsOk: true, questions: 2, pictures: 2,
-    rows: 1, level: 'problem', kinds: [['picture from another course', 1]] });
+    rows: 1, level: 'problem', kinds: [['picture from another course', 1]], url: URL_251474 });
   check('workbook: Quiz B summary (points 4 vs 9 → red, unpublished)',
     [result.quizzes[1].published, result.quizzes[1].pointsOk, result.quizzes[1].rows, result.quizzes[1].level,
       result.quizzes[1].kinds], [false, false, 0, 'problem', [['points add up to 4, not 9', 0]]]);
   check('workbook: message', result.message, 'Checked 2 quiz(zes) from "biology-export.imscc". See the "Quiz Check" tab: ' +
-    '2 need fixing (red), 0 have suggestions (orange), 0 look fine.\n\n(Detailed reports for each quiz are still being built.)');
+    '2 need fixing (red), 0 have suggestions (orange), 0 look fine.\n\n1 of 2 quiz names link to their page in Canvas. ' +
+    '1 aren\'t linked: ungraded quizzes (such as practice quizzes) aren\'t Canvas assignments.' +
+    '\n\n(Detailed reports for each quiz are still being built.)');
+  check('links: assignment list refreshed once, before linking', setup.refreshed, 1);
 
   // The overview tab.
   const tab = workbook.tabs.find(t => t.name === 'Quiz Check');
@@ -244,6 +295,46 @@ const courseZip = new Blob([makeZip(entries, true)]);
     ['Quiz A', 'Yes', 5, 5, 2, 2, 1, 'picture from another course (1)']);
   check('tab: unpublished, points line', [tab.cells['6,2'], tab.cells['6,8']], ['No', 'points add up to 4, not 9']);
   check('tab: red rows, whole width', [tab.colors['5,1'], tab.colors['5,8'], tab.colors['6,8']], ['#f4cccc', '#f4cccc', '#f4cccc']);
+  check('tab: Quiz A\'s name links to Canvas, Quiz B\'s is plain text', [tab.cells['5,1'], tab.links['5,1'], tab.cells['6,1'], tab.links['6,1']],
+    ['Quiz A', URL_251474, 'Quiz B', '']);
+
+  // Links: the real identifier pairs, and what happens when something's off.
+  const md5 = c.quizCheckMd5Hex_;
+  check('links: MD5 from Apps Script\'s signed bytes', md5('abc'), '900150983cd24fb0d6963f7d28e17f72');
+  check('links: real Classic quiz assignment (251474) and New Quiz (270391) identifiers',
+    [c.quizCheckAssignmentKeys_('251474', ROOT_ACCOUNT, md5)[0], c.quizCheckAssignmentKeys_('270391', ROOT_ACCOUNT, md5)[0]],
+    [REAL_CLASSIC_ASSIGNMENT, REAL_NEW_QUIZ]);
+  const nqUrl = 'https://canvas.example.edu/courses/4791/assignments/270391';
+  check('links: a New Quiz matches by its own id; non-https and bad ids are skipped', [...c.quizCheckLinks_(
+    [{ id: REAL_NEW_QUIZ, assignmentRef: '' }, { id: 'gother', assignmentRef: REAL_CLASSIC_ASSIGNMENT }],
+    [{ assignmentId: '270391', url: nqUrl }, { assignmentId: '251474', url: 'javascript:alert(1)' }, { assignmentId: 'x', url: nqUrl }],
+    ROOT_ACCOUNT, md5)], [[REAL_NEW_QUIZ, nqUrl]]);
+
+  setup.refreshFails = true;
+  const stale = c.receiveCourseExport({ fileName: 'b.imscc', gzip });
+  check('links: refresh fails → list as it was still used, window says so',
+    [stale.ok, stale.quizzes[0].url, stale.message.includes('The assignment list couldn\'t be refreshed from Canvas (Canvas returned an error'),
+      stale.message.includes('quizzes made since the list was last refreshed')], [true, URL_251474, true, true]);
+  resetSetup();
+  setup.courseId = '5000';
+  const other = c.receiveCourseExport({ fileName: 'b.imscc', gzip });
+  check('links: export from another course → no refresh, no links, window says why',
+    [other.ok, setup.refreshed, other.quizzes.every(q => !q.url), other.message.includes('this export is from course 4791, ' +
+      'but this workbook is set up for course 5000')], [true, 0, true, true]);
+  resetSetup();
+  setup.courseId = '';
+  const noCourse = c.receiveCourseExport({ fileName: 'b.imscc', gzip });
+  check('links: no course set → check still works, window says why', [noCourse.ok,
+    noCourse.message.includes('Quiz names aren\'t linked to Canvas: cfg_CourseID')], [true, true]);
+  resetSetup();
+  setup.list = [{ assignmentId: '251474', url: URL_251474 }, { assignmentId: '1', url: 'https://canvas.example.edu/1' }];
+  check('links: nothing linked from a single-quiz export (no Canvas call)', [(await (async () => {
+    setup.refreshed = 0;
+    const r = c.receiveCourseExport({ fileName: 'solo.zip',
+      gzip: await win('quizCheckGzipBase64')(JSON.stringify({ texts: single.texts, sizes: single.sizes })) });
+    return [r.quizzes[0].url, r.message.includes('link')];
+  })()), setup.refreshed], [['', false], 0]);
+  resetSetup();
 
   // A second run replaces the tab; a "Quiz Check" tab used for something else is left alone.
   c.receiveCourseExport({ fileName: 'again.imscc', gzip });

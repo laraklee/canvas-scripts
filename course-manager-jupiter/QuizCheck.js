@@ -8,11 +8,22 @@
  *   them, published or not), red if something needs fixing, orange if there are only
  *   suggestions (so far: pictures "worth shrinking", 500 KB–1 MB), plain if fine; red
  *   first, then orange, then fine, A–Z within each. The tab is rewritten each run.
+ *   Links (Lara, 2026-11-09): when a course export is from this workbook's course
+ *   (cfg_CourseID), the assignment list (ref_assignmentGroups) is refreshed from Canvas
+ *   first (writeAssignmentGroupsSheet_, the same read-only refresh the reorder tool uses;
+ *   Course check is not run), and each quiz name links to its assignment's Canvas page
+ *   (a Classic quiz's assignment page opens the quiz). An export doesn't carry Canvas
+ *   numbers, only identifiers that Canvas makes from them (quizCheckAssignmentKeys_), so
+ *   each listed assignment's identifier is worked out and matched. Ungraded quizzes
+ *   aren't assignments and stay unlinked. If the refresh fails, the list already on the
+ *   tab is used; the check itself never depends on Canvas.
  *   Step 3a of the plan in BRIEF.md. Next (3b): a detailed report for a chosen quiz.
  *   Course content only: an export holds no student data. Logs counts and timings only.
- * Canvas endpoints called: none (reads the export the window sends).
+ * Canvas endpoints called (GET, via writeAssignmentGroupsSheet_ in RefSheets.js):
+ *   /api/v1/courses/:course/assignment_groups?include[]=assignments&include[]=all_dates
  * Canvas write operations: none.
- * Required User/Script Properties: none.
+ * Required: User Properties CANVAS_BASE_URL and CANVAS_TOKEN (links only; the check runs
+ *   without them); named range cfg_CourseID.
  */
 
 const QUIZ_CHECK_TITLE = 'Quiz Check';
@@ -68,12 +79,15 @@ function receiveCourseExport(upload) {
     }
     const quizzes = quizCheckSort_(result.quizzes.map(quizCheckSummary_));
     const name = String(upload.fileName || '').slice(0, 200);
-    const sheet = quizCheckSheet_(SpreadsheetApp.getActiveSpreadsheet());
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = quizCheckSheet_(ss); // before Canvas: a tab-name clash changes nothing
+    const linkNote = result.courseExport ? quizCheckLinkQuizzes_(ss, result, quizzes) : '';
     writeQuizCheckOverview_(sheet, quizCheckOverview_(quizzes, name, new Date()));
     const red = quizzes.filter(q => q.level === 'problem').length;
     const orange = quizzes.filter(q => q.level === 'suggestion').length;
+    const linked = quizzes.filter(q => q.url).length;
     console.log(`${QUIZ_CHECK_TITLE}: ${quizzes.length} quiz(zes), ${red} red, ${orange} orange, ` +
-      `course export: ${result.courseExport}, ${Date.now() - started} ms.`);
+      `${linked} linked, course export: ${result.courseExport}, ${Date.now() - started} ms.`);
     const single = result.courseExport ? '' : '\n\nThis is a single-quiz export. A course export ' +
       '(Settings › Export Course Content › Course) is the stricter check: it shows pictures ' +
       'that students can\'t open, such as ones from another course.';
@@ -82,7 +96,8 @@ function receiveCourseExport(upload) {
       courseExport: result.courseExport,
       quizzes,
       message: `Checked ${quizzes.length} quiz(zes) from "${name}". See the "${sheet.getName()}" tab: ` +
-        `${quizCheckCountLine_(quizzes)}.${single}\n\n(Detailed reports for each quiz are still being built.)`,
+        `${quizCheckCountLine_(quizzes)}.${linkNote ? `\n\n${linkNote}` : ''}${single}` +
+        '\n\n(Detailed reports for each quiz are still being built.)',
     };
   } catch (error) {
     // Kind of failure and the code line only: never the error text (it could quote the file).
@@ -143,6 +158,7 @@ function quizCheckSummary_(quiz) {
     rows: lists.length,
     level: red ? 'problem' : (lists.length ? 'suggestion' : ''),
     kinds,
+    url: '', // set by quizCheckLinkQuizzes_ when the quiz is matched to its assignment
   };
 }
 
@@ -174,7 +190,8 @@ function quizCheckCountLine_(quizzes) {
 
 /**
  * The overview as cell values: { top (rows 1–3, two columns), rows (one per quiz, in
- * QUIZ_CHECK_HEADERS order), colors (one background per quiz row, null when fine) }.
+ * QUIZ_CHECK_HEADERS order), colors (one background per quiz row, null when fine),
+ * names ([quiz name, Canvas URL or ''] per quiz row, for the links in column A) }.
  */
 function quizCheckOverview_(quizzes, fileName, now) {
   const yesNo = value => (value === true ? 'Yes' : (value === false ? 'No' : ''));
@@ -198,6 +215,7 @@ function quizCheckOverview_(quizzes, fileName, now) {
     ],
     rows,
     colors,
+    names: quizzes.map(q => [quizCellText_(q.title), q.url || '']),
   };
 }
 
@@ -239,9 +257,104 @@ function writeQuizCheckOverview_(sheet, overview) {
     sheet.getRange(first, 1, count, width).setValues(overview.rows).setVerticalAlignment('top')
       .setBackgrounds(overview.colors.map(color => new Array(width).fill(color)));
     sheet.getRange(first, width, count, 1).setWrap(true);
+    // Quiz names that were matched to Canvas become links (the text stays the same).
+    if (overview.names.some(([, url]) => url)) {
+      sheet.getRange(first, 1, count, 1).setRichTextValues(overview.names.map(([name, url]) => {
+        const text = SpreadsheetApp.newRichTextValue().setText(name);
+        return [url ? text.setLinkUrl(url).build() : text.build()];
+      }));
+    }
   }
   QUIZ_CHECK_WIDTHS.forEach((pixels, i) => sheet.setColumnWidth(i + 1, pixels));
   sheet.setFrozenRows(QUIZ_CHECK_HEADER_ROW);
   sheet.setFrozenColumns(1);
   sheet.activate();
+}
+
+/**
+ * Links each quiz to its assignment's Canvas page: sets url on the matching summaries
+ * (quizzes) and returns one line for the window ('' when there's nothing to say). Only for
+ * a course export from this workbook's course. Refreshes the assignment list first; if
+ * that fails, uses the list already on the tab. Never throws: links are a convenience.
+ */
+function quizCheckLinkQuizzes_(ss, result, quizzes) {
+  let courseId;
+  try {
+    courseId = getCourseIdForRefresh_();
+  } catch (error) {
+    return `Quiz names aren't linked to Canvas: ${quizCheckReason_(error)}`;
+  }
+  if (result.courseId && result.courseId !== courseId) {
+    return `Quiz names aren't linked to Canvas: this export is from course ${result.courseId}, ` +
+      `but this workbook is set up for course ${courseId}.`;
+  }
+  let refreshNote = '';
+  try {
+    writeAssignmentGroupsSheet_(ss);
+  } catch (error) {
+    console.error(`${QUIZ_CHECK_TITLE}: assignment list refresh failed (${error.canvasType || 'SHEET_PROBLEM'}).`);
+    refreshNote = `The assignment list couldn't be refreshed from Canvas (${quizCheckReason_(error)}), ` +
+      'so links come from the list as it was. ';
+  }
+  let assignments;
+  try {
+    assignments = readAssignmentGroups_();
+  } catch (error) {
+    return `${refreshNote}Quiz names aren't linked to Canvas: ${quizCheckReason_(error)}`;
+  }
+  const urls = quizCheckLinks_(result.quizzes, assignments, result.rootAccountId, quizCheckMd5Hex_);
+  quizzes.forEach(q => { q.url = urls.get(q.id) || ''; });
+  const missing = quizzes.filter(q => !q.url).length;
+  if (!missing) return `${refreshNote}Every quiz name links to its page in Canvas.`.trim();
+  return `${refreshNote}${quizzes.length - missing} of ${quizzes.length} quiz names link to their page ` +
+    `in Canvas. ${missing} aren't linked: ungraded quizzes (such as practice quizzes) aren't ` +
+    `Canvas assignments${refreshNote ? ', and quizzes made since the list was last refreshed aren\'t on it' : ''}.`;
+}
+
+/** An error as a short reason for the window: a sheet problem's own words, else a general one. */
+function quizCheckReason_(error) {
+  if (error && error.isSheetProblem) return error.message;
+  if (error && error.canvasType) return describeCanvasError_(error);
+  return 'something went wrong';
+}
+
+/**
+ * Map quiz id → Canvas URL. quizzes: QtiReader quizzes (id, assignmentRef). assignments:
+ * [{ assignmentId, url }] (readAssignmentGroups_). A Classic quiz's export names its
+ * assignment (assignmentRef); a New Quiz's own id is its assignment's. Only https links.
+ */
+function quizCheckLinks_(quizzes, assignments, rootAccountId, md5Hex) {
+  const byKey = new Map();
+  assignments.forEach(a => {
+    if (!/^\d+$/.test(String(a.assignmentId)) || !/^https:\/\//i.test(String(a.url || ''))) return;
+    quizCheckAssignmentKeys_(String(a.assignmentId), rootAccountId, md5Hex).forEach(key => byKey.set(key, a.url));
+  });
+  const urls = new Map();
+  quizzes.forEach(quiz => {
+    const url = [quiz.assignmentRef, quiz.id].filter(Boolean).map(ref => byKey.get(ref)).find(Boolean);
+    if (url) urls.set(quiz.id, url);
+  });
+  return urls;
+}
+
+/**
+ * The identifiers a course export could use for assignment number id: "g" + MD5 of
+ * "assignment_<global id>", where the global id puts the school's server number (the
+ * root account number's digits above the last 13) in front of the 13-digit number
+ * (checked on Lara's 11/9 Biology export: all 45 graded quizzes matched). The plain
+ * "assignment_<id>" form is included for a Canvas without server numbers.
+ */
+function quizCheckAssignmentKeys_(id, rootAccountId, md5Hex) {
+  const keys = [`assignment_${id}`];
+  const root = String(rootAccountId || '');
+  if (/^\d{14,}$/.test(root) && id.length <= 13) {
+    keys.unshift(`assignment_${root.slice(0, -13)}${id.padStart(13, '0')}`);
+  }
+  return keys.map(key => `g${md5Hex(key)}`);
+}
+
+/** MD5 of some text as 32 lowercase hex digits (Apps Script's digest bytes are signed). */
+function quizCheckMd5Hex_(text) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, text, Utilities.Charset.UTF_8)
+    .map(b => ((b + 256) % 256).toString(16).padStart(2, '0')).join('');
 }
