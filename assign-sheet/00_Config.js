@@ -12,7 +12,9 @@ function onOpen() {
       .addItem('Post selected calendarEvents rows to Canvas', 'processUnifiedSheetForCanvasWithLinks')) // 03_Content_Sync.js
     .addSubMenu(ui.createMenu('📝 Assignment dates')
       .addItem('Load assignment dates from Canvas', 'fetchCanvasAssignmentDates') // 07_AssignmentDates.js
-      .addItem('Send changed dates to Canvas', 'pushAssignmentDatesToCanvas'))
+      .addItem('Send changed dates to Canvas', 'pushAssignmentDatesToCanvas')
+      .addSeparator()
+      .addItem('Sort by selected column (keeps ↳ rows together)', 'sortAssignmentDatesBySelectedColumn'))
     .addSeparator()
     .addItem('🔄 Update schedule from Master', 'runFullScheduleUpdate') // 02_Master_Builder.js (Steps 1-4)
     .addItem('🔗 Reset Master connection', 'updateMasterConnection')    // 01_Utilities.js (restores the IMPORTRANGE)

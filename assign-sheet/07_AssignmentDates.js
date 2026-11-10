@@ -3,7 +3,9 @@
  * Purpose: the bulk assignment dates tool (menu Canvas Tools › 📝 Assignment dates).
  *   "Load assignment dates from Canvas" fills the Assignment Dates sheet with every
  *   assignment in the course; edit the open, due, and lock dates/times there (date cells
- *   have a date picker), check Update?, then "Send changed dates to Canvas".
+ *   have a date picker), check Update?, then "Send changed dates to Canvas". Load lists
+ *   assignments by due date; "Sort by selected column" re-sorts the sheet and keeps each
+ *   assignment's "↳" rows under it (sheet only, no Canvas calls).
  *   Ported from course-manager/03d.AssignmentDates.js. Keep the two public function
  *   names: drawn buttons on row 1 of the sheet can call them.
  * Canvas endpoints called:
@@ -146,6 +148,117 @@ function pushAssignmentDatesToCanvas() {
   }
 }
 
+/**
+ * Menu: Sort by selected column. Sorts assignments (earliest / A to Z first, blanks last)
+ * by their own row's value in the column of the selected cell; each assignment's "↳"
+ * rows move with it and stay right below it. Sheet only: nothing goes to Canvas.
+ * A date column also sorts by its time column. Uses the sheet's own sort, on a temporary
+ * key column, so checkboxes, links, notes, and date pickers move with their rows.
+ */
+function sortAssignmentDatesBySelectedColumn() {
+  const ui = SpreadsheetApp.getUi();
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const title = 'Sort assignment dates';
+  if (sheet.getName() !== DATES_SHEET_NAME) {
+    ui.alert(title, `Go to the ${DATES_SHEET_NAME} tab, click a cell in the column to sort ` +
+      'by, and run this again.', ui.ButtonSet.OK);
+    return;
+  }
+  const col = sheet.getActiveCell().getColumn();
+  const count = sheet.getLastRow() - DATES_FIRST_DATA_ROW + 1;
+  if (col > DATES_HEADERS.length || count < 2) {
+    ui.alert(title, 'Click a cell in one of the table\'s columns (A to N) and run this ' +
+      'again. Nothing was changed.', ui.ButtonSet.OK);
+    return;
+  }
+  const filter = sheet.getFilter();
+  if (filter && DATES_HEADERS.some((_, i) => filter.getColumnFilterCriteria(i + 1))) {
+    ui.alert(title, 'The filter is hiding some rows. Clear the filter (show all rows) and ' +
+      'run this again. Nothing was changed.', ui.ButtonSet.OK);
+    return;
+  }
+
+  const width = Math.max(sheet.getLastColumn(), DATES_HEADERS.length);
+  const table = sheet.getRange(DATES_FIRST_DATA_ROW, 1, count, DATES_HEADERS.length);
+  const order = groupedSortOrder_(table.getValues(), table.getDisplayValues(), col);
+  // Temporary key column just right of everything, so every column moves together.
+  const keyRange = sheet.getRange(DATES_FIRST_DATA_ROW, width + 1, count, 1);
+  keyRange.setValues(order.map(n => [n]));
+  sheet.getRange(DATES_FIRST_DATA_ROW, 1, count, width + 1).sort({ column: width + 1 });
+  keyRange.clearContent();
+  // Rewrite Schedule Info so each row's formula reads its own due date after the move.
+  sheet.getRange(DATES_FIRST_DATA_ROW, 8, count, 1)
+    .setFormulas(order.map((_, i) => [datesScheduleFormula_(DATES_FIRST_DATA_ROW + i)]));
+  SpreadsheetApp.getActiveSpreadsheet().toast(`Sorted by ${DATES_HEADERS[col - 1]}.`,
+    'Assignment Dates', 3);
+}
+
+/**
+ * For each sheet row (in current order), its new position after a sort that keeps each
+ * assignment's rows together: groups (by assignment ID) are sorted by their assignment
+ * row's value in column col; inside a group the assignment row comes first, then its "↳"
+ * rows in their current order. Rows with no ID stay groups of their own.
+ */
+function groupedSortOrder_(values, shown, col) {
+  const groups = [];
+  const byId = new Map();
+  values.forEach((row, i) => {
+    const id = String(row[DATES_COL.id - 1]).trim();
+    const isOverride = String(row[DATES_COL.override - 1]).trim() !== '';
+    let group = id ? byId.get(id) : null;
+    if (!group) {
+      group = { rows: [], keyRow: i, start: groups.length };
+      groups.push(group);
+      if (id) byId.set(id, group);
+    }
+    if (isOverride) {
+      group.rows.push(i);
+    } else {
+      group.rows.unshift(i); // assignment row first
+      group.keyRow = i;
+    }
+  });
+
+  const dateField = DATES_FIELDS.find(f => f.dateCol === col);
+  const keyOf = i => {
+    const v = values[i][col - 1];
+    if (v === '' || v === null) return null;
+    if (v instanceof Date) {
+      const minutes = dateField ? timeTextMinutes_(shown[i][dateField.timeCol - 1]) : 0;
+      return v.getTime() + minutes * 60000;
+    }
+    if (typeof v === 'number' || typeof v === 'boolean') return Number(v);
+    return String(shown[i][col - 1]).replace(/^↳\s*/, '').toLowerCase();
+  };
+  const keyed = groups.map(g => ({ g, key: keyOf(g.keyRow) }));
+  keyed.sort((a, b) => {
+    if (a.key === null || b.key === null) {
+      return a.key === b.key ? a.g.start - b.g.start : a.key === null ? 1 : -1;
+    }
+    if (typeof a.key === 'number' && typeof b.key === 'number') {
+      return a.key - b.key || a.g.start - b.g.start;
+    }
+    return String(a.key).localeCompare(String(b.key), undefined, { numeric: true }) ||
+      a.g.start - b.g.start;
+  });
+
+  const order = new Array(values.length);
+  let next = 0;
+  keyed.forEach(({ g }) => g.rows.forEach(i => { order[i] = next++; }));
+  return order;
+}
+
+/** '4:00 pm' -> 960 (minutes after midnight); blank or unreadable -> 0. */
+function timeTextMinutes_(text) {
+  const t = String(text).trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?$/i);
+  if (!t) return 0;
+  let hour = Number(t[1]);
+  const ampm = (t[3] || '').toLowerCase();
+  if (ampm === 'pm' && hour < 12) hour += 12;
+  if (ampm === 'am' && hour === 12) hour = 0;
+  return hour * 60 + Number(t[2]);
+}
+
 /** Course ID from *Config* B4, or null after telling the user it is missing. */
 function getDatesCourseId_() {
   const courseId = String(getConfig().COURSE_ID).trim();
@@ -154,6 +267,22 @@ function getDatesCourseId_() {
   ui.alert('Assignment Dates', 'The Course ID in *Config* B4 is missing or not a number. ' +
     'Nothing was done.', ui.ButtonSet.OK);
   return null;
+}
+
+/** Schedule Info formula for sheet row r: the school schedule on that row's due date. */
+function datesScheduleFormula_(r) {
+  const lookup = col => `VLOOKUP(I${r}, '*simpleSchedule*'!C:F, ${col}, FALSE)`;
+  return `=IF(I${r}<>"", IFERROR(${lookup(3)} & " : " & ${lookup(4)}, "No Match"), "")`;
+}
+
+/** A copy of the assignments, earliest due first; no due date last; ties keep Canvas order. */
+function sortByDueDate_(assignments) {
+  const due = a => (a.due_at ? new Date(a.due_at).getTime() : Infinity);
+  return [...assignments].sort((a, b) => {
+    const da = due(a);
+    const db = due(b);
+    return da === db ? 0 : da < db ? -1 : 1;
+  });
 }
 
 /** Clears row 2 down (row 1 keeps any drawn buttons) and writes the assignment table. */
@@ -177,7 +306,6 @@ function writeDatesSheet_(sheet, assignments, studentNames, tz) {
   const styles = [];
   const addRow = (item, dates, nameCell, status, overrideId, inheritedFields) => {
     const r = DATES_FIRST_DATA_ROW + rows.length;
-    const lookup = col => `VLOOKUP(I${r}, '*simpleSchedule*'!C:F, ${col}, FALSE)`;
     const open = formatDisplayDateTime_(dates.unlock_at, tz);
     const due = formatDisplayDateTime_(dates.due_at, tz);
     const lock = formatDisplayDateTime_(dates.lock_at, tz);
@@ -188,7 +316,7 @@ function writeDatesSheet_(sheet, assignments, studentNames, tz) {
       overrideId ? '' : (item.submission_types || []).join(', '),
       overrideId ? '' : (item.points_possible ?? ''),
       open.date, open.time,
-      `=IF(I${r}<>"", IFERROR(${lookup(3)} & " : " & ${lookup(4)}, "No Match"), "")`,
+      datesScheduleFormula_(r),
       due.date, due.time,
       lock.date, lock.time,
       status,
@@ -206,7 +334,7 @@ function writeDatesSheet_(sheet, assignments, studentNames, tz) {
     styles.push(styleRow);
   };
 
-  assignments.forEach(item => {
+  sortByDueDate_(assignments).forEach(item => {
     const name = String(item.name || 'Untitled').replace(/"/g, '""');
     const url = String(item.html_url || '').replace(/"/g, '');
     addRow(item, item, `=HYPERLINK("${url}", "${name}")`, loaded, '', []);

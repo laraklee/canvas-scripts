@@ -127,6 +127,7 @@ Grouped by what each item works on; "Load from" / "Send to" says which way data 
 
 - **📅 Calendar & announcements ›** Post selected calendarEvents rows to Canvas
 - **📝 Assignment dates ›** Load assignment dates from Canvas · Send changed dates to Canvas
+  · Sort by selected column (keeps ↳ rows together)
 - 🔄 Update schedule from Master · 🔗 Reset Master connection · ☑️ Toggle checkboxes
 - **⚙️ Setup ›** Set Canvas token · Test Canvas connection · Dry run: show status /
   switch on/off
@@ -144,6 +145,12 @@ header row 2, data from row 3. Columns: A Update? ☐, B ID, C Name (link), D Su
 E Points, F/G Open date/time, H Schedule Info (VLOOKUP on `*simpleSchedule*` C:F by due
 date), I/J Due, K/L Lock, M Sync Status, N Override ID (blank on assignment rows).
 
+- **Sorting (11/9):** Load lists assignments by due date (none last; ties keep Canvas
+  order). Menu "Sort by selected column" (`sortAssignmentDatesBySelectedColumn`) sorts
+  groups (assignment row + its ↳ rows, by assignment ID) on the assignment row's value in
+  the selected cell's column (date columns also by their time), using the sheet's own
+  `Range.sort` on a temporary key column so formats, notes, checkboxes, and validation
+  move with rows; then rewrites Schedule Info formulas. Refuses if the filter hides rows.
 - Load rebuilds row 2 down (row 1 is left empty). Read-only. Open/Due/Lock date cells get
   a "must be a date" rule, which gives a calendar picker on double-click and rejects
   typos. Sheets has no time picker; times are typed (e.g. 4:00 pm).
