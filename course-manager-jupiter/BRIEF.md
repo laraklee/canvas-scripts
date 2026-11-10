@@ -39,9 +39,11 @@
 >   files only, not the whole 573 MB in memory); test google.script.run with ~6.7 MB,
 >   send in pieces if it fails. Step 3: overview tab (one row per quiz, red if anything)
 >   + window stays open with a quiz list for the detailed report. Step 4: menu item +
->   guide section, Biology first. **Open questions for Lara (before step 3):** "worth
->   shrinking" red or just a note (Claude suggests note); overview all quizzes with a
->   Published column, or published only; menu name ("Quiz check (course export)"?).
+>   guide section, Biology first. **Decided 11/9 (Lara):** rows are red for problems,
+>   **orange for suggestions** (so far only "worth shrinking", 500 KB–1 MB; "shrink it"
+>   1 MB+ stays red), plain if fine; the overview lists **all** quizzes with a Published
+>   column; menu name **"Quiz Check"** (rename the menu item in step 3 or 4, and the
+>   window title and guide to match).
 >
 > **Earlier (2026-11-08 night, PC)**
 >
