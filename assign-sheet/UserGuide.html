@@ -359,7 +359,32 @@ Canvas</span></p>
   <tr><td><b>I–J Due</b> (blue)</td><td>Due date and time.</td></tr>
   <tr><td><b>K–L Lock</b> (red)</td><td>When it closes ("until").</td></tr>
   <tr><td><b>M Sync Status</b></td><td>What happened to this row.</td></tr>
+  <tr><td><b>N Override ID</b> (gray)</td><td>Only on section-date rows (below). Leave it
+    alone: it tells Canvas which section dates the row is.</td></tr>
 </table>
+
+<h3>Section dates (rows marked ↳)</h3>
+
+<p>If an assignment has different dates for some sections or students, each of those
+shows as its own row right under the assignment:</p>
+
+<ul>
+  <li><b>↳ Period 3</b>: dates for that section.</li>
+  <li><b>↳ 2 students</b>: dates for specific students (for example extra time). Names are
+    never shown on the sheet; click the assignment's name to see who in Canvas.</li>
+  <li><b>↳ Group</b>: dates for a group.</li>
+</ul>
+
+<p>The assignment's own row holds the <b>"Everyone else"</b> dates: everyone not on a ↳
+row. You can edit and send both kinds of rows the same way.</p>
+
+<p>A date in <i>italics</i> isn't set separately for that ↳ row: it just uses the
+assignment's date (hover to see a note). Leave it as is and it keeps following the
+assignment; change it and that row gets its own date. After sending a change to an
+assignment's own dates, load again before editing its ↳ rows, so the italic dates are
+up to date.</p>
+
+<p>Adding or removing section dates is done in Canvas for now.</p>
 
 <h3>Editing dates</h3>
 
@@ -383,7 +408,7 @@ Canvas</span></p>
   <li>Check <b>Update?</b> on the rows you changed.</li>
   <li>Run the menu item. It checks Canvas first and only sends the dates that are actually
     different.</li>
-  <li>Read the confirmation (how many assignments and dates will change, dry run on or
+  <li>Read the confirmation (how many rows and dates will change, dry run on or
     off) and click <b>Yes</b>.</li>
 </ol>
 
@@ -401,10 +426,12 @@ nothing; change those in Canvas.</p>
     on).</td></tr>
   <tr><td><b>No changes</b></td><td>The row was checked but its dates already match
     Canvas.</td></tr>
-  <tr><td><b>Has section dates: edit in Canvas</b></td><td>This assignment has different
-    dates for different sections. The sheet can't edit those; use Canvas.</td></tr>
+  <tr><td><b>Edit in Canvas (not a section, group, or student date)</b></td><td>A rare
+    kind of ↳ row the sheet can't edit. Use Canvas.</td></tr>
   <tr><td><b>Not found in Canvas: fetch again</b></td><td>The assignment was deleted or the
     course changed. Load again.</td></tr>
+  <tr><td><b>Section dates not found in Canvas: fetch again</b></td><td>Someone removed
+    those section dates in Canvas. Load again.</td></tr>
   <tr><td><b>Failed: …</b></td><td>Not sent; the reason follows.</td></tr>
 </table>
 

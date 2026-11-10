@@ -5,13 +5,21 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
-> **NEXT (Lara, 2026-11-08): the overrides question in the Assignment Dates editor.**
-> This is the next task Lara wants to work on. Today, assignments with section-specific dates (`has_overrides`) are
-> marked "Has section dates: edit in Canvas" and skipped; per-section editing was shelved
-> on 10/20 (see "Assignment Dates" below). Start by asking Lara what she needs (for
-> example: see each section's dates, edit them, or add new section dates), then plan.
-> Any new Canvas write goes through `canvasWrite_` with DRY_RUN, and is called out to
-> Lara first (CLAUDE.md rule 3). Update `UserGuide.html` in the same commit.
+> **IN PROGRESS (2026-11-09): section dates (overrides) in Assignment Dates.**
+> Lara's decisions 11/9: see, edit, add, and remove section dates; shown as "↳" rows
+> under each assignment; student overrides show a count only ("↳ 2 students", no names
+> or IDs on the sheet or in logs) and are editable; group rows say "↳ Group" (no name).
+> Three steps, each committed, guide-updated, and tested in sandbox 4573 first:
+> 1. **Load + edit** (code written 11/9, not yet pushed or tested): see "Assignment
+>    Dates" below.
+> 2. **Add:** menu item "Add section dates below selected assignment" inserts a row with a
+>    dropdown of course sections (`GET /courses/:c/sections`), dates copied from the
+>    assignment; Send creates it with `POST …/assignments/:id/overrides`
+>    (`assignment_override[course_section_id]`). Refuse a section that already has one.
+>    Sections only (adding students would need names).
+> 3. **Remove:** menu item "Remove section dates on selected rows", confirm, then
+>    `DELETE …/assignments/:id/overrides/:id` (a separate item so a deleted or filtered
+>    row can never remove anything).
 
 > **Where we left off (2026-10-20)**
 >
@@ -129,7 +137,7 @@ Menu **📝 Assignment dates ›** Load assignment dates from Canvas (`fetchCanv
 and Send changed dates to Canvas (`pushAssignmentDatesToCanvas`). Sheet "Assignment Dates":
 header row 2, data from row 3. Columns: A Update? ☐, B ID, C Name (link), D Sub. Type(s),
 E Points, F/G Open date/time, H Schedule Info (VLOOKUP on `*simpleSchedule*` C:F by due
-date), I/J Due, K/L Lock, M Sync Status.
+date), I/J Due, K/L Lock, M Sync Status, N Override ID (blank on assignment rows).
 
 - Load rebuilds row 2 down (row 1 is left empty). Read-only. Open/Due/Lock date cells get
   a "must be a date" rule, which gives a calendar picker on double-click and rejects
@@ -141,9 +149,18 @@ date), I/J Due, K/L Lock, M Sync Status.
   `due_at` / `lock_at` that differ (to the minute). Asks before sending.
 - A date needs a time (no accidental midnight). Clear both to remove a date. 11:59 pm is
   sent as 11:59:59 pm.
-- Section-specific dates (`has_overrides`) are marked and skipped. Per-section editing was
-  shelved on 10/20 (Lara had no overrides then); **it's the next task as of 11/8** (see
-  NEXT at the top).
+- **Section dates (step 1, 11/9):** fetch and push use `include[]=overrides`. Each
+  override is a "↳" row under its assignment (same date columns; N = override ID). The
+  assignment row is "Everyone else" and is now sent even when the assignment has
+  overrides (an assignment PUT without `assignment_overrides` leaves them alone). An
+  override row sends `PUT …/assignments/:id/overrides/:override_id`. Canvas un-sets any
+  override date left out of that PUT, so the payload carries every date the override
+  already sets plus the changed ones; student overrides re-send their `student_ids`
+  (memory only). A date the override doesn't set (key absent in Canvas's reply) shows
+  the assignment's date in italics with a note, and stays un-set unless changed.
+  Overrides that aren't section/student/group (e.g. noop) are marked "Edit in Canvas".
+  **To check in testing:** that Canvas really omits un-set override dates (vs. sending
+  null), and that the student override keeps its students after a PUT.
 
 ## Code notes
 

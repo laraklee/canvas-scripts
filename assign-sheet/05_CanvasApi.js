@@ -9,7 +9,7 @@
  *   canvasWrite_(); the connection test calls GET /api/v1/users/self.
  * Canvas write operations: canvasWrite_() sends POST/PUT/PATCH/DELETE for its callers.
  *   Current callers: 03_Content_Sync.js (calendar events, announcements) and
- *   07_AssignmentDates.js (assignment open/due/lock dates).
+ *   07_AssignmentDates.js (assignment and section open/due/lock dates).
  * Required User/Script Properties: reads User Properties CANVAS_BASE_URL and CANVAS_TOKEN
  *   (saved by Set Canvas token, 06_Credentials.js); reads and writes Script Property
  *   DRY_RUN (unset means dry run is ON).

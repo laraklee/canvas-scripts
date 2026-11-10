@@ -7,16 +7,24 @@
  *   Ported from course-manager/03d.AssignmentDates.js. Keep the two public function
  *   names: drawn buttons on row 1 of the sheet can call them.
  * Canvas endpoints called:
- *   GET /api/v1/courses/:course/assignments (read; by fetch, and again by push to compare)
- *   PUT /api/v1/courses/:course/assignments/:id (write, through canvasWrite_, so DRY_RUN
- *     applies). Sends only unlock_at, due_at, and lock_at, and only the ones that differ
- *     from Canvas. Name, points, and submission type on the sheet are for reference only.
+ *   GET /api/v1/courses/:course/assignments?include[]=overrides (read; by fetch, and
+ *     again by push to compare)
+ *   PUT /api/v1/courses/:course/assignments/:id (write) for an assignment row ("Everyone
+ *     else" dates). Sends only the unlock_at / due_at / lock_at that differ from Canvas.
+ *   PUT /api/v1/courses/:course/assignments/:id/overrides/:override_id (write) for a
+ *     section-date row ("↳"). Canvas un-sets any override date left out, so this sends
+ *     every date the override already sets plus the changed ones; for a student override
+ *     it re-sends the same student_ids so the same students stay on it.
+ *   Both writes go through canvasWrite_, so DRY_RUN applies. Name, points, and
+ *   submission type on the sheet are for reference only.
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
  *   Script Property DRY_RUN. Course ID comes from the *Config* sheet, cell B4.
  *
- * Assignments with section-specific dates (has_overrides) are marked on fetch and skipped
- * on push: their section dates are not on this sheet. (Per-section editing is shelved
- * until someone needs it.)
+ * Section dates (overrides) appear as "↳" rows under their assignment, with the override
+ * ID in the last column. A student override shows only a count ("↳ 2 students"); student
+ * names and IDs never go on the sheet or into logs. A date the override doesn't set uses
+ * the assignment's date: it is shown in italics with a note, and stays un-set on push
+ * unless it is changed.
  */
 
 const DATES_SHEET_NAME = 'Assignment Dates';
@@ -24,15 +32,18 @@ const DATES_HEADER_ROW = 2;
 const DATES_FIRST_DATA_ROW = 3;
 const DATES_HEADERS = Object.freeze(['Update?', 'ID', 'Assignment Name', 'Sub. Type(s)',
   'Points', 'Open Date', 'Open Time', 'Schedule Info', 'Due Date', 'Due Time', 'Lock Date',
-  'Lock Time', 'Sync Status']);
-const DATES_COL = Object.freeze({ check: 1, id: 2, status: 13 });
+  'Lock Time', 'Sync Status', 'Override ID']);
+const DATES_COL = Object.freeze({ check: 1, id: 2, status: 13, override: 14 });
 // Sheet column (1-based) of each date/time pair, keyed by the Canvas field it sets.
 const DATES_FIELDS = Object.freeze([
   { field: 'unlock_at', label: 'open', dateCol: 6, timeCol: 7 },
   { field: 'due_at', label: 'due', dateCol: 9, timeCol: 10 },
   { field: 'lock_at', label: 'lock', dateCol: 11, timeCol: 12 },
 ]);
-const DATES_OVERRIDE_NOTE = 'Has section dates: edit in Canvas';
+const DATES_FETCH_QUERY = Object.freeze({ 'include[]': 'overrides' });
+const DATES_EDIT_IN_CANVAS = 'Edit in Canvas (not a section, group, or student date)';
+const DATES_INHERITED_NOTE = 'Not set separately for this row: it uses the assignment\'s ' +
+  '("Everyone else") date. Change it here to give this row its own date.';
 
 /** Menu: Load assignment dates from Canvas. Rebuilds the sheet from row 2 down. */
 function fetchCanvasAssignmentDates() {
@@ -42,13 +53,17 @@ function fetchCanvasAssignmentDates() {
     const courseId = getDatesCourseId_();
     if (!courseId) return;
     ss.toast('Fetching assignments from Canvas...', 'Assignment Dates', -1);
-    const assignments = canvasGet_(`/courses/${courseId}/assignments`);
+    const assignments = canvasGet_(`/courses/${courseId}/assignments`, DATES_FETCH_QUERY);
     const sheet = ss.getSheetByName(DATES_SHEET_NAME) || ss.insertSheet(DATES_SHEET_NAME);
     writeDatesSheet_(sheet, assignments, ss.getSpreadsheetTimeZone());
-    console.log(`Fetch assignment dates: ${assignments.length} assignment(s) loaded.`);
+    const overrideCount = assignments.reduce((sum, a) => sum + (a.overrides || []).length, 0);
+    console.log(`Fetch assignment dates: ${assignments.length} assignment(s), ` +
+      `${overrideCount} section-date row(s) loaded.`);
     ss.toast('', '', 1);
     ui.alert('Load assignment dates', assignments.length ?
-      `Loaded ${assignments.length} assignment(s).` : 'No assignments found in this course.',
+      `Loaded ${assignments.length} assignment(s)` +
+      (overrideCount ? ` and ${overrideCount} section-date row(s) (marked ↳).` : '.') :
+      'No assignments found in this course.',
       ui.ButtonSet.OK);
   } catch (error) {
     console.error('Load assignment dates failed: ' + (error.canvasType || error.message));
@@ -77,9 +92,9 @@ function pushAssignmentDatesToCanvas() {
     if (!courseId) return;
 
     ss.toast('Comparing with Canvas...', 'Assignment Dates', -1);
-    const live = new Map(canvasGet_(`/courses/${courseId}/assignments`)
+    const live = new Map(canvasGet_(`/courses/${courseId}/assignments`, DATES_FETCH_QUERY)
       .map(item => [String(item.id), item]));
-    const plan = planDateUpdates_(sheet, live, ss.getSpreadsheetTimeZone());
+    const plan = planDateUpdates_(sheet, courseId, live, ss.getSpreadsheetTimeZone());
     ss.toast('', '', 1);
 
     if (plan.problems.length) {
@@ -96,21 +111,21 @@ function pushAssignmentDatesToCanvas() {
 
     const dateCount = plan.toSend.reduce((sum, job) => sum + job.fields.length, 0);
     const answer = ui.alert('Send assignment dates?',
-      `Course ${courseId}: ${plan.toSend.length} assignment(s) will change ` +
+      `Course ${courseId}: ${plan.toSend.length} row(s) will change ` +
       `(${dateCount} date(s) in all). Students will see the new dates.` +
       (plan.skipped ? `\n${plan.skipped} row(s) will be skipped; see Sync Status.` : '') +
       '\n\n' + describeDryRun_(isDryRun_()) + '\n\nContinue?',
       ui.ButtonSet.YES_NO);
     if (answer !== ui.Button.YES) return;
 
-    ss.toast(`Updating ${plan.toSend.length} assignment(s)...`, 'Assignment Dates', -1);
-    const result = sendDateUpdates_(sheet, courseId, plan.toSend, ss.getSpreadsheetTimeZone());
+    ss.toast(`Updating ${plan.toSend.length} row(s)...`, 'Assignment Dates', -1);
+    const result = sendDateUpdates_(sheet, plan.toSend, ss.getSpreadsheetTimeZone());
     console.log(`Push assignment dates: ${result.sent} sent, ${result.failed} failed, ` +
       `${plan.skipped} skipped, dry run ${result.dryRun ? 'ON' : 'OFF'}.`);
     ss.toast('', '', 1);
     ui.alert('Send assignment dates',
-      (result.dryRun ? `Dry run: ${result.sent} assignment(s) checked; nothing was sent to Canvas.` :
-        `${result.sent} assignment(s) updated.`) +
+      (result.dryRun ? `Dry run: ${result.sent} row(s) checked; nothing was sent to Canvas.` :
+        `${result.sent} row(s) updated.`) +
       (result.failed ? `\n${result.failed} failed; see Sync Status.` : '') +
       (result.stoppedMessage ? '\n\nStopped early: ' + result.stoppedMessage : ''),
       ui.ButtonSet.OK);
@@ -138,7 +153,8 @@ function writeDatesSheet_(sheet, assignments, tz) {
   if (filter) filter.remove();
   if (sheet.getLastRow() >= DATES_HEADER_ROW) {
     sheet.getRange(DATES_HEADER_ROW, 1, sheet.getLastRow() - DATES_HEADER_ROW + 1,
-      Math.max(sheet.getLastColumn(), DATES_HEADERS.length)).clear().clearDataValidations();
+      Math.max(sheet.getLastColumn(), DATES_HEADERS.length))
+      .clear().clearDataValidations().clearNote();
   }
   sheet.getRange(DATES_HEADER_ROW, 1, 1, DATES_HEADERS.length)
     .setValues([DATES_HEADERS]).setFontWeight('bold').setBackground('#f3f3f3');
@@ -146,33 +162,64 @@ function writeDatesSheet_(sheet, assignments, tz) {
   if (!assignments.length) return;
 
   const loaded = 'Loaded (' + Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd HH:mm') + ')';
-  const rows = assignments.map((item, i) => {
-    const r = DATES_FIRST_DATA_ROW + i;
-    const name = String(item.name || 'Untitled').replace(/"/g, '""');
-    const url = String(item.html_url || '').replace(/"/g, '');
+  const rows = [];
+  // Notes and italics for date/time columns F–L, row by row (italic = uses the assignment's date).
+  const notes = [];
+  const styles = [];
+  const addRow = (item, dates, nameCell, status, overrideId, inheritedFields) => {
+    const r = DATES_FIRST_DATA_ROW + rows.length;
     const lookup = col => `VLOOKUP(I${r}, '*simpleSchedule*'!C:F, ${col}, FALSE)`;
-    const open = formatDisplayDateTime_(item.unlock_at, tz);
-    const due = formatDisplayDateTime_(item.due_at, tz);
-    const lock = formatDisplayDateTime_(item.lock_at, tz);
-    return [
+    const open = formatDisplayDateTime_(dates.unlock_at, tz);
+    const due = formatDisplayDateTime_(dates.due_at, tz);
+    const lock = formatDisplayDateTime_(dates.lock_at, tz);
+    rows.push([
       false,
       item.id,
-      `=HYPERLINK("${url}", "${name}")`,
-      (item.submission_types || []).join(', '),
-      item.points_possible ?? '',
+      nameCell,
+      overrideId ? '' : (item.submission_types || []).join(', '),
+      overrideId ? '' : (item.points_possible ?? ''),
       open.date, open.time,
       `=IF(I${r}<>"", IFERROR(${lookup(3)} & " : " & ${lookup(4)}, "No Match"), "")`,
       due.date, due.time,
       lock.date, lock.time,
-      item.has_overrides ? DATES_OVERRIDE_NOTE : loaded,
-    ];
+      status,
+      overrideId,
+    ]);
+    const noteRow = ['', '', '', '', '', '', ''];
+    const styleRow = noteRow.map(() => 'normal');
+    DATES_FIELDS.filter(f => inheritedFields.includes(f.field)).forEach(f => {
+      [f.dateCol, f.timeCol].forEach(col => {
+        noteRow[col - 6] = DATES_INHERITED_NOTE;
+        styleRow[col - 6] = 'italic';
+      });
+    });
+    notes.push(noteRow);
+    styles.push(styleRow);
+  };
+
+  assignments.forEach(item => {
+    const name = String(item.name || 'Untitled').replace(/"/g, '""');
+    const url = String(item.html_url || '').replace(/"/g, '');
+    addRow(item, item, `=HYPERLINK("${url}", "${name}")`, loaded, '', []);
+    (item.overrides || []).forEach(override => {
+      const dates = {};
+      const inherited = [];
+      DATES_FIELDS.forEach(f => {
+        dates[f.field] = overrideDate_(override, item, f.field);
+        if (!(f.field in override)) inherited.push(f.field);
+      });
+      addRow(item, dates, overrideLabel_(override),
+        overrideKind_(override) ? loaded : DATES_EDIT_IN_CANVAS, override.id, inherited);
+    });
   });
 
   const count = rows.length;
   const first = DATES_FIRST_DATA_ROW;
   sheet.getRange(first, 1, count, DATES_HEADERS.length).setValues(rows);
+  sheet.getRange(first, 6, count, 7).setNotes(notes).setFontStyles(styles);
   sheet.getRange(first, 1, count, 1).insertCheckboxes();
   sheet.getRange(first, 2, count, 4).setFontColor('#666666'); // reference only, not pushed
+  sheet.getRange(first, DATES_COL.override, count, 1).setFontColor('#666666');
   sheet.getRange(first, 5, count, 1).setNumberFormat('0.##');
   // A date rule gives each date cell a calendar picker (double-click) and rejects typos.
   const dateRule = SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false)
@@ -189,9 +236,10 @@ function writeDatesSheet_(sheet, assignments, tz) {
 
 /**
  * Reads checked rows and compares each with Canvas. Returns { toSend, skipped, problems }.
- * Each job: { row, id, fields, payload }. Skipped rows get a reason in Sync Status.
+ * Each job: { row, path, fields, payload }. Skipped rows get a reason in Sync Status.
+ * A row with an Override ID is a section-date row; the rest are assignment rows.
  */
-function planDateUpdates_(sheet, live, tz) {
+function planDateUpdates_(sheet, courseId, live, tz) {
   const count = sheet.getLastRow() - DATES_FIRST_DATA_ROW + 1;
   const values = sheet.getRange(DATES_FIRST_DATA_ROW, 1, count, DATES_HEADERS.length).getValues();
   // Display text, so dates and times are read exactly as shown on the sheet.
@@ -207,11 +255,17 @@ function planDateUpdates_(sheet, live, tz) {
       sheet.getRange(sheetRow, DATES_COL.status).setValue(reason);
       plan.skipped++;
     };
+    const overrideId = String(row[DATES_COL.override - 1]).trim();
     const assignment = live.get(id);
     if (!assignment) return skip('Not found in Canvas: fetch again');
-    if (assignment.has_overrides) return skip(DATES_OVERRIDE_NOTE);
+    let override = null;
+    if (overrideId) {
+      override = (assignment.overrides || []).find(o => String(o.id) === overrideId);
+      if (!override) return skip('Section dates not found in Canvas: fetch again');
+      if (!overrideKind_(override)) return skip(DATES_EDIT_IN_CANVAS);
+    }
 
-    const payload = {};
+    const changed = {};
     const fields = [];
     for (const f of DATES_FIELDS) {
       const parsed = parseSheetDateTime_(shown[i][f.dateCol - 1], shown[i][f.timeCol - 1], tz);
@@ -219,24 +273,42 @@ function planDateUpdates_(sheet, live, tz) {
         plan.problems.push(`Row ${sheetRow}: ${f.label} ${parsed.error}`);
         return;
       }
-      if (!sameMinute_(parsed.date, assignment[f.field])) {
-        payload[f.field] = parsed.date ? parsed.date.toISOString() : null;
+      const current = override ? overrideDate_(override, assignment, f.field) :
+        assignment[f.field];
+      if (!sameMinute_(parsed.date, current)) {
+        changed[f.field] = parsed.date ? parsed.date.toISOString() : null;
         fields.push(f.field);
       }
     }
     if (!fields.length) return skip('No changes');
-    plan.toSend.push({ row: sheetRow, id, fields, payload: { assignment: payload } });
+
+    const assignmentPath = `/courses/${courseId}/assignments/${id}`;
+    if (!override) {
+      plan.toSend.push({ row: sheetRow, path: assignmentPath, fields,
+        payload: { assignment: changed } });
+      return;
+    }
+    // Canvas un-sets any override date left out of the PUT, so keep the ones it already sets.
+    const body = {};
+    DATES_FIELDS.forEach(f => {
+      if (f.field in changed) body[f.field] = changed[f.field];
+      else if (f.field in override) body[f.field] = override[f.field];
+    });
+    // Same students as now (held in memory only; never written to the sheet or logged).
+    if (overrideKind_(override) === 'students') body.student_ids = override.student_ids;
+    plan.toSend.push({ row: sheetRow, path: `${assignmentPath}/overrides/${overrideId}`, fields,
+      payload: { assignment_override: body } });
   });
   return plan;
 }
 
 /** Sends each job through canvasWrite_. Stops early on errors that would hit every row. */
-function sendDateUpdates_(sheet, courseId, jobs, tz) {
+function sendDateUpdates_(sheet, jobs, tz) {
   const result = { sent: 0, failed: 0, dryRun: isDryRun_(), stoppedMessage: '' };
   for (const job of jobs) {
     const status = sheet.getRange(job.row, DATES_COL.status);
     try {
-      canvasWrite_('PUT', `/courses/${courseId}/assignments/${job.id}`, job.payload);
+      canvasWrite_('PUT', job.path, job.payload);
       if (result.dryRun) {
         status.setValue(`Dry run OK (${job.fields.length} date(s))`);
       } else {
@@ -254,6 +326,38 @@ function sendDateUpdates_(sheet, courseId, jobs, tz) {
     }
   }
   return result;
+}
+
+/** Who a section-date override is for: 'section', 'students', 'group', or null (other). */
+function overrideKind_(override) {
+  if (override.course_section_id) return 'section';
+  if (Array.isArray(override.student_ids)) return 'students';
+  if (override.group_id) return 'group';
+  return null;
+}
+
+/**
+ * Name-column text for a section-date row. Students show only a count and groups no name
+ * (group names are sometimes student names). The "↳" also stops a section name that
+ * starts with "=" from turning into a formula.
+ */
+function overrideLabel_(override) {
+  const kind = overrideKind_(override);
+  if (kind === 'section') return '↳ ' + (override.title || 'Section');
+  if (kind === 'students') {
+    const n = override.student_ids.length;
+    return `↳ ${n} student${n === 1 ? '' : 's'}`;
+  }
+  if (kind === 'group') return '↳ Group';
+  return '↳ Other (see Canvas)';
+}
+
+/**
+ * The date an override row actually uses for one field: the override's own date when it
+ * sets that field (Canvas sends the key only then, possibly as null), else the assignment's.
+ */
+function overrideDate_(override, assignment, field) {
+  return field in override ? override[field] : assignment[field];
 }
 
 /** ISO date from Canvas -> { date: '8/12/26', time: '4:00 pm' } in the sheet's time zone. */
