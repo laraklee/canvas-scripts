@@ -29,8 +29,9 @@
 >   shrinking, 4 shrink it, 3 outside site, 1 not in export (Unit 2, FRQ 1 Plant), other
 >   course: Unit 2 (4230) and both Unit 1 Test copies (3483), 1 blank choice, 1 pick > size,
 >   2 points mismatches. /quiz-check now uses the window's reader (one reader for both).
->   **Still to test in Google:** google.script.run with ~0.8 MB, Apps Script parse time,
->   Safari/iPad.
+>   **Tested in Biology 11/9 (Mac, Chrome):** works end to end, "47 quiz(zes)… 15 have
+>   something to look at, 32 look fine" (matches the Mac). Not yet tried: Safari/iPad.
+>   Step 2 is in Biology only; AI9, Gastronomy, template wait for step 4.
 > - **NEXT: build "Quiz check from course export", plan agreed 11/9.** Step 1 reader:
 >   course-export layout, quiz published state, unpublished file/folder flag, plainer
 >   other-course message ("students in this course can't see it"), offline check,
