@@ -564,7 +564,10 @@ function quizCellText_(text) {
   return /^[=+]/.test(cut) ? `'${cut}` : cut;
 }
 
-/** Replaces everything from row 3 down with the report. Rows 1–2 are left alone. */
+/**
+ * Replaces everything from row 3 down with the report. Rows 1–2 are left alone. Returns
+ * the header row's number (the table starts on the row below it).
+ */
 function writeQuizReport_(sheet, report, now) {
   const first = QUIZ_REPORT_FIRST_ROW;
   const width = QUIZ_REPORT_HEADERS.length;
@@ -587,7 +590,7 @@ function writeQuizReport_(sheet, report, now) {
     .setFontWeight('bold');
   if (!report.rows.length) {
     quizReportLayout_(sheet, headerRow);
-    return;
+    return headerRow;
   }
   // Text columns stay plain text, so Sheets can't turn "1, 2, 3" (Correct) or a name like
   // "11/20" into a date. Must be set before the values go in.
@@ -608,6 +611,7 @@ function writeQuizReport_(sheet, report, now) {
   ['Question', 'Choices', 'Pictures', 'Check'].forEach(label => sheet.getRange(headerRow + 1,
     QUIZ_REPORT_HEADERS.indexOf(label) + 1, report.rows.length, 1).setWrap(true));
   quizReportLayout_(sheet, headerRow);
+  return headerRow;
 }
 
 /**

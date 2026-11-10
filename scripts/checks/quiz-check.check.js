@@ -105,8 +105,13 @@ function makeWorkbook() {
   const makeTab = name => {
     const tab = { name, cells: {}, colors: {}, links: {}, frozen: [0, 0], maxRows: 1000, maxCols: 26, active: false };
     const range = (row, col, rows = 1, cols = 1) => {
+      const each = fn => { for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) fn(`${row + i},${col + j}`); };
       const r = {
         setValues: values => { values.forEach((line, i) => line.forEach((v, j) => { tab.cells[`${row + i},${col + j}`] = v; })); return r; },
+        setValue: v => { tab.cells[`${row},${col}`] = v; return r; },
+        setBackground: color => { each(key => { tab.colors[key] = color; }); return r; },
+        setRichTextValue: v => { tab.cells[`${row},${col}`] = v.text; tab.links[`${row},${col}`] = v.url; return r; },
+        clear: () => { each(key => { delete tab.cells[key]; delete tab.colors[key]; delete tab.links[key]; }); return r; },
         setBackgrounds: colors => { colors.forEach((line, i) => line.forEach((v, j) => { tab.colors[`${row + i},${col + j}`] = v; })); return r; },
         getDisplayValue: () => String(tab.cells[`${row},${col}`] ?? ''),
         setRichTextValues: values => { values.forEach((line, i) => line.forEach((v, j) => {
@@ -114,7 +119,7 @@ function makeWorkbook() {
           tab.links[`${row + i},${col + j}`] = v.url;
         })); return r; },
       };
-      ['setNumberFormat', 'setFontWeight', 'setWrap', 'setVerticalAlignment', 'setHorizontalAlignment']
+      ['setNumberFormat', 'setFontWeight', 'setWrap', 'setVerticalAlignment', 'setHorizontalAlignment', 'clearNote']
         .forEach(fn => { r[fn] = () => r; });
       return r;
     };
@@ -129,6 +134,7 @@ function makeWorkbook() {
       insertRowsAfter: (at, n) => { tab.maxRows += n; },
       insertColumnsAfter: (at, n) => { tab.maxCols += n; },
       setColumnWidth: () => {},
+      hideColumns: () => {},
       activate: () => { tabs.forEach(t => { t.active = t === tab; }); },
     };
     tabs.push(tab);
@@ -280,8 +286,7 @@ const courseZip = new Blob([makeZip(entries, true)]);
       result.quizzes[1].kinds], [false, false, 0, 'problem', [['points add up to 4, not 9', 0]]]);
   check('workbook: message', result.message, 'Checked 2 quiz(zes) from "biology-export.imscc". See the "Quiz Check" tab: ' +
     '2 need fixing (red), 0 have suggestions (orange), 0 look fine.\n\n1 of 2 quiz names link to their page in Canvas. ' +
-    '1 aren\'t linked: ungraded quizzes (such as practice quizzes) aren\'t Canvas assignments.' +
-    '\n\n(Detailed reports for each quiz are still being built.)');
+    '1 aren\'t linked: ungraded quizzes (such as practice quizzes) aren\'t Canvas assignments.');
   check('links: assignment list refreshed once, before linking', setup.refreshed, 1);
 
   // The overview tab.
@@ -399,6 +404,40 @@ const courseZip = new Blob([makeZip(entries, true)]);
   const empty = await win('quizCheckGzipBase64')(JSON.stringify({ texts: { 'imsmanifest.xml': '<m/>' }, sizes: {} }));
   check('workbook: no quizzes → says which export to choose', c.receiveCourseExport({ fileName: 'x', gzip: empty }).message,
     'No quizzes found in that file. Choose the course export from Canvas (Settings › Export Course Content › Course).');
+
+  // Step 3b: a chosen quiz's detailed report on the "Quiz Check detail" tab.
+  workbook = makeWorkbook();
+  const detail = c.receiveQuizCheckDetail({ fileName: 'biology-export.imscc', gzip, quizId: 'ga', url: URL_251474 });
+  const dtab = workbook.tabs.find(t => t.name === 'Quiz Check detail');
+  check('detail: ok, tab made and shown', [detail.ok, Boolean(dtab), dtab && dtab.active], [true, true, true]);
+  check('detail: label, file name, quiz name linked to Canvas',
+    [dtab.cells['1,1'], dtab.cells['1,2'], dtab.cells['3,1'], dtab.cells['3,2'], dtab.links['3,2']],
+    ['Quiz Check detail:', 'biology-export.imscc', 'Quiz', 'Quiz A', URL_251474]);
+  check('detail: header on row 11, question then group then bank question',
+    [dtab.cells['11,1'], dtab.cells['12,1'], dtab.cells['13,1'], dtab.cells['14,1']], ['Kind', 'Question', 'Group', 'Question']);
+  check('detail: the other-course bank question is red', [dtab.colors['14,1'], dtab.colors['12,1']], ['#f4cccc', undefined]);
+  check('detail: message names the quiz and the red row', [detail.message.startsWith('"Quiz A": 1 group(s) and 2 question(s) on the "Quiz Check detail" tab.'),
+    detail.message.includes('1 row(s) need fixing (red).'), detail.message.includes('orange')], [true, true, false]);
+  const plain = c.receiveQuizCheckDetail({ fileName: 'b.imscc', gzip, quizId: 'gb', url: 'javascript:alert(1)' });
+  check('detail: next click replaces the tab; a non-https link is ignored',
+    [plain.ok, workbook.tabs.filter(t => t.name === 'Quiz Check detail').length, dtab.cells['1,2'], dtab.cells['3,2'],
+      dtab.links['3,2'], dtab.cells['14,1'], dtab.colors['14,1']], [true, 1, 'b.imscc', 'Quiz B', undefined, undefined, undefined]);
+  check('detail: unknown quiz → asks to check again', c.receiveQuizCheckDetail({ fileName: 'b', gzip, quizId: 'nope' }),
+    { ok: false, message: 'That quiz isn\'t in this export. Run the check again and pick it from the new list.' });
+  check('detail: garbage → clear message', c.receiveQuizCheckDetail({ fileName: 'x', gzip: 'bm90IGd6aXA=', quizId: 'ga' }).message,
+    'The file couldn\'t be read. Try choosing it again.');
+  const mine = workbook.makeTab('Quiz Check detail');
+  workbook.tabs.splice(workbook.tabs.indexOf(dtab), 1);
+  mine.cells['1,1'] = 'Notes';
+  check('detail: someone else\'s "Quiz Check detail" tab is left alone',
+    [c.receiveQuizCheckDetail({ fileName: 'b', gzip, quizId: 'ga' }).ok, mine.cells['1,1']], [false, 'Notes']);
+  // Orange: rows whose Check is only "worth shrinking"; mixed rows stay red.
+  const shaded = makeWorkbook().makeTab('t');
+  const row = check => { const r = new Array(17).fill(''); r[14] = check; return r; };
+  const orangeCount = c.quizCheckOrangeRows_(shaded.sheet, { rows: [row('Picture "a" is 600 KB: worth shrinking'),
+    row('Picture "a" is 600 KB: worth shrinking\nNo correct answer marked'), row('')] }, 10);
+  check('detail: only suggestion rows turn orange', [orangeCount, shaded.colors['11,1'], shaded.colors['11,17'], shaded.colors['12,1'],
+    shaded.colors['13,1']], [1, '#fce5cd', '#fce5cd', undefined, undefined]);
 
   if (failures) {
     console.log(`\n${failures} check(s) failed.`);

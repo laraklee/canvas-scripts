@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  QuizCheckUpload.html: the "Quiz Check" window (opened by showQuizCheck in
+  QuizCheckUpload.html: the "Quiz Check" side panel (opened by showQuizCheck in
   QuizCheck.js; Lara, 2026-11-09). The teacher picks a Canvas course export (.imscc; a
   single-quiz .zip works too). The file is read here, in the browser, a piece at a time
   (File.slice), so a 600 MB export is never loaded whole: the zip's table of contents
@@ -8,7 +8,9 @@
   bank, and settings files: about 7 MB of text for a big course). That text and the
   sizes are packed into one gzip (CompressionStream; about 1 MB) and sent to
   receiveCourseExport. Pictures never leave the computer. Messages are shown as plain
-  text (textContent), never as HTML.
+  text (textContent), never as HTML. After the check, the panel lists the quizzes (same
+  order and colors as the tab); clicking one sends the same packed text again with that
+  quiz's id to receiveQuizCheckDetail, which writes its detailed report (step 3b).
   Canvas endpoints: none. Write operations: none. Properties: none.
   An export holds course content only (quizzes, pages, files), no student data.
 -->
@@ -23,7 +25,15 @@
     button { font-size: 14px; padding: 6px 14px; }
     input[type=file] { max-width: 100%; }
     #status { white-space: pre-wrap; line-height: 1.4; }
-    #status.problem { color: #b3261e; }
+    #status.problem, #detailStatus.problem { color: #b3261e; }
+    #detailStatus { white-space: pre-wrap; line-height: 1.4; margin-bottom: 8px; }
+    #quizList { display: flex; flex-direction: column; gap: 4px; }
+    #quizList button { text-align: left; padding: 6px 8px; border: 1px solid #dadce0; border-radius: 4px;
+      background: #fff; font-size: 13px; cursor: pointer; }
+    #quizList button.problem { background: #f4cccc; }
+    #quizList button.suggestion { background: #fce5cd; }
+    #quizList button.chosen { outline: 2px solid #1a73e8; }
+    #quizList .kinds { display: block; font-size: 12px; color: #5f6368; margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -36,7 +46,13 @@
     <button id="go" disabled>Check</button>
   </div>
   <div id="status" role="status" aria-live="polite"></div>
-  <div class="row"><button id="close" hidden>Close</button></div>
+  <div id="details" hidden>
+    <p><b>Detailed report:</b> click a quiz. It goes on the <b>Quiz Check detail</b> tab,
+      which is replaced each time.</p>
+    <div id="detailStatus" role="status" aria-live="polite"></div>
+    <div id="quizList"></div>
+  </div>
+  <div class="row" style="margin-top: 12px"><button id="close" hidden>Close</button></div>
 
   <script id="zip-slice-reader">
     // Reads a Canvas export (a File or Blob) a slice at a time. readQuizCheckFile(file,
@@ -181,10 +197,55 @@
     const go = document.getElementById('go');
     const statusBox = document.getElementById('status');
     const closeButton = document.getElementById('close');
-    const say = (message, problem) => {
-      statusBox.textContent = message;
-      statusBox.className = problem ? 'problem' : '';
+    const details = document.getElementById('details');
+    const detailStatus = document.getElementById('detailStatus');
+    const quizList = document.getElementById('quizList');
+    const say = (message, problem, box = statusBox) => {
+      box.textContent = message;
+      box.className = problem ? 'problem' : '';
     };
+    // The last checked upload, kept so a quiz's detailed report needs no second read.
+    let checked = null;
+
+    // One button per quiz, in the tab's order and colors. Text only (textContent).
+    function showQuizList(quizzes) {
+      quizList.replaceChildren();
+      quizzes.forEach(quiz => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = quiz.level || '';
+        button.textContent = quiz.title || '(no title)';
+        const kinds = (quiz.kinds || []).map(([kind, n]) => (n ? `${kind} (${n})` : kind)).join(' · ');
+        if (kinds) {
+          const line = document.createElement('span');
+          line.className = 'kinds';
+          line.textContent = kinds;
+          button.appendChild(line);
+        }
+        button.addEventListener('click', () => showDetail(quiz, button));
+        quizList.appendChild(button);
+      });
+      details.hidden = !quizzes.length;
+    }
+
+    function showDetail(quiz, button) {
+      if (!checked) return;
+      const buttons = [...quizList.querySelectorAll('button')];
+      buttons.forEach(b => { b.disabled = true; b.classList.remove('chosen'); });
+      button.classList.add('chosen');
+      say(`Writing the report for "${quiz.title}"…`, false, detailStatus);
+      const done = () => buttons.forEach(b => { b.disabled = false; });
+      google.script.run
+        .withSuccessHandler(result => {
+          say(result.message, !result.ok, detailStatus);
+          done();
+        })
+        .withFailureHandler(() => {
+          say('The workbook couldn\'t write that report (the connection may have dropped). Try once more.', true, detailStatus);
+          done();
+        })
+        .receiveQuizCheckDetail({ fileName: checked.fileName, gzip: checked.gzip, quizId: quiz.id, url: quiz.url || '' });
+    }
     const ready = () => {
       go.disabled = !fileInput.files.length;
       fileInput.disabled = false;
@@ -192,6 +253,8 @@
     fileInput.addEventListener('change', () => {
       ready();
       say('');
+      checked = null;
+      showQuizList([]);
     });
     closeButton.addEventListener('click', () => google.script.host.close());
     go.addEventListener('click', async () => {
@@ -199,6 +262,8 @@
       if (!file) return;
       go.disabled = true;
       fileInput.disabled = true;
+      checked = null;
+      showQuizList([]);
       say('Reading the export…');
       try {
         if (typeof DecompressionStream === 'undefined' || typeof CompressionStream === 'undefined') {
@@ -212,6 +277,11 @@
           .withSuccessHandler(result => {
             say(result.message, !result.ok);
             closeButton.hidden = false;
+            if (result.ok) {
+              checked = { fileName: file.name, gzip };
+              say('', false, detailStatus);
+              showQuizList(result.quizzes || []);
+            }
             ready();
           })
           .withFailureHandler(() => {

@@ -1,7 +1,21 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-11-09, Mac)**
+> **Where we left off (current state, 2026-11-09, PC)**
 >
+> - **Quiz links pushed to Biology and tested 11/9 (PC; Lara: "They're good").**
+> - **Step 3b built 11/9 (PC), not yet pushed.** Decided (Lara): Quiz Check opens in the
+>   **side panel** (showSidebar), not a modal, so the sheet stays usable; detailed reports
+>   go on **one shared "Quiz Check detail" tab** (A1 "Quiz Check detail:", B1 file name),
+>   replaced each click. After the check the panel lists the quizzes (tab order and
+>   colors, short kinds under each name); a click resends the same gzip with the quiz id
+>   to `receiveQuizCheckDetail`, which writes the Quiz report layout (`writeQuizReport_`,
+>   now returns its header row) and turns suggestion-only rows orange
+>   (`quizCheckOrangeRows_`); the quiz name (B3) links to Canvas when the check linked it
+>   (https only). Window message no longer says detailed reports are being built. Guide
+>   updated (side panel; "Detailed report for one quiz"; still "Being built"). Offline
+>   check 49 pass. **Next:** push Biology, Lara tests on the 11/9 export (try Lab 2.1 for
+>   orange + red rows, Raw Score Unit 2 for many reds, a fine one, both Unit 1 Test copies),
+>   then step 4 (drop "Being built", push AI9, Gastronomy, template).
 > - **Quiz links built 11/9 evening (PC), after 3a; not yet pushed.** Lara: quiz names in
 >   column A should link to Canvas for fixing, using the assignment list, refreshed
 >   automatically at the start. How: when the export's course (context.xml) matches

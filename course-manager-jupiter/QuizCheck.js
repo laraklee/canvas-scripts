@@ -17,7 +17,11 @@
  *   each listed assignment's identifier is worked out and matched. Ungraded quizzes
  *   aren't assignments and stay unlinked. If the refresh fails, the list already on the
  *   tab is used; the check itself never depends on Canvas.
- *   Step 3a of the plan in BRIEF.md. Next (3b): a detailed report for a chosen quiz.
+ *   Detailed report (step 3b; Lara, 2026-11-09): the window is a side panel, so the
+ *   sheet stays usable. After the check it lists the quizzes; clicking one sends the same
+ *   upload again with that quiz's id to receiveQuizCheckDetail, which writes the Quiz
+ *   report layout (writeQuizReport_) on one shared "Quiz Check detail" tab, replaced each
+ *   click. Rows whose Check holds only suggestions are orange there too.
  *   Course content only: an export holds no student data. Logs counts and timings only.
  * Canvas endpoints called (GET, via writeAssignmentGroupsSheet_ in RefSheets.js):
  *   /api/v1/courses/:course/assignment_groups?include[]=assignments&include[]=all_dates
@@ -29,6 +33,8 @@
 const QUIZ_CHECK_TITLE = 'Quiz Check';
 const QUIZ_CHECK_TAB = 'Quiz Check';
 const QUIZ_CHECK_LABEL = 'Quiz Check:';
+const QUIZ_CHECK_DETAIL_TAB = 'Quiz Check detail';
+const QUIZ_CHECK_DETAIL_LABEL = 'Quiz Check detail:';
 const QUIZ_CHECK_SUGGESTION_COLOR = '#fce5cd'; // light orange: suggestions only
 const QUIZ_CHECK_HEADERS = Object.freeze(['Quiz', 'Published', 'Points', 'Points found',
   'Questions', 'Pictures', 'Rows to look at', 'What to look at']);
@@ -56,10 +62,13 @@ const QUIZ_CHECK_KINDS = Object.freeze([
 // The gzipped upload as base64; about 1.3 MB for a 47-quiz course (7 MB of text).
 const QUIZ_CHECK_MAX_GZIP_CHARS = 15 * 1000 * 1000;
 
-/** Menu: Canvas Tools › Quiz Check. Opens the window. */
+/**
+ * Menu: Canvas Tools › Quiz Check. Opens the window in the side panel (Lara, 2026-11-09),
+ * so the teacher can read a report tab and pick the next quiz without closing it.
+ */
 function showQuizCheck() {
-  const html = HtmlService.createHtmlOutputFromFile('QuizCheckUpload').setWidth(480).setHeight(320);
-  SpreadsheetApp.getUi().showModalDialog(html, QUIZ_CHECK_TITLE);
+  const html = HtmlService.createHtmlOutputFromFile('QuizCheckUpload').setTitle(QUIZ_CHECK_TITLE);
+  SpreadsheetApp.getUi().showSidebar(html);
 }
 
 /**
@@ -96,8 +105,7 @@ function receiveCourseExport(upload) {
       courseExport: result.courseExport,
       quizzes,
       message: `Checked ${quizzes.length} quiz(zes) from "${name}". See the "${sheet.getName()}" tab: ` +
-        `${quizCheckCountLine_(quizzes)}.${linkNote ? `\n\n${linkNote}` : ''}${single}` +
-        '\n\n(Detailed reports for each quiz are still being built.)',
+        `${quizCheckCountLine_(quizzes)}.${linkNote ? `\n\n${linkNote}` : ''}${single}`,
     };
   } catch (error) {
     // Kind of failure and the code line only: never the error text (it could quote the file).
@@ -107,6 +115,66 @@ function receiveCourseExport(upload) {
     return { ok: false, message: error.isSheetProblem ? error.message :
       'Something went wrong reading the export. Nothing was changed. See Extensions › Apps Script › Executions.' };
   }
+}
+
+/**
+ * Called from the window (google.script.run) when a quiz in its list is clicked, with
+ * { fileName, gzip, quizId, url }: the same upload as receiveCourseExport, the quiz's id,
+ * and its Canvas link from the check ('' if none). Writes that quiz's detailed report on
+ * the "Quiz Check detail" tab and returns { ok, message }; never throws to the window.
+ */
+function receiveQuizCheckDetail(upload) {
+  const started = Date.now();
+  try {
+    const files = quizCheckUnpack_(upload);
+    const quiz = qtiReadExport_(files).quizzes.find(q => q.id === String(upload.quizId || ''));
+    if (!quiz) throw sheetProblem_('That quiz isn\'t in this export. Run the check again and pick it from the new list.');
+    const report = qtiQuizReport_(quiz, 1);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = quizCheckSheet_(ss, QUIZ_CHECK_DETAIL_TAB, QUIZ_CHECK_DETAIL_LABEL);
+    sheet.getRange(1, 1).setValue(QUIZ_CHECK_DETAIL_LABEL).setFontWeight('bold');
+    sheet.getRange(1, 2).setNumberFormat('@').setValue(quizCellText_(String(upload.fileName || '').slice(0, 200)));
+    const headerRow = writeQuizReport_(sheet, report, new Date());
+    const orange = quizCheckOrangeRows_(sheet, report, headerRow);
+    // The quiz's name (summary row "Quiz") links to Canvas, like on the overview.
+    const url = String(upload.url || '');
+    if (/^https:\/\//i.test(url)) {
+      sheet.getRange(QUIZ_REPORT_FIRST_ROW, 2).setRichTextValue(SpreadsheetApp.newRichTextValue()
+        .setText(String(report.summary[0][1])).setLinkUrl(url).build());
+    }
+    sheet.activate();
+    const n = report.counts;
+    console.log(`${QUIZ_CHECK_TITLE} detail: ${n.groups} group(s), ${n.questions} question(s), ` +
+      `${n.checks} check(s), ${orange} orange, ${Date.now() - started} ms.`);
+    const shaded = n.checks - orange;
+    return { ok: true, message: `"${quiz.title}": ${n.groups} group(s) and ${n.questions} question(s) on the ` +
+      `"${sheet.getName()}" tab.\n\nPoints: ${report.pointsMessage}\n\nPictures: ${report.picturesMessage}` +
+      (shaded ? `\n\n${shaded} row(s) need fixing (red).` : '') +
+      (orange ? `\n\n${orange} row(s) have suggestions only (orange).` : '') };
+  } catch (error) {
+    const where = String(error.stack || '').split('\n')[1] || '';
+    console.error(`${QUIZ_CHECK_TITLE} detail failed after ${Date.now() - started} ms: ` +
+      `${error.isSheetProblem ? 'SHEET_PROBLEM' : `UNEXPECTED ${where.trim()}`}`);
+    return { ok: false, message: error.isSheetProblem ? error.message :
+      'Something went wrong writing the report. See Extensions › Apps Script › Executions.' };
+  }
+}
+
+/**
+ * Turns the report's suggestion-only rows (every Check line "worth shrinking") orange;
+ * writeQuizReport_ shades every row with a Check red. Returns how many it changed.
+ */
+function quizCheckOrangeRows_(sheet, report, headerRow) {
+  const checkIndex = QUIZ_REPORT_HEADERS.indexOf('Check');
+  let count = 0;
+  report.rows.forEach((row, i) => {
+    const lines = String(row[checkIndex]).split('\n').filter(line => line.trim());
+    if (lines.length && lines.every(quizCheckIsSuggestion_)) {
+      sheet.getRange(headerRow + 1 + i, 1, 1, QUIZ_REPORT_HEADERS.length).setBackground(QUIZ_CHECK_SUGGESTION_COLOR);
+      count++;
+    }
+  });
+  return count;
 }
 
 /**
@@ -220,15 +288,16 @@ function quizCheckOverview_(quizzes, fileName, now) {
 }
 
 /**
- * The "Quiz Check" tab (made if missing). A tab by that name that isn't one of ours (A1
- * says something other than "Quiz Check:") is left alone: the teacher is asked to rename it.
+ * The "Quiz Check" tab, or another of ours (the detail tab), made if missing. A tab by
+ * that name that isn't one of ours (A1 says something other than its label) is left
+ * alone: the teacher is asked to rename it.
  */
-function quizCheckSheet_(ss) {
-  const sheet = ss.getSheetByName(QUIZ_CHECK_TAB);
-  if (!sheet) return ss.insertSheet(QUIZ_CHECK_TAB);
+function quizCheckSheet_(ss, name = QUIZ_CHECK_TAB, label = QUIZ_CHECK_LABEL) {
+  const sheet = ss.getSheetByName(name);
+  if (!sheet) return ss.insertSheet(name);
   const a1 = String(sheet.getRange('A1').getDisplayValue()).trim().toLowerCase();
-  if (a1 && a1 !== QUIZ_CHECK_LABEL.toLowerCase()) {
-    throw sheetProblem_(`There's already a "${QUIZ_CHECK_TAB}" tab used for something else. ` +
+  if (a1 && a1 !== label.toLowerCase()) {
+    throw sheetProblem_(`There's already a "${name}" tab used for something else. ` +
       'Rename that tab and try again. Nothing was changed.');
   }
   return sheet;
