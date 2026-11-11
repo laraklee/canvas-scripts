@@ -4,7 +4,7 @@
   },
   "oauthScopes": [
     "https://www.googleapis.com/auth/script.external_request",
-    "https://www.googleapis.com/auth/calendar.readonly"
+    "https://www.googleapis.com/auth/calendar"
   ],
   "webapp": {
     "executeAs": "USER_ACCESSING",

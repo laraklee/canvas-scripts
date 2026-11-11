@@ -98,7 +98,7 @@ Does not call Canvas. No student data: both calendars are school schedules.
      would be added, updated, removed, or moved. Still read-only. The server reads the
      bell schedule from its public ICS link (as the page does) with `calendar-filter`'s
      parser, so teachers needn't subscribe to it.
-     **Written 11/11, not yet pushed or tested.** `Ics.js` = `calendar-filter`'s parser
+     **Done 11/11** (pushed; Lara's preview looked right). `Ics.js` = `calendar-filter`'s parser
      (copied). `Sync.js` builds the plan: the page's choices are saved first; classes come
      from the shared bell schedule copy (date filter in Hawaii dates, so the 9/30 problem
      doesn't happen here), school events from the faculty calendar (skipped if none are
@@ -111,6 +111,21 @@ Does not call Canvas. No student data: both calendars are school schedules.
      calendars only if missing; creates tagged events; deletes or re-creates only events
      with this app's tag, in the chosen calendars, inside the date range. Continues in
      rounds past the 6-minute limit. Adds "Remove everything this app added".
+     **Written 11/11, not yet pushed or tested.** Write calls approved by Lara 11/11, all in
+     `Sync.js` under "Calendar writes": `createAppCalendar_` (new calendar, Hawaii time),
+     `createAppEvent_` (tags it and **turns reminders off**, decided 11/11 so a main
+     calendar's default pop-up doesn't fire for every class), `deleteAppEvent_` (refuses
+     any event without the app's tag). `confirmSync` re-plans every round (never trusts the
+     earlier preview), runs about 4½ minutes, and the page keeps calling it with progress;
+     Google "slow down" errors wait 30 s, and 6 in a row with no progress stop with a
+     come-back-later message (likely the daily limit). A user lock stops two runs at once.
+     `BUILDER_LAST_CALENDARS` is now a list per group, saved before writing and **never
+     shortened**, so events outside today's date range in an old calendar can't be lost.
+     A calendar the app created is found through that list first (Google can be slow to
+     list a new calendar by name, which could otherwise create a second "My Classes").
+     "Remove everything" checks those calendars plus the current choices, 2 years back to
+     3 ahead, shows counts per calendar, then removes in rounds. Scope is now full
+     `calendar` (teachers approve again; push needs `--force`).
 6. Keep the .ics download as a fallback.
 
 ## Open questions

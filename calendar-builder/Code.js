@@ -8,7 +8,9 @@
  * "Add to my Google Calendar" (Sync.js, using the ICS parser in Ics.js).
  *
  * Endpoints: the bell schedule's public ICS link (read-only GET, built from BELL_SCHEDULE_ID).
- * Write calls: none.
+ * Write calls: none in this file. Calendar writes are only in Sync.js (after a confirmed preview).
+ * Permission: full Google Calendar access (appsscript.json), needed to create the teacher's
+ *   calendars and events; Sync.js only ever changes or deletes events this app tagged.
  * Script Properties: BELL_SCHEDULE_ID (the bell schedule's Google Calendar ID; not a secret,
  *   but kept out of the code because this repo is public).
  * Caches (Script Cache, shared by all teachers): the schedule's "last revised" time, for 6
@@ -17,7 +19,7 @@
  */
 
 // Update by hand whenever the tool changes; shown at the top of the page.
-const SYSTEM_REVISION_DATE = '11/11/2026'; // Step 5b: preview of "Add to my Google Calendar".
+const SYSTEM_REVISION_DATE = '11/11/2026'; // Step 5c: Confirm writes to Google Calendar.
 
 const CACHE_KEY_REVISED = 'master_schedule_hst_v2';
 const CACHE_SECONDS = 21600; // 6 hours

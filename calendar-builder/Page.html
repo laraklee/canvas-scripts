@@ -3,10 +3,11 @@
   Page.html
   The Faculty Calendar Builder page: load the bell schedule, pick a date range, choose and
   rename periods, pick kinds of school events, then either add them to Google Calendar
-  (Option A: a preview for now; confirming comes in step 5c) or download a one-time .ics file
-  (Option B). Choices are saved automatically. The .ics is built in the browser. Server calls:
-  fetchDefaultCalendar() in Code.js, getSchoolEventTitles() in SchoolEvents.js, saveChoices()
-  in Settings.js, previewSync() in Sync.js. No calendar writes.
+  (Option A: preview, then Confirm) or download a one-time .ics file (Option B). Choices are
+  saved automatically. The .ics is built in the browser. Server calls: fetchDefaultCalendar()
+  in Code.js, getSchoolEventTitles() in SchoolEvents.js, saveChoices() in Settings.js,
+  previewSync() / confirmSync() / previewRemoveAll() / confirmRemoveAll() in Sync.js.
+  Calendar writes happen only in Sync.js, and only after the teacher confirms a preview.
   Started from a colleague's page (see BRIEF.md); the feedback form was removed for the pilot.
 -->
 <html lang="en">
@@ -352,9 +353,24 @@
 
         <div id="previewBox" class="preview-box" style="display: none;">
             <div id="previewBody"></div>
-            <button class="btn-primary" id="confirmBtn" disabled>Confirm</button>
-            <span class="subtext">Confirming comes in the next update. This is a preview only.</span>
+            <button class="btn-primary" id="confirmBtn" onclick="confirmSyncClicked()">Confirm</button>
+            <span class="subtext" id="confirmNote">A full school year can take several minutes. Keep this page open until it says it's done.</span>
         </div>
+
+        <div id="progressBox" class="preview-box" style="display: none;">
+            <div id="progressBody"></div>
+        </div>
+
+        <details style="margin-top: 15px; font-size: 0.88em; color: #666;">
+            <summary style="cursor: pointer;">Remove everything this app added</summary>
+            <p>Takes out every event this app has put in your calendars, at any date. Events you added
+            yourself are never touched, and no calendar is deleted. You'll see how many first.</p>
+            <button class="btn-secondary" id="removeAllBtn" onclick="previewRemoveAllClicked()">Check what would be removed</button>
+            <div id="removeAllBox" style="display: none; margin-top: 10px;">
+                <div id="removeAllBody"></div>
+                <button class="btn-secondary" id="removeAllConfirmBtn" onclick="confirmRemoveAllClicked()" style="margin-top: 8px;">Remove them</button>
+            </div>
+        </details>
         </div>
 
         <div class="option-box">
@@ -570,7 +586,134 @@
         // ---- Option A: preview what "Add to my Google Calendar" would change ----
 
         function hidePreview() {
+            if (syncRunning) return; // Don't hide the progress of a running sync.
             document.getElementById('previewBox').style.display = 'none';
+        }
+
+        // ---- Running a change in rounds (Confirm, and Remove everything) ----
+        // The server works for up to about 4½ minutes per call and says what's left; this keeps
+        // calling until it's finished. If Google asks for a slower pace, wait 30 seconds first.
+        // Several "slow down" answers in a row with no progress usually means Google's daily limit.
+
+        let syncRunning = false;
+        const MAX_PAUSES_IN_A_ROW = 6;
+
+        function runRounds(serverCall, args, onProgress, onDone, onError) {
+            const totals = {};
+            let pausesInARow = 0;
+            const round = function() {
+                const runner = google.script.run
+                    .withSuccessHandler(function(r) {
+                        Object.keys(r.done).forEach(k => { totals[k] = (totals[k] || 0) + r.done[k]; });
+                        const progressed = Object.keys(r.done).some(k => r.done[k] > 0);
+                        pausesInARow = r.paused && !progressed ? pausesInARow + 1 : 0;
+                        if (r.finished) { onDone(totals); return; }
+                        if (pausesInARow >= MAX_PAUSES_IN_A_ROW) {
+                            onError('Google has paused changes to your calendar for now (probably its daily limit). ' +
+                                'Come back later and click the button again; it will pick up where it left off.', totals);
+                            return;
+                        }
+                        onProgress(totals, r.left, r.paused);
+                        setTimeout(round, r.paused ? 30000 : 0);
+                    })
+                    .withFailureHandler(function(error) { onError(error.message, totals); });
+                runner[serverCall].apply(runner, args);
+            };
+            round();
+        }
+
+        function countsText(t) {
+            const parts = [];
+            if (t.added) parts.push(`added ${t.added}`);
+            if (t.moved) parts.push(`moved ${t.moved}`);
+            if (t.updated) parts.push(`updated ${t.updated}`);
+            if (t.removed) parts.push(`removed ${t.removed}`);
+            return parts.length ? parts.join(', ') : 'nothing needed changing';
+        }
+
+        function setSyncButtonsDisabled(disabled) {
+            ['syncBtn', 'confirmBtn', 'removeAllBtn', 'removeAllConfirmBtn', 'generateBtn']
+                .forEach(id => { document.getElementById(id).disabled = disabled; });
+        }
+
+        function confirmSyncClicked() {
+            const progress = document.getElementById('progressBody');
+            syncRunning = true;
+            setSyncButtonsDisabled(true);
+            document.getElementById('previewBox').style.display = 'none';
+            document.getElementById('progressBox').style.display = 'block';
+            progress.innerHTML = '<span class="status-badge status-none">Updating your calendar... keep this page open.</span>';
+
+            const finish = function() { syncRunning = false; setSyncButtonsDisabled(false); };
+            runRounds('confirmSync', [currentChoices()],
+                function(totals, left, paused) {
+                    progress.innerHTML = `<span class="status-badge status-none">So far: ${countsText(totals)}. ` +
+                        `${left} to go${paused ? ' (Google asked for a short pause; continuing in 30 seconds)' : ''}... keep this page open.</span>`;
+                },
+                function(totals) {
+                    finish();
+                    progress.innerHTML = `<span class="status-badge status-active">✓ Done: ${countsText(totals)}.</span>` +
+                        `<p><a href="https://calendar.google.com/" target="_blank" rel="noopener">Open Google Calendar</a></p>`;
+                },
+                function(message, totals) {
+                    finish();
+                    progress.innerHTML = `<span class="status-badge status-error">✕ ${escapeHtml(message)}</span>` +
+                        `<p class="subtext">Changes made before this: ${countsText(totals)}. Clicking Add to my Google Calendar again picks up where it stopped.</p>`;
+                });
+        }
+
+        function previewRemoveAllClicked() {
+            const btn = document.getElementById('removeAllBtn');
+            const box = document.getElementById('removeAllBox');
+            const body = document.getElementById('removeAllBody');
+            btn.disabled = true;
+            btn.innerText = 'Checking...';
+            google.script.run
+                .withSuccessHandler(function(r) {
+                    btn.disabled = false;
+                    btn.innerText = 'Check what would be removed';
+                    box.style.display = 'block';
+                    const confirmBtn = document.getElementById('removeAllConfirmBtn');
+                    if (!r.total) {
+                        body.innerHTML = 'There are no events from this app in your calendars.';
+                        confirmBtn.style.display = 'none';
+                        return;
+                    }
+                    body.innerHTML = `<strong>${r.total} event(s) would be removed:</strong><ul>` +
+                        r.calendars.map(c => `<li>${escapeHtml(c.calendar)}: ${c.count}</li>`).join('') + '</ul>';
+                    confirmBtn.style.display = 'inline-block';
+                })
+                .withFailureHandler(function(error) {
+                    btn.disabled = false;
+                    btn.innerText = 'Check what would be removed';
+                    box.style.display = 'block';
+                    body.innerHTML = `<span class="status-badge status-error">✕ ${escapeHtml(error.message)}</span>`;
+                    document.getElementById('removeAllConfirmBtn').style.display = 'none';
+                })
+                .previewRemoveAll();
+        }
+
+        function confirmRemoveAllClicked() {
+            const body = document.getElementById('removeAllBody');
+            syncRunning = true;
+            setSyncButtonsDisabled(true);
+            document.getElementById('removeAllConfirmBtn').style.display = 'none';
+            body.innerHTML = '<span class="status-badge status-none">Removing... keep this page open.</span>';
+            const finish = function() { syncRunning = false; setSyncButtonsDisabled(false); };
+            runRounds('confirmRemoveAll', [],
+                function(totals, left, paused) {
+                    body.innerHTML = `<span class="status-badge status-none">Removed ${totals.removed || 0}, ${left} to go` +
+                        `${paused ? ' (short pause requested by Google)' : ''}... keep this page open.</span>`;
+                },
+                function(totals) {
+                    finish();
+                    body.innerHTML = `<span class="status-badge status-active">✓ Removed ${totals.removed || 0} event(s).</span>`;
+                },
+                function(message, totals) {
+                    finish();
+                    body.innerHTML = `<span class="status-badge status-error">✕ ${escapeHtml(message)}</span>` +
+                        `<p class="subtext">Removed before this: ${totals.removed || 0}. Check again to finish.</p>`;
+                });
         }
 
         function previewSyncClicked() {
@@ -581,6 +724,7 @@
             btn.disabled = true;
             btn.innerText = 'Checking your calendars...';
             box.style.display = 'none';
+            document.getElementById('progressBox').style.display = 'none';
 
             google.script.run
                 .withSuccessHandler(function(result) {
