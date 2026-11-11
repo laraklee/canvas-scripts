@@ -429,7 +429,28 @@ assignment, nothing is sent and a pop-up says which row to fix. Canvas allows on
 of dates per student per assignment. Adding or removing a student on an existing ↳ row is
 done in Canvas for now.</p>
 
-<p>Removing section dates is done in Canvas for now.</p>
+<h3>Remove section or student dates</h3>
+
+<p><span class="menu">Canvas Tools › 📝 Assignment dates › Remove section/student dates on
+selected rows</span></p>
+
+<p>Takes away a ↳ row's own dates in Canvas. Those students go back to the assignment's
+"Everyone else" dates.</p>
+
+<ol>
+  <li>Select the ↳ rows to remove (click a cell in each; hold Ctrl, or ⌘ on a Mac, to pick
+    several). The Update? boxes don't matter for this.</li>
+  <li>Run the menu item.</li>
+  <li>Read the confirmation (how many section, student, and group rows, and whether dry run
+    is on) and click <b>Yes</b>.</li>
+</ol>
+
+<p>A removed row stays on the tab, grayed out and crossed out, until you load again.
+Sending skips it.</p>
+
+<p>Only ↳ rows are removed. Assignment rows and rows hidden by a filter are left alone. A
+new row that hasn't been sent yet isn't in Canvas: just delete that row from the sheet.
+Removing a student row removes the dates for every student on that row.</p>
 
 <h3>Sorting</h3>
 
@@ -490,6 +511,13 @@ nothing; change those in Canvas.</p>
     The row is now a normal ↳ row.</td></tr>
   <tr><td><b>Dry run OK (would create)</b></td><td>A new section or student row was checked but not
     sent (dry run was on).</td></tr>
+  <tr><td><b>Removed (date time): Load again to clear this row</b></td><td>The row's own
+    dates were removed in Canvas by <b>Remove section/student dates</b>. The row is grayed
+    out and is skipped when sending. Load again to clear it.</td></tr>
+  <tr><td><b>Removed: Load again to clear this row</b></td><td>A removed row was checked;
+    it was skipped.</td></tr>
+  <tr><td><b>Dry run OK (would remove)</b></td><td>The row was checked for removal but
+    nothing was removed (dry run was on).</td></tr>
   <tr><td><b>No changes</b></td><td>The row was checked but its dates already match
     Canvas.</td></tr>
   <tr><td><b>Edit in Canvas (not a section, group, or student date)</b></td><td>A rare

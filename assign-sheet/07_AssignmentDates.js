@@ -28,6 +28,9 @@
  *   POST /api/v1/courses/:course/assignments/:id/overrides (write) for a new row from an
  *     Add menu item: Override ID "new" creates a section's dates (course_section_id),
  *     "new students" creates dates for those students (student_ids, title "n students").
+ *   DELETE /api/v1/courses/:course/assignments/:id/overrides/:override_id (write) by
+ *     "Remove section/student dates on selected rows", for selected "↳" rows only, after
+ *     re-reading the assignments (GET above) and asking. The row stays, grayed out.
  *   All writes go through canvasWrite_, so DRY_RUN applies. Name, points, and
  *   submission type on the sheet are for reference only.
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
@@ -82,6 +85,11 @@ const DATES_NAME_BATCH = 50; // student IDs per users request (keeps the URL sho
 const DATES_EDIT_IN_CANVAS = 'Edit in Canvas (not a section, group, or student date)';
 const DATES_INHERITED_NOTE = 'Not set separately for this row: it uses the assignment\'s ' +
   '("Everyone else") date. Change it here to give this row its own date.';
+// Override ID of a row after Remove (Lara's choice 11/10: keep the row, grayed out, until
+// the next Load). Never blank: a blank Override ID means an assignment row, and Send would
+// then send that row's dates to the whole assignment.
+const DATES_REMOVED = 'removed';
+const DATES_REMOVED_COLOR = '#9aa0a6';
 
 /** Menu: Load assignment dates from Canvas. Rebuilds the sheet from row 2 down. */
 function fetchCanvasAssignmentDates() {
@@ -305,6 +313,152 @@ function addOverrideRow_(kind) {
     if (choices.length === 1) nameCells.setValue(choices[0]);
     sheet.getRange(first, 3).activate();
     console.log(`${title}: ${howMany} row(s) inserted, ${choices.length} choice(s).`);
+  } catch (error) {
+    console.error(`${title} failed: ` + (error.canvasType || error.message));
+    ss.toast('', '', 1);
+    ui.alert(title, 'Could not finish. ' + describeCanvasError_(error), ui.ButtonSet.OK);
+  }
+}
+
+/**
+ * Menu: Remove section/student dates on selected rows. Works only on the rows selected
+ * right now (not the Update? checkboxes), so a forgotten checkbox, a deleted row, or a
+ * row hidden by a filter can never remove anything. Assignment rows are never touched.
+ * Re-reads Canvas, asks first (counts only, never names), then sends
+ * DELETE …/assignments/:id/overrides/:override_id for each row. A removed row stays on
+ * the sheet, grayed out, with Override ID "removed", until the next Load.
+ */
+function removeSelectedOverrideRows() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getActiveSheet();
+  const title = 'Remove section/student dates';
+  try {
+    const last = sheet.getLastRow();
+    if (sheet.getName() !== DATES_SHEET_NAME || last < DATES_FIRST_DATA_ROW) {
+      ui.alert(title, `On the ${DATES_SHEET_NAME} tab, select the "↳" rows to remove and run ` +
+        'this again. Nothing was changed.', ui.ButtonSet.OK);
+      return;
+    }
+    const selected = new Set();
+    sheet.getActiveRangeList().getRanges().forEach(range => {
+      const bottom = Math.min(range.getLastRow(), last);
+      for (let r = Math.max(range.getRow(), DATES_FIRST_DATA_ROW); r <= bottom; r++) {
+        selected.add(r);
+      }
+    });
+    const rows = [...selected].sort((a, b) => a - b);
+    const visible = rows.filter(r => !sheet.isRowHiddenByFilter(r) && !sheet.isRowHiddenByUser(r));
+    const note = { hidden: rows.length - visible.length, assignment: 0, notSent: 0, removed: 0 };
+    const candidates = [];
+    const block = visible.length ? sheet.getRange(visible[0], 1,
+      visible[visible.length - 1] - visible[0] + 1, DATES_HEADERS.length).getValues() : [];
+    visible.forEach(r => {
+      const values = block[r - visible[0]];
+      const id = String(values[DATES_COL.id - 1]).trim();
+      const overrideId = String(values[DATES_COL.override - 1]).trim();
+      if (!overrideId) note.assignment++;
+      else if (overrideId === DATES_REMOVED) note.removed++;
+      else if (/^\d+$/.test(id) && /^\d+$/.test(overrideId)) candidates.push({ row: r, id, overrideId });
+      else note.notSent++; // "new" / "new students": not in Canvas yet
+    });
+    const notes = [
+      note.assignment && `${note.assignment} assignment row(s) left alone (only "↳" rows ` +
+        'can be removed).',
+      note.notSent && `${note.notSent} new row(s) not sent to Canvas yet: just delete those ` +
+        'rows from the sheet.',
+      note.removed && `${note.removed} row(s) already removed.`,
+      note.hidden && `${note.hidden} hidden row(s) left alone.`,
+    ].filter(Boolean).join('\n');
+    if (!candidates.length) {
+      ui.alert(title, 'No section or student dates in the selected rows. Nothing was changed.' +
+        (notes ? '\n\n' + notes : ''), ui.ButtonSet.OK);
+      return;
+    }
+    const courseId = getDatesCourseId_();
+    if (!courseId) return;
+
+    ss.toast('Checking with Canvas...', 'Assignment Dates', -1);
+    const live = new Map(canvasGet_(`/courses/${courseId}/assignments`, DATES_FETCH_QUERY)
+      .map(item => [String(item.id), item]));
+    ss.toast('', '', 1);
+    const jobs = [];
+    let skipped = 0;
+    candidates.forEach(c => {
+      const assignment = live.get(c.id);
+      const override = assignment &&
+        (assignment.overrides || []).find(o => String(o.id) === c.overrideId);
+      const kind = override && overrideKind_(override);
+      if (!kind) {
+        sheet.getRange(c.row, DATES_COL.status).setValue(override ? DATES_EDIT_IN_CANVAS :
+          'Section dates not found in Canvas: fetch again');
+        skipped++;
+        return;
+      }
+      jobs.push({ row: c.row, kind, students: kind === 'students' ? override.student_ids.length : 0,
+        path: `/courses/${courseId}/assignments/${c.id}/overrides/${c.overrideId}` });
+    });
+    const skippedText = skipped ? `\n${skipped} row(s) skipped; see Sync Status.` : '';
+    if (!jobs.length) {
+      ui.alert(title, 'Nothing to remove.' + skippedText + (notes ? '\n\n' + notes : ''),
+        ui.ButtonSet.OK);
+      return;
+    }
+
+    const countOf = kind => jobs.filter(j => j.kind === kind).length;
+    const studentCount = jobs.reduce((sum, j) => sum + j.students, 0);
+    const parts = [
+      countOf('section') && `${countOf('section')} section row(s)`,
+      countOf('students') && `${countOf('students')} student row(s) (${studentCount} ` +
+        `student${studentCount === 1 ? '' : 's'})`,
+      countOf('group') && `${countOf('group')} group row(s)`,
+    ].filter(Boolean).join(', ');
+    const answer = ui.alert('Remove section/student dates?',
+      `Course ${courseId}: remove the own dates on ${parts}. Those sections and students go ` +
+      'back to the assignment\'s own ("Everyone else") dates.' + skippedText +
+      (notes ? '\n\n' + notes : '') + '\n\n' + describeDryRun_(isDryRun_()) + '\n\nContinue?',
+      ui.ButtonSet.YES_NO);
+    if (answer !== ui.Button.YES) return;
+
+    ss.toast(`Removing ${jobs.length} row(s)...`, 'Assignment Dates', -1);
+    const dryRun = isDryRun_();
+    let sent = 0;
+    let failed = 0;
+    let stoppedMessage = '';
+    for (const job of jobs) {
+      const status = sheet.getRange(job.row, DATES_COL.status);
+      try {
+        canvasWrite_('DELETE', job.path);
+        if (dryRun) {
+          status.setValue('Dry run OK (would remove)');
+        } else {
+          const stamp = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(),
+            'yyyy-MM-dd HH:mm');
+          status.setValue(`Removed (${stamp}): Load again to clear this row`);
+          sheet.getRange(job.row, DATES_COL.override).setValue(DATES_REMOVED);
+          sheet.getRange(job.row, DATES_COL.check).setValue(false);
+          sheet.getRange(job.row, 3, 1, 10).setFontColor(DATES_REMOVED_COLOR)
+            .setFontLine('line-through');
+        }
+        sent++;
+      } catch (error) {
+        failed++;
+        status.setValue('Failed: ' + describeCanvasError_(error));
+        if (EVENTS_STOP_ALL_TYPES.includes(error.canvasType)) { // 03_Content_Sync.js
+          stoppedMessage = describeCanvasError_(error);
+          break;
+        }
+      }
+    }
+    console.log(`Remove section dates: ${sent} removed, ${failed} failed, ${skipped} skipped, ` +
+      `dry run ${dryRun ? 'ON' : 'OFF'}.`);
+    ss.toast('', '', 1);
+    ui.alert(title,
+      (dryRun ? `Dry run: ${sent} row(s) checked; nothing was removed in Canvas.` :
+        `${sent} row(s) removed. They stay on the sheet, grayed out, until you Load again.`) +
+      (failed ? `\n${failed} failed; see Sync Status.` : '') +
+      (stoppedMessage ? '\n\nStopped early: ' + stoppedMessage : ''),
+      ui.ButtonSet.OK);
   } catch (error) {
     console.error(`${title} failed: ` + (error.canvasType || error.message));
     ss.toast('', '', 1);
@@ -564,6 +718,7 @@ function planDateUpdates_(sheet, courseId, live, lists, tz) {
       plan.skipped++;
     };
     const overrideId = String(row[DATES_COL.override - 1]).trim();
+    if (overrideId === DATES_REMOVED) return skip('Removed: Load again to clear this row');
     const assignment = live.get(id);
     if (!assignment) return skip('Not found in Canvas: fetch again');
     const newKind = Object.values(DATES_NEW_KINDS).find(k => k.marker === overrideId);

@@ -8,7 +8,9 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 > **IN PROGRESS (2026-11-09): section dates (overrides) in Assignment Dates.**
 > **Paused 11/9 evening:** steps 1, 2, 2b, sorting, and gray rows are live on **Biology
 > only** (commit `2e721c2`). Gastronomy, AI9, and the template still run the 11/8
-> code (`396699a`); push to them after step 3 is done and tested. Next: step 3 (Remove).
+> code (`396699a`); push to them after step 3 is done and tested.
+> **11/10:** step 3 (Remove) written and committed, not yet pushed or tested. Next: push to
+> Biology, test in sandbox 4573, then push to Gastronomy, AI9, template.
 > Lara's decisions 11/9: see, edit, add, and remove section dates; shown as "↳" rows
 > under each assignment; student overrides are editable and (changed 11/9 after the first
 > test) show the students' names ("↳ Jane Doe", 3 max then "+ n more"), on the sheet
@@ -43,9 +45,17 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 >    this run). Messages give counts only, never names. POST sends `student_ids` and title
 >    "n student(s)" (Canvas requires a title). Editing the students on an existing
 >    override stays in Canvas.
-> 3. **Remove (NEXT, not started):** menu item "Remove section dates on selected rows", confirm, then
->    `DELETE …/assignments/:id/overrides/:id` (a separate item so a deleted or filtered
->    row can never remove anything).
+> 3. **Remove (written 11/10, not yet pushed or tested):** menu item "Remove section/student
+>    dates on selected rows" (`removeSelectedOverrideRows`). Uses the current selection, not
+>    Update? (so a forgotten checkbox, deleted, or filtered row can never remove anything);
+>    skips assignment rows, hidden rows, unsent "new" rows, and rows already removed.
+>    Re-reads the assignments, skips overrides gone from Canvas or of an "other" kind, asks
+>    (counts only: section / student rows with student total / group rows), then sends
+>    `DELETE …/assignments/:id/overrides/:id` via `canvasWrite_`. Lara's choice 11/10: the
+>    row **stays**, gray and crossed out (C–L), Update? unchecked, status "Removed (…)",
+>    Override ID `removed` (`DATES_REMOVED`; never blank, since blank = assignment row and
+>    Send would push its dates to the whole assignment). Send skips `removed` rows; Load
+>    clears them. Dry run: status "Dry run OK (would remove)", row unchanged.
 
 > **Where we left off (2026-10-20)**
 >
@@ -149,7 +159,8 @@ Grouped by what each item works on; "Load from" / "Send to" says which way data 
 - **📅 Calendar & announcements ›** Post selected calendarEvents rows to Canvas
 - **📝 Assignment dates ›** Load assignment dates from Canvas · Send changed dates to Canvas
   · Add section dates below selected assignment · Add student dates below selected
-  assignment · Sort by selected column (keeps ↳ rows together)
+  assignment · Remove section/student dates on selected rows · Sort by selected column
+  (keeps ↳ rows together)
 - 🔄 Update schedule from Master · 🔗 Reset Master connection · ☑️ Toggle checkboxes
 - **⚙️ Setup ›** Set Canvas token · Test Canvas connection · Dry run: show status /
   switch on/off

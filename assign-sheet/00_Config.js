@@ -16,6 +16,7 @@ function onOpen() {
       .addSeparator()
       .addItem('Add section dates below selected assignment', 'addSectionDatesRow')
       .addItem('Add student dates below selected assignment', 'addStudentDatesRow')
+      .addItem('Remove section/student dates on selected rows', 'removeSelectedOverrideRows')
       .addItem('Sort by selected column (keeps ↳ rows together)', 'sortAssignmentDatesBySelectedColumn'))
     .addSeparator()
     .addItem('🔄 Update schedule from Master', 'runFullScheduleUpdate') // 02_Master_Builder.js (Steps 1-4)
