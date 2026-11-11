@@ -22,9 +22,15 @@ Does not call Canvas. No student data: both calendars are school schedules.
 
 ## Decisions (2026-11-10)
 
-- **Two source calendars, two target calendars.** The bell schedule feeds "My Classes";
-  the faculty calendar feeds "School Events". Each target calendar has its own sync tag,
+- **Two source calendars, two target calendars by default.** The bell schedule feeds "My
+  Classes"; the faculty calendar feeds "School Events". Each group has its own sync tag,
   so either can be hidden or deleted without touching the other.
+  **Changed 11/11:** the teacher may pick any calendar they own for each group (one
+  calendar for both, or their main calendar), but only by actively choosing it in the
+  page's "Where Your Events Go" menus; the two new calendars stay the default. The page
+  explains how it works. Changing the choice later moves the events on the next sync
+  (the old calendar is left empty; the app never deletes calendars). Because the main
+  calendar can't simply be deleted, step 5c adds "Remove everything this app added".
 - **Manual sync only.** A "Sync now" button; no nightly trigger. Schedules don't change
   often enough to need one.
 - **Signed in as the teacher.** The web app executes as the user accessing it, access
@@ -56,11 +62,27 @@ Does not call Canvas. No student data: both calendars are school schedules.
    CalendarApp (read-only scope `calendar.readonly`; step 5 will need full `calendar`),
    so each teacher must have it in their Google Calendar list; the page says so if not.
    Titles are grouped like `calendar-filter` (without "CHANGED: ..." notes), with a count,
-   the next date, and a search box. Picks aren't saved yet (step 5). Needs Script
+   the next date, and a search box. Picks are saved from step 5a on. Needs Script
    Property `FACULTY_CALENDAR_ID` (same calendar ID `calendar-filter` uses; paste the name).
 5. "Add to my Google Calendar" using `calendar-filter`'s sync logic. `Events.js` there
    reads Sheet tabs, so the choosing step is rewritten to work from saved settings.
-   Keep/hide words and per-event overrides are left out of the pilot.
+   Keep/hide words, per-event overrides, and "adopting" look-alike events are left out
+   of the pilot. Split into three parts, each pushed and tested on its own:
+   - **5a. Saved choices** (written 11/11, not yet pushed or tested). `Settings.js` saves
+     the teacher's choices as JSON in User Property `BUILDER_CHOICES` (auto-saved about a
+     second after each change) and fills them back in when the page opens. Period rules
+     moved from the page to `Periods.js` as plain data, so the .ics and the sync use the
+     same rules. New card 5, "Where Your Events Go", with a menu per group (new calendars,
+     main calendar, or any calendar the teacher owns; listing them is read-only). Typing a
+     period's new name checks its Keep box. No new permissions, no calendar writes.
+   - **5b. Preview only.** An "Add to my Google Calendar" button shows per calendar what
+     would be added, updated, removed, or moved. Still read-only. The server reads the
+     bell schedule from its public ICS link (as the page does) with `calendar-filter`'s
+     parser, so teachers needn't subscribe to it.
+   - **5c. Write.** Confirm after the preview; full `calendar` scope. Creates the new
+     calendars only if missing; creates tagged events; deletes or re-creates only events
+     with this app's tag, in the chosen calendars, inside the date range. Continues in
+     rounds past the 6-minute limit. Adds "Remove everything this app added".
 6. Keep the .ics download as a fallback.
 
 ## Open questions
@@ -68,6 +90,8 @@ Does not call Canvas. No student data: both calendars are school schedules.
 - Bell schedule: read with CalendarApp (needs the teacher subscribed; the app could
   subscribe them) or download its ICS like the original? The faculty calendar's ICS link
   gave HTTP 429 errors from Apps Script, so CalendarApp is the safer default.
+  **Leaning ICS (11/11):** the bell schedule's ICS link has worked every time so far, and
+  it spares teachers a subscription. 5b uses it; switch if 429s show up.
 - **Faculty calendar ID for other teachers (decide before the pilot opens).** The ID in
   `FACULTY_CALENDAR_ID` ends in `@import.calendar.google.com`, so it may be one person's
   "From URL" copy that other teachers can't open. Options: use the school's original
@@ -85,5 +109,5 @@ Does not call Canvas. No student data: both calendars are school schedules.
   an afternoon event the day before the start date slips in (seen 11/11: a 2:05 pm class
   on 9/30 came through with an Oct 1 start). Fix in step 6.
 - Typing a "Rename to" name doesn't check that period's Keep box, so the period is
-  silently left out (happened in testing 11/11). Check the box automatically when a name is typed.
+  silently left out (happened in testing 11/11). Fixed in 5a: typing a name checks the box.
 - Repeating events are filtered only by their first date.

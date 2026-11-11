@@ -153,6 +153,32 @@
             display: block;
             margin-top: 2px;
         }
+        select {
+            width: 90%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.95em;
+            background: white;
+        }
+        .calendar-choice { margin-top: 12px; }
+        .calendar-help {
+            font-size: 0.88em;
+            color: #555;
+            line-height: 1.5;
+            margin-top: 15px;
+        }
+        .calendar-help p { margin: 6px 0; }
+        .main-calendar-note {
+            display: none;
+            background-color: #fff9e6;
+            border-left: 4px solid #f0ad4e;
+            padding: 8px 12px;
+            margin-top: 8px;
+            font-size: 0.88em;
+            color: #664d03;
+        }
+        .save-error { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
@@ -164,6 +190,7 @@
     <div class="revision-dates-container">
         <span class="revision-pill">System Last Revised: <strong><?= systemRevisionDate ?></strong></span>
         <span class="revision-pill">Master Bell Schedule Last Revised: <strong id="masterScheduleDateText"><?= scheduleLastRevised ?></strong></span>
+        <span class="revision-pill" id="saveStatus">Your choices are saved automatically</span>
     </div>
 
     <!-- IMPORTANT ADVISORY NOTICE -->
@@ -201,11 +228,11 @@
         <div class="date-filter-grid">
             <div>
                 <label for="startDateFilter"><strong>Start Date:</strong></label><br>
-                <input type="date" id="startDateFilter" value="2026-08-01">
+                <input type="date" id="startDateFilter" value="2026-08-01" onchange="saveSoon()">
             </div>
             <div>
                 <label for="endDateFilter"><strong>End Date:</strong></label><br>
-                <input type="date" id="endDateFilter" value="2027-06-30">
+                <input type="date" id="endDateFilter" value="2027-06-30" onchange="saveSoon()">
             </div>
         </div>
     </div>
@@ -213,7 +240,7 @@
     <!-- STEP 3: SCHEDULE CUSTOMIZATION (PERIODS & RENAMING) -->
     <div class="card">
         <h3>3. Select & Rename Your Schedule</h3>
-        <p class="instructions">Check the periods you teach or attend. Optional: Provide a custom label (e.g., "P1 Algebra 1") to replace default period names.</p>
+        <p class="instructions">Check the periods you teach or attend. Optional: Provide a custom label (e.g., "P1 Algebra 1") to replace default period names. Typing a label checks the box for you.</p>
 
         <table id="optionsTable">
             <thead>
@@ -259,9 +286,41 @@
         </div>
     </div>
 
-    <!-- STEP 5: GENERATE DOWNLOAD -->
+    <!-- STEP 5: WHICH CALENDARS EVENTS GO ON -->
+    <div class="card">
+        <h3>5. Where Your Events Go</h3>
+        <p class="instructions">Choose which of your Google Calendars gets each group. Most people can leave these as they are.</p>
+
+        <div class="calendar-choice">
+            <label for="classesCalendar"><strong>Classes and bell schedule (step 3):</strong></label><br>
+            <select id="classesCalendar" onchange="calendarChoiceChanged()"></select>
+        </div>
+        <div class="calendar-choice">
+            <label for="eventsCalendar"><strong>School events (step 4):</strong></label><br>
+            <select id="eventsCalendar" onchange="calendarChoiceChanged()"></select>
+        </div>
+        <div class="main-calendar-note" id="mainCalendarNote">
+            <strong>About your main calendar:</strong> these events will show as busy to anyone who
+            can see your calendar, and they'll be mixed in with your own events, so there's no single
+            calendar to delete if you want them gone. Use <strong>Remove everything this app added</strong>
+            instead. Your own events are never touched.
+        </div>
+
+        <div class="calendar-help">
+            <p><strong>How this works:</strong> unless you change these, the app makes two new calendars,
+            <em>My Classes</em> and <em>School Events</em>, the first time you add events. In Google Calendar
+            you can show, hide, or delete each one on its own.</p>
+            <p>You can also put both groups on one calendar, or on your main calendar. Either way, the app
+            only ever changes events it added itself. Anything you put in your calendar is left alone.</p>
+            <p><strong>Changed your mind?</strong> Pick a different calendar here and add your events again.
+            They move to the new calendar. The old calendar is left empty, and you can delete it in
+            Google Calendar's settings.</p>
+        </div>
+    </div>
+
+    <!-- STEP 6: GENERATE DOWNLOAD -->
     <button class="btn-primary" id="generateBtn" onclick="processAndDownload()" disabled>
-        5. Generate My Calendar (.ics)
+        6. Generate My Calendar (.ics)
     </button>
 
 
@@ -283,47 +342,37 @@
         // Holds loaded calendar text in memory
         let activeIcsData = null;
 
-        // Category definitions and rule matchers
-        const categoryDefinitions = [
-            { id: "p1", label: "Period 1", matches: (s) => s === "Period 1" },
-            { id: "p2", label: "Period 2", matches: (s) => s === "Period 2" },
-            { id: "p3", label: "Period 3", matches: (s) => s === "Period 3" },
-            { id: "p4", label: "Period 4", matches: (s) => s === "Period 4" },
-            { id: "p5", label: "Period 5", matches: (s) => s === "Period 5" },
-            { id: "p6", label: "Period 6", matches: (s) => s === "Period 6" },
-            { id: "p7", label: "Period 7", matches: (s) => s === "Period 7" },
-            { id: "p8", label: "Period 8", matches: (s) => s === "Period 8" },
-            {
-                id: "homeroom_group",
-                label: "Homeroom / Homeroom Chapel",
-                subtext: "Combines 'Homeroom' and 'Homeroom/Chapel' for advisors",
-                matches: (s) => s === "Homeroom" || s === "Homeroom/Chapel"
-            },
-            {
-                id: "school_chapel",
-                label: "School Chapel Events",
-                subtext: "Chapel/Assembly, Christmas & Easter Chapels, etc.",
-                matches: (s) => s !== "Homeroom/Chapel" && s.toLowerCase().includes("chapel")
-            },
-            {
-                id: "assembly",
-                label: "Assembly",
-                subtext: "Standalone assemblies",
-                matches: (s) => s === "Assembly"
-            },
-            { id: "break", label: "Break", matches: (s) => s === "Break" },
-            { id: "meeting_lunch", label: "Meeting/Lunch", matches: (s) => s === "Meeting/Lunch" },
-            { id: "meeting", label: "Meeting", matches: (s) => s === "Meeting" },
-            { id: "lunch", label: "Lunch", matches: (s) => s === "Lunch" }
-        ];
+        // From the server: the period rules (Periods.js), this teacher's saved choices
+        // (Settings.js), and the calendars they can pick in step 5.
+        const categoryDefinitions = <?!= periodCategoriesJson ?>;
+        const savedChoices = <?!= choicesJson ?>;
+        const calendarOptions = <?!= calendarOptionsJson ?>;
+
+        // School event titles (lowercase keys) the teacher has checked. Kept here rather than
+        // read from the list, so picks outside the current date range aren't lost.
+        const schoolEventPicks = new Set(savedChoices.schoolEvents);
+
+        // Same rule as periodCategoryFor_() in Periods.js.
+        function findMatchingCategory(title) {
+            return categoryDefinitions.find(cat => cat.titles
+                ? cat.titles.includes(title)
+                : !cat.except.includes(title) && title.toLowerCase().includes(cat.contains));
+        }
+
+        // Makes calendar text safe to put inside HTML.
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[c]);
+        }
 
         // Populate Table UI
         const tbody = document.getElementById("tableBody");
 
-        // 1. All-Day Events row (Unchecked by default)
+        // 1. All-Day Events row
         tbody.innerHTML += `
             <tr style="background-color: #f8f9fa;">
-                <td><input type="checkbox" id="keep_allday"></td>
+                <td><input type="checkbox" id="keep_allday" onchange="saveSoon()"></td>
                 <td><strong>All-Day Events</strong><span class="subtext">Holidays, Special Schedule Names</span></td>
                 <td><input type="text" disabled placeholder="Keeps original title" style="background:#eaeaea;"></td>
             </tr>
@@ -331,15 +380,116 @@
 
         // 2. Category selection rows
         categoryDefinitions.forEach(cat => {
-            const sub = cat.subtext ? `<span class="subtext">${cat.subtext}</span>` : "";
+            const sub = cat.subtext ? `<span class="subtext">${escapeHtml(cat.subtext)}</span>` : "";
             tbody.innerHTML += `
                 <tr>
-                    <td><input type="checkbox" id="keep_${cat.id}"></td>
-                    <td><strong>${cat.label}</strong>${sub}</td>
-                    <td><input type="text" id="rename_${cat.id}" placeholder="e.g. Custom name (optional)"></td>
+                    <td><input type="checkbox" id="keep_${cat.id}" onchange="saveSoon()"></td>
+                    <td><strong>${escapeHtml(cat.label)}</strong>${sub}</td>
+                    <td><input type="text" id="rename_${cat.id}" placeholder="e.g. Custom name (optional)"
+                        oninput="renameTyped('${cat.id}')"></td>
                 </tr>
             `;
         });
+
+        // Typing a new name means the teacher wants that period, so check its box.
+        function renameTyped(id) {
+            if (document.getElementById(`rename_${id}`).value.trim()) {
+                document.getElementById(`keep_${id}`).checked = true;
+            }
+            saveSoon();
+        }
+
+        // 3. Calendar menus (step 5)
+        function fillCalendarMenu(selectId, chosen) {
+            const select = document.getElementById(selectId);
+            const options = calendarOptions.slice();
+            if (!options.some(opt => opt.value === chosen)) {
+                options.push({ value: chosen, label: '(a calendar you can no longer reach)' });
+            }
+            select.innerHTML = options.map(opt =>
+                `<option value="${escapeHtml(opt.value)}">${escapeHtml(opt.label)}</option>`).join('');
+            select.value = chosen;
+        }
+
+        function calendarChoiceChanged() {
+            const usesMain = ['classesCalendar', 'eventsCalendar']
+                .some(id => document.getElementById(id).value === 'primary');
+            document.getElementById('mainCalendarNote').style.display = usesMain ? 'block' : 'none';
+            saveSoon();
+        }
+
+        // 4. Put the saved choices back on the page.
+        function restoreChoices(c) {
+            document.getElementById('startDateFilter').value = c.start;
+            document.getElementById('endDateFilter').value = c.end;
+            document.getElementById('keep_allday').checked = c.allDay;
+            categoryDefinitions.forEach(cat => {
+                const p = c.periods[cat.id] || { keep: false, rename: '' };
+                document.getElementById(`keep_${cat.id}`).checked = p.keep;
+                document.getElementById(`rename_${cat.id}`).value = p.rename;
+            });
+            fillCalendarMenu('classesCalendar', c.classesCalendar);
+            fillCalendarMenu('eventsCalendar', c.eventsCalendar);
+            document.getElementById('mainCalendarNote').style.display =
+                c.classesCalendar === 'primary' || c.eventsCalendar === 'primary' ? 'block' : 'none';
+        }
+        restoreChoices(savedChoices);
+
+        // ---- Saving choices ----
+        // Saves about a second after the last change. Only one save runs at a time; changes made
+        // while it runs are saved right after, so the newest choices always win.
+
+        let saveTimer = null;
+        let saveRunning = false;
+        let saveAgain = false;
+
+        function currentChoices() {
+            const periods = {};
+            categoryDefinitions.forEach(cat => {
+                periods[cat.id] = {
+                    keep: document.getElementById(`keep_${cat.id}`).checked,
+                    rename: document.getElementById(`rename_${cat.id}`).value.trim()
+                };
+            });
+            return {
+                start: document.getElementById('startDateFilter').value,
+                end: document.getElementById('endDateFilter').value,
+                allDay: document.getElementById('keep_allday').checked,
+                periods: periods,
+                schoolEvents: Array.from(schoolEventPicks),
+                classesCalendar: document.getElementById('classesCalendar').value,
+                eventsCalendar: document.getElementById('eventsCalendar').value
+            };
+        }
+
+        function saveSoon() {
+            setSaveStatus('Saving...', false);
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveNow, 1000);
+        }
+
+        function saveNow() {
+            if (saveRunning) { saveAgain = true; return; }
+            saveRunning = true;
+            google.script.run
+                .withSuccessHandler(function() {
+                    saveRunning = false;
+                    if (saveAgain) { saveAgain = false; saveNow(); return; }
+                    setSaveStatus('✓ Choices saved', false);
+                })
+                .withFailureHandler(function(error) {
+                    saveRunning = false;
+                    saveAgain = false;
+                    setSaveStatus('✕ Not saved: ' + error.message, true);
+                })
+                .saveChoices(currentChoices());
+        }
+
+        function setSaveStatus(text, isError) {
+            const pill = document.getElementById('saveStatus');
+            pill.textContent = text;
+            pill.classList.toggle('save-error', isError);
+        }
 
         // Trigger server fetch via Apps Script
         function loadOfficialSchedule() {
@@ -370,25 +520,25 @@
 
         // ---- School events (step 4) ----
 
-        // Makes calendar text safe to put inside HTML.
-        function escapeHtml(text) {
-            return String(text).replace(/[&<>"']/g, c => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-            })[c]);
-        }
-
-        // Keys (lowercase titles) of the school events currently checked.
+        // Keys (lowercase titles) of the school events checked in the list on screen.
         function checkedSchoolEventKeys() {
             return Array.from(document.querySelectorAll('#eventsBody input[type="checkbox"]:checked'))
                 .map(box => box.dataset.key);
         }
 
+        // Remembers a check or uncheck, then saves.
+        function schoolEventToggled(box) {
+            if (box.checked) schoolEventPicks.add(box.dataset.key);
+            else schoolEventPicks.delete(box.dataset.key);
+            updateSchoolEventsSummary();
+            saveSoon();
+        }
+
         // Asks the server for the faculty calendar's titles in the step 2 date range.
-        // Checked titles stay checked when the list is loaded again.
+        // Saved picks are checked again when the list loads.
         function loadSchoolEvents() {
             const btn = document.getElementById('loadEventsBtn');
             const statusDiv = document.getElementById('eventsStatus');
-            const keepChecked = new Set(checkedSchoolEventKeys());
             const start = document.getElementById('startDateFilter').value;
             const end = document.getElementById('endDateFilter').value;
 
@@ -409,7 +559,7 @@
                     document.getElementById('eventsBody').innerHTML = result.titles.map((t, i) => `
                         <tr data-key="${escapeHtml(t.key)}">
                             <td><input type="checkbox" id="school_${i}" data-key="${escapeHtml(t.key)}"
-                                ${keepChecked.has(t.key) ? 'checked' : ''} onchange="updateSchoolEventsSummary()"></td>
+                                ${schoolEventPicks.has(t.key) ? 'checked' : ''} onchange="schoolEventToggled(this)"></td>
                             <td><label for="school_${i}">${escapeHtml(t.title)}</label></td>
                             <td>${t.count}</td>
                             <td>${escapeHtml(t.nextLabel)}</td>
@@ -479,10 +629,6 @@
                     isAllDay: isAllDay
                 };
             });
-        }
-
-        function findMatchingCategory(title) {
-            return categoryDefinitions.find(cat => cat.matches(title));
         }
 
         // Calendar Generation & Export

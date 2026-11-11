@@ -3,7 +3,8 @@
  * Faculty Calendar Builder (pilot): serves the web page and reads the school bell schedule.
  * Started from a colleague's "Faculty Custom Calendar Builder" (see BRIEF.md). The page works
  * as his did (pick periods, rename them, download a one-time .ics file), plus a School Events
- * list from the faculty calendar (SchoolEvents.js).
+ * list from the faculty calendar (SchoolEvents.js), saved choices and calendar menus
+ * (Settings.js), and period rules shared by the page and server (Periods.js).
  *
  * Endpoints: the bell schedule's public ICS link (read-only GET, built from BELL_SCHEDULE_ID).
  * Write calls: none.
@@ -13,7 +14,7 @@
  */
 
 // Update by hand whenever the tool changes; shown at the top of the page.
-const SYSTEM_REVISION_DATE = '11/11/2026';
+const SYSTEM_REVISION_DATE = '11/11/2026'; // Step 5a: saved choices, calendar menus.
 
 const CACHE_KEY_REVISED = 'master_schedule_hst_v2';
 const CACHE_SECONDS = 21600; // 6 hours
@@ -23,6 +24,9 @@ function doGet() {
   const template = HtmlService.createTemplateFromFile('Page');
   template.systemRevisionDate = SYSTEM_REVISION_DATE;
   template.scheduleLastRevised = getMasterScheduleRevisedDateHST();
+  template.periodCategoriesJson = jsonForPage_(PERIOD_CATEGORIES);
+  template.choicesJson = jsonForPage_(loadChoices_());
+  template.calendarOptionsJson = jsonForPage_(calendarOptions_());
 
   return template.evaluate()
     .setTitle('Faculty Custom Calendar Builder')
