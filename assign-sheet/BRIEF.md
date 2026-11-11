@@ -5,12 +5,14 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
-> **IN PROGRESS (2026-11-09): section dates (overrides) in Assignment Dates.**
+> **DONE (2026-11-10): section dates (overrides) in Assignment Dates.** Live on all four
+> sheets (Biology, Gastronomy, AI9, template), code from `e4e4128`. History below.
 > **Paused 11/9 evening:** steps 1, 2, 2b, sorting, and gray rows are live on **Biology
 > only** (commit `2e721c2`). Gastronomy, AI9, and the template still run the 11/8
 > code (`396699a`); push to them after step 3 is done and tested.
 > **11/10:** step 3 (Remove) committed (`e4e4128`), pushed to **Biology**, and tested by
-> Lara: works. Next: push to Gastronomy, AI9, then template.
+> Lara: works. Pushed to **Gastronomy and AI9** 11/10 (code from `e4e4128`; all overrides
+> steps); Lara checked both. Template pushed last, 11/10.
 > Lara's decisions 11/9: see, edit, add, and remove section dates; shown as "↳" rows
 > under each assignment; student overrides are editable and (changed 11/9 after the first
 > test) show the students' names ("↳ Jane Doe", 3 max then "+ n more"), on the sheet

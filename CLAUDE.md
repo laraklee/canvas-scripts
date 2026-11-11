@@ -110,8 +110,8 @@ reviewable steps over large multi-file changes.
   with an "Open in a large window" link calling `showUserGuideLarge`, and narrow-screen
   CSS) so teachers can follow steps while working. **Live in all four projects and every
   workbook (11/8, commits `601d03b` and `396699a`).** Any new in-sheet guide should work
-  the same way. Lara's next task: Assignment Dates overrides in `assign-sheet/`, step 3
-  (Remove), then push to the other sheets (see "Paused 11/9" at the top of its BRIEF).
+  the same way. Assignment Dates overrides in `assign-sheet/` are done and live on all
+  four sheets (11/10; see the top of its BRIEF).
 - Commit small, focused changes with clear messages.
 - To publish changes to Google: show the diff, commit, confirm with Lara, then
   `clasp push` from that project's folder. Always commit before `clasp push` so the
