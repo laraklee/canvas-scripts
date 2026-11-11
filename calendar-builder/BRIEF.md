@@ -16,7 +16,9 @@ Does not call Canvas. No student data: both calendars are school schedules.
 
 - Script ID: `1NRaFfistbupSsmqwS1hucP0YNaUhMa6g6UVrgbKuhSgWA8ePDRuyKN9J` (standalone,
   "Faculty Calendar Builder (pilot)", in Lara's account; created 2026-11-10)
-- Push from this folder with plain `clasp push` (ask Lara first).
+- Push from this folder with plain `clasp push` (ask Lara first). If clasp says "Skipping
+  push", the manifest in Google differs; if the change is intended, add `--force` (the
+  first push, 11/10, needed it to replace Google's default manifest).
 
 ## Decisions (2026-11-10)
 
@@ -42,10 +44,12 @@ Does not call Canvas. No student data: both calendars are school schedules.
    feature, his email, and the hardcoded calendar link. (done 11/10; otherwise it works
    as his did, parser bugs included, so it can be tested against the original)
 3. `clasp create` a new standalone web app. (done 11/10; clasp replaced
-   `appsscript.json` with Google's default, so ours was restored from Git.) Still to do:
-   set the Script Property `BELL_SCHEDULE_ID` in the editor (Project Settings > Script
-   Properties; the ID is in the private notes repo), `clasp push`, then deploy as a web
-   app and test against the original.
+   `appsscript.json` with Google's default, so ours was restored from Git.) Script
+   Property `BELL_SCHEDULE_ID` set (the ID is in the private notes repo), pushed, and
+   tested from a test deployment 11/10: date range, period picks, renames, and all-day
+   events all came through correctly in the .ics.
+   **Tip:** copy and paste Script Property names into the editor. A typed
+   `BELL_SCHEDULE_ID` didn't match (probably a hidden character) until it was pasted.
 4. Add a "School events" section built from the faculty calendar's titles.
 5. "Add to my Google Calendar" using `calendar-filter`'s sync logic. `Events.js` there
    reads Sheet tabs, so the choosing step is rewritten to work from saved settings.
