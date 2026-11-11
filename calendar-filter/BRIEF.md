@@ -18,24 +18,13 @@ Google Calendar of the teacher's own. Bound to the Sheet "Google Calendar Utilit
   question was answered no). Compare scopes; if the change is intended, add `--force`.
   First push to the template (2026-11-10) needed it for formatting only.
 
-## Pilot idea: web app version (11/9, not started)
+## Web app version: moved to `calendar-builder/` (11/10)
 
-An existing Apps Script web app (HTML page, no spreadsheet) lets teachers pick their class
-periods, rename them, and push them to their Google Calendar. Idea: merge this project's
-"pick events from the faculty calendar" into that UI as a pilot for teachers who find
-spreadsheets intimidating. **Waiting on:** access to that app's code.
-
-When it arrives: make a new project folder with its own BRIEF.md, read both, and draft a
-merge plan before building. Suggestions so far:
-- That app's UI as the shell; this project's Feed / Events / Sync logic behind it.
-- Two separate calendars ("My Classes", "School Events"), each with its own sync tag, so
-  either can be hidden or deleted and the syncs never touch each other's events.
-- Each teacher's picks saved in their own User Properties instead of Sheet tabs.
-- Web app runs as the user accessing it; access `DOMAIN`.
-- One click to subscribe the teacher to the faculty calendar (removes a setup step).
-
-Open questions: whose code is the base, where it lives and who
-maintains it, and trying it with a few teachers first.
+A colleague's Apps Script web app lets teachers pick their class periods from the bell
+schedule, rename them, and download a one-time .ics file (it does not write to Google
+Calendar). The pilot that blends it with this project's faculty-calendar picking and sync
+lives in `calendar-builder/`; see its BRIEF. Changes to `Feed.js` or `Sync.js` here may
+need copying there.
 
 ## Decisions
 
