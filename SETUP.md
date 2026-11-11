@@ -72,7 +72,7 @@ overwritten. Quick browser fixes are fine: just `clasp pull` and commit next tim
 |---|---|
 | Claude Code | Writing and changing code, reviews, scans, commits |
 | Google's script editor | Running and testing, logs, Script Properties, emergency fixes |
-| GitHub (private) | Backup, browsable history, getting the code onto another computer |
+| GitHub (public repo; personal notes in the private notes repo) | Backup, browsable history, getting the code onto another computer |
 | Claude (Cowork) | Planning, questions, privacy and design decisions |
 
 ### Handy commands
@@ -90,5 +90,6 @@ run `npm run scan` on it before the first commit.
 
 The same files work on Windows. Install Claude Code (`irm https://claude.ai/install.ps1 | iex`
 in PowerShell), plus Git for Windows, Node.js LTS, and gitleaks, then copy this repo over.
-GitHub (a private repository) is the easiest way to keep both computers in sync.
+GitHub is the easiest way to keep both computers in sync. Clone both this public repo
+and the private notes repo (step 6 above).
 Ask Claude Code to walk you through it.
