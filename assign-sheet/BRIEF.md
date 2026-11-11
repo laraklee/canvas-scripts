@@ -9,8 +9,8 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 > **Paused 11/9 evening:** steps 1, 2, 2b, sorting, and gray rows are live on **Biology
 > only** (commit `2e721c2`). Gastronomy, AI9, and the template still run the 11/8
 > code (`396699a`); push to them after step 3 is done and tested.
-> **11/10:** step 3 (Remove) written and committed, not yet pushed or tested. Next: push to
-> Biology, test in sandbox 4573, then push to Gastronomy, AI9, template.
+> **11/10:** step 3 (Remove) committed (`e4e4128`), pushed to **Biology**, and tested by
+> Lara: works. Next: push to Gastronomy, AI9, then template.
 > Lara's decisions 11/9: see, edit, add, and remove section dates; shown as "↳" rows
 > under each assignment; student overrides are editable and (changed 11/9 after the first
 > test) show the students' names ("↳ Jane Doe", 3 max then "+ n more"), on the sheet
@@ -45,7 +45,7 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 >    this run). Messages give counts only, never names. POST sends `student_ids` and title
 >    "n student(s)" (Canvas requires a title). Editing the students on an existing
 >    override stays in Canvas.
-> 3. **Remove (written 11/10, not yet pushed or tested):** menu item "Remove section/student
+> 3. **Remove (pushed to Biology 11/10, commit `e4e4128`; tested by Lara 11/10: works):** menu item "Remove section/student
 >    dates on selected rows" (`removeSelectedOverrideRows`). Uses the current selection, not
 >    Update? (so a forgotten checkbox, deleted, or filtered row can never remove anything);
 >    skips assignment rows, hidden rows, unsent "new" rows, and rows already removed.
