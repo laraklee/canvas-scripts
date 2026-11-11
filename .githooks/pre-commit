@@ -14,6 +14,13 @@ if ! gitleaks git --pre-commit --staged --config .gitleaks.toml --redact --no-ba
   exit 1
 fi
 
+STAGED_ALL=$(git diff --cached --name-only --diff-filter=ACM)
+if [ -n "$STAGED_ALL" ]; then
+  echo "pre-commit: checking for personal info (this repo is public)..."
+  printf '%s\n' "$STAGED_ALL" | tr '\n' '\0' | xargs -0 bash scripts/check-personal.sh ||
+    { echo "pre-commit: personal info found. Commit blocked."; exit 1; }
+fi
+
 STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(js|gs|json|csv|xlsx?|tsv)$')
 if [ -n "$STAGED" ]; then
   echo "pre-commit: checking project standards..."

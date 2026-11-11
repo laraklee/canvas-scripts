@@ -5,10 +5,11 @@
 #   bash scripts/scan.sh FILE    scan one file or folder
 #   --strict                     also fail on warnings (used by the Claude hook)
 #
-# Three checks:
+# Four checks:
 #   1. gitleaks            secrets such as Canvas tokens and API keys
 #   2. eslint + security   risky JavaScript patterns
 #   3. check-standards.js  our own rules (dry run, logging student data, scopes)
+#   4. check-personal.sh   personal details (this repo is public)
 
 cd "$(dirname "$0")/.." || exit 1
 STRICT=""
@@ -44,6 +45,17 @@ fi
 
 echo "== 3. Project standards (check-standards.js)"
 node scripts/check-standards.js $STRICT "${TARGETS[@]}" || status=1
+
+echo "== 4. Personal info (check-personal.sh)"
+PI_FILES=()
+for t in "${TARGETS[@]}"; do
+  # "." means every tracked file; a folder means every tracked file inside it.
+  if [ "$t" = "." ]; then PI_FILES=(); break
+  elif [ -d "$t" ]; then while IFS= read -r f; do PI_FILES+=("$f"); done < <(git ls-files "$t")
+  else PI_FILES+=("$t"); fi
+done
+if [ ${#PI_FILES[@]} -eq 0 ]; then bash scripts/check-personal.sh || status=1
+else bash scripts/check-personal.sh "${PI_FILES[@]}" || status=1; fi
 
 if [ $status -eq 0 ]; then echo "== PASS"; else echo "== ISSUES FOUND (see above)"; fi
 exit $status

@@ -15,3 +15,6 @@ exports/
 node_modules/
 .DS_Store
 .claude/settings.local.json
+
+# Private notes: its own private Git repo (canvas-scripts-private). Never commit here.
+private/

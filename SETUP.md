@@ -28,7 +28,10 @@ Start Claude Code in this folder and paste this:
 > 4. Run `npm install --save-dev eslint eslint-plugin-security`.
 > 5. Run `git init` in this folder (if it isn't a git repo yet) and
 >    `git config core.hooksPath .githooks`, then `chmod +x .githooks/pre-commit scripts/scan.sh`.
-> 6. Run `npm run scan` and summarize the results for me. Don't fix anything yet,
+> 6. Clone my private notes repo into a `private` folder here:
+>    `git clone https://github.com/laraklee/canvas-scripts-private.git private`.
+>    (This repo is public; the personal-info check reads `private/blocked-words.txt`.)
+> 7. Run `npm run scan` and summarize the results for me. Don't fix anything yet,
 >    and don't commit yet.
 
 If the scan finds a Canvas token, **revoke it in Canvas first**: go to Account > Settings >

@@ -46,6 +46,14 @@ reviewable steps over large multi-file changes.
    listing recent files, or opening any other file, and say which file and why.
    Never open gradebooks, rosters, or student work. Never share, move, or trash a
    file unless Lara asks for that file by name.
+8. **This repo is public.** Anyone can read every file and every old commit. No
+   personal details in committed files: no colleagues' or family members' names or
+   plans, no school name or internal school details, no personal emails, phone numbers,
+   or device usernames. Put those in the private notes repo, `private/` in this folder
+   (its own private GitHub repo, ignored by this one; see `private/README.md`), and
+   commit and push it separately. When a public BRIEF needs them, write "details in the
+   private notes repo". Add new names to `private/blocked-words.txt` so the
+   personal-info check catches them.
 
 ## Code standards
 
@@ -76,7 +84,8 @@ reviewable steps over large multi-file changes.
 - After every file edit, a hook runs `scripts/scan.sh` on the changed file. If it
   reports problems, fix them before moving on, and tell Lara what was found.
 - Before committing, run `npm run scan` (all projects). Git's pre-commit hook also
-  runs a secret scan and blocks commits that contain secrets.
+  runs a secret scan and a personal-info check (`scripts/check-personal.sh`), and blocks
+  commits that contain secrets or personal details.
 - When you finish a change, give Lara a short review summary: what changed, any new
   Canvas write calls, any new Google permissions, and scan results.
 
