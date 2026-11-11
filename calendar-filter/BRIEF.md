@@ -6,6 +6,15 @@ Google Calendar of the teacher's own. Bound to the Sheet "Google Calendar Utilit
 - Script ID: `1N-ZSDpFF56Y9J7_91a3kDTT9hgRyVaeb41cUeDkW9fssD-QXbIdQMfKX`
 - Sheet: `1Rmojvg6OGadgMr7jisXUsf7rwwYBo1raVfCJ1Wi4Ieo`
 
+## Other sheets using this code
+
+- **Template copy** (added 2026-11-10): script ID
+  `1GM9Db5mdfB1TSdKVCzYb6u6giQfXpd_IF7KqGSAMVnD1aB8a7qzrAhIe`, settings file
+  `.clasp-template.json`. Claude never opens the template's sheet; Lara looks after its
+  tabs and settings. clasp updates code only: tab or label changes go on by hand.
+- Push order: Lara's sheet first (plain `clasp push`), then the template, from this folder:
+  `clasp push -P "$PWD/.clasp-template.json"`. Ask Lara before each push.
+
 ## Pilot idea: web app with a colleague (11/9, not started)
 
 A colleague built an Apps Script web app (HTML page, no spreadsheet) where teachers pick
