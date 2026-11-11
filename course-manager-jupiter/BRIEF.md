@@ -378,8 +378,11 @@
 >   in Drive for other teachers. Its script ID gets its own clasp file (like the AI9 and
 >   Gastronomy ones) and it is pushed **last** (Biology → AI9, Gastronomy → template); ask
 >   before the first push. clasp updates code only: new tabs, labels, or buttons go onto
->   the template by hand. How teachers' own copies get updates: later (copies are frozen
->   when made).
+>   the template by hand. How teachers' own copies get updates (decided 11/10, same as
+>   assign-sheet): the guide shows "Version yyyy-mm-dd" under its title and section "8. What's
+>   new and getting updates"; a teacher re-copies the template and brings their
+>   work over. **Bump the version and add a What's new line in the same commit as any
+>   change a teacher would see.**
 >   **Scrub list (expanded 11/8; checklist given to Lara in chat):** student data
 >   (ref_peopleList; every grading sheet, e.g. Comments: columns A–F, scores, comments,
 >   Pull groups columns, and the cell notes Post comments leaves; JupiterExport; any

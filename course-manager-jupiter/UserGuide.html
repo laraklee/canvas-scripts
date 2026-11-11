@@ -62,6 +62,7 @@
       margin: 12px 0;
     }
     .contents ol { margin: 4px 0; }
+    .version { color: #5f6368; margin-top: -6px; }
     .contents ul { margin: 2px 0 4px; }
     .contents a { color: #1a73e8; text-decoration: none; cursor: pointer; }
     .contents a:hover { text-decoration: underline; }
@@ -96,6 +97,8 @@
   <a id="open-large">Open in a large window</a></div>
 
 <h1>Course Manager (Jupiter edition) — User Guide</h1>
+
+<p class="version">Version 2026-11-10. See <b>8. What's new and getting updates</b>.</p>
 
 <div class="note"><b>Draft.</b> Written for teachers new to the workbook; not yet tried by
 one. If a step doesn't match what you see, note where and what you saw.</div>
@@ -150,6 +153,7 @@ with the ✕ at its top.</p>
       </ul>
     </li>
     <li><a data-target="problems">When something goes wrong</a></li>
+    <li><a data-target="updates">What's new and getting updates</a></li>
   </ol>
 </div>
 
@@ -648,6 +652,58 @@ anything else typed on the tab is replaced.</p>
   <tr><td>Anything else</td><td>Note the button or menu item and the exact message (no
     student data), then tell whoever shared the workbook with you.</td></tr>
 </table>
+
+<h2 id="updates">8. What's new and getting updates</h2>
+
+<p>Your copy of this workbook doesn't change when the template it came from is improved.
+The version at the top of this guide tells you which one you have. To see whether there's
+a newer one, open the template and look at the version in its guide.</p>
+
+<h3>What's new</h3>
+
+<ul>
+  <li><b>2026-11-10:</b> Version label and this section added to the guide.</li>
+  <li><b>2026-11-09:</b> Quiz Check (course export): an overview tab of every quiz, a
+    detailed report for one quiz, and quiz names that link to Canvas.</li>
+  <li><b>2026-11-08:</b> This guide opens in a panel on the right of the workbook.</li>
+</ul>
+
+<h3>Getting the newest version</h3>
+
+<p>You make a fresh copy of the template and bring your own work over. Your old workbook
+stays as it is until you're done, so nothing is lost.</p>
+
+<ol>
+  <li>Open the template (the same link you used for your first copy) and make a
+    copy.</li>
+  <li>In the new copy, fill in <b>ref_Config</b> (see <b>1. First-time setup</b>),
+    including <code>cfg_SeatingDeckID</code> if you use the seating chart.</li>
+  <li>Run <b>Set Canvas token</b> and <b>Test Canvas connection</b>. A new copy needs your
+    token again: it isn't carried over.</li>
+  <li>Run <b>Refresh all tables</b>, then <b>Refresh Jupiter categories</b>, and tick the
+    same categories on ref_Config as in your old workbook. Then run <b>Check
+    setup</b>.</li>
+  <li>Bring your work over from the old workbook:
+    <ul>
+      <li><b>Tabs the new copy already has</b> (createByRow, makeAssignment, your grading
+        sheet such as Comments): copy your rows from the old tab and paste them into the
+        same place. On a grading sheet, this brings the Jupiter IDs in column F along.</li>
+      <li><b>Tabs you added yourself</b> (extra makeAssignment tabs, rubric tabs, other
+        grading sheets): in the old workbook, right-click the tab ›
+        <b>Copy to › Existing spreadsheet</b> and pick the new copy. Then rename the copied
+        tab to take out "Copy of".</li>
+      <li><b>Don't copy</b> the ref_ tabs or JupiterExport: the refresh and Update Grades
+        fill those.</li>
+    </ul>
+  </li>
+  <li>Look over each copied tab for <code>#REF!</code> errors, and click a button or two.
+    If a button says "Script function … not found", see <b>7. When something goes
+    wrong</b>.</li>
+  <li>Check dry run: <span class="menu">Setup &amp; Data › Setup &amp; safety › Dry run:
+    show status</span>. A new copy starts with it ON.</li>
+  <li>Rename the old workbook (for example "OLD Course Manager") so you don't use it by
+    mistake. Keep it until you're sure everything came over.</li>
+</ol>
 
 <script>
   // Section links (the contents list and links in the text): scroll within this window
