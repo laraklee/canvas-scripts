@@ -2,9 +2,11 @@
 <!--
   Page.html
   The Faculty Calendar Builder page: load the bell schedule, pick a date range, choose and
-  rename periods, pick kinds of school events, and download a one-time .ics file. Parsing and
-  the download happen in the browser. Server calls: fetchDefaultCalendar() in Code.js,
-  getSchoolEventTitles() in SchoolEvents.js. No writes anywhere.
+  rename periods, pick kinds of school events, then either add them to Google Calendar
+  (Option A, coming in step 5b/5c) or download a one-time .ics file (Option B). Choices are
+  saved automatically. The .ics is built in the browser. Server calls: fetchDefaultCalendar()
+  in Code.js, getSchoolEventTitles() in SchoolEvents.js, saveChoices() in Settings.js.
+  No calendar writes.
   Started from a colleague's page (see BRIEF.md); the feedback form was removed for the pilot.
 -->
 <html lang="en">
@@ -162,6 +164,14 @@
             background: white;
         }
         .calendar-choice { margin-top: 12px; }
+        .option-box {
+            border: 1px solid #e2e5e9;
+            border-radius: 8px;
+            padding: 12px 18px 16px;
+            margin-top: 15px;
+        }
+        .option-box h4 { margin: 6px 0 4px; }
+        .option-box .btn-primary { margin-bottom: 4px; }
         .calendar-help {
             font-size: 0.88em;
             color: #555;
@@ -228,11 +238,11 @@
         <div class="date-filter-grid">
             <div>
                 <label for="startDateFilter"><strong>Start Date:</strong></label><br>
-                <input type="date" id="startDateFilter" value="2026-08-01" onchange="saveSoon()">
+                <input type="date" id="startDateFilter" value="2026-08-01" onchange="datesChanged()">
             </div>
             <div>
                 <label for="endDateFilter"><strong>End Date:</strong></label><br>
-                <input type="date" id="endDateFilter" value="2027-06-30" onchange="saveSoon()">
+                <input type="date" id="endDateFilter" value="2027-06-30" onchange="datesChanged()">
             </div>
         </div>
     </div>
@@ -259,7 +269,7 @@
     <!-- STEP 4: SCHOOL EVENTS (FROM THE FACULTY CALENDAR) -->
     <div class="card">
         <h3>4. School Events</h3>
-        <p class="instructions">Load the faculty calendar to see its kinds of events, then check the ones you want. Uses the date range from step 2. (Not in the .ics download yet.)</p>
+        <p class="instructions">The faculty calendar's kinds of events load by themselves, for the date range in step 2. Check the ones you want. (Not in the .ics download yet.)</p>
 
         <button class="btn-secondary" id="loadEventsBtn" onclick="loadSchoolEvents()">Load School Events</button>
         <div id="eventsStatus">
@@ -286,10 +296,15 @@
         </div>
     </div>
 
-    <!-- STEP 5: WHICH CALENDARS EVENTS GO ON -->
+    <!-- STEP 5: GET YOUR CALENDAR (TWO WAYS) -->
     <div class="card">
-        <h3>5. Where Your Events Go</h3>
-        <p class="instructions">Choose which of your Google Calendars gets each group. Most people can leave these as they are.</p>
+        <h3>5. Get Your Calendar</h3>
+        <p class="instructions">Choose one. Your choices above are used either way.</p>
+
+        <div class="option-box">
+        <h4>Option A: Add to my Google Calendar</h4>
+        <p class="instructions">Puts your events straight into Google Calendar. When the school changes
+        something, come back and click again to bring your calendar up to date.</p>
 
         <div class="calendar-choice">
             <label for="classesCalendar"><strong>Classes and bell schedule (step 3):</strong></label><br>
@@ -312,16 +327,25 @@
             you can show, hide, or delete each one on its own.</p>
             <p>You can also put both groups on one calendar, or on your main calendar. Either way, the app
             only ever changes events it added itself. Anything you put in your calendar is left alone.</p>
+            <p>If an event is already in your calendar (you added it yourself, or imported it before),
+            the app doesn't add a second copy, and it leaves yours as it is.</p>
             <p><strong>Changed your mind?</strong> Pick a different calendar here and add your events again.
             They move to the new calendar. The old calendar is left empty, and you can delete it in
             Google Calendar's settings.</p>
         </div>
-    </div>
 
-    <!-- STEP 6: GENERATE DOWNLOAD -->
-    <button class="btn-primary" id="generateBtn" onclick="processAndDownload()" disabled>
-        6. Generate My Calendar (.ics)
-    </button>
+        <button class="btn-primary" id="syncBtn" disabled>Add to my Google Calendar</button>
+        <span class="subtext">Coming in the next update.</span>
+        </div>
+
+        <div class="option-box">
+        <h4>Option B: Just download an .ics file</h4>
+        <p class="instructions">For Apple Calendar, Outlook, or importing into a calendar yourself. This is
+        a one-time snapshot: it won't change when the school updates the schedule, so download a new one
+        if that happens. (School events aren't in the file yet.)</p>
+        <button class="btn-secondary" id="generateBtn" onclick="processAndDownload()">Download .ics file</button>
+        </div>
+    </div>
 
 
     <!-- ==============================================================
@@ -491,11 +515,11 @@
             pill.classList.toggle('save-error', isError);
         }
 
-        // Trigger server fetch via Apps Script
-        function loadOfficialSchedule() {
+        // Trigger server fetch via Apps Script. Calls afterLoad(succeeded) when done, if given
+        // (the .ics download uses this to fetch the schedule itself).
+        function loadOfficialSchedule(afterLoad) {
             const statusDiv = document.getElementById('sourceStatus');
             const fetchBtn = document.getElementById('fetchBtn');
-            const generateBtn = document.getElementById('generateBtn');
 
             fetchBtn.disabled = true;
             fetchBtn.innerText = 'Connecting...';
@@ -506,14 +530,14 @@
                     activeIcsData = rawIcs;
                     fetchBtn.disabled = false;
                     fetchBtn.innerText = 'Sync Master Bell Schedule';
-                    generateBtn.disabled = false;
-
                     statusDiv.innerHTML = '<span class="status-badge status-active">✓ Official schedule loaded successfully</span>';
+                    if (afterLoad) afterLoad(true);
                 })
                 .withFailureHandler(function(error) {
                     fetchBtn.disabled = false;
                     fetchBtn.innerText = 'Sync Master Bell Schedule';
-                    statusDiv.innerHTML = `<span class="status-badge status-error">✕ Error: ${error.message}</span>`;
+                    statusDiv.innerHTML = `<span class="status-badge status-error">✕ Error: ${escapeHtml(error.message)}</span>`;
+                    if (afterLoad) afterLoad(false, error.message);
                 })
                 .fetchDefaultCalendar();
         }
@@ -534,8 +558,17 @@
             saveSoon();
         }
 
+        // The school event list depends on the dates, so reload it (a moment after the last
+        // change) when they change.
+        let datesTimer = null;
+        function datesChanged() {
+            saveSoon();
+            clearTimeout(datesTimer);
+            datesTimer = setTimeout(loadSchoolEvents, 1500);
+        }
+
         // Asks the server for the faculty calendar's titles in the step 2 date range.
-        // Saved picks are checked again when the list loads.
+        // Runs by itself when the page opens. Saved picks are checked again when the list loads.
         function loadSchoolEvents() {
             const btn = document.getElementById('loadEventsBtn');
             const statusDiv = document.getElementById('eventsStatus');
@@ -596,14 +629,16 @@
             document.getElementById('eventsSummary').textContent = text;
         }
 
+        // Fill in the school event list as soon as the page opens.
+        loadSchoolEvents();
+
         // Local file upload fallback listener
         document.getElementById('icsFileInput').addEventListener('change', async function() {
             if (this.files.length > 0) {
                 const file = this.files[0];
                 activeIcsData = await file.text();
-                document.getElementById('generateBtn').disabled = false;
                 document.getElementById('sourceStatus').innerHTML =
-                    `<span class="status-badge status-active">✓ File Uploaded: ${file.name}</span>`;
+                    `<span class="status-badge status-active">✓ File Uploaded: ${escapeHtml(file.name)}</span>`;
             }
         });
 
@@ -631,12 +666,22 @@
             });
         }
 
-        // Calendar Generation & Export
+        // Option B button: gets the bell schedule first if it isn't loaded yet, then downloads.
         function processAndDownload() {
-            if (!activeIcsData) {
-                alert("Please sync the master bell schedule first.");
-                return;
-            }
+            if (activeIcsData) { buildAndDownloadIcs(); return; }
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerText = 'Getting the bell schedule...';
+            loadOfficialSchedule(function(ok, message) {
+                btn.disabled = false;
+                btn.innerText = 'Download .ics file';
+                if (ok) buildAndDownloadIcs();
+                else alert('Could not get the bell schedule: ' + message);
+            });
+        }
+
+        // Calendar Generation & Export
+        function buildAndDownloadIcs() {
 
             const startVal = document.getElementById('startDateFilter').value.replace(/-/g, '');
             const endVal = document.getElementById('endDateFilter').value.replace(/-/g, '');

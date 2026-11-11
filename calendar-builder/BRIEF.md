@@ -68,13 +68,27 @@ Does not call Canvas. No student data: both calendars are school schedules.
    reads Sheet tabs, so the choosing step is rewritten to work from saved settings.
    Keep/hide words, per-event overrides, and "adopting" look-alike events are left out
    of the pilot. Split into three parts, each pushed and tested on its own:
-   - **5a. Saved choices** (written 11/11, not yet pushed or tested). `Settings.js` saves
+   - **5a. Saved choices** (pushed 11/11 and looked OK in testing; follow-up below).
+     `Settings.js` saves
      the teacher's choices as JSON in User Property `BUILDER_CHOICES` (auto-saved about a
      second after each change) and fills them back in when the page opens. Period rules
      moved from the page to `Periods.js` as plain data, so the .ics and the sync use the
      same rules. New card 5, "Where Your Events Go", with a menu per group (new calendars,
      main calendar, or any calendar the teacher owns; listing them is read-only). Typing a
      period's new name checks its Keep box. No new permissions, no calendar writes.
+     **Follow-up (written 11/11, not yet pushed or tested):** school events load by
+     themselves when the page opens (and again when the dates change), so saved picks
+     show without a click. Card 5 is now "Get Your Calendar" with two options: **A. Add to
+     my Google Calendar** (holds the calendar menus; button greyed out until 5b/5c) and
+     **B. Just download an .ics file** (one-time snapshot, no menus; fetches the bell
+     schedule itself if it isn't loaded). Some teachers will only want the .ics.
+   - **Events already in a calendar (decided 11/11):** events the app added carry its tag
+     and are kept, replaced if changed, or removed if no longer picked. An untagged event
+     with the same title and start time (added by hand, or imported from an earlier .ics)
+     is **left alone and no copy is added**; the preview counts these ("already in your
+     calendar"). No adopting: the app never takes over a teacher's own event. Trade-off:
+     if such an event later changes at school, the new version is added beside the old
+     one; the preview should say so.
    - **5b. Preview only.** An "Add to my Google Calendar" button shows per calendar what
      would be added, updated, removed, or moved. Still read-only. The server reads the
      bell schedule from its public ICS link (as the page does) with `calendar-filter`'s
