@@ -90,8 +90,14 @@ Does not call Canvas. No student data: both calendars are school schedules.
 - Bell schedule: read with CalendarApp (needs the teacher subscribed; the app could
   subscribe them) or download its ICS like the original? The faculty calendar's ICS link
   gave HTTP 429 errors from Apps Script, so CalendarApp is the safer default.
-  **Leaning ICS (11/11):** the bell schedule's ICS link has worked every time so far, and
-  it spares teachers a subscription. 5b uses it; switch if 429s show up.
+  **Leaning ICS (11/11):** the ICS link spares teachers a subscription, but it hit a 429
+  during 5a testing (11/11). Google's limit isn't per teacher, and many teachers will use
+  this at once (first week of August). Fix (11/11, `Code.js`): one downloaded copy is
+  shared through the Script Cache (fresh 1 hour, kept 6 hours as a fallback when Google
+  says no), a script-wide lock so only one teacher downloads at a time, and 4 tries with
+  waits of 2, 4, and 8 seconds. Page load only tries once and never waits. So a schedule
+  change can take up to an hour to show. If 429s still happen, switch the bell schedule to
+  CalendarApp (5c could add the calendar to each teacher's list).
 - **Faculty calendar ID for other teachers (decide before the pilot opens).** The ID in
   `FACULTY_CALENDAR_ID` ends in `@import.calendar.google.com`, so it may be one person's
   "From URL" copy that other teachers can't open. Options: use the school's original
