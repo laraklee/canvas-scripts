@@ -59,6 +59,7 @@
       margin: 12px 0;
     }
     .contents ol { margin: 4px 0; }
+    .version { color: #5f6368; margin-top: -6px; }
     .contents a { color: #1a73e8; text-decoration: none; cursor: pointer; }
     .contents a:hover { text-decoration: underline; }
     .menu { font-weight: bold; }
@@ -93,6 +94,8 @@
 
 <h1>Gastronomy Badges — User Guide</h1>
 
+<p class="version">Version 2026-11-10. See <b>6. What's new and getting updates</b>.</p>
+
 <p>For teachers using the Gastronomy badges sheet (or a copy of it). It pulls scores and
 <b>Etoilles</b> (star badge) points from Canvas into a roster tab, so you can see each
 student's badges for the quarter without opening the Gradebook.</p>
@@ -115,6 +118,7 @@ students see.</div>
     <li><a data-target="update">Update Etoilles</a></li>
     <li><a data-target="refresh">Run FULL Data Refresh</a></li>
     <li><a data-target="problems">When something goes wrong</a></li>
+    <li><a data-target="updates">What's new and getting updates</a></li>
   </ol>
 </div>
 
@@ -328,6 +332,35 @@ don't copy it into other files or share the sheet more widely than you need to.<
 
 <p>If something keeps going wrong, note what you clicked and what the message said, and
 tell whoever shared the sheet with you.</p>
+
+<h2 id="updates">6. What's new and getting updates</h2>
+
+<p>A copy of this sheet doesn't change when the sheet it came from is improved. The
+version at the top of this guide tells you which one you have. To see whether there's a
+newer one, look at the version in the guide of the sheet you copied.</p>
+
+<h3>What's new</h3>
+
+<ul>
+  <li><b>2026-11-10:</b> Version label and this section added to the guide.</li>
+  <li><b>2026-11-08:</b> This guide opens in a panel on the right of the sheet.</li>
+</ul>
+
+<h3>Getting the newest version</h3>
+
+<ol>
+  <li>Make a fresh copy of the sheet you copied before.</li>
+  <li>In the new copy, fill in <i>Config</i> B2 and B4 (see <b>1. First-time setup</b>),
+    and save your Canvas token again with <b>1. Set API Key and Base URL</b>. A new copy
+    doesn't carry it over.</li>
+  <li>Run <b>2. Run FULL Data Refresh</b>.</li>
+  <li>Bring your roster tab over: in the old sheet, right-click the tab › <b>Copy to ›
+    Existing spreadsheet</b> and pick the new copy. Rename it to take out "Copy of". Delete
+    any roster tab that came with the new copy and holds someone else's students.</li>
+  <li>Run <b>Update Etoilles</b> on the roster tab to check it works.</li>
+  <li>Rename the old sheet (for example "OLD Gastronomy badges") so you don't use it by
+    mistake.</li>
+</ol>
 
 <script>
   // Contents links: scroll within this window (plain #links can misbehave inside

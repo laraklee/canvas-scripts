@@ -12,7 +12,11 @@ old prompt-based steps). Rewritten from this brief and the code, not from the ol
 It includes generic AI instructions for colleagues (versions A and C of
 `gems/grading/SKILL.md`, without Lara's course list), because the `@grading` skill can't
 be shared yet; keep them in step with the skill. Marked "Work in progress" (Lara's AI
-group knows). Same-commit rule as CLAUDE.md. **Never put a passphrase in the guide or
+group knows). Same-commit rule as CLAUDE.md. **Version label (11/10):** the guide shows
+"Version yyyy-mm-dd" under its title and section "9. What's new and getting updates"
+(re-copy the template; finish in-progress assignments in the old workbook first, since
+their Key tabs stay there). Bump the version and add a What's new line in the same commit
+as any change a teacher would see. **Never put a passphrase in the guide or
 the sheet:** on 11/8 Lara's old Instructions tab turned out to show her passphrase in
 plain text; Claude advised removing it and setting a new one in each workbook (Lara's to
 do; never record the passphrase anywhere in this repo).

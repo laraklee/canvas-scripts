@@ -19,6 +19,11 @@ the pop-up), the data refresh, and messages. That file is the only master copy (
 decision 11/8: keep docs self-contained, like calendar-filter). Update it in the same
 commit as any change a teacher would see (CLAUDE.md rule). If the Clean-up list changes
 the token menu (item 1), the guide's setup section changes too.
+**Version label (11/10):** the guide shows "Version yyyy-mm-dd" under its title and section
+"6. What's new and getting updates" (make a fresh copy, bring the roster tab over with
+Copy to). Bump the version and add a What's new line in the same commit as any change a
+teacher would see. There is no scrubbed template for this sheet yet, so a copy comes from
+a working sheet.
 History: first drafted 10/31 as `USER-GUIDE.md` (removed 11/8; still in Git history);
 reviewed by Lara 11/1. The old Google Doc copy "Gastronomy Badges — User Guide", ID
 `1cfWBB9xwD20B9ZMLBizmh295gKyKpm8dlNptelTZTRE`, in Drive folder TeacherTools
