@@ -515,7 +515,7 @@
 >   share with everyone, and each teacher imports it into their own course.
 > - **Pushing (from `course-manager-jupiter/`; always commit first, ask Lara first):**
 >   Biology = plain `clasp push` (`.clasp.json`). AI9 / Gastronomy: on the PC (Git Bash
->   or PowerShell) `clasp push -P 'C:\Users\18087\Projects\canvas-scripts\course-manager-jupiter\.clasp-ai9.json'`
+>   or PowerShell) `clasp push -P 'C:\Users\lalee\Code\canvas-scripts\course-manager-jupiter\.clasp-ai9.json'`
 >   (backslash path; a forward-slash path gave "srcDir escapes project root"); on the Mac
 >   `clasp -P "$PWD/.clasp-ai9.json" push`. Same for `.clasp-gastronomy.json`. A
 >   manifest (`appsscript.json`) change needs `--force`. Switching machines: `git pull`
@@ -1293,7 +1293,7 @@
 >     Canvas address? **No (Lara, 2026-10-21).**
 
 Read this at the start of every session, together with the repo-level `CLAUDE.md`
-(which always wins if the two disagree). Lara is new to the command line: explain each
+(which always wins if the two disagree). Explain each
 command in plain language before running it, and prefer small, reviewable steps.
 
 ## How Lara works

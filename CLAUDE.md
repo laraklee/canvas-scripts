@@ -7,8 +7,7 @@ repository. The Canvas-specific rules below apply to any project that calls Canv
 `calendar-filter/` does not call Canvas yet: it filters the school calendar (an ICS
 import into a Sheet) and exports a new ICS. The school calendar is not student data.
 
-Lara is a high school science teacher, new to Claude Code and the command line.
-Explain commands in plain language when you propose them, and prefer small,
+Explain commands to Lara in plain language when you propose them, and prefer small,
 reviewable steps over large multi-file changes.
 
 ## Hard rules (never break these)
@@ -30,7 +29,7 @@ reviewable steps over large multi-file changes.
      scattered `UrlFetchApp.fetch` calls;
    - respect a `DRY_RUN` setting (Script Property, default `true`) that logs what
      *would* happen without sending the request.
-   School IT has not granted grade write access. Do not try to work around that.
+   Grade write access is not available. Do not try to work around that.
 4. **Never run `clasp push` or `clasp deploy` without asking first.** These overwrite
    the live script in Google. `clasp pull` and `clasp clone` are fine.
 5. **Student privacy (FERPA).** Student names, emails, IDs, grades, and submission
