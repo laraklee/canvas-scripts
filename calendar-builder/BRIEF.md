@@ -35,8 +35,12 @@ Does not call Canvas. No student data: both calendars are school schedules.
 
 1. This BRIEF. (done)
 2. Bring in the colleague's code as `Code.js` and `Page.html`, minus the feedback
-   feature, his email, and the hardcoded calendar link.
-3. `clasp create` a new standalone web app (ask Lara first).
+   feature, his email, and the hardcoded calendar link. (done 11/10; otherwise it works
+   as his did, parser bugs included, so it can be tested against the original)
+3. `clasp create` a new standalone web app (ask Lara first). `clasp create` may write its
+   own `appsscript.json`: keep ours (scopes and `webapp` settings). Then set the Script
+   Property `BELL_SCHEDULE_ID` in the editor (Project Settings > Script Properties); the
+   ID is in the private notes repo.
 4. Add a "School events" section built from the faculty calendar's titles.
 5. "Add to my Google Calendar" using `calendar-filter`'s sync logic. `Events.js` there
    reads Sheet tabs, so the choosing step is rewritten to work from saved settings.
@@ -49,6 +53,8 @@ Does not call Canvas. No student data: both calendars are school schedules.
   subscribe them) or download its ICS like the original? The faculty calendar's ICS link
   gave HTTP 429 errors from Apps Script, so CalendarApp is the safer default.
 - Who maintains it after the pilot, and which teachers try it first.
+- The page allows embedding on any site (`XFrameOptionsMode.ALLOWALL`), kept from the
+  original, probably for Google Sites. Keep it only if the pilot is embedded somewhere.
 
 ## Known issues in the original to fix along the way
 
