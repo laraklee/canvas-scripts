@@ -50,8 +50,9 @@ Does not call Canvas. No student data: both calendars are school schedules.
    events all came through correctly in the .ics.
    **Tip:** copy and paste Script Property names into the editor. A typed
    `BELL_SCHEDULE_ID` didn't match (probably a hidden character) until it was pasted.
-4. Add a "School events" section built from the faculty calendar's titles. (written
-   11/11, not yet pushed or tested.) `SchoolEvents.js` reads the faculty calendar with
+4. Add a "School events" section built from the faculty calendar's titles. (done 11/11:
+   pushed with `--force` for the new scope, `FACULTY_CALENDAR_ID` set, and tested from the
+   test deployment; the full title list loaded, most frequent first.) `SchoolEvents.js` reads the faculty calendar with
    CalendarApp (read-only scope `calendar.readonly`; step 5 will need full `calendar`),
    so each teacher must have it in their Google Calendar list; the page says so if not.
    Titles are grouped like `calendar-filter` (without "CHANGED: ..." notes), with a count,
@@ -67,6 +68,11 @@ Does not call Canvas. No student data: both calendars are school schedules.
 - Bell schedule: read with CalendarApp (needs the teacher subscribed; the app could
   subscribe them) or download its ICS like the original? The faculty calendar's ICS link
   gave HTTP 429 errors from Apps Script, so CalendarApp is the safer default.
+- **Faculty calendar ID for other teachers (decide before the pilot opens).** The ID in
+  `FACULTY_CALENDAR_ID` ends in `@import.calendar.google.com`, so it may be one person's
+  "From URL" copy that other teachers can't open. Options: use the school's original
+  Google calendar ID if there is one, share the imported copy with the domain, or read
+  the ICS link (which hit 429 errors). Test by having one colleague open the page.
 - Who maintains it after the pilot, and which teachers try it first.
 - The page allows embedding on any site (`XFrameOptionsMode.ALLOWALL`), kept from the
   original, probably for Google Sites. Keep it only if the pilot is embedded somewhere.
@@ -75,5 +81,9 @@ Does not call Canvas. No student data: both calendars are school schedules.
 
 - An event marked `VALUE=DATE-TIME` would be treated as all-day.
 - Commas or semicolons in a new name aren't escaped in the .ics.
-- The date filter compares UTC dates, so a late event on the last day can drop out.
+- The date filter compares UTC dates, so a late event on the last day can drop out, and
+  an afternoon event the day before the start date slips in (seen 11/11: a 2:05 pm class
+  on 9/30 came through with an Oct 1 start). Fix in step 6.
+- Typing a "Rename to" name doesn't check that period's Keep box, so the period is
+  silently left out (happened in testing 11/11). Check the box automatically when a name is typed.
 - Repeating events are filtered only by their first date.
