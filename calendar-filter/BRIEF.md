@@ -14,6 +14,9 @@ Google Calendar of the teacher's own. Bound to the Sheet "Google Calendar Utilit
   tabs and settings. clasp updates code only: tab or label changes go on by hand.
 - Push order: Lara's sheet first (plain `clasp push`), then the template, from this folder:
   `clasp push -P "$PWD/.clasp-template.json"`. Ask Lara before each push.
+- If clasp says "Skipping push", the remote `appsscript.json` differs (its manifest
+  question was answered no). Compare scopes; if the change is intended, add `--force`.
+  First push to the template (2026-11-10) needed it for formatting only.
 
 ## Pilot idea: web app with a colleague (11/9, not started)
 
