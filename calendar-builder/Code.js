@@ -1,8 +1,9 @@
 /**
  * Code.js
  * Faculty Calendar Builder (pilot): serves the web page and reads the school bell schedule.
- * Started from a colleague's "Faculty Custom Calendar Builder" (see BRIEF.md). So far the
- * page works as his did: pick periods, rename them, download a one-time .ics file.
+ * Started from a colleague's "Faculty Custom Calendar Builder" (see BRIEF.md). The page works
+ * as his did (pick periods, rename them, download a one-time .ics file), plus a School Events
+ * list from the faculty calendar (SchoolEvents.js).
  *
  * Endpoints: the bell schedule's public ICS link (read-only GET, built from BELL_SCHEDULE_ID).
  * Write calls: none.
@@ -12,7 +13,7 @@
  */
 
 // Update by hand whenever the tool changes; shown at the top of the page.
-const SYSTEM_REVISION_DATE = '11/10/2026';
+const SYSTEM_REVISION_DATE = '11/11/2026';
 
 const CACHE_KEY_REVISED = 'master_schedule_hst_v2';
 const CACHE_SECONDS = 21600; // 6 hours

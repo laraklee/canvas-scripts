@@ -2,8 +2,9 @@
 <!--
   Page.html
   The Faculty Calendar Builder page: load the bell schedule, pick a date range, choose and
-  rename periods, and download a one-time .ics file. Parsing and the download happen in the
-  browser. Server calls: fetchDefaultCalendar() in Code.js. No writes anywhere.
+  rename periods, pick kinds of school events, and download a one-time .ics file. Parsing and
+  the download happen in the browser. Server calls: fetchDefaultCalendar() in Code.js,
+  getSchoolEventTitles() in SchoolEvents.js. No writes anywhere.
   Started from a colleague's page (see BRIEF.md); the feedback form was removed for the pilot.
 -->
 <html lang="en">
@@ -228,9 +229,39 @@
         </table>
     </div>
 
-    <!-- STEP 4: GENERATE DOWNLOAD -->
+    <!-- STEP 4: SCHOOL EVENTS (FROM THE FACULTY CALENDAR) -->
+    <div class="card">
+        <h3>4. School Events</h3>
+        <p class="instructions">Load the faculty calendar to see its kinds of events, then check the ones you want. Uses the date range from step 2. (Not in the .ics download yet.)</p>
+
+        <button class="btn-secondary" id="loadEventsBtn" onclick="loadSchoolEvents()">Load School Events</button>
+        <div id="eventsStatus">
+            <span class="status-badge status-none">Not loaded yet</span>
+        </div>
+
+        <div id="eventsPicker" style="display: none; margin-top: 15px;">
+            <label for="eventSearch"><strong>Search:</strong></label><br>
+            <input type="text" id="eventSearch" placeholder="Type part of an event title" oninput="filterSchoolEvents()">
+            <span class="subtext" id="eventsSummary"></span>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="8%">Keep</th>
+                        <th width="60%">Event Title</th>
+                        <th width="12%">Times</th>
+                        <th width="20%">Next Date</th>
+                    </tr>
+                </thead>
+                <tbody id="eventsBody">
+                    <!-- Filled by loadSchoolEvents() -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- STEP 5: GENERATE DOWNLOAD -->
     <button class="btn-primary" id="generateBtn" onclick="processAndDownload()" disabled>
-        4. Generate My Calendar (.ics)
+        5. Generate My Calendar (.ics)
     </button>
 
 
@@ -335,6 +366,84 @@
                     statusDiv.innerHTML = `<span class="status-badge status-error">✕ Error: ${error.message}</span>`;
                 })
                 .fetchDefaultCalendar();
+        }
+
+        // ---- School events (step 4) ----
+
+        // Makes calendar text safe to put inside HTML.
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[c]);
+        }
+
+        // Keys (lowercase titles) of the school events currently checked.
+        function checkedSchoolEventKeys() {
+            return Array.from(document.querySelectorAll('#eventsBody input[type="checkbox"]:checked'))
+                .map(box => box.dataset.key);
+        }
+
+        // Asks the server for the faculty calendar's titles in the step 2 date range.
+        // Checked titles stay checked when the list is loaded again.
+        function loadSchoolEvents() {
+            const btn = document.getElementById('loadEventsBtn');
+            const statusDiv = document.getElementById('eventsStatus');
+            const keepChecked = new Set(checkedSchoolEventKeys());
+            const start = document.getElementById('startDateFilter').value;
+            const end = document.getElementById('endDateFilter').value;
+
+            btn.disabled = true;
+            btn.innerText = 'Loading...';
+            statusDiv.innerHTML = '<span class="status-badge status-none">Reading the faculty calendar...</span>';
+
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    btn.disabled = false;
+                    btn.innerText = 'Load School Events';
+                    if (result.titles.length === 0) {
+                        document.getElementById('eventsPicker').style.display = 'none';
+                        statusDiv.innerHTML = '<span class="status-badge status-none">No school events in this date range</span>';
+                        return;
+                    }
+                    statusDiv.innerHTML = '<span class="status-badge status-active">✓ Faculty calendar loaded</span>';
+                    document.getElementById('eventsBody').innerHTML = result.titles.map((t, i) => `
+                        <tr data-key="${escapeHtml(t.key)}">
+                            <td><input type="checkbox" id="school_${i}" data-key="${escapeHtml(t.key)}"
+                                ${keepChecked.has(t.key) ? 'checked' : ''} onchange="updateSchoolEventsSummary()"></td>
+                            <td><label for="school_${i}">${escapeHtml(t.title)}</label></td>
+                            <td>${t.count}</td>
+                            <td>${escapeHtml(t.nextLabel)}</td>
+                        </tr>
+                    `).join('');
+                    document.getElementById('eventsPicker').dataset.total = result.total;
+                    document.getElementById('eventsPicker').style.display = 'block';
+                    filterSchoolEvents();
+                })
+                .withFailureHandler(function(error) {
+                    btn.disabled = false;
+                    btn.innerText = 'Load School Events';
+                    statusDiv.innerHTML = `<span class="status-badge status-error">✕ ${escapeHtml(error.message)}</span>`;
+                })
+                .getSchoolEventTitles(start, end);
+        }
+
+        // Shows only the rows whose title contains the search text. Hidden rows keep their checks.
+        function filterSchoolEvents() {
+            const query = document.getElementById('eventSearch').value.trim().toLowerCase();
+            document.querySelectorAll('#eventsBody tr').forEach(row => {
+                row.style.display = !query || row.dataset.key.includes(query) ? '' : 'none';
+            });
+            updateSchoolEventsSummary();
+        }
+
+        // "42 kinds of events (310 dates). 3 checked. Showing 5."
+        function updateSchoolEventsSummary() {
+            const rows = Array.from(document.querySelectorAll('#eventsBody tr'));
+            const shown = rows.filter(row => row.style.display !== 'none').length;
+            const total = document.getElementById('eventsPicker').dataset.total;
+            let text = `${rows.length} kinds of events (${total} dates). ${checkedSchoolEventKeys().length} checked.`;
+            if (shown < rows.length) text += ` Showing ${shown}.`;
+            document.getElementById('eventsSummary').textContent = text;
         }
 
         // Local file upload fallback listener

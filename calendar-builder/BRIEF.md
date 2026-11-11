@@ -50,7 +50,13 @@ Does not call Canvas. No student data: both calendars are school schedules.
    events all came through correctly in the .ics.
    **Tip:** copy and paste Script Property names into the editor. A typed
    `BELL_SCHEDULE_ID` didn't match (probably a hidden character) until it was pasted.
-4. Add a "School events" section built from the faculty calendar's titles.
+4. Add a "School events" section built from the faculty calendar's titles. (written
+   11/11, not yet pushed or tested.) `SchoolEvents.js` reads the faculty calendar with
+   CalendarApp (read-only scope `calendar.readonly`; step 5 will need full `calendar`),
+   so each teacher must have it in their Google Calendar list; the page says so if not.
+   Titles are grouped like `calendar-filter` (without "CHANGED: ..." notes), with a count,
+   the next date, and a search box. Picks aren't saved yet (step 5). Needs Script
+   Property `FACULTY_CALENDAR_ID` (same calendar ID `calendar-filter` uses; paste the name).
 5. "Add to my Google Calendar" using `calendar-filter`'s sync logic. `Events.js` there
    reads Sheet tabs, so the choosing step is rewritten to work from saved settings.
    Keep/hide words and per-event overrides are left out of the pilot.
