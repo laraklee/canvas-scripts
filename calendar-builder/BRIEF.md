@@ -82,6 +82,11 @@ Does not call Canvas. No student data: both calendars are school schedules.
      my Google Calendar** (holds the calendar menus; button greyed out until 5b/5c) and
      **B. Just download an .ics file** (one-time snapshot, no menus; fetches the bell
      schedule itself if it isn't loaded). Some teachers will only want the .ics.
+     Tested 11/11: the list and the .ics (116 events, Aug to May) worked.
+     **Then (written 11/11, not yet pushed):** the bell schedule also loads by itself when
+     the page opens (cheap now that the copy is shared). Card 1 is a status line with a
+     "Try again" button only on failure; "use your own .ics file instead" stays as the
+     override, and a file picked while the automatic load runs is not overwritten.
    - **Events already in a calendar (decided 11/11):** events the app added carry its tag
      and are kept, replaced if changed, or removed if no longer picked. An untagged event
      with the same title and start time (added by hand, or imported from an earlier .ics)

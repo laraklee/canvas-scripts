@@ -215,16 +215,16 @@
 
     <!-- STEP 1: CALENDAR SOURCE -->
     <div class="card">
-        <h3>1. Master Schedule Source</h3>
-        <p class="instructions">Click below to fetch the official school bell schedule feed via Google Workspace:</p>
+        <h3>1. Bell Schedule</h3>
+        <p class="instructions">The school's official bell schedule loads by itself when you open this page.</p>
 
-        <button class="btn-secondary" id="fetchBtn" onclick="loadOfficialSchedule()">Sync Master Bell Schedule</button>
         <div id="sourceStatus">
-            <span class="status-badge status-none">No active calendar loaded</span>
+            <span class="status-badge status-none">Loading the bell schedule...</span>
         </div>
+        <button class="btn-secondary" id="fetchBtn" onclick="loadOfficialSchedule()" style="display: none; margin-top: 10px;">Try again</button>
 
         <details style="margin-top: 15px; font-size: 0.88em; color: #666;">
-            <summary style="cursor: pointer;">Alternative: Upload a local .ics file instead</summary>
+            <summary style="cursor: pointer;">Alternative: use your own .ics file instead</summary>
             <div style="margin-top: 10px;">
                 <input type="file" id="icsFileInput" accept=".ics">
             </div>
@@ -365,6 +365,8 @@
     <script>
         // Holds loaded calendar text in memory
         let activeIcsData = null;
+        // True once the teacher picks their own .ics file in card 1; it then replaces the official one.
+        let usingOwnFile = false;
 
         // From the server: the period rules (Periods.js), this teacher's saved choices
         // (Settings.js), and the calendars they can pick in step 5.
@@ -515,28 +517,31 @@
             pill.classList.toggle('save-error', isError);
         }
 
-        // Trigger server fetch via Apps Script. Calls afterLoad(succeeded) when done, if given
-        // (the .ics download uses this to fetch the schedule itself).
+        // Gets the bell schedule from the server (usually the shared copy, so it's quick). Runs by
+        // itself when the page opens; "Try again" shows only if that fails. Calls
+        // afterLoad(succeeded, message) when done, if given (the .ics download uses this).
         function loadOfficialSchedule(afterLoad) {
             const statusDiv = document.getElementById('sourceStatus');
             const fetchBtn = document.getElementById('fetchBtn');
 
             fetchBtn.disabled = true;
-            fetchBtn.innerText = 'Connecting...';
-            statusDiv.innerHTML = '<span class="status-badge status-none">Retrieving schedule via Google Workspace...</span>';
+            statusDiv.innerHTML = '<span class="status-badge status-none">Loading the bell schedule...</span>';
 
             google.script.run
                 .withSuccessHandler(function(rawIcs) {
+                    // A file the teacher chose while this was loading wins.
+                    if (usingOwnFile) { if (afterLoad) afterLoad(true); return; }
                     activeIcsData = rawIcs;
                     fetchBtn.disabled = false;
-                    fetchBtn.innerText = 'Sync Master Bell Schedule';
-                    statusDiv.innerHTML = '<span class="status-badge status-active">✓ Official schedule loaded successfully</span>';
+                    fetchBtn.style.display = 'none';
+                    statusDiv.innerHTML = '<span class="status-badge status-active">✓ Bell schedule loaded</span>';
                     if (afterLoad) afterLoad(true);
                 })
                 .withFailureHandler(function(error) {
+                    if (usingOwnFile) { if (afterLoad) afterLoad(true); return; }
                     fetchBtn.disabled = false;
-                    fetchBtn.innerText = 'Sync Master Bell Schedule';
-                    statusDiv.innerHTML = `<span class="status-badge status-error">✕ Error: ${escapeHtml(error.message)}</span>`;
+                    fetchBtn.style.display = 'inline-block';
+                    statusDiv.innerHTML = `<span class="status-badge status-error">✕ ${escapeHtml(error.message)}</span>`;
                     if (afterLoad) afterLoad(false, error.message);
                 })
                 .fetchDefaultCalendar();
@@ -629,7 +634,8 @@
             document.getElementById('eventsSummary').textContent = text;
         }
 
-        // Fill in the school event list as soon as the page opens.
+        // Load the bell schedule and the school event list as soon as the page opens.
+        loadOfficialSchedule();
         loadSchoolEvents();
 
         // Local file upload fallback listener
@@ -637,8 +643,10 @@
             if (this.files.length > 0) {
                 const file = this.files[0];
                 activeIcsData = await file.text();
+                usingOwnFile = true;
+                document.getElementById('fetchBtn').style.display = 'none';
                 document.getElementById('sourceStatus').innerHTML =
-                    `<span class="status-badge status-active">✓ File Uploaded: ${escapeHtml(file.name)}</span>`;
+                    `<span class="status-badge status-active">✓ Using your file instead: ${escapeHtml(file.name)}</span>`;
             }
         });
 
