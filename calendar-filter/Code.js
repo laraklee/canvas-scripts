@@ -5,7 +5,8 @@
  *
  * This file: the menu, tab setup, and reading the settings on the Start Here tab.
  * Other files: Feed.js (read the school calendar), Events.js (the Events and Pick Titles
- * tabs, and deciding what syncs), Sync.js (writes to Google Calendar, nightly trigger).
+ * tabs, and deciding what syncs), Sync.js (writes to Google Calendar, nightly trigger),
+ * Calendars.js (lists the account's calendars and their IDs on a "My Calendars" tab).
  *
  * Endpoints: Google Calendar (read), or a public ICS link if one is entered (read-only).
  * Write calls: Google Calendar only, in Sync.js, and only when "Preview only" is unchecked.
@@ -43,6 +44,7 @@ function onOpen() {
     .addItem('Turn off nightly refresh + sync', 'turnOffNightlySync')
     .addSeparator()
     .addItem('Set up / repair tabs', 'setupTabs')
+    .addItem('List my calendars (with IDs)', 'listMyCalendars')
     .addToUi();
 }
 
