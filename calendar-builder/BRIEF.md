@@ -98,6 +98,15 @@ Does not call Canvas. No student data: both calendars are school schedules.
      would be added, updated, removed, or moved. Still read-only. The server reads the
      bell schedule from its public ICS link (as the page does) with `calendar-filter`'s
      parser, so teachers needn't subscribe to it.
+     **Written 11/11, not yet pushed or tested.** `Ics.js` = `calendar-filter`'s parser
+     (copied). `Sync.js` builds the plan: the page's choices are saved first; classes come
+     from the shared bell schedule copy (date filter in Hawaii dates, so the 9/30 problem
+     doesn't happen here), school events from the faculty calendar (skipped if none are
+     picked). Tags: `builderClassUid`, `builderEventUid`, `builderHash`. It reads the target
+     calendars plus the ones in User Property `BUILDER_LAST_CALENDARS` (written by 5c), so
+     "move" only appears after a real sync. The page's preview box lists add / move /
+     update / remove / already there / up to date per group, with up to 5 examples each;
+     any change to the choices hides an old preview. Confirm stays greyed out.
    - **5c. Write.** Confirm after the preview; full `calendar` scope. Creates the new
      calendars only if missing; creates tagged events; deletes or re-creates only events
      with this app's tag, in the chosen calendars, inside the date range. Continues in

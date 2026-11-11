@@ -3,10 +3,10 @@
   Page.html
   The Faculty Calendar Builder page: load the bell schedule, pick a date range, choose and
   rename periods, pick kinds of school events, then either add them to Google Calendar
-  (Option A, coming in step 5b/5c) or download a one-time .ics file (Option B). Choices are
-  saved automatically. The .ics is built in the browser. Server calls: fetchDefaultCalendar()
-  in Code.js, getSchoolEventTitles() in SchoolEvents.js, saveChoices() in Settings.js.
-  No calendar writes.
+  (Option A: a preview for now; confirming comes in step 5c) or download a one-time .ics file
+  (Option B). Choices are saved automatically. The .ics is built in the browser. Server calls:
+  fetchDefaultCalendar() in Code.js, getSchoolEventTitles() in SchoolEvents.js, saveChoices()
+  in Settings.js, previewSync() in Sync.js. No calendar writes.
   Started from a colleague's page (see BRIEF.md); the feedback form was removed for the pilot.
 -->
 <html lang="en">
@@ -172,6 +172,19 @@
         }
         .option-box h4 { margin: 6px 0 4px; }
         .option-box .btn-primary { margin-bottom: 4px; }
+        .preview-box {
+            background: #f4f8ff;
+            border: 1px solid #cfe0ff;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 15px;
+            font-size: 0.92em;
+        }
+        .preview-group { margin-bottom: 12px; }
+        .preview-group h5 { margin: 4px 0; font-size: 1em; }
+        .preview-group ul { margin: 4px 0 0 0; padding-left: 20px; }
+        .preview-group li { margin: 3px 0; }
+        .preview-examples { color: #666; font-size: 0.9em; }
         .calendar-help {
             font-size: 0.88em;
             color: #555;
@@ -334,8 +347,14 @@
             Google Calendar's settings.</p>
         </div>
 
-        <button class="btn-primary" id="syncBtn" disabled>Add to my Google Calendar</button>
-        <span class="subtext">Coming in the next update.</span>
+        <button class="btn-primary" id="syncBtn" onclick="previewSyncClicked()">Add to my Google Calendar</button>
+        <span class="subtext">First you'll see exactly what will change. Nothing changes until you confirm.</span>
+
+        <div id="previewBox" class="preview-box" style="display: none;">
+            <div id="previewBody"></div>
+            <button class="btn-primary" id="confirmBtn" disabled>Confirm</button>
+            <span class="subtext">Confirming comes in the next update. This is a preview only.</span>
+        </div>
         </div>
 
         <div class="option-box">
@@ -490,6 +509,7 @@
 
         function saveSoon() {
             setSaveStatus('Saving...', false);
+            hidePreview(); // A preview made before this change is out of date.
             clearTimeout(saveTimer);
             saveTimer = setTimeout(saveNow, 1000);
         }
@@ -545,6 +565,66 @@
                     if (afterLoad) afterLoad(false, error.message);
                 })
                 .fetchDefaultCalendar();
+        }
+
+        // ---- Option A: preview what "Add to my Google Calendar" would change ----
+
+        function hidePreview() {
+            document.getElementById('previewBox').style.display = 'none';
+        }
+
+        function previewSyncClicked() {
+            const btn = document.getElementById('syncBtn');
+            const box = document.getElementById('previewBox');
+            const body = document.getElementById('previewBody');
+            clearTimeout(saveTimer); // The preview saves the choices itself.
+            btn.disabled = true;
+            btn.innerText = 'Checking your calendars...';
+            box.style.display = 'none';
+
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    btn.disabled = false;
+                    btn.innerText = 'Add to my Google Calendar';
+                    setSaveStatus('✓ Choices saved', false);
+                    body.innerHTML = result.groups.map(previewGroupHtml).join('');
+                    box.style.display = 'block';
+                })
+                .withFailureHandler(function(error) {
+                    btn.disabled = false;
+                    btn.innerText = 'Add to my Google Calendar';
+                    body.innerHTML = `<span class="status-badge status-error">✕ ${escapeHtml(error.message)}</span>`;
+                    box.style.display = 'block';
+                    saveNow(); // The preview may have stopped before saving the choices.
+                })
+                .previewSync(currentChoices());
+        }
+
+        // One group's lines, e.g. "Add 116 · e.g. Sequence 9 (Mon 8/10), ..."
+        function previewGroupHtml(g) {
+            const where = g.willCreate
+                ? `a new calendar, <em>${escapeHtml(g.calendar)}</em> (created when you confirm)`
+                : `<em>${escapeHtml(g.calendar)}</em>`;
+            const line = (count, text, examples) => {
+                if (!count) return '';
+                const eg = examples && examples.length
+                    ? `<br><span class="preview-examples">e.g. ${examples.map(escapeHtml).join('; ')}${count > examples.length ? '; ...' : ''}</span>`
+                    : '';
+                return `<li><strong>${text.replace('#', count)}</strong>${eg}</li>`;
+            };
+            const lines = [
+                line(g.add, 'Add #', g.examples.add),
+                line(g.move, 'Move # here from ' + g.movedFrom.map(escapeHtml).join(', '), g.examples.move),
+                line(g.update, 'Update # (changed at school, or renamed)', g.examples.update),
+                line(g.remove, 'Remove # (no longer picked, or gone from the school calendar)', g.examples.remove),
+                line(g.alreadyThere, '# already in your calendar (left as is, no copy added)', g.examples.alreadyThere),
+                line(g.unchanged, '# already up to date', null),
+            ].join('');
+            return `<div class="preview-group">
+                <h5>${escapeHtml(g.label)} → ${where}</h5>
+                <ul>${lines || '<li>Nothing to change.</li>'}</ul>
+                ${g.alreadyThere ? '<span class="preview-examples">If the school later changes one of those, the new version is added and yours stays.</span>' : ''}
+            </div>`;
         }
 
         // ---- School events (step 4) ----
