@@ -14,6 +14,10 @@ Started 2026-11-10 by blending two projects:
 
 Does not call Canvas. No student data: both calendars are school schedules.
 
+- Script ID: `1NRaFfistbupSsmqwS1hucP0YNaUhMa6g6UVrgbKuhSgWA8ePDRuyKN9J` (standalone,
+  "Faculty Calendar Builder (pilot)", in Lara's account; created 2026-11-10)
+- Push from this folder with plain `clasp push` (ask Lara first).
+
 ## Decisions (2026-11-10)
 
 - **Two source calendars, two target calendars.** The bell schedule feeds "My Classes";
@@ -37,10 +41,11 @@ Does not call Canvas. No student data: both calendars are school schedules.
 2. Bring in the colleague's code as `Code.js` and `Page.html`, minus the feedback
    feature, his email, and the hardcoded calendar link. (done 11/10; otherwise it works
    as his did, parser bugs included, so it can be tested against the original)
-3. `clasp create` a new standalone web app (ask Lara first). `clasp create` may write its
-   own `appsscript.json`: keep ours (scopes and `webapp` settings). Then set the Script
-   Property `BELL_SCHEDULE_ID` in the editor (Project Settings > Script Properties); the
-   ID is in the private notes repo.
+3. `clasp create` a new standalone web app. (done 11/10; clasp replaced
+   `appsscript.json` with Google's default, so ours was restored from Git.) Still to do:
+   set the Script Property `BELL_SCHEDULE_ID` in the editor (Project Settings > Script
+   Properties; the ID is in the private notes repo), `clasp push`, then deploy as a web
+   app and test against the original.
 4. Add a "School events" section built from the faculty calendar's titles.
 5. "Add to my Google Calendar" using `calendar-filter`'s sync logic. `Events.js` there
    reads Sheet tabs, so the choosing step is rewritten to work from saved settings.
