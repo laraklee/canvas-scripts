@@ -60,6 +60,7 @@
       margin: 12px 0;
     }
     .contents ol { margin: 4px 0; }
+    .version { color: #5f6368; margin-top: -6px; }
     .contents a { color: #1a73e8; text-decoration: none; cursor: pointer; }
     .contents a:hover { text-decoration: underline; }
     .menu { font-weight: bold; }
@@ -94,6 +95,8 @@
 
 <h1>Assignment Sheet — User Guide</h1>
 
+<p class="version">Version 2026-11-10. See <b>6. What's new and getting updates</b>.</p>
+
 <p>For teachers using a course Assignment sheet (Biology, Gastronomy, AI9, or a copy).
 Everything here is on the <b>Canvas Tools</b> menu at the top of the sheet, next to Help.
 If you don't see the menu, reload the page and wait a few seconds. This guide is always
@@ -111,8 +114,9 @@ with the ✕ at its top.</p>
     dates.</li>
 </ul>
 
-<div class="note"><b>Which tools change Canvas?</b> Only two: <i>Post selected
-calendarEvents rows to Canvas</i> and <i>Send changed dates to Canvas</i>. Everything
+<div class="note"><b>Which tools change Canvas?</b> Only three: <i>Post selected
+calendarEvents rows to Canvas</i>, <i>Send changed dates to Canvas</i>, and <i>Remove
+section/student dates on selected rows</i>. Everything
 else only reads Canvas or works inside the sheet. The tools that change Canvas always
 show you what they will do and ask <b>Yes/No</b> before sending.</div>
 
@@ -124,6 +128,7 @@ show you what they will do and ask <b>Yes/No</b> before sending.</div>
     <li><a data-target="events">📅 Calendar events and announcements</a></li>
     <li><a data-target="dates">📝 Assignment dates</a></li>
     <li><a data-target="problems">When something goes wrong</a></li>
+    <li><a data-target="updates">What's new and getting updates</a></li>
   </ol>
 </div>
 
@@ -204,7 +209,8 @@ would go. Nothing changes in Canvas.</p>
   <li><b>Dry run: switch on/off</b> flips it (it asks first).</li>
   <li>Dry run is a setting <b>for the whole sheet</b>, not per teacher. If you share a
     sheet, check the status before you post.</li>
-  <li>Every "Post" or "Send" confirmation box also says whether dry run is on.</li>
+  <li>Every "Post", "Send", or "Remove" confirmation box also says whether dry run is
+    on.</li>
 </ul>
 
 <p>A good habit when trying something new: turn dry run ON, run the tool, check the
@@ -561,6 +567,49 @@ fix.</p>
   <tr><td>No <b>Canvas Tools</b> menu</td><td>Reload the page; wait a few
     seconds.</td></tr>
 </table>
+
+<h2 id="updates">6. What's new and getting updates</h2>
+
+<p>Your copy of this sheet doesn't change when the template it came from is improved. The
+version at the top of this guide tells you which one you have. To see whether there's a
+newer one, open the template and look at the version in its guide.</p>
+
+<h3>What's new</h3>
+
+<ul>
+  <li><b>2026-11-10:</b> Section and student dates on the Assignment Dates tab (rows
+    marked ↳): load, edit, add, and remove them. Sort that tab by any column. Version
+    label and this section added to the guide.</li>
+  <li><b>2026-11-08:</b> This guide opens in a panel on the right of the sheet.</li>
+</ul>
+
+<h3>Getting the newest version</h3>
+
+<p>You make a fresh copy of the template and bring your own work over. Your old sheet
+stays as it is until you're done, so nothing is lost.</p>
+
+<ol>
+  <li>Open the template (the same link you used for your first copy) and make a copy.</li>
+  <li>In the new copy, fill in the <i>Config</i> tab (see <b>1. First-time setup</b>).</li>
+  <li>Run <b>Set Canvas token</b> and <b>Test Canvas connection</b>. A new copy needs your
+    token again: it isn't carried over.</li>
+  <li>Run <b>🔄 Update schedule from Master</b> to fill the Q tabs.</li>
+  <li>Bring your work over from the old sheet:
+    <ul>
+      <li><b>Q tabs:</b> copy columns F–I (and any of your own columns from J on) and
+        paste them into the same place. First check that the dates in column A line up
+        in both sheets.</li>
+      <li><b>calendarEvents:</b> copy your rows (from row 3, columns A–I). Keep columns
+        H and I, so items already posted aren't posted twice.</li>
+      <li><b>Assignment Dates:</b> nothing to copy. Run <b>Load assignment dates from
+        Canvas</b>.</li>
+    </ul>
+  </li>
+  <li>Check dry run: <span class="menu">Canvas Tools › ⚙️ Setup › Dry run: show
+    status</span>. A new copy may start with it ON.</li>
+  <li>Rename the old sheet (for example "OLD Assignment sheet") so you don't use it by
+    mistake. Keep it until you're sure everything came over.</li>
+</ol>
 
 <script>
   // Contents links: scroll within this window (plain #links can misbehave inside

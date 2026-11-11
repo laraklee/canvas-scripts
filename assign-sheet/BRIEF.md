@@ -116,8 +116,12 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 >   the Assignment Dates tab, Q tabs columns F–I; keep D3/D5 if the master calendar is
 >   shared. Set dry run ON in the template. Share it view-only, with a `/copy` link.
 >   clasp updates code only: tab or label changes go onto the template by hand. How
->   teachers' own copies get updates: later (copies are frozen when made). Shelved ideas: per-section (override) dates in Assignment
->   Dates (no overrides this year); sending name/points from Assignment Dates.
+>   teachers' own copies get updates (decided 11/10): the guide shows "Version
+>   yyyy-mm-dd" under its title and a "6. What's new and getting updates" section; a
+>   teacher re-copies the template and brings their work over. **Bump the version and add
+>   a What's new line in the same commit as any change a teacher would see.**
+>   Shelved idea: sending name/points from Assignment Dates. (Section dates, once shelved,
+>   were built 11/9–11/10.)
 > - A new Google service in the code (e.g. `MailApp`, `openById`) needs its scope added
 >   to `appsscript.json`, or that item fails with a permission error.
 
