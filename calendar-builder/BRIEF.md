@@ -68,7 +68,7 @@ Does not call Canvas. No student data: both calendars are school schedules.
    reads Sheet tabs, so the choosing step is rewritten to work from saved settings.
    Keep/hide words, per-event overrides, and "adopting" look-alike events are left out
    of the pilot. Split into three parts, each pushed and tested on its own:
-   - **5a. Saved choices** (pushed 11/11 and looked OK in testing; follow-up below).
+   - **5a. Saved choices** (done 11/11, including the follow-ups below; all pushed).
      `Settings.js` saves
      the teacher's choices as JSON in User Property `BUILDER_CHOICES` (auto-saved about a
      second after each change) and fills them back in when the page opens. Period rules
@@ -76,14 +76,14 @@ Does not call Canvas. No student data: both calendars are school schedules.
      same rules. New card 5, "Where Your Events Go", with a menu per group (new calendars,
      main calendar, or any calendar the teacher owns; listing them is read-only). Typing a
      period's new name checks its Keep box. No new permissions, no calendar writes.
-     **Follow-up (written 11/11, not yet pushed or tested):** school events load by
+     **Follow-up (11/11):** school events load by
      themselves when the page opens (and again when the dates change), so saved picks
      show without a click. Card 5 is now "Get Your Calendar" with two options: **A. Add to
      my Google Calendar** (holds the calendar menus; button greyed out until 5b/5c) and
      **B. Just download an .ics file** (one-time snapshot, no menus; fetches the bell
      schedule itself if it isn't loaded). Some teachers will only want the .ics.
      Tested 11/11: the list and the .ics (116 events, Aug to May) worked.
-     **Then (written 11/11, not yet pushed):** the bell schedule also loads by itself when
+     **Then (pushed 11/11):** the bell schedule also loads by itself when
      the page opens (cheap now that the copy is shared). Card 1 is a status line with a
      "Try again" button only on failure; "use your own .ics file instead" stays as the
      override, and a file picked while the automatic load runs is not overwritten.
