@@ -133,5 +133,14 @@ reviewable steps over large multi-file changes.
     that first means entering it only once.
   - Afterward, revoke the old tokens in Canvas (Account › Settings › Approved
     Integrations).
-  - Option, not decided: give `assign-sheet/` (and later `gastronomy-badges/`) the same
-    **Setup…** side panel as `course-manager-jupiter/` (`SetupPanel.js`).
+- **Setup side panels for the other projects (added 2026-11-11).** Model:
+  `course-manager-jupiter/`'s **Setup & Data › Setup…** (`SetupPanel.js`,
+  `SetupPanelPage.html`; see its BRIEF). Same way of working: Biology first, Lara tests,
+  then the other workbooks; guide updated in the same commit.
+  - `assign-sheet/`: a **Setup…** panel (token with last 4 + date saved, connection
+    test, dry run, which course), replacing the trip through its ⚙️ Setup menu items.
+  - `gastronomy-badges/`: a **Setup…** panel, done together with its clean-up item 1
+    (rename to `CANVAS_TOKEN`, base URL from User Properties) so teachers re-enter
+    their token only once.
+  - `anonymize-submissions/` (no Canvas calls): a small setup panel for its three
+    passphrase items (Set, Check, Show my passphrase).
