@@ -12,7 +12,15 @@
 >   run it. Old menu items stay. Guide: section 3, setup step, What's new; version
 >   2026-11-11. Offline check: menus 13 pass. (Considered first and dropped 11/11: a
 >   Groups panel. Lara builds group names with formulas on the createGroups tab, which a
->   panel would bypass.) **Next:** commit, push Biology, Lara tests, then the others.
+>   panel would bypass.) **Pushed to Biology 11/11 (5d19500); Lara: "basically worked".**
+>   **Round 2 (11/11, Lara):** (1) **Course check** is its own row and **in All** (Lara
+>   chose); the assignment groups step no longer runs it. Refresh all tables runs it last
+>   on the same download (`shared.canvasGroups`, fetched once); on its own in the panel it
+>   downloads the assignments itself (so ticking both fetches twice; fine). Menu Refresh
+>   assignment groups still updates Course Check as before. (2) Each **name is a link**
+>   (`showRefreshTableTab`): unhides and opens the tab; Jupiter selects
+>   cfg_JupiterCategories on ref_Config; missing tab → message in the panel.
+>   **Next:** commit, push Biology, Lara tests, then AI9, Gastronomy, template.
 > - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in
 >   Biology ("looks fine so far"); guide's "Being built" removed; pushed AI9, Gastronomy,
 >   then template (no manifest change). Live Quiz report and export-file report stay off

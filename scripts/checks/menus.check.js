@@ -48,15 +48,54 @@ check('progress callback runs before every step, failures included', progress, [
 
 // Refresh tables panel (RefreshPanel.js): the table list and one-table refresh, with the
 // sheet writers swapped for made-up ones.
+vm.runInContext(fs.readFileSync(path.join(PROJECT, 'Config.js'), 'utf8'), context);
 vm.runInContext(fs.readFileSync(path.join(PROJECT, 'RefreshPanel.js'), 'utf8'), context);
-context.SpreadsheetApp = { getActiveSpreadsheet: () => ({}) };
+context.JUPITER_CATEGORY_RANGE = 'cfg_JupiterCategories';
+const shown = [];
+const fakeSheet = name => ({
+  hidden: true,
+  isSheetHidden() { return this.hidden; },
+  showSheet() { this.hidden = false; shown.push(`show ${name}`); },
+  activate() { shown.push(`open ${name}`); },
+});
+const fakeSheets = { ref_peopleList: fakeSheet('ref_peopleList'), ref_Config: fakeSheet('ref_Config') };
+context.SpreadsheetApp = { getActiveSpreadsheet: () => ({
+  getSheetByName: name => fakeSheets[name] || null,
+  getRangeByName: name => ({ activate: () => shown.push(`select ${name}`) }),
+}) };
 context.writeCourseListSheet_ = () => 4;
 context.writePeopleListSheet_ = () => {
   throw Object.assign(new Error('There is no tab named ref_peopleList.'), { isSheetProblem: true });
 };
 context.writeJupiterCategories_ = () => ({ categories: 6, kept: 3, dropped: 1 });
-check('panel lists every table, Jupiter last', c.getRefreshTables().map(t => t.key),
-  ['courses', 'people', 'assignmentGroups', 'sections', 'sheetIndex', 'jupiter']);
+let downloads = 0;
+context.writeAssignmentGroupsSheet_ = () => {
+  downloads++;
+  return { assignments: 30, groups: 5, canvasGroups: ['made-up groups'] };
+};
+context.writeCourseCheck_ = (ss, groups) => ({ total: groups.length, groups });
+context.courseCheckCountsText_ = result => `${result.total} possible problem(s)`;
+check('panel lists every table, Course check last of All, Jupiter last',
+  c.getRefreshTables().map(t => t.key),
+  ['courses', 'people', 'assignmentGroups', 'sections', 'sheetIndex', 'courseCheck', 'jupiter']);
+check('every table names the tab its link opens',
+  c.getRefreshTables().filter(t => !t.tab).map(t => t.key), []);
+check('panel refresh: Course check on its own downloads the assignments',
+  [c.refreshTableFromPanel('courseCheck'), downloads],
+  [{ ok: true, text: '1 possible problem(s)' }, 1]);
+downloads = 0;
+const shared = {};
+const byKey = Object.fromEntries(c.refreshTableList_().map(t => [t.key, t]));
+byKey.assignmentGroups.run({}, shared);
+byKey.courseCheck.run({}, shared);
+check('Refresh all: Course check reuses the assignment groups download', downloads, 1);
+check('link: hidden tab is unhidden and opened', [c.showRefreshTableTab('people'), shown],
+  ['', ['show ref_peopleList', 'open ref_peopleList']]);
+shown.length = 0;
+check('link: Jupiter opens ref_Config and selects its table', [c.showRefreshTableTab('jupiter'),
+  shown], ['', ['show ref_Config', 'open ref_Config', 'select cfg_JupiterCategories']]);
+check('link: missing tab gives a message', c.showRefreshTableTab('courses'),
+  'There is no ref_CourseIDs tab yet. Update creates it.');
 check('All covers everything except Jupiter categories',
   c.getRefreshTables().filter(t => !t.inAll).map(t => t.key), ['jupiter']);
 check('panel refresh: counts on success', c.refreshTableFromPanel('courses'),

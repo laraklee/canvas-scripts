@@ -4,7 +4,7 @@
   RefreshPanel.js; Lara, 2026-11-11). Lists the reference tables (getRefreshTables) with a
   checkbox each and an "All" box (ticks every table except Jupiter categories). Update
   refreshes the ticked tables one at a time (refreshTableFromPanel), showing ✓ or ✗ and
-  the counts next to each. Messages are shown as plain text (textContent), never as HTML.
+  the counts next to each. Each name is a link that opens its tab (showRefreshTableTab). Messages are shown as plain text (textContent), never as HTML.
   Canvas endpoints: those of the refreshes (all GET). Write operations: none.
   Properties: none here. Shows counts only, never names.
 -->
@@ -16,6 +16,8 @@
     body { font-family: Arial, sans-serif; font-size: 14px; color: #202124; margin: 12px 16px; }
     p { margin: 0 0 12px; line-height: 1.4; }
     label { cursor: pointer; }
+    a { color: #1a73e8; text-decoration: none; }
+    a:hover, a:focus { text-decoration: underline; }
     .table { margin-bottom: 10px; }
     .table .result { display: block; margin: 2px 0 0 24px; font-size: 13px; color: #5f6368;
       white-space: pre-wrap; line-height: 1.35; }
@@ -32,7 +34,7 @@
 </head>
 <body>
   <p>Tick the tables to bring up to date from Canvas, then click <b>Update</b>. This only
-    reads Canvas; nothing in Canvas changes.</p>
+    reads Canvas; nothing in Canvas changes. Click a name to open its tab.</p>
   <div class="table all"><label><input type="checkbox" id="all"> All</label></div>
   <div id="tables">Loading…</div>
   <button id="update" disabled>Update</button>
@@ -56,11 +58,20 @@
       rows = tables.map(table => {
         const div = document.createElement('div');
         div.className = 'table' + (table.inAll ? '' : ' separate');
-        const label = document.createElement('label');
         const box = document.createElement('input');
         box.type = 'checkbox';
-        label.append(box, ' ' + table.label);
-        div.append(label);
+        box.setAttribute('aria-label', 'Refresh ' + table.label);
+        // The name is a link to the table's tab, apart from the checkbox, so clicking it
+        // doesn't tick or untick the box.
+        const link = document.createElement('a');
+        link.href = '#';
+        link.textContent = table.label;
+        link.title = 'Open the ' + table.tab + ' tab';
+        link.addEventListener('click', event => {
+          event.preventDefault();
+          openTab(table.key);
+        });
+        div.append(box, ' ', link);
         if (!table.inAll) {
           const note = document.createElement('span');
           note.className = 'note';
@@ -97,6 +108,13 @@
       rows.forEach(row => { row.box.disabled = value; });
       updateButton.textContent = value ? 'Updating…' : 'Update';
       updateControls();
+    }
+
+    function openTab(key) {
+      google.script.run
+        .withSuccessHandler(message => { if (message) showStatus(message, true); })
+        .withFailureHandler(() => showStatus('That tab could not be opened.', true))
+        .showRefreshTableTab(key);
     }
 
     function refreshOne(key) {

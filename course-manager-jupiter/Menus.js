@@ -16,8 +16,8 @@
  *     panel, RefreshPanel.js), Jupiter categories (manual, on purpose), and setup /
  *     safety checks.
  *   Also here: goToHomePage (jumps to the Home tab) and refreshAllTables (every ref_
- *   table refresh in a row, except Jupiter categories, then one summary; the assignment
- *   groups step also updates the Course Check tab).
+ *   table refresh in a row, except Jupiter categories, then Course check, then one
+ *   summary).
  * Canvas endpoints called: those of the refreshes it runs (all GET; see RefSheets.js).
  * Canvas write operations: none here (the menu items for write tools call their own
  *   files, which go through canvasWrite_).
@@ -147,16 +147,19 @@ function findHomeSheet_(names) {
 
 /**
  * Menu: Setup & Data › Refresh all tables. Runs each reference-table refresh in turn
- * (course list, people list, assignment groups, section list, sheet index); one that
+ * (course list, people list, assignment groups, section list, sheet index), then Course
+ * check on the assignments just downloaded (one step of its own since 2026-11-11); one that
  * fails doesn't stop the others. Jupiter categories are left out on purpose (Lara
  * refreshes them by hand while looking at ref_Config). Reads Canvas only. One summary
  * at the end, counts only.
  */
 function refreshAllTables() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  // The table list is shared with the Refresh tables panel (RefreshPanel.js).
+  // The table list is shared with the Refresh tables panel (RefreshPanel.js). shared
+  // passes the assignment groups download on to Course check (fetched once).
+  const shared = {};
   const steps = refreshTableList_().filter(table => table.inAll)
-    .map(table => [table.label, () => table.run(ss)]);
+    .map(table => [table.label, () => table.run(ss, shared)]);
   const lines = runRefreshSteps_(steps, (label, i) => ss.toast(
     `Refreshing ${label.toLowerCase()}… (${i + 1} of ${steps.length})`, 'Refresh all tables', -1));
   const failed = lines.filter(line => line.startsWith('✗')).length;
