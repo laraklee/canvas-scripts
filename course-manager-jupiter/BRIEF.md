@@ -61,6 +61,13 @@
 >   and the Open ref_Config link. The Check course button and the separate "works in"
 >   line are gone: Canvas's name for the course is fetched by itself when the panel
 >   opens (once credentials are saved) and after each save, and shown under the box.
+>   Committed d00d151. Round 5 (Lara, before pushing): part 1 shows **"Token: saved
+>   11/11/2026 · ends in …x7Qa"** so a teacher can tell which Canvas token is saved. Last
+>   4, not first (the part before `~` is the school's Canvas, the same for everyone); only
+>   for tokens of 20+ characters; each teacher sees only their own (User Properties).
+>   New User Property `CANVAS_TOKEN_SAVED` (ISO time, written by both save paths via
+>   `saveToken_`); tokens saved before 11/11 show the hint with no date until re-saved.
+>   "Never shown" comments now say "except its last 4 characters, to its owner".
 >   **Next:** commit, push Biology, Lara tests, then the others; then decide whether to
 >   trim Setup & safety.
 > - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in

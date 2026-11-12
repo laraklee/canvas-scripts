@@ -8,8 +8,8 @@
   run is OFF; Canvas's name for the course is fetched by itself whenever the number
   shown changes; an "Open ref_Config" link), dry run (with an "are you sure" step before turning it off), and the
   setup check. The token box
-  is a password field, cleared as soon as Save is clicked; the token is never sent back
-  here. The address box shows the saved address, or the school's address from ref_Config
+  is a password field, cleared as soon as Save is clicked; the whole token is never sent
+  back here (part 1 shows only its last 4 characters and the date it was saved). The address box shows the saved address, or the school's address from ref_Config
   B2 if none is saved yet (status.defaultBaseUrl). Messages are shown as plain text (textContent), never as HTML.
   Canvas endpoints: GET /users/self and /courses/:course (through SetupPanel.js).
   Write operations: none in Canvas. Saves User Properties CANVAS_BASE_URL and
@@ -130,7 +130,9 @@
       if (!addressTyped) $('baseUrl').value = status.baseUrl || status.defaultBaseUrl || '';
       $('baseUrlNote').textContent = !status.baseUrl && status.defaultBaseUrl ?
         'Filled in from ref_Config B2 (the school\'s address). Save to use it.' : '';
-      setLine($('tokenLine'), status.hasToken ? '✓ Token: saved' :
+      setLine($('tokenLine'), status.hasToken ? '✓ Token: saved' +
+        (status.tokenSavedOn ? ' ' + status.tokenSavedOn : '') +
+        (status.tokenHint ? ' · ends in …' + status.tokenHint : '') :
         '⚠ Token: not saved yet (part 2).', status.hasToken ? 'ok' : 'warn');
       $('testButton').disabled = !(status.baseUrl && status.hasToken);
 

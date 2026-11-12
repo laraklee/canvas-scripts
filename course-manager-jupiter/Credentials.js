@@ -2,16 +2,22 @@
  * Credentials.js
  * Purpose: the "Set Canvas token" menu item. Prompts for the Canvas web address and
  *   access token and saves them in this user's User Properties, where other editors of
- *   the script cannot read them. The token is never shown, logged, or put in a message.
- *   saveCanvasCredentialsFromPanel does the same for the Setup panel's Save button
- *   (SetupPanel.js, 2026-11-11).
+ *   the script cannot read them. The token is never logged or put in a message, and
+ *   never shown except its last 4 characters, to its owner only, in the Setup panel
+ *   (tokenHint_; Lara, 2026-11-11), with the date it was saved.
+ *   saveCanvasCredentialsFromPanel does the same as the prompts for the Setup panel's
+ *   Save button (SetupPanel.js, 2026-11-11).
  * Canvas endpoints called: none.
  * Canvas write operations: none.
- * Required User/Script Properties: writes User Properties CANVAS_BASE_URL and CANVAS_TOKEN.
+ * Required User/Script Properties: writes User Properties CANVAS_BASE_URL, CANVAS_TOKEN,
+ *   and CANVAS_TOKEN_SAVED (when the token was saved).
  */
 
 const PROP_TOKEN = 'CANVAS_TOKEN';
 const PROP_BASE_URL = 'CANVAS_BASE_URL';
+// When the token was last saved (ISO date and time), so the Setup panel can show it
+// next to the token's last 4 characters (Lara, 2026-11-11). Not secret.
+const PROP_TOKEN_SAVED = 'CANVAS_TOKEN_SAVED';
 
 /**
  * Menu: Course Manager › Set Canvas token.
@@ -52,7 +58,7 @@ function setCanvasCredentials() {
     }
 
     props.setProperty(PROP_BASE_URL, baseUrl);
-    if (token) props.setProperty(PROP_TOKEN, token);
+    if (token) saveToken_(props, token);
     ui.alert('Canvas setup',
       'Saved for your Google account only.\n\nCanvas address: ' + baseUrl +
       '\nToken: ' + (token ? 'saved' : 'unchanged'),
@@ -85,7 +91,7 @@ function saveCanvasCredentialsFromPanel(form) {
         'saved. Copy it again and retry.' };
     }
     props.setProperty(PROP_BASE_URL, baseUrl);
-    if (token) props.setProperty(PROP_TOKEN, token);
+    if (token) saveToken_(props, token);
     console.log('Canvas setup (panel): address saved' + (token ? ', token saved.' : '.'));
     return { ok: true, message: 'Saved for your Google account only. Token: ' +
       (token ? 'saved.' : 'unchanged.') };
@@ -94,6 +100,26 @@ function saveCanvasCredentialsFromPanel(form) {
     console.error('Canvas setup (panel) failed.');
     return { ok: false, message: 'Not saved. ' + error.message };
   }
+}
+
+/** Saves the token and when it was saved. */
+function saveToken_(props, token) {
+  props.setProperty(PROP_TOKEN, token);
+  props.setProperty(PROP_TOKEN_SAVED, new Date().toISOString());
+}
+
+/**
+ * What the Setup panel may show about this user's saved token: { hint, savedAt }.
+ * hint is the last 4 characters ('' if none is saved, or if the token is too short for 4
+ * characters to be a small part of it); savedAt the ISO time it was saved ('' if saved
+ * before 2026-11-11, when this started being recorded). Never the token itself.
+ */
+function tokenHint_(props) {
+  const token = props.getProperty(PROP_TOKEN) || '';
+  return {
+    hint: token.length >= 20 ? token.slice(-4) : '',
+    savedAt: token ? props.getProperty(PROP_TOKEN_SAVED) || '' : '',
+  };
 }
 
 /**

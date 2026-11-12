@@ -61,18 +61,36 @@ answer = c.saveCanvasCredentialsFromPanel({ baseUrl: 'x.example.edu', token: 'tw
 check('token with a space: nothing saved', [answer.ok, user.data], [false, {}]);
 answer = c.saveCanvasCredentialsFromPanel({ baseUrl: 'https://canvas.example.edu/courses/1',
   token: ` ${FAKE_TOKEN} ` });
+const savedAt = user.data.CANVAS_TOKEN_SAVED;
+delete user.data.CANVAS_TOKEN_SAVED;
 check('good save: address trimmed to the site, token stored trimmed', [answer.ok, user.data],
   [true, { CANVAS_BASE_URL: 'https://canvas.example.edu', CANVAS_TOKEN: FAKE_TOKEN }]);
+check('good save: records when the token was saved',
+  /^\d{4}-\d\d-\d\dT/.test(savedAt || ''), true);
+user.data.CANVAS_TOKEN_SAVED = '2026-11-11T20:00:00.000Z';
 check('save message never contains the token', answer.message.includes(FAKE_TOKEN), false);
 answer = c.saveCanvasCredentialsFromPanel({ baseUrl: '', token: '' });
 check('both boxes blank: keeps what is saved', [answer.ok, user.data.CANVAS_TOKEN,
   answer.message.includes('unchanged')], [true, FAKE_TOKEN, true]);
 
 // Status sent to the panel.
+c.Utilities = { formatDate: (date, zone, pattern) =>
+  `${date.getUTCMonth() + 1}/${date.getUTCDate()}/${date.getUTCFullYear()} (${zone}, ${pattern})` };
+c.SpreadsheetApp = { getActiveSpreadsheet: () => ({ getSpreadsheetTimeZone: () => 'UTC',
+  getSheetByName: () => null }) };
 const status = c.getSetupStatus();
-check('status says a token is saved, never the token itself',
+check('status never includes the whole token',
   [status.hasToken, JSON.stringify(status).includes(FAKE_TOKEN), 'token' in status],
   [true, false, false]);
+check('status: last 4 characters and the date it was saved',
+  [status.tokenHint, status.tokenSavedOn], [FAKE_TOKEN.slice(-4), '11/11/2026 (UTC, M/d/yyyy)']);
+const longToken = user.data.CANVAS_TOKEN;
+user.data.CANVAS_TOKEN = 'short~token';
+check('a token under 20 characters gets no hint', c.getSetupStatus().tokenHint, '');
+user.data.CANVAS_TOKEN = longToken;
+delete user.data.CANVAS_TOKEN_SAVED;
+check('a token saved before dates were kept: hint, no date',
+  [c.getSetupStatus().tokenHint.length, c.getSetupStatus().tokenSavedOn], [4, '']);
 check('status: address, course, dry run (unset = ON), setup problems',
   [status.baseUrl, status.courseId, status.courseName, status.dryRun, status.setupProblems.count],
   ['https://canvas.example.edu', '12345', 'Biology (P3)', true, 1]);

@@ -12,12 +12,15 @@
  *   - getSetupStatus, testSetupConnection, checkSetupCourse, saveSetupCourseId,
  *     openSetupConfig, setDryRunFromPanel: called by the panel (google.script.run). They
  *     return plain objects or text and never throw (openSetupConfig aside).
- *   The token is never sent to the panel: status says only whether one is saved.
+ *   The whole token is never sent to the panel: status says whether one is saved, its
+ *   last 4 characters, and when it was saved (Lara, 2026-11-11), so a teacher can tell
+ *   which of their Canvas tokens it is. Each teacher only ever sees their own.
  * Canvas endpoints called (GET, via canvasGet_): /api/v1/users/self (Test connection),
  *   /api/v1/courses/:course (the course's name, when the panel opens and after a save).
  * Canvas write operations: none.
  * Required User/Script Properties: reads User Properties CANVAS_BASE_URL and
- *   CANVAS_TOKEN (whether saved; never shown); reads and writes Script Property DRY_RUN.
+ *   CANVAS_TOKEN (whether saved, and its last 4 characters) and CANVAS_TOKEN_SAVED;
+ *   reads and writes Script Property DRY_RUN.
  *   Named ranges cfg_CourseID (read, and written by Save course) and cfg_CourseName
  *   (shown if filled in); ref_Config B2 (the school's Canvas address, read only, to
  *   fill in the address box).
@@ -37,9 +40,10 @@ function showSetupPanel() {
 
 /**
  * Called by the panel when it opens and after each change: { baseUrl, defaultBaseUrl
- * (ref_Config B2, or ''), hasToken, dryRun,
- * courseId, courseName, courseProblem, setupProblems: { missingSheets, missingRanges,
- * count } or null, setupError }. Never includes the token.
+ * (ref_Config B2, or ''), hasToken, tokenHint (its last 4 characters, or ''),
+ * tokenSavedOn ('11/11/2026', or '' if unknown), dryRun, courseId, courseName,
+ * courseProblem, setupProblems: { missingSheets, missingRanges, count } or null,
+ * setupError }. Never includes the whole token.
  */
 function getSetupStatus() {
   const props = PropertiesService.getUserProperties();
@@ -54,6 +58,17 @@ function getSetupStatus() {
     setupError: '',
   };
   status.defaultBaseUrl = readDefaultBaseUrl_();
+  const token = tokenHint_(props);
+  status.tokenHint = token.hint;
+  status.tokenSavedOn = '';
+  if (token.savedAt) {
+    try {
+      status.tokenSavedOn = Utilities.formatDate(new Date(token.savedAt),
+        SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'M/d/yyyy');
+    } catch {
+      // Unreadable date: the panel shows the hint alone.
+    }
+  }
   try {
     status.dryRun = isDryRun_();
   } catch (error) {
