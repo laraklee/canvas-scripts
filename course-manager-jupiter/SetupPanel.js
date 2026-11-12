@@ -18,10 +18,15 @@
  * Required User/Script Properties: reads User Properties CANVAS_BASE_URL and
  *   CANVAS_TOKEN (whether saved; never shown); reads and writes Script Property DRY_RUN.
  *   Named ranges cfg_CourseID (read, and written by Save course) and cfg_CourseName
- *   (shown if filled in).
+ *   (shown if filled in); ref_Config B2 (the school's Canvas address, read only, to
+ *   fill in the address box).
  */
 
 const SETUP_PANEL_TITLE = 'Setup';
+// ref_Config B2: the school's Canvas address (its legacy spot; Lara, 2026-11-11). Only
+// fills in the panel's address box; tools always use the teacher's saved CANVAS_BASE_URL.
+// Kept in the sheet so the school's address never goes into this public code.
+const SETUP_DEFAULT_URL_CELL = 'B2';
 
 /** Menu: Setup & Data › Setup…. Opens the panel on the right. */
 function showSetupPanel() {
@@ -30,7 +35,8 @@ function showSetupPanel() {
 }
 
 /**
- * Called by the panel when it opens and after each change: { baseUrl, hasToken, dryRun,
+ * Called by the panel when it opens and after each change: { baseUrl, defaultBaseUrl
+ * (ref_Config B2, or ''), hasToken, dryRun,
  * courseId, courseName, courseProblem, setupProblems: { missingSheets, missingRanges,
  * count } or null, setupError }. Never includes the token.
  */
@@ -46,6 +52,7 @@ function getSetupStatus() {
     setupProblems: null,
     setupError: '',
   };
+  status.defaultBaseUrl = readDefaultBaseUrl_();
   try {
     status.dryRun = isDryRun_();
   } catch (error) {
@@ -70,6 +77,20 @@ function getSetupStatus() {
     status.setupError = 'The setup check could not run.';
   }
   return status;
+}
+
+/**
+ * The Canvas address in ref_Config B2, as "https://host", or '' if the tab or cell is
+ * missing, blank, or not a web address.
+ */
+function readDefaultBaseUrl_() {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.CONFIG);
+    const text = sheet ? String(sheet.getRange(SETUP_DEFAULT_URL_CELL).getValue()).trim() : '';
+    return text ? normalizeBaseUrl_(text) : '';
+  } catch {
+    return '';
+  }
 }
 
 /** Called by the panel: Test connection. { ok, message } (Canvas error type only). */

@@ -8,7 +8,8 @@
   dry run is OFF), dry run (with an "are you sure" step before turning it off), and the
   setup check. The token box
   is a password field, cleared as soon as Save is clicked; the token is never sent back
-  here. Messages are shown as plain text (textContent), never as HTML.
+  here. The address box shows the saved address, or the school's address from ref_Config
+  B2 if none is saved yet (status.defaultBaseUrl). Messages are shown as plain text (textContent), never as HTML.
   Canvas endpoints: GET /users/self and /courses/:course (through SetupPanel.js).
   Write operations: none in Canvas. Saves User Properties CANVAS_BASE_URL and
   CANVAS_TOKEN (Save), the cfg_CourseID cell (Save course), and Script Property DRY_RUN
@@ -50,10 +51,11 @@
 
   <h2>2. Set or change your token</h2>
   <p class="muted">Saved for <b>your</b> Google account only; other editors can't see it.
-    Leave a box blank to keep what's saved. Make a token in Canvas: <b>Account › Settings
-    › Approved Integrations › + New Access Token</b>.</p>
+    Leave the token box blank to keep the token you saved before. Make a token in Canvas:
+    <b>Account › Settings › Approved Integrations › + New Access Token</b>.</p>
   <label for="baseUrl">Canvas address (the start of the address bar in Canvas)</label>
   <input type="text" id="baseUrl" autocomplete="off" spellcheck="false">
+  <div class="muted" id="baseUrlNote"></div>
   <label for="token">Canvas token</label>
   <input type="password" id="token" autocomplete="off" spellcheck="false">
   <button id="saveButton">Save</button>
@@ -107,10 +109,23 @@
       if (arg === undefined) runner[name](); else runner[name](arg);
     }
 
+    // The address box shows the saved address, or ref_Config B2's, unless the teacher
+    // has started typing in it.
+    let addressTyped = false;
+    $('baseUrl').addEventListener('input', () => { addressTyped = true; });
+
     function show(next) {
       status = next;
-      setLine($('addressLine'), status.baseUrl ? '✓ Canvas address: ' + status.baseUrl :
-        '⚠ Canvas address: not saved yet (part 2).', status.baseUrl ? 'ok' : 'warn');
+      if (status.baseUrl) {
+        setLine($('addressLine'), '✓ Canvas address: ' + status.baseUrl, 'ok');
+      } else {
+        setLine($('addressLine'), '⚠ Canvas address: not saved yet. ' + (status.defaultBaseUrl ?
+          'Part 2 has ' + status.defaultBaseUrl + ' filled in: click Save there.' :
+          'Enter it in part 2.'), 'warn');
+      }
+      if (!addressTyped) $('baseUrl').value = status.baseUrl || status.defaultBaseUrl || '';
+      $('baseUrlNote').textContent = !status.baseUrl && status.defaultBaseUrl ?
+        'Filled in from ref_Config B2 (the school\'s address). Save to use it.' : '';
       setLine($('tokenLine'), status.hasToken ? '✓ Token: saved' :
         '⚠ Token: not saved yet (part 2).', status.hasToken ? 'ok' : 'warn');
       $('testButton').disabled = !(status.baseUrl && status.hasToken);
@@ -191,7 +206,7 @@
         setLine($('saveResult'), (answer.ok ? '✓ ' : '⚠ ') + answer.message,
           answer.ok ? 'ok' : 'warn');
         if (!answer.ok) return;
-        $('baseUrl').value = '';
+        addressTyped = false; // show the saved address again
         call('getSetupStatus', undefined, next => {
           show(next);
           if (next.baseUrl && next.hasToken) test();

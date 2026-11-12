@@ -167,6 +167,9 @@ workbook, they may still hold their information: replace every one with yours.</
 
 <table>
   <tr><th>Named cell</th><th>What goes there</th></tr>
+  <tr><td><b>B2</b> (no name)</td><td>The school's Canvas address. It fills in the address
+    box in the <b>Setup…</b> panel; each teacher still saves their own copy
+    there.</td></tr>
   <tr><td><code>cfg_CourseID</code></td><td>The Canvas course number: the digits after
     <code>/courses/</code> in the course's web address. <b>Every tool works on this
     course.</b></td></tr>
@@ -191,8 +194,8 @@ workbook, they may still hold their information: replace every one with yours.</
     below). Review and allow.</li>
   <li>Open <span class="menu">Setup &amp; Data › Setup…</span>. A panel opens on the right
     and shows what's ready (✓) and what still needs doing (⚠).</li>
-  <li>In part <b>2</b>, enter the school's Canvas address and paste your own Canvas token,
-    then click <b>Save</b>. Both are saved for <b>you only</b>; other editors can't see
+  <li>In part <b>2</b>, check the Canvas address (it's filled in from ref_Config B2) and
+    paste your own Canvas token, then click <b>Save</b>. Both are saved for <b>you only</b>; other editors can't see
     them. (Make a token in Canvas: <b>Account › Settings › Approved Integrations › + New
     Access Token</b>. Canvas shows it only once.) The panel then tests the connection: it
     should say <b>Connected</b>.</li>
@@ -207,8 +210,9 @@ workbook, they may still hold their information: replace every one with yours.</
 </ol>
 
 <p>The <b>Setup panel</b> parts: <b>1</b> whether your Canvas address and token are saved
-(never the token itself) and <b>Test connection</b>; <b>2</b> set or change them (a blank
-box keeps what's saved); <b>3</b> which course, with a link to ref_Config and a box to
+(never the token itself) and <b>Test connection</b>; <b>2</b> set or change them (the
+address box shows your saved address, or B2's if you haven't saved one; a blank token
+box keeps your saved token); <b>3</b> which course, with a link to ref_Config and a box to
 change the course number (if dry run is OFF, it asks first, since tools would then send
 changes to the new course; afterward, refresh the tables); <b>4</b> dry run, ON or OFF, with a button
 to switch it (turning it off asks first); <b>5</b> the setup check (missing tabs or named

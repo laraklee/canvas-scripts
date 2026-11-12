@@ -130,6 +130,20 @@ check('open ref_Config: unhides, opens, selects the course cell', [c.openSetupCo
 c.getCfg_ = name => { if (name === 'CourseName') return '#N/A'; throw new Error('x'); };
 check('course name #N/A (not in the course list) is hidden', c.getSetupStatus().courseName, '');
 
+// Default Canvas address from ref_Config B2 (read only).
+let b2 = 'https://school.example.edu/';
+c.SpreadsheetApp.getActiveSpreadsheet = () => ({
+  getSheetByName: name => name === 'ref_Config' ? { getRange: a1 => ({
+    getValue: () => (a1 === 'B2' ? b2 : '') }) } : null,
+  getRangeByName: () => null,
+});
+check('B2 address is tidied and offered as the default', c.getSetupStatus().defaultBaseUrl,
+  'https://school.example.edu');
+b2 = 'not an address';
+check('B2 that is not an address is ignored', c.getSetupStatus().defaultBaseUrl, '');
+b2 = '';
+check('blank B2: no default', c.getSetupStatus().defaultBaseUrl, '');
+
 // Dry run switch.
 check('turn dry run off', [c.setDryRunFromPanel(false).dryRun, script.data.DRY_RUN], [false, 'false']);
 check('turn dry run on', [c.setDryRunFromPanel(true).dryRun, script.data.DRY_RUN], [true, 'true']);

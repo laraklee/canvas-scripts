@@ -48,6 +48,14 @@
 >   message gives the old number; asks first in the panel when dry run is OFF; then
 >   auto-runs Check course). cfg_CourseName (C4 formula over ref_CourseIDs) follows by
 >   itself; a `#N/A` name is hidden. Sheet write only, no Canvas write.
+>   **Pushed to Biology 11/11 8:47 PM (7bfbc63).** Round 3 (Lara): default Canvas
+>   address. Not hardcoded (code standards, check-standards.js, public repo): Lara chose
+>   **ref_Config B2**, the legacy base-URL cell (still there, unused). Read only
+>   (`readDefaultBaseUrl_`, normalized; bad or blank → ignored); fills the address box
+>   when nothing is saved (part 1 says so); tools still use the teacher's saved
+>   `CANVAS_BASE_URL`. Address box now shows the saved address (not blank) and keeps it
+>   after Save. Guide: B2 row in the ref_Config table. **Check B2 holds the address in
+>   each workbook and the template.**
 >   **Next:** commit, push Biology, Lara tests, then the others; then decide whether to
 >   trim Setup & safety.
 > - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in
