@@ -114,7 +114,7 @@
 
 <h1>AI Grading Helper — User Guide</h1>
 
-<p class="version">Version 2026-11-10. See <b>9. What's new and getting updates</b>.</p>
+<p class="version">Version 2026-11-12. See <b>9. What's new and getting updates</b>.</p>
 
 <div class="note"><b>Work in progress.</b> Written for teachers in our AI grading group.
 If a step doesn't match what you see, note where and what you saw.</div>
@@ -178,24 +178,32 @@ students.</p>
 sheet can't see it.</p>
 
 <ol>
-  <li><span class="menu">Anonymize › Set passphrase</span>. Type at least 12 characters
-    and click OK. The workbook remembers it for you from then on.</li>
+  <li><span class="menu">Anonymize › ⚙️ Setup…</span>. The <b>Setup</b> panel opens on the
+    right.</li>
+  <li>In part <b>2. Set or change it</b>, type a passphrase of at least 12 characters in
+    both boxes and click <b>Save</b>. The workbook remembers it for you from then on.</li>
+  <li>Part <b>1. Your passphrase</b> now shows <b>✓ Passphrase: saved</b> and a 4-character
+    <b>check code</b>, for example <b>7C1E</b>.</li>
   <li>Use the <b>same passphrase in each of your course workbooks</b>. The same passphrase
     always gives the same codes.</li>
 </ol>
 
-<p><b>You don't need to write it down.</b> When you set up another workbook, open one where
-you've already set it, choose <span class="menu">Anonymize › Show my passphrase</span>,
-copy it, and paste it into <b>Set passphrase</b> in the new one. It shows only
-<b>your own</b> passphrase; anyone else who clicks it sees theirs, or none. Check that no
-one can see your screen first.</p>
+<p><b>The check code</b> is made from your passphrase but doesn't reveal it. Every workbook
+where you saved the same passphrase shows the same check code, so you can tell at a
+glance that they match. If two of your workbooks show different check codes, the same
+student would get different codes in them.</p>
 
-<p><span class="menu">Anonymize › Check passphrase</span> just says whether one is saved,
-without showing it.</p>
+<p><b>You don't need to write it down.</b> When you set up another workbook, open
+<b>⚙️ Setup…</b> in one where you've already set it and use part <b>3. Show my
+passphrase</b>. It asks you to check that no one can see your screen, then shows it with
+a <b>Copy</b> button. Paste it into part 2 of the new workbook's Setup panel, then click
+<b>Hide</b>. It shows only <b>your own</b> passphrase; anyone else sees theirs, or
+none.</p>
 
 <p><b>Changing it</b> is fine between assignments: finished ones keep their codes in their
-Key tabs. Don't change it in the middle of an assignment, or a student's later files get a
-second code. If you ever lose it completely, set a new one the same way.</p>
+Key tabs. The panel asks first, because every student gets a new code. Don't change it in
+the middle of an assignment, or a student's later files get a second code. If you ever
+lose it completely, set a new one the same way.</p>
 
 <h3>Google's permission screen</h3>
 
@@ -438,8 +446,8 @@ class="menu">Anonymize › Archive selected row…</span>.</p>
     quiz.</td></tr>
   <tr><td>A row says <b>Archived</b></td><td>That assignment is finished. To start it
     over, delete its <b>anonymized</b> folder and clear the Anonymized cell.</td></tr>
-  <tr><td><b>No passphrase is saved yet</b></td><td>Run <b>Anonymize › Set
-    passphrase</b> (section 1).</td></tr>
+  <tr><td><b>No passphrase is saved yet</b></td><td>Open <b>Anonymize › ⚙️ Setup…</b> and
+    set it (section 1).</td></tr>
   <tr><td>No <b>Anonymize</b> menu</td><td>Reload the page; wait a few seconds.</td></tr>
   <tr><td>Anything else</td><td><b>Extensions › Apps Script › Executions</b> shows the
     logs (counts and IDs only, safe to share). Note what you clicked and the exact
@@ -459,6 +467,9 @@ a newer one, open the template and look at the version in its guide.</p>
 <h3>What's new</h3>
 
 <ul>
+  <li><b>2026-11-12:</b> New <b>⚙️ Setup…</b> panel replaces Set passphrase, Check
+    passphrase, and Show my passphrase. It also shows a <b>check code</b>, so you can see
+    that your workbooks use the same passphrase without showing it.</li>
   <li><b>2026-11-10:</b> Version label and this section added to the guide.</li>
   <li><b>2026-11-08:</b> This guide is in the workbook and opens in a panel on the right.
     New <b>Show my passphrase</b>, so you don't have to write it down. Classic quiz
@@ -474,9 +485,10 @@ new assignments in the new copy.</p>
 <ol>
   <li>Open the clean template (the same link you used for your first copy) and make a
     copy.</li>
-  <li>In your old workbook, <b>Show my passphrase</b>; in the new copy, <b>Set
-    passphrase</b> and paste it. The same passphrase keeps your codes the same. Check that
-    no one can see your screen.</li>
+  <li>In your old workbook, open <b>⚙️ Setup…</b> and use <b>Show my passphrase</b>; in
+    the new copy, open <b>⚙️ Setup…</b> and paste it into part 2. Both should then show
+    the same check code. The same passphrase keeps your codes the same. Check that no one
+    can see your screen.</li>
   <li>In the new copy, run <b>Refresh folder list</b> and paste the link to the same
     course folder.</li>
   <li>On the new Index tab, type the Quiz/Assignment ID for each new row. Rows for

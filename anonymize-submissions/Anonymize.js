@@ -47,7 +47,7 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
   try {
     const passphrase = getPassphrase_();
     if (!passphrase) {
-      ui.alert('No passphrase is saved yet. Use Anonymize › Set passphrase first.');
+      ui.alert('No passphrase is saved yet. Open Anonymize › ⚙️ Setup… and set it first.');
       return null;
     }
 

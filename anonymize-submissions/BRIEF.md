@@ -25,6 +25,20 @@ own saved passphrase (User Properties) after a "no one watching" warning, so a t
 can copy it into Set passphrase in a new workbook instead of keeping a record. Never
 logged; other users see only their own. This replaces the earlier "never shown" rule.
 
+**Setup panel (11/12; built on the Mac, not pushed yet):** **Anonymize › ⚙️ Setup…**
+(`showSetupPanel` in Passphrase.js, `SetupPanelPage.html`) replaces the Set / Check /
+Show my passphrase menu items (their functions are gone). Lara's choices 11/12: (1) status
+shows saved / not saved and a **check code**, the first 4 hex characters of
+HMAC-SHA256(`passphrase-check`, passphrase) (no ":", so never a student-code input), the
+same in every workbook with the same passphrase, so matching workbooks can be seen without
+showing it; (2) set or change it: typed twice, at least 12 characters, boxes cleared on
+Save; replacing a saved one needs the panel's "codes will change" step (server refuses
+without `replace: true`); (3) Show my passphrase: "no one watching" step, then shown in the
+panel with Copy and Hide, hidden again when the panel reopens. Offline check:
+`scripts/checks/anonymize-setup-panel.check.js`. Guide: section 1 "Your passphrase",
+section 8 row, section 9 steps and What's new; version **2026-11-12**. Next: commit, push
+to **Biology** (`.clasp-biology.json`), Lara tests, then AI9, Gastronomy, template.
+
 **Template (clean copy for new courses):** spreadsheet
 `1blak2cQg4LiU4FETz2ITnsnLlg0zCSJc8tps9y4p9ww`, script
 `13cU3kzCNWurdIeBdA2kJAaMKttnYmG9wJG4aT8XKyYIHmNcwrT1zQT2i`, push file

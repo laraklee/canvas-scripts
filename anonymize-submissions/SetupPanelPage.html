@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<!--
+  SetupPanelPage.html: the "Setup" side panel (opened by showSetupPanel in Passphrase.js;
+  Lara, 2026-11-12). Three parts: your passphrase (saved or not, and its 4-character
+  check code: the same in every workbook that uses the same passphrase), set or change
+  it (typed twice; replacing a saved one asks first, because every code changes), and
+  Show my passphrase (a "no one watching" step first, then shown here with Copy and
+  Hide; hidden again whenever the panel reopens). The boxes are password fields,
+  cleared as soon as Save is clicked. Messages are shown as plain text (textContent).
+  No student data and no Canvas calls. Writes User Property ANON_PASSPHRASE (Save).
+-->
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 14px; color: #202124; margin: 12px 16px; }
+    h2 { font-size: 15px; margin: 18px 0 6px; padding-top: 12px; border-top: 1px solid #dadce0; }
+    h2:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+    p { margin: 0 0 8px; line-height: 1.4; }
+    .line { margin: 0 0 6px; line-height: 1.4; white-space: pre-wrap; }
+    .ok { color: #137333; }
+    .warn { color: #b3261e; }
+    .muted { color: #5f6368; font-size: 13px; }
+    .code { font-family: monospace; font-size: 15px; font-weight: bold; letter-spacing: 1px; }
+    button { font-size: 14px; padding: 6px 14px; margin: 2px 6px 6px 0; }
+    label { display: block; margin: 6px 0 2px; font-size: 13px; }
+    input[type=text], input[type=password] { width: 100%; box-sizing: border-box;
+      font-size: 14px; padding: 5px 6px; }
+    .confirm { border: 1px solid #f0b37e; background: #fff8f1; padding: 8px 10px;
+      border-radius: 4px; margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <h2>1. Your passphrase</h2>
+  <div class="line" id="statusLine">Loading…</div>
+  <p class="muted" id="checkNote" hidden>Every workbook where you saved the same passphrase
+    shows the same check code. If two of your workbooks show different codes, the same
+    student gets different codes in them.</p>
+
+  <h2>2. Set or change it</h2>
+  <p class="muted">Saved for <b>your</b> Google account only; other editors can't see it.
+    Use the same passphrase in each of your workbooks. Never write it on the sheet.</p>
+  <label for="pass1">Passphrase (at least <span id="minLength">12</span> characters)</label>
+  <input type="password" id="pass1" autocomplete="off" spellcheck="false">
+  <label for="pass2">Type it again</label>
+  <input type="password" id="pass2" autocomplete="off" spellcheck="false">
+  <button id="saveButton">Save</button>
+  <div id="replaceConfirm" class="confirm" hidden>
+    <p><b>Replace your passphrase?</b> Every student gets a NEW code, so codes from earlier
+      runs (Key tabs, files you already shared) will no longer match new ones.</p>
+    <button id="replaceYes">Yes, replace it</button>
+    <button id="replaceNo">Cancel</button>
+  </div>
+  <div class="line" id="saveResult" role="status" aria-live="polite"></div>
+
+  <h2>3. Show my passphrase</h2>
+  <p class="muted">To copy it into another of your workbooks. Each person only ever sees
+    their own.</p>
+  <button id="showButton">Show my passphrase…</button>
+  <div id="showConfirm" class="confirm" hidden>
+    <p><b>Make sure no one else can see your screen.</b> Don't paste it anywhere except
+      the Setup panel of another of your workbooks.</p>
+    <button id="showYes">Show it</button>
+    <button id="showNo">Cancel</button>
+  </div>
+  <div id="revealBox" hidden>
+    <input type="text" id="revealed" readonly spellcheck="false">
+    <button id="copyButton">Copy</button>
+    <button id="hideButton">Hide</button>
+  </div>
+  <div class="line" id="showResult" role="status" aria-live="polite"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let pending = null; // what Save was about to send, kept only while the replace step is open
+
+    function setLine(el, text, kind) {
+      el.textContent = text;
+      el.className = 'line' + (kind ? ' ' + kind : '');
+    }
+
+    function call(name, arg, onDone) {
+      const runner = google.script.run
+        .withSuccessHandler(onDone)
+        .withFailureHandler(() => onDone({ ok: false,
+          message: 'Could not run (see Extensions › Apps Script › Executions).' }));
+      if (arg === undefined) runner[name](); else runner[name](arg);
+    }
+
+    function show(status) {
+      if (!status || status.ok === false) {
+        setLine($('statusLine'), '⚠ ' + ((status && status.message) || 'Could not read your setup.'), 'warn');
+        return;
+      }
+      $('minLength').textContent = status.minLength;
+      if (status.hasPassphrase) {
+        $('statusLine').textContent = '';
+        $('statusLine').className = 'line ok';
+        $('statusLine').append('✓ Passphrase: saved · check code ');
+        const code = document.createElement('span');
+        code.className = 'code';
+        code.textContent = status.checkCode;
+        $('statusLine').append(code);
+      } else {
+        setLine($('statusLine'), '⚠ Passphrase: not saved yet. Set it in part 2 before you ' +
+          'anonymize anything.', 'warn');
+      }
+      $('checkNote').hidden = !status.hasPassphrase;
+      $('showButton').disabled = !status.hasPassphrase;
+    }
+
+    function hideReveal() {
+      $('revealed').value = '';
+      $('revealBox').hidden = true;
+      $('showButton').hidden = false;
+    }
+
+    function save(replace) {
+      const form = Object.assign({}, pending, { replace });
+      $('replaceConfirm').hidden = true;
+      $('saveButton').hidden = false;
+      $('saveButton').disabled = true;
+      setLine($('saveResult'), 'Saving…');
+      call('savePassphraseFromPanel', form, answer => {
+        $('saveButton').disabled = false;
+        if (answer && answer.needsReplace) {
+          $('saveButton').hidden = true;
+          $('replaceConfirm').hidden = false; // pending is kept for Yes
+          setLine($('saveResult'), '');
+          return;
+        }
+        pending = null;
+        setLine($('saveResult'), (answer.ok ? '✓ ' : '⚠ ') + answer.message,
+          answer.ok ? 'ok' : 'warn');
+        if (answer.ok && answer.status) {
+          hideReveal();
+          show(answer.status);
+        }
+      });
+    }
+
+    $('saveButton').addEventListener('click', () => {
+      pending = { passphrase: $('pass1').value, again: $('pass2').value };
+      $('pass1').value = ''; // cleared at once, whatever happens next
+      $('pass2').value = '';
+      save(false);
+    });
+    $('replaceYes').addEventListener('click', () => save(true));
+    $('replaceNo').addEventListener('click', () => {
+      pending = null;
+      $('replaceConfirm').hidden = true;
+      $('saveButton').hidden = false;
+      setLine($('saveResult'), 'Nothing changed.');
+    });
+
+    $('showButton').addEventListener('click', () => {
+      $('showButton').hidden = true;
+      $('showConfirm').hidden = false;
+      setLine($('showResult'), '');
+    });
+    $('showNo').addEventListener('click', () => {
+      $('showConfirm').hidden = true;
+      $('showButton').hidden = false;
+    });
+    $('showYes').addEventListener('click', () => {
+      $('showConfirm').hidden = true;
+      call('revealPassphraseForPanel', undefined, answer => {
+        if (!answer.ok) {
+          $('showButton').hidden = false;
+          setLine($('showResult'), '⚠ ' + answer.message, 'warn');
+          return;
+        }
+        $('revealed').value = answer.passphrase;
+        $('revealBox').hidden = false;
+      });
+    });
+    $('copyButton').addEventListener('click', () => {
+      const box = $('revealed');
+      box.focus();
+      box.select();
+      const done = () => setLine($('showResult'), '✓ Copied. Paste it into the other ' +
+        'workbook\'s Setup panel, then click Hide.', 'ok');
+      const manual = () => setLine($('showResult'), 'Selected: press Ctrl+C (Cmd+C on a ' +
+        'Mac) to copy it.');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(box.value).then(done, manual);
+      } else {
+        manual();
+      }
+    });
+    $('hideButton').addEventListener('click', () => {
+      hideReveal();
+      setLine($('showResult'), '');
+    });
+
+    call('getSetupStatus', undefined, show);
+  </script>
+</body>
+</html>

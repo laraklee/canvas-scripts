@@ -138,5 +138,6 @@ reviewable steps over large multi-file changes.
   - `gastronomy-badges/`: **live 11/12** (`47764fd`; Canvas Tools › Setup…; its
     clean-up items 1 and 2 done with it; old `CANVAS_API_KEY` token moves over by
     itself, so nobody re-enters it). See the top of its BRIEF.
-  - `anonymize-submissions/` (no Canvas calls): a small setup panel for its three
-    passphrase items (Set, Check, Show my passphrase).
+  - `anonymize-submissions/` (no Canvas calls): **built 11/12, not pushed yet**
+    (Anonymize › ⚙️ Setup…: passphrase saved + check code, set or change, show). Biology
+    first, then AI9, Gastronomy, template. See its BRIEF.

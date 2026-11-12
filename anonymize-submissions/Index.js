@@ -34,9 +34,7 @@ function onOpen() {
     .addItem('Sort Review by question', 'sortReviewByQuestion')
     .addItem('Sort Review by student', 'sortReviewByStudent')
     .addSeparator()
-    .addItem('Set passphrase', 'setPassphrase')
-    .addItem('Check passphrase', 'checkPassphrase')
-    .addItem('Show my passphrase', 'showPassphrase')
+    .addItem('⚙️ Setup…', 'showSetupPanel') // Passphrase.js (set, check code, show)
     .addSeparator()
     .addItem('❓ User guide', 'showUserGuide')
     .addToUi();
