@@ -45,71 +45,81 @@ const JUPITER_CATEGORY_HEADERS = Object.freeze(['Canvas category', 'Export to Ju
 function refreshJupiterCategories() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   try {
-    const table = ss.getRangeByName(JUPITER_CATEGORY_RANGE);
-    if (!table || table.getNumColumns() !== JUPITER_CATEGORY_HEADERS.length) {
-      throw sheetProblem_(`The named range ${JUPITER_CATEGORY_RANGE} should be three columns ` +
-        `on ${SHEETS.CONFIG} (G:I). Check Data › Named ranges.`);
-    }
-    const sheet = table.getSheet();
-    const headerRow = table.getRow();
-    const firstColumn = table.getColumn();
-    const existingRows = Math.max(0, sheet.getLastRow() - headerRow);
-    const existing = existingRows ?
-      sheet.getRange(headerRow + 1, firstColumn, existingRows, 3).getValues() : [];
-
-    // Column I is this tool's; refuse to overwrite anything else that is there.
-    const idHeader = String(sheet.getRange(headerRow, firstColumn + 2).getValue()).trim();
-    if (idHeader && idHeader !== JUPITER_CATEGORY_HEADERS[2]) {
-      throw sheetProblem_(`The Canvas group ID column of ${JUPITER_CATEGORY_RANGE} already has ` +
-        'a different heading. Move that content before refreshing.');
-    }
-    if (!idHeader && existing.some(row => !isBlank_(row[2]))) {
-      throw sheetProblem_(`The Canvas group ID column of ${JUPITER_CATEGORY_RANGE} already ` +
-        'contains data. Move that content before refreshing.');
-    }
-
-    const checked = existing
-      .filter(row => row[1] === true)
-      .map(row => ({ id: jupiterId_(row[2]), name: String(row[0]).trim().toLowerCase() }));
-
-    const courseId = getCourseIdForRefresh_();
-    const groups = canvasStep_('assignment groups request', () =>
-      canvasGet_('/courses/' + courseId + '/assignment_groups'));
-    if (!Array.isArray(groups)) {
-      throw sheetProblem_('Canvas did not return a list for the assignment groups request.');
-    }
-    const entries = groups
-      .map(group => ({ id: jupiterId_(group.id), name: String(group.name || '').trim() }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    if (!entries.length) {
-      throw sheetProblem_('Canvas returned no assignment groups, so nothing was changed.');
-    }
-
-    const keepChecked = entry => checked.some(c =>
-      c.id ? c.id === entry.id : c.name === entry.name.toLowerCase());
-    const rows = entries.map(entry => [entry.name, keepChecked(entry), entry.id]);
-    const keptCount = rows.filter(row => row[1]).length;
-    const droppedCount = checked.filter(c => !entries.some(entry =>
-      c.id ? c.id === entry.id : c.name === entry.name.toLowerCase())).length;
-
-    // Canvas answered; only now replace the table.
-    const clearRows = Math.max(existingRows, rows.length);
-    sheet.getRange(headerRow + 1, firstColumn, clearRows, 3).clearContent();
-    sheet.getRange(headerRow + 1, firstColumn + 1, clearRows, 1).clearDataValidations();
-    sheet.getRange(headerRow, firstColumn, 1, 3).setValues([JUPITER_CATEGORY_HEADERS.slice()]);
-    sheet.getRange(headerRow + 1, firstColumn + 1, rows.length, 1).insertCheckboxes();
-    sheet.getRange(headerRow + 1, firstColumn, rows.length, 3).setValues(rows);
-
-    console.log(`Refresh Jupiter categories: ${rows.length} categor(ies), ${keptCount} checked ` +
-      `kept, ${droppedCount} checked dropped.`);
-    ss.toast(`${rows.length} categor${rows.length === 1 ? 'y' : 'ies'}; ${keptCount} checked ` +
-      'kept' + (droppedCount ? `; ${droppedCount} checked categor${droppedCount === 1 ?
-        'y is' : 'ies are'} no longer in Canvas and dropped off.` : '.'),
-      'Refresh Jupiter categories', 8);
+    const counts = writeJupiterCategories_(ss);
+    ss.toast(`${counts.categories} categor${counts.categories === 1 ? 'y' : 'ies'}; ` +
+      `${counts.kept} checked kept` + (counts.dropped ? `; ${counts.dropped} checked ` +
+        `categor${counts.dropped === 1 ? 'y is' : 'ies are'} no longer in Canvas and ` +
+        'dropped off.' : '.'), 'Refresh Jupiter categories', 8);
   } catch (error) {
     reportRefreshFailure_('Refresh Jupiter categories',
       'The Jupiter category table was not changed.', error);
   }
+}
+
+/**
+ * Rebuilds the cfg_JupiterCategories table (see refreshJupiterCategories) and returns
+ * { categories, kept, dropped }. Throws on a problem, before changing anything. Also
+ * used by the Refresh tables side panel (RefreshPanel.js).
+ */
+function writeJupiterCategories_(ss) {
+  const table = ss.getRangeByName(JUPITER_CATEGORY_RANGE);
+  if (!table || table.getNumColumns() !== JUPITER_CATEGORY_HEADERS.length) {
+    throw sheetProblem_(`The named range ${JUPITER_CATEGORY_RANGE} should be three columns ` +
+      `on ${SHEETS.CONFIG} (G:I). Check Data › Named ranges.`);
+  }
+  const sheet = table.getSheet();
+  const headerRow = table.getRow();
+  const firstColumn = table.getColumn();
+  const existingRows = Math.max(0, sheet.getLastRow() - headerRow);
+  const existing = existingRows ?
+    sheet.getRange(headerRow + 1, firstColumn, existingRows, 3).getValues() : [];
+
+  // Column I is this tool's; refuse to overwrite anything else that is there.
+  const idHeader = String(sheet.getRange(headerRow, firstColumn + 2).getValue()).trim();
+  if (idHeader && idHeader !== JUPITER_CATEGORY_HEADERS[2]) {
+    throw sheetProblem_(`The Canvas group ID column of ${JUPITER_CATEGORY_RANGE} already has ` +
+      'a different heading. Move that content before refreshing.');
+  }
+  if (!idHeader && existing.some(row => !isBlank_(row[2]))) {
+    throw sheetProblem_(`The Canvas group ID column of ${JUPITER_CATEGORY_RANGE} already ` +
+      'contains data. Move that content before refreshing.');
+  }
+
+  const checked = existing
+    .filter(row => row[1] === true)
+    .map(row => ({ id: jupiterId_(row[2]), name: String(row[0]).trim().toLowerCase() }));
+
+  const courseId = getCourseIdForRefresh_();
+  const groups = canvasStep_('assignment groups request', () =>
+    canvasGet_('/courses/' + courseId + '/assignment_groups'));
+  if (!Array.isArray(groups)) {
+    throw sheetProblem_('Canvas did not return a list for the assignment groups request.');
+  }
+  const entries = groups
+    .map(group => ({ id: jupiterId_(group.id), name: String(group.name || '').trim() }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  if (!entries.length) {
+    throw sheetProblem_('Canvas returned no assignment groups, so nothing was changed.');
+  }
+
+  const keepChecked = entry => checked.some(c =>
+    c.id ? c.id === entry.id : c.name === entry.name.toLowerCase());
+  const rows = entries.map(entry => [entry.name, keepChecked(entry), entry.id]);
+  const keptCount = rows.filter(row => row[1]).length;
+  const droppedCount = checked.filter(c => !entries.some(entry =>
+    c.id ? c.id === entry.id : c.name === entry.name.toLowerCase())).length;
+
+  // Canvas answered; only now replace the table.
+  const clearRows = Math.max(existingRows, rows.length);
+  sheet.getRange(headerRow + 1, firstColumn, clearRows, 3).clearContent();
+  sheet.getRange(headerRow + 1, firstColumn + 1, clearRows, 1).clearDataValidations();
+  sheet.getRange(headerRow, firstColumn, 1, 3).setValues([JUPITER_CATEGORY_HEADERS.slice()]);
+  sheet.getRange(headerRow + 1, firstColumn + 1, rows.length, 1).insertCheckboxes();
+  sheet.getRange(headerRow + 1, firstColumn, rows.length, 3).setValues(rows);
+
+  console.log(`Refresh Jupiter categories: ${rows.length} categor(ies), ${keptCount} checked ` +
+    `kept, ${droppedCount} checked dropped.`);
+  return { categories: rows.length, kept: keptCount, dropped: droppedCount };
 }
 
 // ---- Grading sheet roster (CreateRoster button) ----

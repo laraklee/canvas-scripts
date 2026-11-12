@@ -2,6 +2,17 @@
 
 > **Where we left off (current state, 2026-11-09, PC)**
 >
+> - **Refresh tables panel built 11/11 (PC), not yet pushed.** Lara: a friendlier way to
+>   refresh. **Setup & Data › Refresh tables…** opens a side panel (`RefreshPanel.js`,
+>   `RefreshPanel.html`): a checkbox per table, **All** (the five Refresh-all tables;
+>   never Jupiter categories, which sits apart at the bottom), and **Update**, which runs
+>   one server call per table and shows ✓/✗ with counts next to each. Read-only. The
+>   table list (`refreshTableList_`) is now shared with Refresh all tables; Jupiter's
+>   refresh was split into `writeJupiterCategories_` (returns counts) so the panel can
+>   run it. Old menu items stay. Guide: section 3, setup step, What's new; version
+>   2026-11-11. Offline check: menus 13 pass. (Considered first and dropped 11/11: a
+>   Groups panel. Lara builds group names with formulas on the createGroups tab, which a
+>   panel would bypass.) **Next:** commit, push Biology, Lara tests, then the others.
 > - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in
 >   Biology ("looks fine so far"); guide's "Being built" removed; pushed AI9, Gastronomy,
 >   then template (no manifest change). Live Quiz report and export-file report stay off

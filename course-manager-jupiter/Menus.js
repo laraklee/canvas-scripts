@@ -12,8 +12,9 @@
  *     and Course check (read-only report, CourseCheck.js) near the bottom, then
  *     ❓ User guide (showUserGuide, below; opens UserGuide.html in the side panel, with
  *     showUserGuideLarge for the big window).
- *   - Setup & Data: refreshing reference tables, Jupiter categories (manual, on purpose),
- *     and setup / safety checks.
+ *   - Setup & Data: refreshing reference tables (Refresh tables… opens the checkbox side
+ *     panel, RefreshPanel.js), Jupiter categories (manual, on purpose), and setup /
+ *     safety checks.
  *   Also here: goToHomePage (jumps to the Home tab) and refreshAllTables (every ref_
  *   table refresh in a row, except Jupiter categories, then one summary; the assignment
  *   groups step also updates the Course Check tab).
@@ -80,6 +81,7 @@ function buildMenus_() {
     .addToUi();
 
   ui.createMenu('Setup & Data')
+    .addItem('Refresh tables…', 'showRefreshPanel')
     .addItem('Refresh all tables', 'refreshAllTables')
     .addSeparator()
     .addItem('Refresh course list', 'refreshCourseList')
@@ -152,17 +154,9 @@ function findHomeSheet_(names) {
  */
 function refreshAllTables() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const steps = [
-    ['Course list', () => `${writeCourseListSheet_(ss)} course(s)`],
-    ['People list', () => `${writePeopleListSheet_(ss)} enrollment row(s)`],
-    ['Assignment groups', () => {
-      const counts = writeAssignmentGroupsSheet_(ss);
-      return `${counts.assignments} assignment(s) in ${counts.groups} group(s). ` +
-        courseCheckAfterRefresh_(ss, counts.canvasGroups);
-    }],
-    ['Section list', () => `${writeSectionLookupSheet_(ss).sections} section(s)`],
-    ['Sheet index', () => `${buildSheetIndex_(ss)} tab(s)`],
-  ];
+  // The table list is shared with the Refresh tables panel (RefreshPanel.js).
+  const steps = refreshTableList_().filter(table => table.inAll)
+    .map(table => [table.label, () => table.run(ss)]);
   const lines = runRefreshSteps_(steps, (label, i) => ss.toast(
     `Refreshing ${label.toLowerCase()}… (${i + 1} of ${steps.length})`, 'Refresh all tables', -1));
   const failed = lines.filter(line => line.startsWith('✗')).length;

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<!--
+  RefreshPanel.html: the "Refresh tables" side panel (opened by showRefreshPanel in
+  RefreshPanel.js; Lara, 2026-11-11). Lists the reference tables (getRefreshTables) with a
+  checkbox each and an "All" box (ticks every table except Jupiter categories). Update
+  refreshes the ticked tables one at a time (refreshTableFromPanel), showing ✓ or ✗ and
+  the counts next to each. Messages are shown as plain text (textContent), never as HTML.
+  Canvas endpoints: those of the refreshes (all GET). Write operations: none.
+  Properties: none here. Shows counts only, never names.
+-->
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 14px; color: #202124; margin: 12px 16px; }
+    p { margin: 0 0 12px; line-height: 1.4; }
+    label { cursor: pointer; }
+    .table { margin-bottom: 10px; }
+    .table .result { display: block; margin: 2px 0 0 24px; font-size: 13px; color: #5f6368;
+      white-space: pre-wrap; line-height: 1.35; }
+    .table .result.done { color: #137333; }
+    .table .result.problem { color: #b3261e; }
+    .all { font-weight: bold; padding-bottom: 8px; margin-bottom: 10px;
+      border-bottom: 1px solid #dadce0; }
+    .separate { padding-top: 10px; border-top: 1px solid #dadce0; }
+    .note { display: block; margin-left: 24px; font-size: 12px; color: #5f6368; }
+    button { font-size: 14px; padding: 6px 14px; margin-top: 4px; }
+    #status { white-space: pre-wrap; line-height: 1.4; margin-top: 12px; }
+    #status.problem { color: #b3261e; }
+  </style>
+</head>
+<body>
+  <p>Tick the tables to bring up to date from Canvas, then click <b>Update</b>. This only
+    reads Canvas; nothing in Canvas changes.</p>
+  <div class="table all"><label><input type="checkbox" id="all"> All</label></div>
+  <div id="tables">Loading…</div>
+  <button id="update" disabled>Update</button>
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <script>
+    const allBox = document.getElementById('all');
+    const tablesDiv = document.getElementById('tables');
+    const updateButton = document.getElementById('update');
+    const statusDiv = document.getElementById('status');
+    let rows = []; // { key, label, inAll, box, result }
+    let running = false;
+
+    function showStatus(text, isProblem) {
+      statusDiv.textContent = text;
+      statusDiv.className = isProblem ? 'problem' : '';
+    }
+
+    function buildList(tables) {
+      tablesDiv.textContent = '';
+      rows = tables.map(table => {
+        const div = document.createElement('div');
+        div.className = 'table' + (table.inAll ? '' : ' separate');
+        const label = document.createElement('label');
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        label.append(box, ' ' + table.label);
+        div.append(label);
+        if (!table.inAll) {
+          const note = document.createElement('span');
+          note.className = 'note';
+          note.textContent = 'Not part of All. Check the ticks on ref_Config afterward.';
+          div.append(note);
+        }
+        const result = document.createElement('span');
+        result.className = 'result';
+        div.append(result);
+        tablesDiv.append(div);
+        box.addEventListener('change', updateControls);
+        return Object.assign({}, table, { box, result });
+      });
+      updateControls();
+    }
+
+    // "All" is ticked when every All table is; half-ticked when some are.
+    function updateControls() {
+      const allRows = rows.filter(row => row.inAll);
+      const ticked = allRows.filter(row => row.box.checked).length;
+      allBox.checked = allRows.length > 0 && ticked === allRows.length;
+      allBox.indeterminate = ticked > 0 && ticked < allRows.length;
+      updateButton.disabled = running || !rows.some(row => row.box.checked);
+    }
+
+    allBox.addEventListener('change', () => {
+      rows.filter(row => row.inAll).forEach(row => { row.box.checked = allBox.checked; });
+      updateControls();
+    });
+
+    function setRunning(value) {
+      running = value;
+      allBox.disabled = value;
+      rows.forEach(row => { row.box.disabled = value; });
+      updateButton.textContent = value ? 'Updating…' : 'Update';
+      updateControls();
+    }
+
+    function refreshOne(key) {
+      return new Promise(resolve => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(() => resolve({ ok: false,
+            text: 'could not run (see Extensions › Apps Script › Executions)' }))
+          .refreshTableFromPanel(key);
+      });
+    }
+
+    updateButton.addEventListener('click', async () => {
+      const chosen = rows.filter(row => row.box.checked);
+      if (!chosen.length) return;
+      setRunning(true);
+      showStatus('', false);
+      rows.forEach(row => { row.result.textContent = ''; row.result.className = 'result'; });
+      let failed = 0;
+      for (const [i, row] of chosen.entries()) {
+        row.result.textContent = `Refreshing… (${i + 1} of ${chosen.length})`;
+        const answer = await refreshOne(row.key);
+        row.result.textContent = (answer.ok ? '✓ ' : '✗ ') + answer.text;
+        row.result.className = 'result ' + (answer.ok ? 'done' : 'problem');
+        if (!answer.ok) failed++;
+      }
+      showStatus(failed ? `${failed} table(s) failed. Tables that failed were not changed.` :
+        'Done.', failed > 0);
+      setRunning(false);
+    });
+
+    google.script.run
+      .withSuccessHandler(buildList)
+      .withFailureHandler(() => {
+        tablesDiv.textContent = '';
+        showStatus('The table list could not be loaded. Close this panel and try again.', true);
+      })
+      .getRefreshTables();
+  </script>
+</body>
+</html>

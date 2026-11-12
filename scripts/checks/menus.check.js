@@ -1,7 +1,8 @@
 /**
  * scripts/checks/menus.check.js
  * Purpose: offline check of the Menus.js helpers (finding the Home tab, running refresh
- *   steps) and that every menu item names a function that exists in the project. Made-up
+ *   steps), the Refresh tables panel (RefreshPanel.js: table list, one-table refresh),
+ *   and that every menu item names a function that exists in the project. Made-up
  *   data only; nothing is sent anywhere. Run with the others: npm run check-offline.
  *   Repo helper only: not part of any Apps Script project; never clasp-pushed.
  * Canvas endpoints called: none. Canvas write operations: none.
@@ -44,6 +45,28 @@ const progress = [];
 c.runRefreshSteps_([['A', () => '1'], ['B', () => { throw new Error('x'); }], ['C', () => '2']],
   (label, i) => progress.push(`${label} ${i + 1}`));
 check('progress callback runs before every step, failures included', progress, ['A 1', 'B 2', 'C 3']);
+
+// Refresh tables panel (RefreshPanel.js): the table list and one-table refresh, with the
+// sheet writers swapped for made-up ones.
+vm.runInContext(fs.readFileSync(path.join(PROJECT, 'RefreshPanel.js'), 'utf8'), context);
+context.SpreadsheetApp = { getActiveSpreadsheet: () => ({}) };
+context.writeCourseListSheet_ = () => 4;
+context.writePeopleListSheet_ = () => {
+  throw Object.assign(new Error('There is no tab named ref_peopleList.'), { isSheetProblem: true });
+};
+context.writeJupiterCategories_ = () => ({ categories: 6, kept: 3, dropped: 1 });
+check('panel lists every table, Jupiter last', c.getRefreshTables().map(t => t.key),
+  ['courses', 'people', 'assignmentGroups', 'sections', 'sheetIndex', 'jupiter']);
+check('All covers everything except Jupiter categories',
+  c.getRefreshTables().filter(t => !t.inAll).map(t => t.key), ['jupiter']);
+check('panel refresh: counts on success', c.refreshTableFromPanel('courses'),
+  { ok: true, text: '4 course(s)' });
+check('panel refresh: sheet problem shown', c.refreshTableFromPanel('people'),
+  { ok: false, text: 'There is no tab named ref_peopleList.' });
+check('panel refresh: Jupiter counts', c.refreshTableFromPanel('jupiter'), { ok: true,
+  text: '6 categor(ies), 3 ticked kept, 1 ticked dropped off. Check the ticks on ref_Config.' });
+check('panel refresh: unknown table', c.refreshTableFromPanel('nope'),
+  { ok: false, text: 'unknown table' });
 
 // Every menu item's function must exist somewhere in the project (a typo would show
 // "Script function not found" in the menu).

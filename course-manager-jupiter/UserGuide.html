@@ -98,7 +98,7 @@
 
 <h1>Course Manager (Jupiter edition) — User Guide</h1>
 
-<p class="version">Version 2026-11-10. See <b>8. What's new and getting updates</b>.</p>
+<p class="version">Version 2026-11-11. See <b>8. What's new and getting updates</b>.</p>
 
 <div class="note"><b>Draft.</b> Written for teachers new to the workbook; not yet tried by
 one. If a step doesn't match what you see, note where and what you saw.</div>
@@ -198,8 +198,8 @@ workbook, they may still hold their information: replace every one with yours.</
     connection</span>. It should say <b>Connected</b>.</li>
   <li>On <b>ref_Config</b>, check <code>cfg_CourseID</code> is the course you mean to work
     in.</li>
-  <li><span class="menu">Setup &amp; Data › Refresh all tables</span>. You should see a ✓
-    for each table.</li>
+  <li><span class="menu">Setup &amp; Data › Refresh tables…</span>, tick <b>All</b>, and
+    click <b>Update</b>. You should see a ✓ next to each table.</li>
   <li><span class="menu">Setup &amp; Data › Setup &amp; safety › Check setup</span>. It
     should say the setup is OK.</li>
 </ol>
@@ -267,6 +267,16 @@ workbook, they may still hold their information: replace every one with yours.</
 
 <h2 id="data">3. Keeping data current (Setup &amp; Data)</h2>
 
+<p><b>The easy way: <span class="menu">Setup &amp; Data › Refresh tables…</span></b> opens
+a panel on the right with a checkbox for each table. Tick the ones you want (or
+<b>All</b>), then click <b>Update</b>. Each table shows "Refreshing…", then a ✓ with what
+it found, or a ✗ with why it failed (a table that fails is left as it was). The panel
+stays open, so you can tick others and update again. <b>Jupiter categories</b> is at the
+bottom, apart from the rest: <b>All</b> never ticks it, so tick it on its own when you
+mean to.</p>
+
+<p>The menu items below do the same jobs, if you prefer them:</p>
+
 <table>
   <tr><th>Menu item</th><th>Use it when</th></tr>
   <tr><td>Refresh all tables</td><td>Start of a session, or after changes in Canvas (new
@@ -274,8 +284,8 @@ workbook, they may still hold their information: replace every one with yours.</
   <tr><td>Refresh course list / people list / assignment groups / section list / sheet
     index</td><td>Just one table needs updating.</td></tr>
   <tr><td>Refresh Jupiter categories</td><td>Canvas assignment groups changed. Then check
-    the ticks on ref_Config (ticked = exported to Jupiter). It's not part of Refresh all,
-    on purpose.</td></tr>
+    the ticks on ref_Config (ticked = exported to Jupiter). It's not part of Refresh all
+    (or All in the panel), on purpose.</td></tr>
 </table>
 
 <p><b>Reference tabs hide themselves.</b> After a refresh, ref_CourseIDs, ref_peopleList,
@@ -662,6 +672,8 @@ a newer one, open the template and look at the version in its guide.</p>
 <h3>What's new</h3>
 
 <ul>
+  <li><b>2026-11-11:</b> <b>Refresh tables…</b> panel: tick the tables to refresh and
+    click Update.</li>
   <li><b>2026-11-10:</b> Version label and this section added to the guide.</li>
   <li><b>2026-11-09:</b> Quiz Check (course export): an overview tab of every quiz, a
     detailed report for one quiz, and quiz names that link to Canvas.</li>
