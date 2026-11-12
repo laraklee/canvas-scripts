@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<!--
+  SetupPanelPage.html: the "Setup" side panel (opened by showSetupPanel in SetupPanel.js;
+  Lara, 2026-11-11). Shows whether the workbook is ready (getSetupStatus) in five parts:
+  Canvas connection (Test connection), set or change the token
+  (saveCanvasCredentialsFromPanel, Credentials.js), which course (Check course), dry run
+  (with an "are you sure" step before turning it off), and the setup check. The token box
+  is a password field, cleared as soon as Save is clicked; the token is never sent back
+  here. Messages are shown as plain text (textContent), never as HTML.
+  Canvas endpoints: GET /users/self and /courses/:course (through SetupPanel.js).
+  Write operations: none in Canvas. Saves User Properties CANVAS_BASE_URL and
+  CANVAS_TOKEN (Save) and Script Property DRY_RUN (dry run buttons).
+-->
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 14px; color: #202124; margin: 12px 16px; }
+    h2 { font-size: 15px; margin: 18px 0 6px; padding-top: 12px; border-top: 1px solid #dadce0; }
+    h2:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+    p { margin: 0 0 8px; line-height: 1.4; }
+    .line { margin: 0 0 6px; line-height: 1.4; white-space: pre-wrap; }
+    .ok { color: #137333; }
+    .warn { color: #b3261e; }
+    .muted { color: #5f6368; font-size: 13px; }
+    button { font-size: 14px; padding: 6px 14px; margin: 2px 6px 6px 0; }
+    label { display: block; margin: 6px 0 2px; font-size: 13px; }
+    input[type=text], input[type=password] { width: 100%; box-sizing: border-box;
+      font-size: 14px; padding: 5px 6px; }
+    #dryRunLine { font-weight: bold; padding: 8px 10px; border-radius: 4px; }
+    #dryRunLine.on { background: #e6f4ea; color: #137333; }
+    #dryRunLine.off { background: #fce8d6; color: #a14800; }
+    #dryRunConfirm { border: 1px solid #f0b37e; background: #fff8f1; padding: 8px 10px;
+      border-radius: 4px; margin-bottom: 6px; }
+    ul { margin: 4px 0 8px; padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <h2>1. Canvas connection</h2>
+  <div class="line" id="addressLine">Loading…</div>
+  <div class="line" id="tokenLine"></div>
+  <button id="testButton">Test connection</button>
+  <div class="line" id="testResult" role="status" aria-live="polite"></div>
+
+  <h2>2. Set or change your token</h2>
+  <p class="muted">Saved for <b>your</b> Google account only; other editors can't see it.
+    Leave a box blank to keep what's saved. Make a token in Canvas: <b>Account › Settings
+    › Approved Integrations › + New Access Token</b>.</p>
+  <label for="baseUrl">Canvas address (the start of the address bar in Canvas)</label>
+  <input type="text" id="baseUrl" autocomplete="off" spellcheck="false">
+  <label for="token">Canvas token</label>
+  <input type="password" id="token" autocomplete="off" spellcheck="false">
+  <button id="saveButton">Save</button>
+  <div class="line" id="saveResult" role="status" aria-live="polite"></div>
+
+  <h2>3. Which course</h2>
+  <div class="line" id="courseLine"></div>
+  <button id="courseButton">Check course</button>
+  <div class="line" id="courseResult" role="status" aria-live="polite"></div>
+
+  <h2>4. Dry run</h2>
+  <div class="line" id="dryRunLine"></div>
+  <p class="muted">One setting for the whole workbook, not per teacher. While it's ON,
+    tools that would change Canvas only show what they would send.</p>
+  <button id="dryRunButton"></button>
+  <div id="dryRunConfirm" hidden>
+    <p><b>Turn dry run OFF?</b> Tools that change Canvas WILL send their changes until you
+      turn it back on.</p>
+    <button id="dryRunYes">Yes, turn it off</button>
+    <button id="dryRunNo">Cancel</button>
+  </div>
+
+  <h2>5. Setup check</h2>
+  <div id="setupResult"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let status = null;
+
+    function setLine(el, text, kind) {
+      el.textContent = text;
+      el.className = 'line' + (kind ? ' ' + kind : '');
+    }
+
+    function call(name, arg, onDone) {
+      const runner = google.script.run
+        .withSuccessHandler(onDone)
+        .withFailureHandler(() => onDone({ ok: false,
+          message: 'Could not run (see Extensions › Apps Script › Executions).' }));
+      if (arg === undefined) runner[name](); else runner[name](arg);
+    }
+
+    function show(next) {
+      status = next;
+      setLine($('addressLine'), status.baseUrl ? '✓ Canvas address: ' + status.baseUrl :
+        '⚠ Canvas address: not saved yet (part 2).', status.baseUrl ? 'ok' : 'warn');
+      setLine($('tokenLine'), status.hasToken ? '✓ Token: saved' :
+        '⚠ Token: not saved yet (part 2).', status.hasToken ? 'ok' : 'warn');
+      $('testButton').disabled = !(status.baseUrl && status.hasToken);
+
+      if (status.courseId) {
+        setLine($('courseLine'), 'This workbook works in ' + (status.courseName ?
+          status.courseName + ' · ' : '') + 'course ' + status.courseId + ' (cfg_CourseID).');
+      } else {
+        setLine($('courseLine'), '⚠ ' + status.courseProblem, 'warn');
+      }
+      $('courseButton').disabled = !status.courseId || !(status.baseUrl && status.hasToken);
+
+      const line = $('dryRunLine');
+      line.textContent = status.dryRun ? 'ON: safe. Nothing is sent to Canvas.' :
+        'OFF: changes WILL be sent to Canvas.';
+      line.className = 'line ' + (status.dryRun ? 'on' : 'off');
+      $('dryRunButton').textContent = status.dryRun ? 'Turn dry run off…' : 'Turn dry run on';
+      $('dryRunButton').hidden = false;
+      $('dryRunConfirm').hidden = true;
+
+      const box = $('setupResult');
+      box.textContent = '';
+      if (status.setupError) {
+        box.append(lineOf('⚠ ' + status.setupError, 'warn'));
+      } else if (!status.setupProblems.count) {
+        box.append(lineOf('✓ Setup OK: every tab and named range the tools need is here.', 'ok'));
+      } else {
+        addList(box, 'Missing tabs', status.setupProblems.missingSheets);
+        addList(box, 'Missing named ranges (Data › Named ranges)',
+          status.setupProblems.missingRanges);
+      }
+    }
+
+    function lineOf(text, kind) {
+      const div = document.createElement('div');
+      setLine(div, text, kind);
+      return div;
+    }
+
+    function addList(box, title, names) {
+      if (!names.length) return;
+      box.append(lineOf(`⚠ ${title} (${names.length}):`, 'warn'));
+      const ul = document.createElement('ul');
+      names.forEach(name => {
+        const li = document.createElement('li');
+        li.textContent = name;
+        ul.append(li);
+      });
+      box.append(ul);
+    }
+
+    function refresh() {
+      call('getSetupStatus', undefined, next => {
+        if (next && next.ok === false) setLine($('addressLine'), '⚠ ' + next.message, 'warn');
+        else show(next);
+      });
+    }
+
+    function test() {
+      $('testButton').disabled = true;
+      setLine($('testResult'), 'Testing…');
+      call('testSetupConnection', undefined, answer => {
+        setLine($('testResult'), (answer.ok ? '✓ ' : '⚠ ') + answer.message,
+          answer.ok ? 'ok' : 'warn');
+        $('testButton').disabled = false;
+      });
+    }
+
+    $('testButton').addEventListener('click', test);
+
+    $('saveButton').addEventListener('click', () => {
+      const form = { baseUrl: $('baseUrl').value, token: $('token').value };
+      $('token').value = ''; // cleared at once, whatever happens next
+      $('saveButton').disabled = true;
+      setLine($('saveResult'), 'Saving…');
+      call('saveCanvasCredentialsFromPanel', form, answer => {
+        $('saveButton').disabled = false;
+        setLine($('saveResult'), (answer.ok ? '✓ ' : '⚠ ') + answer.message,
+          answer.ok ? 'ok' : 'warn');
+        if (!answer.ok) return;
+        $('baseUrl').value = '';
+        call('getSetupStatus', undefined, next => {
+          show(next);
+          if (next.baseUrl && next.hasToken) test();
+        });
+      });
+    });
+
+    $('courseButton').addEventListener('click', () => {
+      $('courseButton').disabled = true;
+      setLine($('courseResult'), 'Checking…');
+      call('checkSetupCourse', undefined, answer => {
+        setLine($('courseResult'), (answer.ok ? '✓ ' : '⚠ ') + answer.message,
+          answer.ok ? 'ok' : 'warn');
+        $('courseButton').disabled = false;
+      });
+    });
+
+    function setDryRun(on) {
+      $('dryRunButton').disabled = true;
+      $('dryRunYes').disabled = true;
+      call('setDryRunFromPanel', on, next => {
+        $('dryRunButton').disabled = false;
+        $('dryRunYes').disabled = false;
+        if (next && next.ok === false) {
+          setLine($('dryRunLine'), '⚠ ' + next.message, 'warn');
+          return;
+        }
+        show(next);
+      });
+    }
+
+    $('dryRunButton').addEventListener('click', () => {
+      if (!status) return;
+      if (status.dryRun) {
+        $('dryRunButton').hidden = true;
+        $('dryRunConfirm').hidden = false; // turning OFF asks first
+      } else {
+        setDryRun(true); // turning ON is always safe
+      }
+    });
+    $('dryRunYes').addEventListener('click', () => setDryRun(false));
+    $('dryRunNo').addEventListener('click', () => {
+      $('dryRunConfirm').hidden = true;
+      $('dryRunButton').hidden = false;
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

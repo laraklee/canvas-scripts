@@ -13,8 +13,8 @@
  *     ❓ User guide (showUserGuide, below; opens UserGuide.html in the side panel, with
  *     showUserGuideLarge for the big window).
  *   - Setup & Data: refreshing reference tables (Refresh tables… opens the checkbox side
- *     panel, RefreshPanel.js), Jupiter categories (manual, on purpose), and setup /
- *     safety checks.
+ *     panel, RefreshPanel.js), Jupiter categories (manual, on purpose), Setup… (the
+ *     setup side panel, SetupPanel.js), and the Setup & safety items.
  *   Also here: goToHomePage (jumps to the Home tab) and refreshAllTables (every ref_
  *   table refresh in a row, except Jupiter categories, then Course check, then one
  *   summary).
@@ -88,6 +88,7 @@ function buildMenus_() {
     // refreshJupiterCategories) left the menu on 2026-11-11 (Lara): the panel covers them.
     // The functions stay, for the Home and ref_Config buttons.
     .addSeparator()
+    .addItem('Setup…', 'showSetupPanel')
     .addSubMenu(ui.createMenu('Setup & safety')
       .addItem('Set Canvas token', 'setCanvasCredentials')
       .addItem('Test Canvas connection', 'testCanvasConnection')

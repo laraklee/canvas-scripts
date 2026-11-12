@@ -29,9 +29,20 @@
 >   categories" buttons). Messages that said "Run Refresh people list" etc. now point to
 >   the panel. **Live in all four workbooks 11/11 (37499d0):** Biology 8:22 PM, then AI9,
 >   Gastronomy, template 8:24 PM (Lara: "push to the other 3"; no manifest change). A
->   read-only `clasp clone` of each matched Git exactly (29 files). **Next (Lara's idea,
->   not started):** a Setup panel (token, Test connection, dry run, Check setup), built
->   the same way: Biology first.
+>   read-only `clasp clone` of each matched Git exactly (29 files).
+> - **Setup panel built 11/11 (PC), not yet committed or pushed.** **Setup & Data ›
+>   Setup…** (`SetupPanel.js`, `SetupPanelPage.html`): (1) address saved?, token saved?
+>   (never the token), Test connection; (2) address + token boxes (password field,
+>   cleared on Save; blank keeps what's saved) → `saveCanvasCredentialsFromPanel` in
+>   Credentials.js, then auto-tests; (3) cfg_CourseID (+ cfg_CourseName) and **Check
+>   course** (new read-only GET /courses/:id; shows Canvas's name and code); (4) dry run
+>   ON/OFF with an in-panel "are you sure" before OFF; (5) setup check on open
+>   (`findSetupProblems_`). Decided (Claude proposed, Lara OK'd): token typed in the
+>   panel; Setup & safety submenu kept for now (label checks stay menu-only). Messages
+>   that said "Set Canvas token" now point to Setup…. Guide: first-time setup, safety
+>   rules, troubleshooting, update steps, What's new; version **2026-11-11b**.
+>   **Next:** commit, push Biology, Lara tests, then the others; then decide whether to
+>   trim Setup & safety.
 > - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in
 >   Biology ("looks fine so far"); guide's "Being built" removed; pushed AI9, Gastronomy,
 >   then template (no manifest change). Live Quiz report and export-file report stay off

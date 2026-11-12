@@ -3,6 +3,8 @@
  * Purpose: the "Set Canvas token" menu item. Prompts for the Canvas web address and
  *   access token and saves them in this user's User Properties, where other editors of
  *   the script cannot read them. The token is never shown, logged, or put in a message.
+ *   saveCanvasCredentialsFromPanel does the same for the Setup panel's Save button
+ *   (SetupPanel.js, 2026-11-11).
  * Canvas endpoints called: none.
  * Canvas write operations: none.
  * Required User/Script Properties: writes User Properties CANVAS_BASE_URL and CANVAS_TOKEN.
@@ -59,6 +61,38 @@ function setCanvasCredentials() {
     // Messages from this file never contain the token or what was typed.
     console.error('Canvas setup failed: ' + error.message);
     ui.alert('Canvas setup could not finish: ' + error.message);
+  }
+}
+
+/**
+ * Called by the Setup panel's Save button (SetupPanel.js; google.script.run, so no
+ * trailing underscore) with { baseUrl, token } as typed. Same rules as the prompts: a
+ * blank box keeps what is saved. Returns { ok, message }; the message never contains
+ * the token or what was typed, and the token is never sent back. Never throws.
+ */
+function saveCanvasCredentialsFromPanel(form) {
+  try {
+    const props = PropertiesService.getUserProperties();
+    const urlText = String((form && form.baseUrl) || '').trim();
+    const token = String((form && form.token) || '').trim();
+    const baseUrl = urlText ? normalizeBaseUrl_(urlText) : props.getProperty(PROP_BASE_URL);
+    if (!baseUrl) return { ok: false, message: 'Enter your Canvas address. Nothing was saved.' };
+    if (!token && !props.getProperty(PROP_TOKEN)) {
+      return { ok: false, message: 'Paste your Canvas token. Nothing was saved.' };
+    }
+    if (/\s/.test(token)) {
+      return { ok: false, message: 'That token contains spaces or line breaks. Nothing was ' +
+        'saved. Copy it again and retry.' };
+    }
+    props.setProperty(PROP_BASE_URL, baseUrl);
+    if (token) props.setProperty(PROP_TOKEN, token);
+    console.log('Canvas setup (panel): address saved' + (token ? ', token saved.' : '.'));
+    return { ok: true, message: 'Saved for your Google account only. Token: ' +
+      (token ? 'saved.' : 'unchanged.') };
+  } catch (error) {
+    // normalizeBaseUrl_'s message never repeats what was typed.
+    console.error('Canvas setup (panel) failed.');
+    return { ok: false, message: 'Not saved. ' + error.message };
   }
 }
 

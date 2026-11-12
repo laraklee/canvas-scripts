@@ -180,7 +180,7 @@ function getCanvasCredentials_() {
   const baseUrl = props.getProperty(PROP_BASE_URL);
   if (!token || !baseUrl) {
     throw canvasError_('NOT_SET_UP',
-      'Your Canvas address or token is not saved yet. Run Course Manager › Set Canvas token.');
+      'Your Canvas address or token is not saved yet. Use Setup & Data › Setup….');
   }
   return { token, baseUrl };
 }
@@ -208,7 +208,7 @@ function fetchCanvas_(url, options) {
       response = UrlFetchApp.fetch(url, options);
     } catch {
       throw canvasError_('UNREACHABLE',
-        'Could not reach Canvas. Check the Canvas address in Set Canvas token.');
+        'Could not reach Canvas. Check the Canvas address in Setup & Data › Setup….');
     }
     const code = response.getResponseCode();
     const throttled = code === 429 ||
@@ -235,7 +235,7 @@ function checkCanvasResponse_(code, throttled) {
   }
   if (code === 401) {
     throw canvasError_('TOKEN_REJECTED', 'Canvas did not accept your token (401). ' +
-      'It may be expired or mistyped. Run Course Manager › Set Canvas token.');
+      'It may be expired or mistyped. Save a new one in Setup & Data › Setup….');
   }
   if (code === 403) {
     throw canvasError_('NOT_ALLOWED',
