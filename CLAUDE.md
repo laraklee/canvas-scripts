@@ -115,30 +115,14 @@ reviewable steps over large multi-file changes.
   workbook (11/8, commits `601d03b` and `396699a`).** Any new in-sheet guide should work
   the same way. Assignment Dates overrides in `assign-sheet/` are done and live on all
   four sheets (11/10; see the top of its BRIEF).
+- **Setup side panels (2026-11-12):** every workbook project has one (**Setup…** in its
+  menu) instead of separate setup menu items: `course-manager-jupiter/` (the model,
+  `SetupPanel.js`), `gastronomy-badges/`, `assign-sheet/`, `anonymize-submissions/`. The
+  token is never sent to the panel whole (last 4 characters and the date saved only). A
+  new project with settings should get one the same way; see each project's BRIEF.
 - Commit small, focused changes with clear messages.
 - To publish changes to Google: show the diff, commit, confirm with Lara, then
   `clasp push` from that project's folder. Always commit before `clasp push` so the
   change can be undone.
 - If testing in Google fails: fix it and commit again, or `git revert` the commit.
   Then `clasp push` again (after confirming with Lara) so Google matches.
-
-## To do (across projects)
-
-- **Refresh Canvas tokens (added 2026-11-11).** Lara made new tokens on 11/11 and
-  re-saved them in every workbook (Jupiter 11/11; assign-sheet and gastronomy-badges by
-  11/12). Still to do: revoke the old tokens in Canvas (Account › Settings › Approved
-  Integrations), if Lara hasn't already.
-- **Setup side panels for the other projects (added 2026-11-11).** Model:
-  `course-manager-jupiter/`'s **Setup & Data › Setup…** (`SetupPanel.js`,
-  `SetupPanelPage.html`; see its BRIEF). Same way of working: Biology first, Lara tests,
-  then the other workbooks; guide updated in the same commit.
-  - `assign-sheet/`: **live on all four sheets 11/12** (`a662e63`; Canvas Tools › ⚙️
-    Setup…: token with last 4 + date saved, connection test, which course, dry run;
-    replaced the ⚙️ Setup submenu). See its BRIEF.
-  - `gastronomy-badges/`: **live 11/12** (`47764fd`; Canvas Tools › Setup…; its
-    clean-up items 1 and 2 done with it; old `CANVAS_API_KEY` token moves over by
-    itself, so nobody re-enters it). See the top of its BRIEF.
-  - `anonymize-submissions/` (no Canvas calls): **live in all four workbooks 11/12**
-    (`f91df37`; Anonymize › ⚙️ Setup…: passphrase saved + check code, set or change,
-    show). See its BRIEF.
-  - **All Setup side panels are done (11/12).** This item can go once Lara confirms.
