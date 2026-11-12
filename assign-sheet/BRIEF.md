@@ -5,11 +5,12 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
-> **Setup panel built 11/12 (Mac), not pushed yet.** **Canvas Tools › ⚙️ Setup…**
-> (`08_SetupPanel.js`, `SetupPanelPage.html`; save in `06_Credentials.js`) replaces the
-> ⚙️ Setup submenu, modelled on course-manager-jupiter's. Next: commit, push to
-> **Biology**, Lara tests, then Gastronomy, AI9, template (see "Setup panel" below).
-> Tokens: Lara re-saved her new token in every sheet by 11/12.
+> **Setup panel live on all four sheets 11/12** (commit `a662e63`). **Canvas Tools › ⚙️
+> Setup…** (`08_SetupPanel.js`, `SetupPanelPage.html`; save in `06_Credentials.js`)
+> replaces the ⚙️ Setup submenu, modelled on course-manager-jupiter's. Pushed to Biology
+> 12:39 PM; Lara tested ("Gorgeous… much easier to use"); then Gastronomy, AI9, template
+> 12:41 PM. See "Setup panel" below. Tokens: Lara re-saved her new token in every sheet
+> by 11/12.
 >
 > **DONE (2026-11-10): section dates (overrides) in Assignment Dates.** Live on all four
 > sheets (Biology, Gastronomy, AI9, template), code from `e4e4128`. History below.
