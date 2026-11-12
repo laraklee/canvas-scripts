@@ -221,5 +221,16 @@ check('api path: no leading slash still works',
 check('api path: New Quizzes path kept as-is',
   context.canvasApiPath_('/api/quiz/v1/courses/1/quizzes'), '/api/quiz/v1/courses/1/quizzes');
 
+// Preview mode message on open (showPreviewModeToast_): unset or "true" is ON; only
+// exactly "false" is OFF, with the warning title and a longer message.
+const toasts = [];
+const fakeSs = { toast: (message, title, seconds) => toasts.push([title, seconds]) };
+[null, 'true', 'false'].forEach(value => {
+  context.PropertiesService = { getScriptProperties: () => ({ getProperty: () => value }) };
+  context.showPreviewModeToast_(fakeSs);
+});
+check('preview mode message on open: unset and "true" are ON, "false" is OFF', toasts, [
+  ['Preview mode is ON', 5], ['Preview mode is ON', 5], ['⚠ Preview mode is OFF', 10]]);
+
 console.log(failures ? `\n${failures} check(s) failed.` : '\nAll checks passed.');
 process.exitCode = failures ? 1 : 0;

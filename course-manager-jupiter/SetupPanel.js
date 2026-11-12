@@ -5,8 +5,8 @@
  *   Canvas connection (address, token saved or not, Test connection), set or change the
  *   token (saved by saveCanvasCredentialsFromPanel in Credentials.js), which course
  *   (one box filled in from cfg_CourseID to change it, Canvas's name for the course
- *   fetched by itself, and a link to ref_Config; Lara, 2026-11-11), dry run (status,
- *   turn on/off), and the setup check (missing tabs and named ranges;
+ *   fetched by itself, and a link to ref_Config; Lara, 2026-11-11), preview mode
+ *   (DRY_RUN; status, turn on/off), and the setup check (missing tabs and named ranges;
  *   findSetupProblems_ in SetupCheck.js).
  *   - showSetupPanel (menu: Setup & Data › Setup…): opens SetupPanelPage.html.
  *   - getSetupStatus, testSetupConnection, checkSetupCourse, saveSetupCourseId,
@@ -72,7 +72,7 @@ function getSetupStatus() {
   try {
     status.dryRun = isDryRun_();
   } catch (error) {
-    console.error('Setup panel: dry run read failed: ' + error.message);
+    console.error('Setup panel: preview mode read failed: ' + error.message);
   }
   try {
     status.courseId = getCourseIdForRefresh_();
@@ -212,11 +212,11 @@ function openSetupConfig() {
 }
 
 /**
- * Called by the panel after its own "are you sure" step: turns dry run on (true) or off
+ * Called by the panel after its own "are you sure" step: turns preview mode on (true) or off
  * (false). Returns the new status (getSetupStatus).
  */
 function setDryRunFromPanel(on) {
   PropertiesService.getScriptProperties().setProperty(PROP_DRY_RUN, on ? 'true' : 'false');
-  console.log('Dry run switched ' + (on ? 'ON' : 'OFF') + ' (Setup panel).');
+  console.log('Preview mode switched ' + (on ? 'ON' : 'OFF') + ' (Setup panel).');
   return getSetupStatus();
 }

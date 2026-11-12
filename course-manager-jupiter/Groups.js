@@ -116,14 +116,14 @@ function createGroupCategory() {
 
     const answer = ui.alert('Create group category',
       `Create the group category "${name}" in ${courseLabel_()}?\n\n` +
-      (dryRun ? 'Dry run is ON: nothing will be sent.' :
-        'Dry run is OFF: this creates it in Canvas.'), ui.ButtonSet.YES_NO);
+      (dryRun ? 'Preview mode is ON: nothing will be sent.' :
+        'Preview mode is OFF: this creates it in Canvas.'), ui.ButtonSet.YES_NO);
     if (answer !== ui.Button.YES) return;
 
     const result = canvasWrite_('POST', `/courses/${courseId}/group_categories`, { name });
     if (result.dryRun) {
-      console.log('Create group category (dry run): 1 category would be created.');
-      ui.alert('Create group category', 'Dry run: the category would have been created. ' +
+      console.log('Create group category (preview mode): 1 category would be created.');
+      ui.alert('Create group category', 'Preview mode: the category would have been created. ' +
         `Nothing was sent, and ${GROUPS_CELLS.CATEGORY_ID} was left blank.`, ui.ButtonSet.OK);
       return;
     }
@@ -175,8 +175,8 @@ function createGroups() {
       `Create ${toCreate.length} empty group(s) in category "` +
       `${sheet.getRange(GROUPS_CELLS.CATEGORY_NAME).getDisplayValue()}" in ${courseLabel_()}?` +
       (skipped ? `\n${skipped} row(s) already have a GroupID and will be skipped.` : '') +
-      '\n\n' + (dryRun ? 'Dry run is ON: nothing will be sent.' :
-        'Dry run is OFF: this creates them in Canvas.'), ui.ButtonSet.YES_NO);
+      '\n\n' + (dryRun ? 'Preview mode is ON: nothing will be sent.' :
+        'Preview mode is OFF: this creates them in Canvas.'), ui.ButtonSet.YES_NO);
     if (answer !== ui.Button.YES) return;
 
     let created = 0;
@@ -202,10 +202,10 @@ function createGroups() {
       }
     }
 
-    console.log(`Create groups${dryRun ? ' (dry run)' : ''}: ${created} created, ` +
+    console.log(`Create groups${dryRun ? ' (preview mode)' : ''}: ${created} created, ` +
       `${failures.length} failed, ${skipped} skipped` + (timedOut ? ', stopped at time limit.' : '.'));
     ui.alert('Create groups',
-      (dryRun ? `Dry run: ${created} group(s) would have been created. Nothing was sent.` :
+      (dryRun ? `Preview mode: ${created} group(s) would have been created. Nothing was sent.` :
         `${created} group(s) created; their IDs are in the ${GROUPS_ID_HEADER} column.`) +
       (skipped ? `\n${skipped} row(s) skipped (already had a GroupID).` : '') +
       (failures.length ? `\n\nNot created (${failures.length}):\n• ` + failures.join('\n• ') +
@@ -337,11 +337,11 @@ function putStudentsInGroupsFromActiveColumn() {
     }
 
     const dryRun = isDryRun_();
-    const answer = ui.alert(dryRun ? `${title} (dry run)` : title,
+    const answer = ui.alert(dryRun ? `${title} (preview mode)` : title,
       `"${setName}" (course ${courseId})\n\n${groupChangeCounts_(plan)}\n` +
       `Groups affected: ${plan.groupNames.join(', ')}\n\nStudents not on this sheet are ` +
-      'not changed.\n\n' + (dryRun ? 'Dry run is ON: nothing will be sent.' :
-        'Dry run is OFF: these changes WILL be made in Canvas.') + '\n\nContinue?',
+      'not changed.\n\n' + (dryRun ? 'Preview mode is ON: nothing will be sent.' :
+        'Preview mode is OFF: these changes WILL be made in Canvas.') + '\n\nContinue?',
       ui.ButtonSet.YES_NO);
     if (answer !== ui.Button.YES) {
       ui.alert(title, 'Cancelled. Nothing was sent.', ui.ButtonSet.OK);
@@ -365,17 +365,17 @@ function putStudentsInGroupsFromActiveColumn() {
     }, { started });
     ss.toast('', title, 1);
 
-    console.log(`Put students in groups${dryRun ? ' (dry run)' : ''}: ${result.done} done, ` +
+    console.log(`Put students in groups${dryRun ? ' (preview mode)' : ''}: ${result.done} done, ` +
       `${result.refusedRows.length} refused, ${result.notStarted} not started.`);
-    ui.alert(dryRun ? `${title} (dry run)` : title, (dryRun ?
-      `Dry run: ${result.done} student(s) would have been changed. Nothing was sent.` :
+    ui.alert(dryRun ? `${title} (preview mode)` : title, (dryRun ?
+      `Preview mode: ${result.done} student(s) would have been changed. Nothing was sent.` :
       `"${setName}": ${result.done} student(s) changed in Canvas.`) +
       (result.refusedRows.length ? `\n\nCanvas refused row(s) ${result.refusedRows.join(', ')}` +
         ' (light red; the cell\'s note says why). The other rows still went. Run Pull ' +
         'groups to see where those students are now.' : '') +
       (result.notStarted ? `\n\nStopped near the time limit with ${result.notStarted} ` +
         'student(s) not changed yet. Run it again to finish.' : '') +
-      (dryRun ? '\n\nSee Extensions › Apps Script › Executions for the "DRY RUN" lines.' : ''),
+      (dryRun ? '\n\nSee Extensions › Apps Script › Executions for the "PREVIEW MODE" lines.' : ''),
     ui.ButtonSet.OK);
   } catch (error) {
     reportRefreshFailure_(title, 'Stopped. Changes already made stay in Canvas; run Pull ' +

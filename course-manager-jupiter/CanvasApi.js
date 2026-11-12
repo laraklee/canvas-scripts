@@ -2,17 +2,19 @@
  * CanvasApi.js
  * Purpose: the project's Canvas request helpers and their menu items. Every Canvas read
  *   goes through canvasGet_(); every Canvas write goes through canvasWrite_(), which
- *   only sends when the DRY_RUN Script Property is exactly "false". Menu items: "Test
- *   Canvas connection", "Dry run: show status", "Dry run: switch on/off".
+ *   only sends when the DRY_RUN Script Property is exactly "false". Teachers see DRY_RUN as
+ *   "preview mode" (Lara, 2026-11-12); only the wording changed. Menu items: "Test Canvas
+ *   connection", "Preview mode: show status", "Preview mode: switch on/off". Also the
+ *   preview mode message shown on open (showPreviewModeToast_).
  * Canvas endpoints called: whatever path a caller passes to canvasGet_() or
  *   canvasWrite_(); the connection test calls GET /api/v1/users/self.
  * Canvas write operations: canvasWrite_() sends POST/PUT/PATCH/DELETE for its callers.
  *   Current caller: Push reorder (ReorderTool.js), PUT assignments/:id position only.
  * Required User/Script Properties: reads User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
- *   reads and writes Script Property DRY_RUN (unset means dry run is ON).
+ *   reads and writes Script Property DRY_RUN (unset means preview mode is ON).
  *
  * Error messages name the problem type only. They never include the token, the request
- * path or query (which could contain IDs), or anything Canvas sent back. Dry-run logs
+ * path or query (which could contain IDs), or anything Canvas sent back. Preview-mode logs
  * show the method, the path with every number replaced by ":id", and field names only.
  */
 
@@ -75,7 +77,7 @@ function canvasGet_(path, query) {
  * The only way to change anything in Canvas. method is POST, PUT, PATCH, or DELETE;
  * path is like '/courses/123/assignments/456' (or '/api/quiz/v1/…' for New Quizzes, see
  * canvasApiPath_); payload is sent as JSON.
- * While dry run is ON (the default), logs what would be sent and returns
+ * While preview mode (DRY_RUN) is ON (the default), logs what would be sent and returns
  * { dryRun: true } without contacting Canvas. Otherwise sends the request with the
  * shared retry, back-off, and response checks, and returns Canvas's reply.
  */
@@ -87,7 +89,7 @@ function canvasWrite_(method, path, payload) {
   const apiPath = canvasApiPath_(path);
   if (isDryRun_()) {
     const fields = describeFields_(payload);
-    console.log(`DRY RUN: would ${verb} ${apiPath.replace(/\/\d+(?=\/|$)/g, '/:id')}` +
+    console.log(`PREVIEW MODE: would ${verb} ${apiPath.replace(/\/\d+(?=\/|$)/g, '/:id')}` +
       ` (fields: ${fields.length ? fields.join(', ') : 'none'})`);
     return { dryRun: true };
   }
@@ -131,46 +133,58 @@ function describeFields_(payload, prefix) {
     describeFields_(value, prefix ? `${prefix}[${key}]` : key));
 }
 
-/** Menu: Course Manager › Dry run: show status. */
+/** Menu: Course Manager › Preview mode: show status. */
 function showDryRunStatus() {
   const ui = SpreadsheetApp.getUi();
   try {
-    ui.alert('Dry run', describeDryRun_(isDryRun_()), ui.ButtonSet.OK);
+    ui.alert('Preview mode', describeDryRun_(isDryRun_()), ui.ButtonSet.OK);
   } catch (error) {
-    console.error('Dry run status failed: ' + error.message);
-    ui.alert('Could not read the dry-run setting: ' + error.message);
+    console.error('Preview mode status failed: ' + error.message);
+    ui.alert('Could not read the preview mode setting: ' + error.message);
   }
 }
 
-/** Menu: Course Manager › Dry run: switch on/off. Asks first, then confirms the result. */
+/** Menu: Course Manager › Preview mode: switch on/off. Asks first, then confirms the result. */
 function toggleDryRun() {
   const ui = SpreadsheetApp.getUi();
   try {
     const dryRunOn = isDryRun_();
     const question = dryRunOn ?
-      'Dry run is ON now.\n\nIf you turn it off, changes WILL be sent to Canvas until ' +
-        'you turn dry run back on.\n\nTurn dry run OFF?' :
-      'Dry run is OFF now: changes are being sent to Canvas.\n\nTurn dry run ON?';
-    const answer = ui.alert(dryRunOn ? 'Turn dry run OFF?' : 'Turn dry run ON?',
+      'Preview mode is ON now.\n\nIf you turn it off, changes WILL be sent to Canvas ' +
+        'until you turn preview mode back on.\n\nTurn preview mode OFF?' :
+      'Preview mode is OFF now: changes are being sent to Canvas.\n\nTurn preview mode ON?';
+    const answer = ui.alert(dryRunOn ? 'Turn preview mode OFF?' : 'Turn preview mode ON?',
       question, ui.ButtonSet.YES_NO);
     if (answer !== ui.Button.YES) {
-      ui.alert('Dry run', 'No change. ' + describeDryRun_(dryRunOn), ui.ButtonSet.OK);
+      ui.alert('Preview mode', 'No change. ' + describeDryRun_(dryRunOn), ui.ButtonSet.OK);
       return;
     }
     PropertiesService.getScriptProperties()
       .setProperty(PROP_DRY_RUN, dryRunOn ? 'false' : 'true');
-    console.log('Dry run switched ' + (dryRunOn ? 'OFF.' : 'ON.'));
-    ui.alert('Dry run', describeDryRun_(!dryRunOn), ui.ButtonSet.OK);
+    console.log('Preview mode switched ' + (dryRunOn ? 'OFF.' : 'ON.'));
+    ui.alert('Preview mode', describeDryRun_(!dryRunOn), ui.ButtonSet.OK);
   } catch (error) {
-    console.error('Dry run switch failed: ' + error.message);
-    ui.alert('Could not change the dry-run setting: ' + error.message);
+    console.error('Preview mode switch failed: ' + error.message);
+    ui.alert('Could not change the preview mode setting: ' + error.message);
   }
+}
+
+/**
+ * On open (onOpen, SetupCheck.js): a short message at the bottom right saying whether
+ * preview mode is ON, so teachers know before using a tool (Lara, 2026-11-12). Reads the
+ * Script Property only; no Canvas call. ON shows for 5 seconds, OFF (a warning) for 10.
+ */
+function showPreviewModeToast_(ss) {
+  const on = isDryRun_();
+  ss.toast(on ? 'Nothing changes in Canvas while it is ON.' :
+    'Tools that change Canvas WILL send their changes. Turn it back on in Setup….',
+  on ? 'Preview mode is ON' : '⚠ Preview mode is OFF', on ? 5 : 10);
 }
 
 function describeDryRun_(dryRunOn) {
   return dryRunOn ?
-    'Dry run is ON. Changes are only logged; nothing is sent to Canvas.' :
-    'Dry run is OFF. Changes WILL be sent to Canvas.';
+    'Preview mode is ON. Changes are only logged; nothing is sent to Canvas.' :
+    'Preview mode is OFF. Changes WILL be sent to Canvas.';
 }
 
 /** Reads the saved address and token. Clear message if either is missing. */

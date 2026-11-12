@@ -80,9 +80,9 @@ const MAKE_ASSIGNMENT_SUBMISSION_TYPES = Object.freeze(['online_upload', 'online
   'external_tool']);
 
 /**
- * Button / menu: Preview. Fills Payload and Status for the item, each override row, and
- * each question row with what makeAll would send. Never sends anything, whatever the
- * dry-run setting.
+ * Button / menu: Check (called "Preview" until 2026-11-12, when dry run became "preview
+ * mode"). Fills Payload and Status for the item, each override row, and each question row
+ * with what makeAll would send. Never sends anything, whatever the preview mode.
  */
 function previewAssignment() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -91,14 +91,14 @@ function previewAssignment() {
     const { item, overrides, questions } = job.plan;
     if (item.request) {
       job.writeItem('Payload', JSON.stringify(item.request.payload));
-      job.writeItem('Status', `Preview (${item.label}): not sent`);
+      job.writeItem('Status', `Checked (${item.label}): ready, not sent`);
     } else {
       job.writeItem('Status', item.message);
     }
     const previewRows = (plans, write, target) => plans.filter(plan => {
       if (plan.payload) {
         write(plan, 'Payload', JSON.stringify(plan.payload));
-        write(plan, 'Status', `Preview: not sent (for ${target})`);
+        write(plan, 'Status', `Checked: ready, not sent (for ${target})`);
       } else {
         write(plan, 'Status', plan.message);
       }
@@ -107,14 +107,14 @@ function previewAssignment() {
     const overridesReady = previewRows(overrides, job.writeOverride, item.canvasId || 'new item');
     const questionsReady = previewRows(questions, job.writeQuestion,
       item.quizId ? `quiz ${item.quizId}` : 'new quiz');
-    console.log(`Preview assignment: item ${item.request ? 'ready' : 'not ready'}, ` +
+    console.log(`Check assignment: item ${item.request ? 'ready' : 'not ready'}, ` +
       `${overridesReady} of ${overrides.length} override(s) and ${questionsReady} of ` +
       `${questions.length} question(s) ready.`);
     ss.toast(`Item: ${item.request ? 'ready' : 'see Status'}. Overrides: ${overridesReady} ` +
       `ready of ${overrides.length}.` + (questions.length ? ` Questions: ${questionsReady} ` +
-      `ready of ${questions.length}.` : '') + ' Nothing was sent.', 'Preview assignment', 8);
+      `ready of ${questions.length}.` : '') + ' Nothing was sent.', 'Check assignment', 8);
   } catch (error) {
-    reportRefreshFailure_('Preview assignment', 'Nothing was sent.', error);
+    reportRefreshFailure_('Check assignment', 'Nothing was sent.', error);
   }
 }
 
@@ -158,12 +158,12 @@ function makeAssignmentAll() {
       (item.request ? `Create 1 item (${item.label}), ` : 'The item already exists. Create ') +
       `${parts.join(' and ')} in ${courseLabel_()}?` +
       (skipped ? `\n${skipped} row(s) will be skipped (see Status).` : '') +
-      '\n\n' + (dryRun ? 'Dry run is ON: nothing will be sent.' :
-        'Dry run is OFF: this creates them in Canvas.'), ui.ButtonSet.YES_NO);
+      '\n\n' + (dryRun ? 'Preview mode is ON: nothing will be sent.' :
+        'Preview mode is OFF: this creates them in Canvas.'), ui.ButtonSet.YES_NO);
     if (answer !== ui.Button.YES) return;
 
     const result = runMakeAssignment_(job, canvasWrite_, started);
-    console.log(`makeAll${dryRun ? ' (dry run)' : ''}: item ${result.itemOutcome}, ` +
+    console.log(`makeAll${dryRun ? ' (preview mode)' : ''}: item ${result.itemOutcome}, ` +
       `${result.created} override(s) sent, ${result.failed} refused, ` +
       `${result.questionsCreated} question(s) sent, ${result.questionsFailed} refused` +
       (result.timedOut ? ', stopped at time limit.' : '.'));
@@ -198,7 +198,7 @@ function runMakeAssignment_(job, send, started = Date.now()) {
       if (reply.dryRun) {
         dryRun = true;
         result.itemOutcome = 'dry run';
-        job.writeItem('Status', `Dry run (${item.label}): not sent`);
+        job.writeItem('Status', `Preview mode (${item.label}): not sent`);
       } else {
         assignmentId = item.request.readId(reply);
         const link = item.request.readLink(reply) || '';
@@ -242,7 +242,7 @@ function runMakeAssignment_(job, send, started = Date.now()) {
     try {
       const reply = send('POST', path, plan.payload);
       if (reply.dryRun) {
-        write(plan, 'Status', 'Dry run: not sent');
+        write(plan, 'Status', 'Preview mode: not sent');
       } else {
         write(plan, idLabel, reply.id || '');
         write(plan, 'Status', reply.id ? 'Created' :
@@ -279,7 +279,7 @@ function describeMakeAllResult_(result, dryRun, skipped) {
   const timeNote = result.timedOut ?
     '\n\nStopped near the time limit; click makeAll again to send the rest.' : '';
   if (dryRun || result.itemOutcome === 'dry run') {
-    return `Dry run: the item${result.itemOutcome === 'existing' ? ' (already created)' : ''}, ` +
+    return `Preview mode: the item${result.itemOutcome === 'existing' ? ' (already created)' : ''}, ` +
       `${result.created} override(s), and ${result.questionsCreated} question(s) would have ` +
       'been sent. Nothing was sent.' + timeNote;
   }

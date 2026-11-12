@@ -86,8 +86,9 @@ function checkCreateByRowLabels() {
 }
 
 /**
- * Button / menu: Preview selected rows. Fills Payload with the JSON that Post would send
- * and Status with what would happen. Never sends anything, whatever the dry-run setting.
+ * Button / menu: Check selected rows (called "Preview selected rows" until 2026-11-12,
+ * when dry run became "preview mode"). Fills Payload with the JSON that Post would send
+ * and Status with what would happen. Never sends anything, whatever the preview mode.
  */
 function previewRows() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -98,16 +99,16 @@ function previewRows() {
       if (plan.request) {
         ready++;
         job.write(plan, CREATE_BY_ROW_LABELS.PAYLOAD, JSON.stringify(plan.request.payload));
-        job.write(plan, CREATE_BY_ROW_LABELS.STATUS, `Preview (${plan.label}): not sent`);
+        job.write(plan, CREATE_BY_ROW_LABELS.STATUS, `Checked (${plan.label}): ready, not sent`);
       } else {
         job.write(plan, CREATE_BY_ROW_LABELS.STATUS, plan.message);
       }
     });
-    console.log(`Preview rows: ${ready} ready, ${job.plans.length - ready} not.`);
+    console.log(`Check rows: ${ready} ready, ${job.plans.length - ready} not.`);
     ss.toast(`${ready} row(s) ready to post; ${job.plans.length - ready} skipped or with a ` +
-      'problem (see Status). Nothing was sent.', 'Preview selected rows', 8);
+      'problem (see Status). Nothing was sent.', 'Check selected rows', 8);
   } catch (error) {
-    reportRefreshFailure_('Preview selected rows', 'Nothing was sent.', error);
+    reportRefreshFailure_('Check selected rows', 'Nothing was sent.', error);
   }
 }
 
@@ -134,8 +135,8 @@ function postRows() {
     const answer = ui.alert('Post selected rows',
       `Post ${toSend.length} row(s) (${countTypes_(toSend)}) to ${courseLabel_()}?` +
       (notSent.length ? `\n${notSent.length} other row(s) will be skipped (see Status).` : '') +
-      '\n\n' + (dryRun ? 'Dry run is ON: nothing will be sent.' :
-        'Dry run is OFF: this creates them in Canvas.'), ui.ButtonSet.YES_NO);
+      '\n\n' + (dryRun ? 'Preview mode is ON: nothing will be sent.' :
+        'Preview mode is OFF: this creates them in Canvas.'), ui.ButtonSet.YES_NO);
     if (answer !== ui.Button.YES) return;
 
     let posted = 0;
@@ -150,7 +151,7 @@ function postRows() {
       try {
         const result = canvasWrite_('POST', plan.request.path, plan.request.payload);
         if (result.dryRun) {
-          job.write(plan, CREATE_BY_ROW_LABELS.STATUS, `Dry run (${plan.label}): not sent`);
+          job.write(plan, CREATE_BY_ROW_LABELS.STATUS, `Preview mode (${plan.label}): not sent`);
         } else {
           const canvasId = plan.request.readId(result);
           job.write(plan, CREATE_BY_ROW_LABELS.CANVAS_ID, canvasId || '');
@@ -169,10 +170,10 @@ function postRows() {
       }
     }
 
-    console.log(`Post rows${dryRun ? ' (dry run)' : ''}: ${posted} sent, ${failed} refused, ` +
+    console.log(`Post rows${dryRun ? ' (preview mode)' : ''}: ${posted} sent, ${failed} refused, ` +
       `${notSent.length} skipped` + (timedOut ? ', stopped at time limit.' : '.'));
     ui.alert('Post selected rows',
-      (dryRun ? `Dry run: ${posted} row(s) would have been posted. Nothing was sent.` :
+      (dryRun ? `Preview mode: ${posted} row(s) would have been posted. Nothing was sent.` :
         `${posted} row(s) posted.`) +
       (failed ? `\n${failed} row(s) were refused by Canvas (see Status).` : '') +
       (notSent.length ? `\n${notSent.length} row(s) skipped (see Status).` : '') +

@@ -86,7 +86,7 @@ const cUserIds = [['101'], [102], ['103'], ['104'], [''], ['106'], ['107']];
 const cComments = [['  Nice work, see link  '], ['Good'], ['Redo part 2'], [''], ['Orphan'],
   ['Try again'], ['Check units']];
 const cNotes = [[''], ['Commented 10/23 8:15 AM'], ['commented'], [''], [''],
-  ['Not sent: not found (404)'], ['Dry run (not sent)']];
+  ['Not sent: not found (404)'], ['Preview mode (not sent)']];
 const cPlan = c.planComments_(cUserIds, cComments, cNotes, 3);
 check('posts: trimmed text; skips commented, blank comment, no User ID',
   cPlan.posts, [{ row: 3, userId: '101', text: 'Nice work, see link' },
@@ -113,7 +113,7 @@ check('real run: every row Commented with the time', [ok.recorded, ok.result],
   [[[3, 'Commented 10/23 9:00 AM'], [4, 'Commented 10/23 9:00 AM'], [5, 'Commented 10/23 9:00 AM']],
     { sent: 3, refusedRows: [], notStarted: 0 }]);
 check('dry run: Status says not sent', run(() => {}, { dryRun: true }).recorded[0],
-  [3, 'Dry run (not sent)']);
+  [3, 'Preview mode (not sent)']);
 const one404 = run(post => { if (post.userId === '2') throw canvasErr('NOT_FOUND'); });
 check('one student refused: noted and marked red, the others still go',
   [one404.recorded, one404.result.refusedRows],
@@ -147,7 +147,7 @@ check('summary: real run', c.commentSummary_('10/23 9:00 AM',
 '10/23 9:00 AM: 15 posted, 1 refused, 3 already commented');
 check('summary: dry run and time limit', c.commentSummary_('10/23 9:00 AM',
   { sent: 2, refusedRows: [], notStarted: 4 }, 0, true),
-'10/23 9:00 AM: dry run, 2 not sent, 0 refused, 0 already commented, 4 not started (time limit)');
+'10/23 9:00 AM: preview mode, 2 not sent, 0 refused, 0 already commented, 4 not started (time limit)');
 
 if (failures) {
   console.log(`\n${failures} check(s) failed.`);

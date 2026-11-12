@@ -4,9 +4,9 @@
   Lara, 2026-11-11). Shows whether the workbook is ready (getSetupStatus) in five parts:
   Canvas connection (Test connection), set or change the token
   (saveCanvasCredentialsFromPanel, Credentials.js), which course (a box filled in from
-  ref_Config B4, Save course for a typed number or pasted address, asking first if dry
-  run is OFF; Canvas's name for the course is fetched by itself whenever the number
-  shown changes; an "Open ref_Config" link), dry run (with an "are you sure" step before turning it off), and the
+  ref_Config B4, Save course for a typed number or pasted address, asking first if preview
+  mode is OFF; Canvas's name for the course is fetched by itself whenever the number
+  shown changes; an "Open ref_Config" link), preview mode (DRY_RUN; called dry run until 2026-11-12; with an "are you sure" step before turning it off), and the
   setup check. The token box
   is a password field, cleared as soon as Save is clicked; the whole token is never sent
   back here (part 1 shows only its last 4 characters and the date it was saved). The address box shows the saved address, or the school's address from ref_Config
@@ -14,7 +14,7 @@
   Canvas endpoints: GET /users/self and /courses/:course (through SetupPanel.js).
   Write operations: none in Canvas. Saves User Properties CANVAS_BASE_URL and
   CANVAS_TOKEN (Save), the cfg_CourseID cell (Save course), and Script Property DRY_RUN
-  (dry run buttons).
+  (preview mode buttons).
 -->
 <html>
 <head>
@@ -71,20 +71,20 @@
   <a href="#" id="configLink">Open ref_Config</a>
   <div class="line" id="courseResult" role="status" aria-live="polite"></div>
   <div id="courseConfirm" class="confirm" hidden>
-    <p><b>Dry run is OFF.</b> After this change, tools that change Canvas will send to the
+    <p><b>Preview mode is OFF.</b> After this change, tools that change Canvas will send to the
       new course. Change it anyway?</p>
     <button id="courseYes">Yes, change it</button>
     <button id="courseNo">Cancel</button>
   </div>
   <div class="line" id="courseSaveResult" role="status" aria-live="polite"></div>
 
-  <h2>4. Dry run</h2>
+  <h2>4. Preview mode</h2>
   <div class="line" id="dryRunLine"></div>
   <p class="muted">One setting for the whole workbook, not per teacher. While it's ON,
     tools that would change Canvas only show what they would send.</p>
   <button id="dryRunButton"></button>
   <div id="dryRunConfirm" hidden>
-    <p><b>Turn dry run OFF?</b> Tools that change Canvas WILL send their changes until you
+    <p><b>Turn preview mode OFF?</b> Tools that change Canvas WILL send their changes until you
       turn it back on.</p>
     <button id="dryRunYes">Yes, turn it off</button>
     <button id="dryRunNo">Cancel</button>
@@ -151,7 +151,7 @@
       line.textContent = status.dryRun ? 'ON: safe. Nothing is sent to Canvas.' :
         'OFF: changes WILL be sent to Canvas.';
       line.className = 'line ' + (status.dryRun ? 'on' : 'off');
-      $('dryRunButton').textContent = status.dryRun ? 'Turn dry run off…' : 'Turn dry run on';
+      $('dryRunButton').textContent = status.dryRun ? 'Turn preview mode off…' : 'Turn preview mode on';
       $('dryRunButton').hidden = false;
       $('dryRunConfirm').hidden = true;
 
@@ -261,7 +261,7 @@
       }
       if (status && !status.dryRun) {
         $('courseSaveButton').hidden = true;
-        $('courseConfirm').hidden = false; // dry run OFF: asks first
+        $('courseConfirm').hidden = false; // preview mode OFF: asks first
       } else {
         saveCourse();
       }

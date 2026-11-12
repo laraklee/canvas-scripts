@@ -1,21 +1,29 @@
 /**
  * SetupCheck.js
  * Purpose: the project's onOpen (builds the Course Manager menu, rebuilds ref_Index
- *   silently) and the setup check, run silently on open and on demand from "Check
- *   setup". Confirms the reference sheets built so far (SHEETS_BUILT) and the cfg_ named
+ *   silently, shows whether preview mode is ON) and the setup check, run silently on
+ *   open and on demand from "Check setup". Confirms the reference sheets built so far (SHEETS_BUILT) and the cfg_ named
  *   ranges (CFG_NAMES) exist. Reports names and counts only, never cell values.
  * Canvas endpoints called: none.
  * Canvas write operations: none.
- * Required User/Script Properties: none.
+ * Required User/Script Properties: reads Script Property DRY_RUN (preview mode), on open.
  */
 
 /**
  * This is the project's only onOpen; never add a second one. Both menus are built in
  * Menus.js (add new menu items there).
- * Runs automatically when the spreadsheet opens. Silent when setup is complete.
+ * Runs automatically when the spreadsheet opens. The setup check is silent when setup is
+ * complete; the preview mode message always shows.
  */
 function onOpen() {
   buildMenus_();
+
+  // A short "Preview mode is ON/OFF" message at the bottom right (CanvasApi.js).
+  try {
+    showPreviewModeToast_(SpreadsheetApp.getActiveSpreadsheet());
+  } catch (error) {
+    console.error('Preview mode message on open failed: ' + error.message);
+  }
 
   // Rebuild ref_Index first (silently), so a new one exists before the setup check.
   try {

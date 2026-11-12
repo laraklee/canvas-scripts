@@ -37,7 +37,7 @@ const ASSIGNMENT_ID_ROW = 2;
 const COMMENT_SUMMARY_ROW = 1;
 const COMMENTED_PREFIX = 'Commented';
 const COMMENT_REFUSED_COLOR = '#f4cccc'; // light red
-const COMMENT_DRY_RUN_STATUS = 'Dry run (not sent)';
+const COMMENT_DRY_RUN_STATUS = 'Preview mode (not sent)';
 const COMMENTS_TIME_LIMIT_MS = 5 * 60 * 1000;
 
 /**
@@ -206,14 +206,14 @@ function postCommentsForActiveColumn() {
       canvasGet_(`/courses/${courseId}/assignments/${target.assignmentId}/submissions`)));
     const name = String(assignment.name || '').trim() || 'this assignment';
     const dryRun = isDryRun_();
-    const answer = ui.alert(dryRun ? `${title} (dry run)` : title,
+    const answer = ui.alert(dryRun ? `${title} (preview mode)` : title,
       `"${name}" (course ${courseId})\n\n${plan.posts.length} comment(s) from column ` +
       `${target.letter} to post; each cell gets a note with its result.` +
       (plan.alreadyCommented ? `\n${plan.alreadyCommented} cell(s) already commented will ` +
         'be skipped.' : '') + '\n\n' + (dryRun ?
-        'Dry run is ON: nothing will be sent. The notes will say "' + COMMENT_DRY_RUN_STATUS +
+        'Preview mode is ON: nothing will be sent. The notes will say "' + COMMENT_DRY_RUN_STATUS +
           '".' :
-        'Dry run is OFF: these comments WILL be posted, and Canvas will notify the ' +
+        'Preview mode is OFF: these comments WILL be posted, and Canvas will notify the ' +
           'students.') + '\n\nContinue?',
       ui.ButtonSet.YES_NO);
     if (answer !== ui.Button.YES) {
@@ -239,17 +239,17 @@ function postCommentsForActiveColumn() {
       .setNote(commentSummary_(stamp, result, plan.alreadyCommented, dryRun));
     ss.toast('', title, 1);
 
-    console.log(`Post comments${dryRun ? ' (dry run)' : ''}: ${result.sent} sent, ` +
+    console.log(`Post comments${dryRun ? ' (preview mode)' : ''}: ${result.sent} sent, ` +
       `${result.refusedRows.length} refused, ${result.notStarted} not started, ` +
       `${plan.alreadyCommented} already commented.`);
-    ui.alert(dryRun ? `${title} (dry run)` : title, (dryRun ?
-      `Dry run: ${result.sent} comment(s) would have been posted. Nothing was sent.` :
+    ui.alert(dryRun ? `${title} (preview mode)` : title, (dryRun ?
+      `Preview mode: ${result.sent} comment(s) would have been posted. Nothing was sent.` :
       `${result.sent} comment(s) posted to "${name}".`) +
       (result.refusedRows.length ? `\n\nCanvas refused row(s) ${result.refusedRows.join(', ')}` +
         ' (light red; the cell\'s note says why). The other rows still went.' : '') +
       (result.notStarted ? `\n\nStopped near the time limit with ${result.notStarted} ` +
         'comment(s) not sent yet. Run Post comments again to send the rest.' : '') +
-      (dryRun ? '\n\nSee Extensions › Apps Script › Executions for the "DRY RUN" lines.' : ''),
+      (dryRun ? '\n\nSee Extensions › Apps Script › Executions for the "PREVIEW MODE" lines.' : ''),
     ui.ButtonSet.OK);
   } catch (error) {
     reportRefreshFailure_(title, 'Posting stopped. Cells whose note says "Commented" ' +
@@ -333,7 +333,7 @@ function sendComments_(posts, send, record, options) {
 
 /** The row 1 summary note, e.g. "10/23 8:15 AM: 15 posted, 0 refused, 3 already commented". */
 function commentSummary_(stamp, result, alreadyCommented, dryRun) {
-  return `${stamp}: ` + (dryRun ? `dry run, ${result.sent} not sent` :
+  return `${stamp}: ` + (dryRun ? `preview mode, ${result.sent} not sent` :
     `${result.sent} posted`) + `, ${result.refusedRows.length} refused, ` +
     `${alreadyCommented} already commented` +
     (result.notStarted ? `, ${result.notStarted} not started (time limit)` : '');

@@ -98,7 +98,7 @@
 
 <h1>Course Manager (Jupiter edition) — User Guide</h1>
 
-<p class="version">Version 2026-11-11b. See <b>8. What's new and getting updates</b>.</p>
+<p class="version">Version 2026-11-12. See <b>8. What's new and getting updates</b>.</p>
 
 <div class="note"><b>Draft.</b> Written for teachers new to the workbook; not yet tried by
 one. If a step doesn't match what you see, note where and what you saw.</div>
@@ -215,8 +215,8 @@ which of your Canvas tokens it is; Canvas lists them under Account › Settings 
 Integrations) and <b>Test connection</b>; <b>2</b> set or change them (the
 address box shows your saved address, or B2's if you haven't saved one; a blank token
 box keeps your saved token); <b>3</b> which course, with a link to ref_Config and a box to
-change the course number (if dry run is OFF, it asks first, since tools would then send
-changes to the new course; afterward, refresh the tables); <b>4</b> dry run, ON or OFF, with a button
+change the course number (if preview mode is OFF, it asks first, since tools would then send
+changes to the new course; afterward, refresh the tables); <b>4</b> preview mode, ON or OFF, with a button
 to switch it (turning it off asks first); <b>5</b> the setup check (missing tabs or named
 ranges). The same jobs are still in <span class="menu">Setup &amp; Data › Setup &amp;
 safety</span>, if you prefer the menu.</p>
@@ -237,17 +237,19 @@ safety</span>, if you prefer the menu.</p>
 <h3>Safety rules</h3>
 
 <ul>
-  <li><b>Dry run</b> (part 4 of <span class="menu">Setup &amp; Data › Setup…</span>): while
-    it's <b>ON</b>, tools that would change
-    Canvas only show what they <i>would</i> send. A new copy starts with dry run ON. Turn
-    it OFF only when you mean to create things, and back ON afterward. It's one setting
-    for the whole workbook, not per teacher.</li>
+  <li><b>Preview mode</b> (part 4 of <span class="menu">Setup &amp; Data › Setup…</span>):
+    while it's <b>ON</b>, tools that would change Canvas only show what they <i>would</i>
+    send. A new copy starts with preview mode ON. Turn it OFF only when you mean to create
+    things, and back ON afterward. It's one setting for the whole workbook, not per
+    teacher. When you open the workbook, a message at the bottom right says whether it's
+    ON or OFF.</li>
   <li><b>Check the course.</b> Every tool works on <code>cfg_CourseID</code>. Try new
     things in a test course first.</li>
-  <li><b>Preview first.</b> Tools that create things have a Preview: it fills
-    <b>Payload</b> (what would be sent) and <b>Status</b> without sending anything.</li>
+  <li><b>Check first.</b> Tools that create things have a Check: it fills
+    <b>Payload</b> (what would be sent) and <b>Status</b> without sending anything,
+    whether preview mode is ON or OFF.</li>
   <li><b>Every tool that changes Canvas asks Yes/No first</b>, and says which course and
-    whether dry run is on.</li>
+    whether preview mode is on.</li>
   <li><b>Student privacy.</b> Never paste or screenshot student names, emails, IDs, grades,
     or comments into an AI tool or email when asking for help. Describe the layout
     instead.</li>
@@ -260,7 +262,7 @@ safety</span>, if you prefer the menu.</p>
     🏠 Go to Home page</span> jumps there from anywhere.</li>
   <li><b>Canvas Tools menu:</b> everything that <i>does</i> something, and this guide.</li>
   <li><b>Setup &amp; Data menu:</b> refreshing reference tables, Jupiter categories, token,
-    dry run, and checks.</li>
+    preview mode, and checks.</li>
   <li><b>ref_ tabs</b> (red): reference tables the tools read. Refresh them; don't edit
     them.</li>
   <li><b>ref_Index:</b> a linked list of every tab. Click a name to jump there.</li>
@@ -272,8 +274,8 @@ safety</span>, if you prefer the menu.</p>
 <h3>Which tools change Canvas?</h3>
 
 <table>
-  <tr><th>Changes Canvas (dry run applies)</th><th>Reads Canvas only</th></tr>
-  <tr><td>Post selected rows (createByRow)</td><td>Preview (either create tool)</td></tr>
+  <tr><th>Changes Canvas (preview mode applies)</th><th>Reads Canvas only</th></tr>
+  <tr><td>Post selected rows (createByRow)</td><td>Check (either create tool), Check reorder</td></tr>
   <tr><td>makeAll (makeAssignment)</td><td>Refresh tables, Jupiter categories</td></tr>
   <tr><td>Push reorder</td><td>Update Grades, CreateRoster</td></tr>
   <tr><td>Create group category, Create groups, Put students in groups</td><td>Pull
@@ -349,7 +351,7 @@ Google Doc or Drive link also shows a full-width preview of the Doc underneath.<
     Link</code>, <code>Link Text</code>, <code>Published</code>. The tool fills
     <code>CanvasID</code>, <code>Canvas Link</code>, <code>Payload</code>, and
     <code>Status</code>.</li>
-  <li>Select the rows. <span class="menu">Canvas Tools › Create in Canvas › Preview
+  <li>Select the rows. <span class="menu">Canvas Tools › Create in Canvas › Check
     selected rows</span>. Read Status for each row.</li>
   <li><b>Post selected rows.</b> Rows with a CanvasID are skipped, so nothing is made
     twice.</li>
@@ -373,7 +375,7 @@ keeps its own defaults. Every button works on the tab you're looking at.</p>
     plus School Start / School End / After School / Night. You can also type a time like
     11:59 PM.</li>
   <li><b>Quizzes (CQ or NQ):</b> fill the Questions table (below).</li>
-  <li><b>Preview assignment</b>, read Status, then <b>makeAll</b>. It asks first.</li>
+  <li><b>Check assignment</b>, read Status, then <b>makeAll</b>. It asks first.</li>
   <li>If the item already exists (canvasID filled in), makeAll only adds overrides and
     questions that don't have an ID yet.</li>
 </ol>
@@ -441,7 +443,7 @@ them. Rows without a user ID (like Average rows) are never touched.
 <b>Read-only.</b></p>
 
 <p><b>Post comments from this column</b> posts each student's comment from the column to
-their submission for that assignment. <b>This changes Canvas</b> (dry run applies), and
+their submission for that assignment. <b>This changes Canvas</b> (preview mode applies), and
 Canvas notifies students as their settings say. Comments only, never grades.</p>
 
 <ul>
@@ -459,7 +461,7 @@ Canvas notifies students as their settings say. Comments only, never grades.</p>
 <h3 id="order">Assignment order</h3>
 
 <p><span class="menu">Canvas Tools › Assignment order</span>: <b>Open reorder tool</b>,
-number the rows you want (<b>Number selected rows 1, 2, 3…</b>), <b>Preview reorder</b>,
+number the rows you want (<b>Number selected rows 1, 2, 3…</b>), <b>Check reorder</b>,
 then <b>Push reorder</b>.</p>
 
 <h3 id="groups">Groups</h3>
@@ -502,7 +504,7 @@ on the sheet, or if two groups share a name.</p>
 <p><b>Put students in groups from this column.</b> After Pull groups, pick a group for
 each student from the dropdowns (clear a cell to take a student out of their group). Then
 click in the column and choose <span class="menu">Canvas Tools › Groups › Put students in
-groups from this column</span>. <b>This changes Canvas</b> (dry run applies).</p>
+groups from this column</span>. <b>This changes Canvas</b> (preview mode applies).</p>
 
 <ul>
   <li>It compares each cell with Canvas and changes only the students who differ:
@@ -702,6 +704,11 @@ a newer one, open the template and look at the version in its guide.</p>
 <h3>What's new</h3>
 
 <ul>
+  <li><b>2026-11-12:</b> <b>Dry run is now called preview mode</b> (same setting, new
+    name), and a message when the workbook opens says whether it's ON. The create and
+    reorder tools' <b>Preview</b> items are now called <b>Check</b> (Check selected rows,
+    Check assignment, Check reorder), and their Status says "Checked … ready, not sent".
+    Buttons you drew yourself keep working; retype their labels if you like.</li>
   <li><b>2026-11-11b:</b> <b>Setup…</b> panel: token, connection test, which course (with
     a box to change it), dry run, and the setup check in one place.</li>
   <li><b>2026-11-11:</b> <b>Refresh tables…</b> panel: tick the tables to refresh and
@@ -745,8 +752,9 @@ stays as it is until you're done, so nothing is lost.</p>
   <li>Look over each copied tab for <code>#REF!</code> errors, and click a button or two.
     If a button says "Script function … not found", see <b>7. When something goes
     wrong</b>.</li>
-  <li>Check dry run: <span class="menu">Setup &amp; Data › Setup &amp; safety › Dry run:
-    show status</span>. A new copy starts with it ON.</li>
+  <li>Check preview mode: part 4 of <span class="menu">Setup &amp; Data › Setup…</span>
+    (or the message at the bottom right when the workbook opens). A new copy starts with
+    it ON.</li>
   <li>Rename the old workbook (for example "OLD Course Manager") so you don't use it by
     mistake. Keep it until you're sure everything came over.</li>
 </ol>

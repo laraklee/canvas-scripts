@@ -252,11 +252,11 @@ let r = c.runMakeAssignment_(job, (method, p2) => { sent.push(p2); return { dryR
 check('dry run: item + 2 overrides go to canvasWrite_', sent, ['/courses/5000/assignments',
   '/courses/5000/assignments/new/overrides', '/courses/5000/assignments/new/overrides']);
 check('dry run: statuses', [written(job, 'item', 'Status'), written(job, 12, 'Status')],
-  ['Dry run (A, draft): not sent', 'Dry run: not sent']);
+  ['Preview mode (A, draft): not sent', 'Preview mode: not sent']);
 check('dry run: no IDs written', [written(job, 'item', 'canvasID'), written(job, 12, 'OverrideID')],
   [undefined, undefined]);
 check('dry run message', c.describeMakeAllResult_(r, true, 0),
-  'Dry run: the item, 2 override(s), and 0 question(s) would have been sent. Nothing was sent.');
+  'Preview mode: the item, 2 override(s), and 0 question(s) would have been sent. Nothing was sent.');
 
 // Real run: item gets ID 777; overrides 9001, 9002.
 job = makeJob();
@@ -462,7 +462,7 @@ sent = [];
 r = c.runMakeAssignment_(job, (method, p2) => { sent.push(p2); return { dryRun: true }; });
 check('dry run: questions go to the new quiz', sent.slice(3),
   ['/courses/5000/quizzes/new/questions', '/courses/5000/quizzes/new/questions']);
-check('dry run: question status', written(job, 'q22', 'Status'), 'Dry run: not sent');
+check('dry run: question status', written(job, 'q22', 'Status'), 'Preview mode: not sent');
 job = questionJob();
 sent = [];
 let nextId = 9001;

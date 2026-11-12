@@ -1,7 +1,25 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-11-09, PC)**
+> **Where we left off (current state, 2026-11-12, Mac)**
 >
+> - **UI simplification plan (11/12, Lara).** Many teachers are intimidated by
+>   spreadsheets. Decided: (1) **dry run is called "preview mode"** everywhere a teacher
+>   sees it (`DRY_RUN`, `isDryRun_` and the safe default unchanged); the create/reorder
+>   tools' **Preview** items became **Check** so "preview" has one meaning. (2) **One
+>   menu, "Course Manager Tools"**, grouped by teacher task, plain labels (function names
+>   unchanged so Home buttons work). (3) Later: a **Course Manager Tools side panel**
+>   (task cards: what to fill in, Open the tab, the tool buttons; preview-mode banner;
+>   links to Setup/Refresh/Guide with Back links). **Not** opened automatically (no
+>   trigger: Lara wants it simpler) and **not tab-aware** (dropped: tabs get cloned and
+>   renamed routinely). (4) Then a simpler Home tab (Lara, in the Sheet); maybe "My
+>   tools" later. Open from 11/12: drop the menu items Setup… covers? Same "preview mode"
+>   wording in the other three Setup panels later?
+>   **Phase 1 built 11/12 (Mac), not yet committed:** wording in PostRows, MakeAssignment,
+>   Groups, AssignmentColumn, ReorderTool, CanvasApi (log prefix now "PREVIEW MODE:"),
+>   Setup panel part 4, menu labels (Check …, Preview mode: …); new on-open message
+>   (`showPreviewModeToast_`, bottom right; no trigger needed). Guide version 2026-11-12.
+>   Old "Dry run"/"Preview" Status cells in sheets are harmless (nothing reads them).
+>   Lara may want to retype drawn buttons that say "Preview".
 > - **Refresh tables panel built 11/11 (PC), not yet pushed.** Lara: a friendlier way to
 >   refresh. **Setup & Data › Refresh tables…** opens a side panel (`RefreshPanel.js`,
 >   `RefreshPanelPage.html`): a checkbox per table, **All** (the five Refresh-all tables;
