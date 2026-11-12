@@ -205,11 +205,15 @@ function buildSyncPlan_(choices, createMissing) {
 
 // ---- What the teacher wants ----
 
-/** Bell schedule events for the checked periods (with new names) and, if checked, all-day events. */
-function classItems_(choices, tz) {
+/**
+ * Bell schedule events for the checked periods (with new names) and, if checked, all-day events.
+ * icsText: a teacher's own .ics file (used by the .ics download only); otherwise the official
+ * bell schedule. "Add to my Google Calendar" always uses the official one.
+ */
+function classItems_(choices, tz, icsText) {
   const items = [];
   const seen = new Set();
-  parseIcs_(fetchBellScheduleText_()).forEach(function (ev) {
+  parseIcs_(icsText || fetchBellScheduleText_()).forEach(function (ev) {
     const day = ev.allDay ? ymdKey_(ev.start) : Utilities.formatDate(ev.start, tz, 'yyyy-MM-dd');
     // Hawaii dates, so an afternoon class the day before the start date can't slip in.
     if (day < choices.start || day > choices.end) return;

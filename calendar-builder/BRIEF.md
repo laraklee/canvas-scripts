@@ -131,7 +131,17 @@ Does not call Canvas. No student data: both calendars are school schedules.
      show a spinner, a running clock, "64 of 312 changes done (added 60, updated 4)" and a
      progress bar. The total starts from the preview and is corrected each round (done so
      far + what's left). A Google "slow down" pause shows a 30-second countdown.
-6. Keep the .ics download as a fallback.
+6. Keep the .ics download as a fallback. **Written 11/11, not yet pushed or tested.**
+   The file is now built on the server (`IcsExport.js`, `buildIcsFile`, read-only) from the
+   same lists the sync uses (`classItems_`, `schoolEventItems_`), so the download and "Add to
+   my Google Calendar" always agree, and the checked school events are in the file too.
+   Dates are filtered in Hawaii time (fixes the 9/30 bug); titles, places, and notes are
+   escaped (commas, semicolons, backslashes, line breaks) and long lines folded; each event
+   has a stable UID (`class-` or `event-` + source ID + `@calendar-builder`). The page shows
+   what's in the file ("312 classes and bell schedule events and 24 school events").
+   **Decided 11/11:** a teacher's own .ics file (card 1) is used for the download only;
+   "Add to my Google Calendar" always uses the official bell schedule, and the page says so
+   (mixing a personal file into the sync could swap every class for a different copy).
 
 ## Open questions
 
@@ -157,11 +167,12 @@ Does not call Canvas. No student data: both calendars are school schedules.
 
 ## Known issues in the original to fix along the way
 
-- An event marked `VALUE=DATE-TIME` would be treated as all-day.
-- Commas or semicolons in a new name aren't escaped in the .ics.
+- An event marked `VALUE=DATE-TIME` would be treated as all-day. Fixed in step 6 (the
+  server's parser reads the date value itself, not the marker).
+- Commas or semicolons in a new name aren't escaped in the .ics. Fixed in step 6.
 - The date filter compares UTC dates, so a late event on the last day can drop out, and
   an afternoon event the day before the start date slips in (seen 11/11: a 2:05 pm class
-  on 9/30 came through with an Oct 1 start). Fix in step 6.
+  on 9/30 came through with an Oct 1 start). Fixed in step 6 (Hawaii dates).
 - Typing a "Rename to" name doesn't check that period's Keep box, so the period is
   silently left out (happened in testing 11/11). Fixed in 5a: typing a name checks the box.
 - Repeating events are filtered only by their first date.

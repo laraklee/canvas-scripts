@@ -4,8 +4,9 @@
   The Faculty Calendar Builder page: load the bell schedule, pick a date range, choose and
   rename periods, pick kinds of school events, then either add them to Google Calendar
   (Option A: preview, then Confirm) or download a one-time .ics file (Option B). Choices are
-  saved automatically. The .ics is built in the browser. Server calls: fetchDefaultCalendar()
-  in Code.js, getSchoolEventTitles() in SchoolEvents.js, saveChoices() in Settings.js,
+  saved automatically. Server calls: fetchDefaultCalendar() in Code.js, getSchoolEventTitles()
+  in SchoolEvents.js, saveChoices() in Settings.js, buildIcsFile() in IcsExport.js (the .ics is
+  built on the server and downloaded here),
   previewSync() / confirmSync() / previewRemoveAll() / confirmRemoveAll() in Sync.js.
   Calendar writes happen only in Sync.js, and only after the teacher confirms a preview.
   Started from a colleague's page (see BRIEF.md); the feedback form was removed for the pilot.
@@ -359,6 +360,8 @@
             <p><strong>Changed your mind?</strong> Pick a different calendar here and add your events again.
             They move to the new calendar. The old calendar is left empty, and you can delete it in
             Google Calendar's settings.</p>
+            <p>This always uses the school's official bell schedule, even if you chose your own .ics file
+            in step 1. Your own file is used only for the download in Option B.</p>
         </div>
 
         <button class="btn-primary" id="syncBtn" onclick="previewSyncClicked()">Add to my Google Calendar</button>
@@ -390,8 +393,9 @@
         <h4>Option B: Just download an .ics file</h4>
         <p class="instructions">For Apple Calendar, Outlook, or importing into a calendar yourself. This is
         a one-time snapshot: it won't change when the school updates the schedule, so download a new one
-        if that happens. (School events aren't in the file yet.)</p>
+        if that happens. It holds the same classes and school events as Option A would add.</p>
         <button class="btn-secondary" id="generateBtn" onclick="processAndDownload()">Download .ics file</button>
+        <div id="icsStatus" style="margin-top: 8px;"></div>
         </div>
     </div>
 
@@ -941,7 +945,8 @@
             }
         });
 
-        // RFC 5545 Calendar Parsing
+        // Simple ICS reader, kept only for the commented-out audit below (the .ics download is
+        // built on the server now, in IcsExport.js).
         function parseEvents(rawText) {
             const unfolded = rawText.replace(/\r?\n[ \t]/g, '');
             const rawEvents = unfolded.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || [];
@@ -965,72 +970,47 @@
             });
         }
 
-        // Option B button: gets the bell schedule first if it isn't loaded yet, then downloads.
+        // Option B button: the server builds the file (IcsExport.js) from the same lists the
+        // sync uses, with classes, school events, and Hawaii dates; the page just downloads it.
         function processAndDownload() {
-            if (activeIcsData) { buildAndDownloadIcs(); return; }
             const btn = document.getElementById('generateBtn');
+            const status = document.getElementById('icsStatus');
+            clearTimeout(saveTimer); // The server saves the choices itself.
             btn.disabled = true;
-            btn.innerText = 'Getting the bell schedule...';
-            loadOfficialSchedule(function(ok, message) {
-                btn.disabled = false;
-                btn.innerText = 'Download .ics file';
-                if (ok) buildAndDownloadIcs();
-                else alert('Could not get the bell schedule: ' + message);
-            });
+            btn.innerText = 'Building your file...';
+            status.textContent = '';
+            const done = function() { btn.disabled = false; btn.innerText = 'Download .ics file'; };
+
+            google.script.run
+                .withSuccessHandler(function(r) {
+                    done();
+                    setSaveStatus('✓ Choices saved', false);
+                    if (!r.text) {
+                        status.innerHTML = '<span class="status-badge status-error">✕ Nothing matched your choices ' +
+                            'and dates. Check your date range, your periods (Keep), and your school events.</span>';
+                        return;
+                    }
+                    downloadText(r.fileName, r.text);
+                    const parts = [];
+                    if (r.classes) parts.push(`${r.classes} class${r.classes === 1 ? '' : 'es'} and bell schedule event${r.classes === 1 ? '' : 's'}`);
+                    if (r.events) parts.push(`${r.events} school event${r.events === 1 ? '' : 's'}`);
+                    status.innerHTML = `<span class="status-badge status-active">✓ Downloaded ${escapeHtml(r.fileName)}: ` +
+                        `${parts.join(' and ')}.</span>`;
+                })
+                .withFailureHandler(function(error) {
+                    done();
+                    status.innerHTML = `<span class="status-badge status-error">✕ ${escapeHtml(error.message)}</span>`;
+                    saveNow(); // The server may have stopped before saving the choices.
+                })
+                .buildIcsFile(currentChoices(), usingOwnFile ? activeIcsData : null);
         }
 
-        // Calendar Generation & Export
-        function buildAndDownloadIcs() {
-
-            const startVal = document.getElementById('startDateFilter').value.replace(/-/g, '');
-            const endVal = document.getElementById('endDateFilter').value.replace(/-/g, '');
-
-            const keepAllDay = document.getElementById('keep_allday').checked;
-            const events = parseEvents(activeIcsData);
-            const header = activeIcsData.split("BEGIN:VEVENT")[0];
-            let keptEvents = [];
-
-            events.forEach(ev => {
-                // Apply Date Range Filter
-                if (ev.dateString) {
-                    if (startVal && ev.dateString < startVal) return;
-                    if (endVal && ev.dateString > endVal) return;
-                }
-
-                // Handle all-day events
-                if (ev.isAllDay) {
-                    if (keepAllDay) keptEvents.push(ev.raw);
-                    return;
-                }
-
-                // Match against categories
-                const matchedCat = findMatchingCategory(ev.summary);
-                if (matchedCat) {
-                    const isKept = document.getElementById(`keep_${matchedCat.id}`).checked;
-                    if (isKept) {
-                        let processed = ev.raw;
-                        const renameVal = document.getElementById(`rename_${matchedCat.id}`).value.trim();
-                        if (renameVal) {
-                            processed = processed.replace(/^SUMMARY(?:;[^:]*)?:.*$/m, 'SUMMARY:' + renameVal);
-                        }
-                        keptEvents.push(processed);
-                    }
-                }
-            });
-
-            if (keptEvents.length === 0) {
-                alert("No events matched your selections and date range. Please verify your date filter and checked categories.");
-                return;
-            }
-
-            // Create client-side download
-            const finalIcs = header + keptEvents.join("\r\n") + "\r\nEND:VCALENDAR\r\n";
-            const blob = new Blob([finalIcs], { type: 'text/calendar' });
+        function downloadText(fileName, text) {
+            const blob = new Blob([text], { type: 'text/calendar' });
             const url = URL.createObjectURL(blob);
-
             const a = document.createElement('a');
             a.href = url;
-            a.download = "My_Custom_Schedule.ics";
+            a.download = fileName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
