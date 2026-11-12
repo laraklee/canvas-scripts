@@ -19,7 +19,7 @@
  */
 
 // Update by hand whenever the tool changes; shown at the top of the page.
-const SYSTEM_REVISION_DATE = '11/11/2026'; // Step 5c: Confirm writes to Google Calendar.
+const SYSTEM_REVISION_DATE = '11/11/2026'; // Step 5c, plus a progress bar and 1-minute rounds.
 
 const CACHE_KEY_REVISED = 'master_schedule_hst_v2';
 const CACHE_SECONDS = 21600; // 6 hours

@@ -33,7 +33,8 @@ const TAG_EVENTS = 'builderEventUid';
 const TAG_HASH = 'builderHash';
 const LAST_CALENDARS_KEY = 'BUILDER_LAST_CALENDARS';
 const PREVIEW_EXAMPLES = 5;
-const ROUND_LIMIT_MS = 4.5 * 60 * 1000; // Apps Script stops a run at 6 minutes.
+const ROUND_LIMIT_MS = 60 * 1000; // Short rounds so the page can show progress often (Apps Script
+// stops a run at 6 minutes; each round re-plans first, which takes a few seconds).
 const PAUSE_BETWEEN_WRITES_MS = 150; // Google Calendar rejects bursts of rapid changes.
 const REMOVE_ALL_YEARS_BACK = 2;
 const REMOVE_ALL_YEARS_AHEAD = 3;
@@ -50,7 +51,7 @@ function previewSync(choices) {
 }
 
 /**
- * Called from the page after a preview: makes the changes, for up to about 4½ minutes.
+ * Called from the page after a preview: makes the changes, for about a minute per call.
  * Returns { finished, done: { added, moved, updated, removed }, left, paused }.
  * paused means Google asked for a slower pace; the page waits, then calls again.
  */

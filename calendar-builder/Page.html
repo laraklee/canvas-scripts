@@ -203,6 +203,19 @@
             color: #664d03;
         }
         .save-error { background: #f8d7da; color: #721c24; }
+        .progress-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .progress-clock { color: #666; font-variant-numeric: tabular-nums; }
+        .spinner {
+            width: 16px; height: 16px; flex: none;
+            border: 3px solid #cfe0ff; border-top-color: #4285f4; border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-bar {
+            height: 10px; background: #e3ebf7; border-radius: 5px;
+            overflow: hidden; margin: 10px 0 6px;
+        }
+        .progress-fill { height: 100%; width: 0; background: #4285f4; transition: width 0.6s ease; }
     </style>
 </head>
 <body>
@@ -591,12 +604,56 @@
         }
 
         // ---- Running a change in rounds (Confirm, and Remove everything) ----
-        // The server works for up to about 4½ minutes per call and says what's left; this keeps
+        // The server works for about a minute per call and says what's left; this keeps
         // calling until it's finished. If Google asks for a slower pace, wait 30 seconds first.
         // Several "slow down" answers in a row with no progress usually means Google's daily limit.
 
         let syncRunning = false;
         const MAX_PAUSES_IN_A_ROW = 6;
+        const PAUSE_SECONDS = 30;
+        let previewChangeCount = 0; // From the last preview: how many changes Confirm will make.
+        let removeAllCount = 0;     // From "Check what would be removed".
+
+        // A spinner, a running clock, "Added 64 of 312" and a progress bar, so a long run never
+        // looks stuck. The clock ticks every second even while the server is mid-round.
+        // Returns { update(done, total, text), pause(seconds), stop() }.
+        function startProgress(container, startText, total) {
+            container.innerHTML =
+                '<div class="progress-line"><span class="spinner"></span>' +
+                '<strong class="progress-text"></strong><span class="progress-clock">0:00</span></div>' +
+                '<div class="progress-bar"><div class="progress-fill"></div></div>' +
+                '<div class="subtext progress-note">Keep this page open until it says it\'s done.</div>';
+            const textEl = container.querySelector('.progress-text');
+            const clockEl = container.querySelector('.progress-clock');
+            const fillEl = container.querySelector('.progress-fill');
+            const noteEl = container.querySelector('.progress-note');
+            const started = Date.now();
+            let pauseUntil = 0;
+            const tick = function() {
+                const s = Math.floor((Date.now() - started) / 1000);
+                clockEl.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+                const wait = Math.ceil((pauseUntil - Date.now()) / 1000);
+                noteEl.textContent = wait > 0
+                    ? `Google asked for a short pause; continuing in ${wait} seconds. Keep this page open.`
+                    : 'Keep this page open until it says it\'s done.';
+            };
+            const timer = setInterval(tick, 1000);
+            const ui = {
+                update: function(done, newTotal, text) {
+                    textEl.textContent = text;
+                    const pct = newTotal > 0 ? Math.min(100, Math.round(100 * done / newTotal)) : 0;
+                    fillEl.style.width = pct + '%';
+                },
+                pause: function(seconds) { pauseUntil = Date.now() + seconds * 1000; tick(); },
+                stop: function() { clearInterval(timer); },
+            };
+            ui.update(0, total, startText);
+            return ui;
+        }
+
+        function sumCounts(t) {
+            return Object.keys(t).reduce((n, k) => n + t[k], 0);
+        }
 
         function runRounds(serverCall, args, onProgress, onDone, onError) {
             const totals = {};
@@ -614,7 +671,7 @@
                             return;
                         }
                         onProgress(totals, r.left, r.paused);
-                        setTimeout(round, r.paused ? 30000 : 0);
+                        setTimeout(round, r.paused ? PAUSE_SECONDS * 1000 : 0);
                     })
                     .withFailureHandler(function(error) { onError(error.message, totals); });
                 runner[serverCall].apply(runner, args);
@@ -642,13 +699,18 @@
             setSyncButtonsDisabled(true);
             document.getElementById('previewBox').style.display = 'none';
             document.getElementById('progressBox').style.display = 'block';
-            progress.innerHTML = '<span class="status-badge status-none">Updating your calendar... keep this page open.</span>';
+            const ui = startProgress(progress,
+                previewChangeCount ? `Updating your calendar: 0 of ${previewChangeCount} changes...` : 'Updating your calendar...',
+                previewChangeCount);
 
-            const finish = function() { syncRunning = false; setSyncButtonsDisabled(false); };
+            const finish = function() { ui.stop(); syncRunning = false; setSyncButtonsDisabled(false); };
             runRounds('confirmSync', [currentChoices()],
                 function(totals, left, paused) {
-                    progress.innerHTML = `<span class="status-badge status-none">So far: ${countsText(totals)}. ` +
-                        `${left} to go${paused ? ' (Google asked for a short pause; continuing in 30 seconds)' : ''}... keep this page open.</span>`;
+                    // Each round re-plans, so done + left is the up-to-date total.
+                    const done = sumCounts(totals);
+                    const total = done + left;
+                    ui.update(done, total, `${done} of ${total} changes done (${countsText(totals)})...`);
+                    if (paused) ui.pause(PAUSE_SECONDS);
                 },
                 function(totals) {
                     finish();
@@ -674,6 +736,7 @@
                     btn.innerText = 'Check what would be removed';
                     box.style.display = 'block';
                     const confirmBtn = document.getElementById('removeAllConfirmBtn');
+                    removeAllCount = r.total;
                     if (!r.total) {
                         body.innerHTML = 'There are no events from this app in your calendars.';
                         confirmBtn.style.display = 'none';
@@ -698,12 +761,14 @@
             syncRunning = true;
             setSyncButtonsDisabled(true);
             document.getElementById('removeAllConfirmBtn').style.display = 'none';
-            body.innerHTML = '<span class="status-badge status-none">Removing... keep this page open.</span>';
-            const finish = function() { syncRunning = false; setSyncButtonsDisabled(false); };
+            const ui = startProgress(body,
+                removeAllCount ? `Removing: 0 of ${removeAllCount}...` : 'Removing...', removeAllCount);
+            const finish = function() { ui.stop(); syncRunning = false; setSyncButtonsDisabled(false); };
             runRounds('confirmRemoveAll', [],
                 function(totals, left, paused) {
-                    body.innerHTML = `<span class="status-badge status-none">Removed ${totals.removed || 0}, ${left} to go` +
-                        `${paused ? ' (short pause requested by Google)' : ''}... keep this page open.</span>`;
+                    const removed = totals.removed || 0;
+                    ui.update(removed, removed + left, `Removed ${removed} of ${removed + left}...`);
+                    if (paused) ui.pause(PAUSE_SECONDS);
                 },
                 function(totals) {
                     finish();
@@ -731,6 +796,8 @@
                     btn.disabled = false;
                     btn.innerText = 'Add to my Google Calendar';
                     setSaveStatus('✓ Choices saved', false);
+                    previewChangeCount = result.groups.reduce(
+                        (n, g) => n + g.add + g.update + g.move + g.remove, 0);
                     body.innerHTML = result.groups.map(previewGroupHtml).join('');
                     box.style.display = 'block';
                 })

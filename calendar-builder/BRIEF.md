@@ -111,7 +111,7 @@ Does not call Canvas. No student data: both calendars are school schedules.
      calendars only if missing; creates tagged events; deletes or re-creates only events
      with this app's tag, in the chosen calendars, inside the date range. Continues in
      rounds past the 6-minute limit. Adds "Remove everything this app added".
-     **Written 11/11, not yet pushed or tested.** Write calls approved by Lara 11/11, all in
+     **Done 11/11: pushed and tested** (Lara's first real Confirm worked). Write calls approved by Lara 11/11, all in
      `Sync.js` under "Calendar writes": `createAppCalendar_` (new calendar, Hawaii time),
      `createAppEvent_` (tags it and **turns reminders off**, decided 11/11 so a main
      calendar's default pop-up doesn't fire for every class), `deleteAppEvent_` (refuses
@@ -126,6 +126,11 @@ Does not call Canvas. No student data: both calendars are school schedules.
      "Remove everything" checks those calendars plus the current choices, 2 years back to
      3 ahead, shows counts per calendar, then removes in rounds. Scope is now full
      `calendar` (teachers approve again; push needs `--force`).
+     **Progress (11/11, after testing):** with 4½-minute rounds the page looked stuck, so
+     rounds are now about 1 minute (`ROUND_LIMIT_MS`), and Confirm and "Remove everything"
+     show a spinner, a running clock, "64 of 312 changes done (added 60, updated 4)" and a
+     progress bar. The total starts from the preview and is corrected each round (done so
+     far + what's left). A Google "slow down" pause shows a 30-second countdown.
 6. Keep the .ics download as a fallback.
 
 ## Open questions
