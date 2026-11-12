@@ -95,7 +95,7 @@
 
 <h1>Assignment Sheet — User Guide</h1>
 
-<p class="version">Version 2026-11-10. See <b>6. What's new and getting updates</b>.</p>
+<p class="version">Version 2026-11-12. See <b>6. What's new and getting updates</b>.</p>
 
 <p>For teachers using a course Assignment sheet (Biology, Gastronomy, AI9, or a copy).
 Everything here is on the <b>Canvas Tools</b> menu at the top of the sheet, next to Help.
@@ -146,18 +146,25 @@ who can edit the sheet cannot see it, and it is never shown on the sheet.</p>
   <li>In Canvas, go to <b>Account › Settings</b>, scroll to <b>Approved Integrations</b>,
     and click <b>+ New Access Token</b>. Give it a purpose (for example "Assignment
     sheet") and copy the token. Canvas only shows it once.</li>
-  <li>In the sheet: <span class="menu">Canvas Tools › ⚙️ Setup › Set Canvas token</span>.</li>
-  <li>Box 1 of 2 asks for your Canvas web address: the start of the address bar when you
-    are logged in to Canvas (for example
-    <code>https://yourschool.instructure.com</code>).</li>
-  <li>Box 2 of 2: paste the token.</li>
-  <li>Check it: <span class="menu">Canvas Tools › ⚙️ Setup › Test Canvas connection</span>
-    should say <b>Connected</b>.</li>
+  <li>In the sheet: <span class="menu">Canvas Tools › ⚙️ Setup…</span>. The <b>Setup</b>
+    panel opens on the right.</li>
+  <li>In part <b>2. Set or change your token</b>, check the Canvas address: the start of
+    the address bar when you are logged in to Canvas (for example
+    <code>https://yourschool.instructure.com</code>). It's filled in from <i>Config</i>
+    B2 if you haven't saved one yet. Paste the token and click <b>Save</b>.</li>
+  <li>The panel tests the connection by itself. Part <b>1. Canvas connection</b> should
+    show <b>✓ Connected.</b> and <b>✓ Token: saved</b> with the date and the last 4
+    characters of your token, so you can tell which of your Canvas tokens it is.</li>
+  <li>Part <b>3. Which course</b> shows the course number from <i>Config</i> B4 and
+    Canvas's name for it. If it's the wrong course, type the right number (or paste the
+    course's Canvas address) and click <b>Save course</b>.</li>
 </ol>
 
-<p>To change either one later, run <b>Set Canvas token</b> again; leave a box blank to keep
-what's saved. If you ever think your token was exposed, delete it in Canvas
-(Account › Settings › Approved Integrations) and make a new one.</p>
+<p>Open <b>⚙️ Setup…</b> any time to check that everything is ready. To change the address
+or token later, use part 2 again; leave a box blank to keep what's saved. A token saved
+before 11/12/2026 shows without a date until you save a new one. If you ever think your
+token was exposed, delete it in Canvas (Account › Settings › Approved Integrations) and
+make a new one.</p>
 
 <h3>Google's permission screen</h3>
 
@@ -174,13 +181,14 @@ It asks to:</p>
 
 <table>
   <tr><th>Cell</th><th>What goes there</th></tr>
-  <tr><td><b>B2</b></td><td>Your school's Canvas web address (the same one you give
-    <b>Set Canvas token</b>).</td></tr>
+  <tr><td><b>B2</b></td><td>Your school's Canvas web address. It fills in the address in
+    <b>⚙️ Setup…</b>; the tools use the address you save there.</td></tr>
   <tr><td><b>B3</b></td><td>Your Canvas user ID. To find it: in your course, open
     <b>People</b> and click your own name. Your profile's web address ends in your ID,
     for example <code>.../courses/1234/users/5678</code> → <b>5678</b>.</td></tr>
   <tr><td><b>B4</b></td><td>Your Canvas <b>course ID</b>: the number after
-    <code>/courses/</code> in the course's web address. Numbers only.</td></tr>
+    <code>/courses/</code> in the course's web address. Numbers only. You can also change
+    it in <b>⚙️ Setup…</b>, part 3.</td></tr>
   <tr><td><b>B5</b></td><td>An email address to copy on messages.</td></tr>
   <tr><td><b>D3</b></td><td>The master calendar's spreadsheet ID (used by the schedule
     tools).</td></tr>
@@ -194,8 +202,8 @@ The <i>Config</i> tab is laid out the same way in all our Canvas workbooks, and 
 tools (such as Course Manager) do use them.</p>
 
 <div class="note"><b>Using a copy?</b> The cells may still hold the original teacher's
-information. Replace every one with yours before you run anything, then run
-<b>Set Canvas token</b> and <b>Test Canvas connection</b>.</div>
+information. Replace every one with yours before you run anything, then open
+<b>⚙️ Setup…</b>, save your token, and check the course.</div>
 
 <h3>Dry run</h3>
 
@@ -204,9 +212,11 @@ except actually send: they check your rows and write "Dry run OK" where a link o
 would go. Nothing changes in Canvas.</p>
 
 <ul>
-  <li><span class="menu">Canvas Tools › ⚙️ Setup › Dry run: show status</span> tells you
-    which mode you're in.</li>
-  <li><b>Dry run: switch on/off</b> flips it (it asks first).</li>
+  <li><span class="menu">Canvas Tools › ⚙️ Setup…</span>, part <b>4. Dry run</b>, shows
+    which mode you're in: green <b>ON: safe</b> or orange <b>OFF: changes WILL be
+    sent</b>.</li>
+  <li>Click <b>Turn dry run off…</b> (it asks first) or <b>Turn dry run on</b>. While dry
+    run is OFF, <b>Save course</b> also asks first.</li>
   <li>Dry run is a setting <b>for the whole sheet</b>, not per teacher. If you share a
     sheet, check the status before you post.</li>
   <li>Every "Post", "Send", or "Remove" confirmation box also says whether dry run is
@@ -542,12 +552,12 @@ fix.</p>
 
 <table>
   <tr><th>Message</th><th>What to do</th></tr>
-  <tr><td><i>Your Canvas address or token is not saved yet</i></td><td>Run <b>⚙️ Setup ›
-    Set Canvas token</b>.</td></tr>
+  <tr><td><i>Your Canvas address or token is not saved yet</i></td><td>Open <b>⚙️
+    Setup…</b> and save them (part 2).</td></tr>
   <tr><td><i>Canvas did not accept your token (401)</i></td><td>Your token expired or was
-    mistyped. Make a new one in Canvas and run <b>Set Canvas token</b>.</td></tr>
-  <tr><td><i>Could not reach Canvas</i></td><td>Check the Canvas address in <b>Set Canvas
-    token</b>.</td></tr>
+    mistyped. Make a new one in Canvas and save it in <b>⚙️ Setup…</b> (part 2).</td></tr>
+  <tr><td><i>Could not reach Canvas</i></td><td>Check the Canvas address in <b>⚙️
+    Setup…</b> (part 1).</td></tr>
   <tr><td><i>Canvas says your account is not allowed to do this (403)</i></td><td>Your
     Canvas account can't make this change in this course. Check <i>Config</i> B4 is your
     course.</td></tr>
@@ -558,8 +568,8 @@ fix.</p>
     has a link or "View …" text from an earlier post, so that part is skipped. Clear
     those cells and run it again.</td></tr>
   <tr><td>Something else seems wrong (the wrong course, odd results)</td><td>Check that
-    every cell on <i>Config</i> holds your information (B4 especially). Run <b>⚙️ Setup ›
-    Test Canvas connection</b>, then <b>🔄 Update schedule from Master</b>. Then try once
+    every cell on <i>Config</i> holds your information (B4 especially). Open <b>⚙️ Setup…</b>
+    (check the connection and the course in parts 1 and 3), then <b>🔄 Update schedule from Master</b>. Then try once
     more with dry run ON.</td></tr>
   <tr><td><i>Unexpected error</i></td><td>Note what you clicked and what the message said,
     then try once more. If it happens again, tell whoever shared the sheet with
@@ -577,6 +587,9 @@ newer one, open the template and look at the version in its guide.</p>
 <h3>What's new</h3>
 
 <ul>
+  <li><b>2026-11-12:</b> New <b>⚙️ Setup…</b> panel replaces the ⚙️ Setup submenu: save
+    your token (it shows the last 4 characters and the date saved), test the connection,
+    check or change the course, and turn dry run on or off, all in one place.</li>
   <li><b>2026-11-10:</b> Section and student dates on the Assignment Dates tab (rows
     marked ↳): load, edit, add, and remove them. Sort that tab by any column. Version
     label and this section added to the guide.</li>
@@ -591,7 +604,7 @@ stays as it is until you're done, so nothing is lost.</p>
 <ol>
   <li>Open the template (the same link you used for your first copy) and make a copy.</li>
   <li>In the new copy, fill in the <i>Config</i> tab (see <b>1. First-time setup</b>).</li>
-  <li>Run <b>Set Canvas token</b> and <b>Test Canvas connection</b>. A new copy needs your
+  <li>Open <b>⚙️ Setup…</b>, save your token, and check the course. A new copy needs your
     token again: it isn't carried over.</li>
   <li>Run <b>🔄 Update schedule from Master</b> to fill the Q tabs.</li>
   <li>Bring your work over from the old sheet:
@@ -605,8 +618,8 @@ stays as it is until you're done, so nothing is lost.</p>
         Canvas</b>.</li>
     </ul>
   </li>
-  <li>Check dry run: <span class="menu">Canvas Tools › ⚙️ Setup › Dry run: show
-    status</span>. A new copy may start with it ON.</li>
+  <li>Check dry run: <span class="menu">Canvas Tools › ⚙️ Setup…</span>, part 4. A new
+    copy may start with it ON.</li>
   <li>Rename the old sheet (for example "OLD Assignment sheet") so you don't use it by
     mistake. Keep it until you're sure everything came over.</li>
 </ol>

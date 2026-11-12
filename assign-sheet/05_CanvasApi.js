@@ -1,17 +1,17 @@
 /**
  * 05_CanvasApi.js
- * Purpose: the project's Canvas request helpers and their menu items. Every Canvas read
- *   goes through canvasGet_(); every Canvas write goes through canvasWrite_(), which
- *   only sends when the DRY_RUN Script Property is exactly "false". Menu items: "Test
- *   Canvas connection", "Dry run: show status", "Dry run: switch on/off".
+ * Purpose: the project's Canvas request helpers. Every Canvas read goes through
+ *   canvasGet_(); every Canvas write goes through canvasWrite_(), which only sends when
+ *   the DRY_RUN Script Property is exactly "false". Connection test and dry-run switch
+ *   are in the Setup panel (08_SetupPanel.js; they were menu items until 2026-11-12).
  *   Adapted from course-manager-jupiter/CanvasApi.js.
  * Canvas endpoints called: whatever path a caller passes to canvasGet_() or
- *   canvasWrite_(); the connection test calls GET /api/v1/users/self.
+ *   canvasWrite_().
  * Canvas write operations: canvasWrite_() sends POST/PUT/PATCH/DELETE for its callers.
  *   Current callers: 03_Content_Sync.js (calendar events, announcements) and
  *   07_AssignmentDates.js (assignment and section open/due/lock dates).
  * Required User/Script Properties: reads User Properties CANVAS_BASE_URL and CANVAS_TOKEN
- *   (saved by Set Canvas token, 06_Credentials.js); reads and writes Script Property
+ *   (saved in the Setup panel, 06_Credentials.js); reads and writes Script Property
  *   DRY_RUN (unset means dry run is ON).
  *
  * Error messages name the problem type only. They never include the token, the request
@@ -26,22 +26,6 @@ const CANVAS_RATE_LIMIT_FLOOR = 100;
 const CANVAS_PAUSE_MS = 2000;
 const CANVAS_WRITE_METHODS = Object.freeze(['POST', 'PUT', 'PATCH', 'DELETE']);
 const PROP_DRY_RUN = 'DRY_RUN';
-
-/**
- * Menu: Canvas Tools › ⚙️ Setup › Test Canvas connection.
- * Reads the user's own Canvas profile and reports only "Connected" or the error type.
- */
-function testCanvasConnection() {
-  const ui = SpreadsheetApp.getUi();
-  try {
-    canvasGet_('/users/self');
-    ui.alert('Test Canvas connection', 'Connected', ui.ButtonSet.OK);
-  } catch (error) {
-    console.error('Canvas connection test failed: ' + (error.canvasType || 'UNEXPECTED'));
-    ui.alert('Test Canvas connection', 'Not connected. ' + describeCanvasError_(error),
-      ui.ButtonSet.OK);
-  }
-}
 
 /**
  * GETs a Canvas API path, for example canvasGet_('/courses', {'state[]': 'available'}).
@@ -125,42 +109,6 @@ function describeFields_(payload, prefix) {
     describeFields_(value, prefix ? `${prefix}[${key}]` : key));
 }
 
-/** Menu: Canvas Tools › ⚙️ Setup › Dry run: show status. */
-function showDryRunStatus() {
-  const ui = SpreadsheetApp.getUi();
-  try {
-    ui.alert('Dry run', describeDryRun_(isDryRun_()), ui.ButtonSet.OK);
-  } catch (error) {
-    console.error('Dry run status failed: ' + error.message);
-    ui.alert('Could not read the dry-run setting: ' + error.message);
-  }
-}
-
-/** Menu: Canvas Tools › ⚙️ Setup › Dry run: switch on/off. Asks first, then confirms the result. */
-function toggleDryRun() {
-  const ui = SpreadsheetApp.getUi();
-  try {
-    const dryRunOn = isDryRun_();
-    const question = dryRunOn ?
-      'Dry run is ON now.\n\nIf you turn it off, changes WILL be sent to Canvas until ' +
-        'you turn dry run back on.\n\nTurn dry run OFF?' :
-      'Dry run is OFF now: changes are being sent to Canvas.\n\nTurn dry run ON?';
-    const answer = ui.alert(dryRunOn ? 'Turn dry run OFF?' : 'Turn dry run ON?',
-      question, ui.ButtonSet.YES_NO);
-    if (answer !== ui.Button.YES) {
-      ui.alert('Dry run', 'No change. ' + describeDryRun_(dryRunOn), ui.ButtonSet.OK);
-      return;
-    }
-    PropertiesService.getScriptProperties()
-      .setProperty(PROP_DRY_RUN, dryRunOn ? 'false' : 'true');
-    console.log('Dry run switched ' + (dryRunOn ? 'OFF.' : 'ON.'));
-    ui.alert('Dry run', describeDryRun_(!dryRunOn), ui.ButtonSet.OK);
-  } catch (error) {
-    console.error('Dry run switch failed: ' + error.message);
-    ui.alert('Could not change the dry-run setting: ' + error.message);
-  }
-}
-
 function describeDryRun_(dryRunOn) {
   return dryRunOn ?
     'Dry run is ON. Changes are only logged; nothing is sent to Canvas.' :
@@ -174,7 +122,7 @@ function getCanvasCredentials_() {
   const baseUrl = props.getProperty(PROP_BASE_URL);
   if (!token || !baseUrl) {
     throw canvasError_('NOT_SET_UP',
-      'Your Canvas address or token is not saved yet. Run Canvas Tools › ⚙️ Setup › Set Canvas token.');
+      'Your Canvas address or token is not saved yet. Open Canvas Tools › ⚙️ Setup… and save them.');
   }
   return { token, baseUrl };
 }
@@ -202,7 +150,7 @@ function fetchCanvas_(url, options) {
       response = UrlFetchApp.fetch(url, options);
     } catch {
       throw canvasError_('UNREACHABLE',
-        'Could not reach Canvas. Check the Canvas address in Set Canvas token.');
+        'Could not reach Canvas. Check the Canvas address in Canvas Tools › ⚙️ Setup….');
     }
     const code = response.getResponseCode();
     const throttled = code === 429 ||
@@ -229,7 +177,7 @@ function checkCanvasResponse_(code, throttled) {
   }
   if (code === 401) {
     throw canvasError_('TOKEN_REJECTED', 'Canvas did not accept your token (401). ' +
-      'It may be expired or mistyped. Run Canvas Tools › ⚙️ Setup › Set Canvas token.');
+      'It may be expired or mistyped. Save a new one in Canvas Tools › ⚙️ Setup….');
   }
   if (code === 403) {
     throw canvasError_('NOT_ALLOWED',

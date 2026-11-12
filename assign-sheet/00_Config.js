@@ -1,4 +1,13 @@
-/* 00_Config.gs */
+/**
+ * 00_Config.js
+ * Purpose: the Canvas Tools menu (onOpen), the user guide side panel, and the *Config*
+ *   tab readers (getConfig, getConfiguredPeriodPairs). Setup (token, connection, course,
+ *   dry run) is the Setup panel, Canvas Tools › ⚙️ Setup… (08_SetupPanel.js; 2026-11-12).
+ * Canvas endpoints called: none.
+ * Canvas write operations: none.
+ * Required User/Script Properties: none (the Canvas address and token are User
+ *   Properties read by 05_CanvasApi.js).
+ */
 
 /**
  * Runs automatically when the spreadsheet is opened.
@@ -23,11 +32,7 @@ function onOpen() {
     .addItem('🔗 Reset Master connection', 'updateMasterConnection')    // 01_Utilities.js (restores the IMPORTRANGE)
     .addItem('☑️ Toggle checkboxes', 'toggleSelectedCheckboxes')        // 01_Utilities.js
     .addSeparator()
-    .addSubMenu(ui.createMenu('⚙️ Setup')
-      .addItem('Set Canvas token', 'setCanvasCredentials')       // 06_Credentials.js
-      .addItem('Test Canvas connection', 'testCanvasConnection') // 05_CanvasApi.js
-      .addItem('Dry run: show status', 'showDryRunStatus')
-      .addItem('Dry run: switch on/off', 'toggleDryRun'))
+    .addItem('⚙️ Setup…', 'showSetupPanel') // 08_SetupPanel.js (token, connection, course, dry run)
     .addSeparator()
     .addItem('❓ User guide', 'showUserGuide')
     .addToUi();
@@ -105,4 +110,4 @@ function getConfiguredPeriodPairs() {
   return selectedPairs.length > 0 ? selectedPairs : ['1,2', '3,4', '5,6', '7,8'];
 }
 
-// The Canvas token is now set with Canvas Tools › ⚙️ Setup › Set Canvas token (06_Credentials.js).
+// The Canvas token is set in the Setup panel: Canvas Tools › ⚙️ Setup… (08_SetupPanel.js).

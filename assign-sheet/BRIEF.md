@@ -5,10 +5,11 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
-> **TO DO (added 2026-11-11): re-save the new Canvas token** in each sheet (Biology,
-> Gastronomy, AI9; template if it holds one): Canvas Tools › ⚙️ Setup › Set Canvas
-> token, then Test Canvas connection. Lara made new tokens on 11/11. See "To do" in the
-> root CLAUDE.md.
+> **Setup panel built 11/12 (Mac), not pushed yet.** **Canvas Tools › ⚙️ Setup…**
+> (`08_SetupPanel.js`, `SetupPanelPage.html`; save in `06_Credentials.js`) replaces the
+> ⚙️ Setup submenu, modelled on course-manager-jupiter's. Next: commit, push to
+> **Biology**, Lara tests, then Gastronomy, AI9, template (see "Setup panel" below).
+> Tokens: Lara re-saved her new token in every sheet by 11/12.
 >
 > **DONE (2026-11-10): section dates (overrides) in Assignment Dates.** Live on all four
 > sheets (Biology, Gastronomy, AI9, template), code from `e4e4128`. History below.
@@ -173,13 +174,37 @@ Grouped by what each item works on; "Load from" / "Send to" says which way data 
   assignment · Remove section/student dates on selected rows · Sort by selected column
   (keeps ↳ rows together)
 - 🔄 Update schedule from Master · 🔗 Reset Master connection · ☑️ Toggle checkboxes
-- **⚙️ Setup ›** Set Canvas token · Test Canvas connection · Dry run: show status /
-  switch on/off
+- **⚙️ Setup…** (`showSetupPanel`): the Setup side panel (see "Setup panel"). Until 11/12
+  a submenu: Set Canvas token · Test Canvas connection · Dry run: show status / switch
+  on/off (`setCanvasCredentials`, `testCanvasConnection`, `showDryRunStatus`,
+  `toggleDryRun`; removed with it).
 - ❓ User guide (`showUserGuide`): opens `UserGuide.html` in a window over the sheet.
 
 Labels can change freely. Function names must not change (drawn buttons call them).
 Messages that name a menu path (e.g. "Run Canvas Tools › ⚙️ Setup › Set Canvas token")
 must be updated with the labels.
+
+## Setup panel (08_SetupPanel.js, 11/12)
+
+**Canvas Tools › ⚙️ Setup…** opens a side panel, the same as course-manager-jupiter's
+minus its setup check (this sheet has no named ranges):
+1. **Canvas connection:** address saved?, token saved (date saved, last 4), **Test
+   connection** (GET /users/self via `canvasGet_`).
+2. **Set or change your token:** address box (saved address, or *Config* B2 if none) and
+   password box, cleared on Save; blank keeps what's saved
+   (`saveCanvasCredentialsFromPanel`, which also records `CANVAS_TOKEN_SAVED`); auto-tests
+   after Save. Tokens saved before 11/12 show no date until saved again.
+3. **Which course:** *Config* B4 in a box; Canvas's name and code fetched whenever the
+   number changes (GET /courses/:id); **Save course** takes digits or a pasted
+   `/courses/N` address, writes B4 as a number, refuses a formula cell, asks first in the
+   panel when dry run is OFF; **Open Config** link (unhides, selects B4). Sheet write
+   only, no Canvas write.
+4. **Dry run:** ON/OFF line, with an in-panel "are you sure" before turning it OFF.
+
+Messages that said "Run Canvas Tools › ⚙️ Setup › Set Canvas token" now point to ⚙️
+Setup…. Offline check: `scripts/checks/assign-setup-panel.check.js`. Guide: section 1
+(token steps, Config table, copy note, dry run), section 5 rows, section 6 steps and
+What's new; version **2026-11-12**.
 
 ## Assignment Dates (07_AssignmentDates.js)
 
