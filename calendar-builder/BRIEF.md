@@ -16,6 +16,11 @@ Does not call Canvas. No student data: both calendars are school schedules.
 
 - Script ID: `1NRaFfistbupSsmqwS1hucP0YNaUhMa6g6UVrgbKuhSgWA8ePDRuyKN9J` (standalone,
   "Faculty Calendar Builder (pilot)", in Lara's account; created 2026-11-10)
+- **Another editor may change the script in Google** (the original author, once shared).
+  So before every `clasp push`: commit, run `clasp pull`, then `git diff`. No differences =
+  push as usual. Differences = edits made in Google: show Lara, then commit them as the other
+  editor's change (or restore with `git checkout` if she says so) before pushing. Never push
+  over a diff without showing her.
 - Push from this folder with plain `clasp push` (ask Lara first). If clasp says "Skipping
   push", the manifest in Google differs; if the change is intended, add `--force` (the
   first push, 11/10, needed it to replace Google's default manifest).
