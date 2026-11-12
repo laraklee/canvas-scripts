@@ -27,7 +27,11 @@
 >   (panel covers them); menu is now Refresh tables…, Refresh all tables, Setup &
 >   safety. Functions kept (Home "Refresh sheet index" and ref_Config "Refresh Jupiter
 >   categories" buttons). Messages that said "Run Refresh people list" etc. now point to
->   the panel. **Next:** commit, push Biology, Lara tests, then AI9, Gastronomy, template.
+>   the panel. **Live in all four workbooks 11/11 (37499d0):** Biology 8:22 PM, then AI9,
+>   Gastronomy, template 8:24 PM (Lara: "push to the other 3"; no manifest change). A
+>   read-only `clasp clone` of each matched Git exactly (29 files). **Next (Lara's idea,
+>   not started):** a Setup panel (token, Test connection, dry run, Check setup), built
+>   the same way: Biology first.
 > - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in
 >   Biology ("looks fine so far"); guide's "Being built" removed; pushed AI9, Gastronomy,
 >   then template (no manifest change). Live Quiz report and export-file report stay off
