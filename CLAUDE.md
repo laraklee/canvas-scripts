@@ -138,6 +138,7 @@ reviewable steps over large multi-file changes.
   - `gastronomy-badges/`: **live 11/12** (`47764fd`; Canvas Tools › Setup…; its
     clean-up items 1 and 2 done with it; old `CANVAS_API_KEY` token moves over by
     itself, so nobody re-enters it). See the top of its BRIEF.
-  - `anonymize-submissions/` (no Canvas calls): **built 11/12, not pushed yet**
-    (Anonymize › ⚙️ Setup…: passphrase saved + check code, set or change, show). Biology
-    first, then AI9, Gastronomy, template. See its BRIEF.
+  - `anonymize-submissions/` (no Canvas calls): **live in all four workbooks 11/12**
+    (`f91df37`; Anonymize › ⚙️ Setup…: passphrase saved + check code, set or change,
+    show). See its BRIEF.
+  - **All Setup side panels are done (11/12).** This item can go once Lara confirms.
