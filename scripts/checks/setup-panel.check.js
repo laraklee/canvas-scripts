@@ -86,11 +86,49 @@ check('test connection: error type message only', c.testSetupConnection(),
 canvasAnswer = { name: 'Biology', course_code: 'BIO-P3' };
 check('check course: shows Canvas name and code', c.checkSetupCourse().message,
   'Canvas has "Biology" (BIO-P3), course 12345. If that\'s not the course you mean, ' +
-  'change cfg_CourseID on ref_Config.');
+  'change it below.');
 canvasAnswer = canvasError('NOT_FOUND', 'Canvas could not find what was asked for (404).');
 const notFound = c.checkSetupCourse();
 check('check course: not found points to cfg_CourseID',
   [notFound.ok, notFound.message.includes('cfg_CourseID')], [false, true]);
+
+// Change course and Open ref_Config.
+check('course input: digits', c.parseCourseIdInput_(' 4321 '), '4321');
+check('course input: pasted Canvas address',
+  c.parseCourseIdInput_('https://canvas.example.edu/courses/4321/assignments?x=1'), '4321');
+check('course input: not a course', [c.parseCourseIdInput_('Biology'),
+  c.parseCourseIdInput_('https://canvas.example.edu/courses/abc')], ['', '']);
+const cell = { value: 12345, formula: '', getValue() { return this.value; },
+  getFormula() { return this.formula; }, setValue(v) { this.value = v; } };
+const shownTabs = [];
+const configSheet = { hidden: true, isSheetHidden() { return this.hidden; },
+  showSheet() { this.hidden = false; shownTabs.push('show'); },
+  activate() { shownTabs.push('open ref_Config'); } };
+c.SpreadsheetApp = {
+  flush() {},
+  getActiveSpreadsheet: () => ({
+    getRangeByName: name => name === 'cfg_CourseID' ? { getCell: () => cell,
+      activate: () => shownTabs.push('select cfg_CourseID') } : null,
+    getSheetByName: name => name === 'ref_Config' ? configSheet : null,
+  }),
+};
+answer = c.saveSetupCourseId('nope');
+check('save course: bad input changes nothing', [answer.ok, cell.value], [false, 12345]);
+answer = c.saveSetupCourseId('https://canvas.example.edu/courses/4321');
+check('save course: writes the number, says what it was', [answer.ok, cell.value,
+  answer.message], [true, 4321,
+  'Changed to course 4321 (was 12345). Next: refresh the tables (Refresh tables…, All).']);
+check('save course: returns the new status', Boolean(answer.status), true);
+answer = c.saveSetupCourseId('4321');
+check('save course: same number, nothing changed', [answer.ok,
+  answer.message.startsWith('Already')], [true, true]);
+cell.formula = '=A1';
+answer = c.saveSetupCourseId('999');
+check('save course: formula cell left alone', [answer.ok, cell.value], [false, 4321]);
+check('open ref_Config: unhides, opens, selects the course cell', [c.openSetupConfig(),
+  shownTabs], ['', ['show', 'open ref_Config', 'select cfg_CourseID']]);
+c.getCfg_ = name => { if (name === 'CourseName') return '#N/A'; throw new Error('x'); };
+check('course name #N/A (not in the course list) is hidden', c.getSetupStatus().courseName, '');
 
 // Dry run switch.
 check('turn dry run off', [c.setDryRunFromPanel(false).dryRun, script.data.DRY_RUN], [false, 'false']);

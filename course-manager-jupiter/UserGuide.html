@@ -197,7 +197,10 @@ workbook, they may still hold their information: replace every one with yours.</
     Access Token</b>. Canvas shows it only once.) The panel then tests the connection: it
     should say <b>Connected</b>.</li>
   <li>In part <b>3</b>, click <b>Check course</b>. It shows the Canvas course that
-    <code>cfg_CourseID</code> points to; make sure it's the one you mean to work in.</li>
+    <code>cfg_CourseID</code> points to; make sure it's the one you mean to work in. To
+    change it, type the course number (or paste the course's Canvas address) in
+    <b>Change course</b> and click <b>Save course</b>; the panel checks the new course
+    straight away. <b>Open ref_Config</b> jumps to the cell.</li>
   <li>Part <b>5</b> should say <b>Setup OK</b>.</li>
   <li><span class="menu">Setup &amp; Data › Refresh tables…</span>, tick <b>All</b>, and
     click <b>Update</b>. You should see a ✓ next to each table.</li>
@@ -205,7 +208,9 @@ workbook, they may still hold their information: replace every one with yours.</
 
 <p>The <b>Setup panel</b> parts: <b>1</b> whether your Canvas address and token are saved
 (never the token itself) and <b>Test connection</b>; <b>2</b> set or change them (a blank
-box keeps what's saved); <b>3</b> which course; <b>4</b> dry run, ON or OFF, with a button
+box keeps what's saved); <b>3</b> which course, with a link to ref_Config and a box to
+change the course number (if dry run is OFF, it asks first, since tools would then send
+changes to the new course; afterward, refresh the tables); <b>4</b> dry run, ON or OFF, with a button
 to switch it (turning it off asks first); <b>5</b> the setup check (missing tabs or named
 ranges). The same jobs are still in <span class="menu">Setup &amp; Data › Setup &amp;
 safety</span>, if you prefer the menu.</p>
@@ -690,8 +695,8 @@ a newer one, open the template and look at the version in its guide.</p>
 <h3>What's new</h3>
 
 <ul>
-  <li><b>2026-11-11b:</b> <b>Setup…</b> panel: token, connection test, which course, dry
-    run, and the setup check in one place.</li>
+  <li><b>2026-11-11b:</b> <b>Setup…</b> panel: token, connection test, which course (with
+    a box to change it), dry run, and the setup check in one place.</li>
   <li><b>2026-11-11:</b> <b>Refresh tables…</b> panel: tick the tables to refresh and
     click Update. Course check has its own box; click a name to open its tab. The
     one-table refresh items left the Setup &amp; Data menu (the panel does them).</li>

@@ -41,6 +41,13 @@
 >   panel; Setup & safety submenu kept for now (label checks stay menu-only). Messages
 >   that said "Set Canvas token" now point to Setup…. Guide: first-time setup, safety
 >   rules, troubleshooting, update steps, What's new; version **2026-11-11b**.
+>   **Pushed to Biology 11/11 8:39 PM (351458c); Lara: "Almost."** Round 2 (Lara): part 3
+>   gets an **Open ref_Config** link (`openSetupConfig`: unhides, selects cfg_CourseID)
+>   and **Change course** box + **Save course** (`saveSetupCourseId`: digits or a pasted
+>   `/courses/N` address; writes cfg_CourseID B4 as a number; refuses a formula cell;
+>   message gives the old number; asks first in the panel when dry run is OFF; then
+>   auto-runs Check course). cfg_CourseName (C4 formula over ref_CourseIDs) follows by
+>   itself; a `#N/A` name is hidden. Sheet write only, no Canvas write.
 >   **Next:** commit, push Biology, Lara tests, then the others; then decide whether to
 >   trim Setup & safety.
 > - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in

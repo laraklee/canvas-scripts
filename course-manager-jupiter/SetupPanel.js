@@ -4,18 +4,21 @@
  *   workbook is ready and fix it, instead of the Setup & safety menu items. Sections:
  *   Canvas connection (address, token saved or not, Test connection), set or change the
  *   token (saved by saveCanvasCredentialsFromPanel in Credentials.js), which course
- *   (cfg_CourseID, Check course), dry run (status, turn on/off), and the setup check
+ *   (cfg_CourseID, Check course, a link to ref_Config, and a box to change the course
+ *   number; Lara, 2026-11-11), dry run (status, turn on/off), and the setup check
  *   (missing tabs and named ranges; findSetupProblems_ in SetupCheck.js).
  *   - showSetupPanel (menu: Setup & Data › Setup…): opens SetupPanelPage.html.
- *   - getSetupStatus, testSetupConnection, checkSetupCourse, setDryRunFromPanel: called
- *     by the panel (google.script.run). They return plain objects and never throw.
+ *   - getSetupStatus, testSetupConnection, checkSetupCourse, saveSetupCourseId,
+ *     openSetupConfig, setDryRunFromPanel: called by the panel (google.script.run). They
+ *     return plain objects or text and never throw (openSetupConfig aside).
  *   The token is never sent to the panel: status says only whether one is saved.
  * Canvas endpoints called (GET, via canvasGet_): /api/v1/users/self (Test connection),
  *   /api/v1/courses/:course (Check course).
  * Canvas write operations: none.
  * Required User/Script Properties: reads User Properties CANVAS_BASE_URL and
  *   CANVAS_TOKEN (whether saved; never shown); reads and writes Script Property DRY_RUN.
- *   Named ranges cfg_CourseID and cfg_CourseName (shown if filled in).
+ *   Named ranges cfg_CourseID (read, and written by Save course) and cfg_CourseName
+ *   (shown if filled in).
  */
 
 const SETUP_PANEL_TITLE = 'Setup';
@@ -54,7 +57,9 @@ function getSetupStatus() {
     status.courseProblem = error.isSheetProblem ? error.message : 'cfg_CourseID could not be read.';
   }
   try {
-    status.courseName = String(getCfg_('CourseName'));
+    const name = String(getCfg_('CourseName')).trim();
+    // "#N/A" and the like: the course isn't on ref_CourseIDs yet.
+    if (!name.startsWith('#')) status.courseName = name;
   } catch {
     // Optional: the panel shows the course number alone.
   }
@@ -89,17 +94,84 @@ function checkSetupCourse() {
     const name = String((course && course.name) || '').trim() || '(no name)';
     const code = String((course && course.course_code) || '').trim();
     return { ok: true, message: `Canvas has "${name}"` + (code && code !== name ? ` (${code})` : '') +
-      `, course ${courseId}. If that's not the course you mean, change cfg_CourseID on ` +
-      `${SHEETS.CONFIG}.` };
+      `, course ${courseId}. If that's not the course you mean, change it below.` };
   } catch (error) {
     console.error('Setup panel: course check failed: ' + (error.canvasType || error.message));
     if (error.canvasType === 'NOT_FOUND' || error.canvasType === 'NOT_ALLOWED') {
-      return { ok: false, message: `${describeCanvasError_(error)} Check cfg_CourseID on ` +
-        `${SHEETS.CONFIG}: it should be the number in the course's Canvas address.` };
+      return { ok: false, message: `${describeCanvasError_(error)} Check the course number ` +
+        '(cfg_CourseID): it should be the number in the course\'s Canvas address. Change ' +
+        'it below.' };
     }
     return { ok: false, message: error.isSheetProblem ? error.message :
       describeCanvasError_(error) };
   }
+}
+
+/**
+ * The course number from what was typed: digits, or a Canvas course address
+ * (".../courses/12345/..."). '' if neither.
+ */
+function parseCourseIdInput_(text) {
+  const value = String(text || '').trim();
+  if (/^\d+$/.test(value)) return value;
+  const match = value.match(/\/courses\/(\d+)(?:[/?#]|$)/);
+  return match ? match[1] : '';
+}
+
+/**
+ * Called by the panel: Save course. Writes the course number into cfg_CourseID (ref_Config)
+ * and returns { ok, message, status }. Refuses if the cell holds a formula. The sheet's
+ * cfg_CourseName formula follows by itself (it looks the number up in ref_CourseIDs).
+ * Changes nothing in Canvas.
+ */
+function saveSetupCourseId(text) {
+  try {
+    const courseId = parseCourseIdInput_(text);
+    if (!courseId) {
+      return { ok: false, message: 'Type the course number, or paste the course\'s Canvas ' +
+        'address (it has /courses/ and the number in it). Nothing was changed.' };
+    }
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const range = ss.getRangeByName('cfg_CourseID');
+    if (!range) {
+      return { ok: false, message: 'The named range cfg_CourseID is missing (Data › Named ' +
+        'ranges). Nothing was changed.' };
+    }
+    const cell = range.getCell(1, 1);
+    if (cell.getFormula()) {
+      return { ok: false, message: 'cfg_CourseID holds a formula, so it was left alone. ' +
+        'Change it on ref_Config.' };
+    }
+    const before = String(cell.getValue()).replace(/\.0$/, '').trim();
+    if (before === courseId) {
+      return { ok: true, message: `Already course ${courseId}. Nothing was changed.`,
+        status: getSetupStatus() };
+    }
+    cell.setValue(Number(courseId));
+    SpreadsheetApp.flush(); // so cfg_CourseName's formula catches up before the status
+    console.log('Setup panel: cfg_CourseID changed.');
+    return { ok: true, message: `Changed to course ${courseId}` +
+      (before ? ` (was ${before})` : '') + '. Next: refresh the tables (Refresh tables…, All).',
+    status: getSetupStatus() };
+  } catch (error) {
+    console.error('Setup panel: course save failed: ' + error.message);
+    return { ok: false, message: 'Could not change cfg_CourseID. Nothing was changed.' };
+  }
+}
+
+/**
+ * Called by the panel's "Open ref_Config" link: shows ref_Config (unhiding it if needed)
+ * and selects cfg_CourseID. Returns '' or a short message for the panel.
+ */
+function openSetupConfig() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEETS.CONFIG);
+  if (!sheet) return `There is no ${SHEETS.CONFIG} tab.`;
+  if (sheet.isSheetHidden()) sheet.showSheet();
+  sheet.activate();
+  const range = ss.getRangeByName('cfg_CourseID');
+  if (range) range.activate();
+  return '';
 }
 
 /**
