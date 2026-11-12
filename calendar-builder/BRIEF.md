@@ -144,6 +144,15 @@ Does not call Canvas. No student data: both calendars are school schedules.
    "Add to my Google Calendar" always uses the official bell schedule, and the page says so
    (mixing a personal file into the sync could swap every class for a different copy).
 
+## Beta
+
+- **Beta 1 (deployed 11/11):** version 1, `clasp deploy -d "Beta 1"`, for two colleagues.
+  The `/exec` link and deployment ID are in the private notes repo. Testers get
+  `BETA-NOTE.md` (a draft message; paste the link in). The link stays on version 1: to send
+  a fix, `clasp push`, then `clasp deploy -i <deployment ID> -d "Beta 2"` (ask Lara first),
+  so the link doesn't change. The test deployment (`@HEAD`) is still Lara's for trying changes.
+- The beta should answer the faculty calendar question below: does card 4 load for others?
+
 ## Open questions
 
 - Bell schedule: read with CalendarApp (needs the teacher subscribed; the app could
