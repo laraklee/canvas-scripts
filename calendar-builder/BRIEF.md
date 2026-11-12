@@ -20,12 +20,17 @@ Does not call Canvas. No student data: both calendars are school schedules.
   **At the start of every work session, before reading or changing any code** (Lara,
   2026-11-11): `git pull`, make sure `git status` is clean, run `clasp pull` in this
   folder, then `git diff`. No differences = carry on. Differences = edits made in Google:
-  show Lara what changed, commit them as the other editor's change (or restore with
-  `git checkout` if she says so), and only then start work, so nothing is built on
-  out-of-date code.
+  show Lara what changed, then **save them on their own branch first** (Lara,
+  2026-11-11), so neither person's work is lost: `git switch -c
+  colleague-edits-YYYY-MM-DD`, commit the pulled files there as the other editor's
+  change, then `git switch main` (our version, unchanged). Lara then decides: merge the
+  branch (Git stops on lines both changed, and we go through those together), take only
+  some of the changes, or leave the branch for later. Only then start work, so nothing
+  is built on out-of-date code. Branches exist only in Git: Google holds one live copy,
+  so their changes must be committed before any `clasp push` replaces it.
   Also before every `clasp push`: commit, run `clasp pull`, then `git diff`. No differences =
-  push as usual. Differences = edits made in Google: show Lara, then commit them as the other
-  editor's change (or restore with `git checkout` if she says so) before pushing. Never push
+  push as usual. Differences = edits made in Google: show Lara, then save them on a branch
+  as above (restore `main` with `git checkout` only if she says so) before pushing. Never push
   over a diff without showing her.
 - Push from this folder with plain `clasp push` (ask Lara first). If clasp says "Skipping
   push", the manifest in Google differs; if the change is intended, add `--force` (the
