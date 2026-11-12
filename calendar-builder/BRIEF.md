@@ -131,7 +131,8 @@ Does not call Canvas. No student data: both calendars are school schedules.
      show a spinner, a running clock, "64 of 312 changes done (added 60, updated 4)" and a
      progress bar. The total starts from the preview and is corrected each round (done so
      far + what's left). A Google "slow down" pause shows a 30-second countdown.
-6. Keep the .ics download as a fallback. **Written 11/11, not yet pushed or tested.**
+6. Keep the .ics download as a fallback. **Done 11/11: pushed and tested** (Lara's real
+   schedule: 462 events, 311 classes and 151 school events, no line over 75 bytes).
    The file is now built on the server (`IcsExport.js`, `buildIcsFile`, read-only) from the
    same lists the sync uses (`classItems_`, `schoolEventItems_`), so the download and "Add to
    my Google Calendar" always agree, and the checked school events are in the file too.
