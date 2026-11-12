@@ -139,6 +139,10 @@ rows, section 6 steps and What's new; version **2026-11-12**.
 
 ## Clean-up list (not done; each one small, one at a time)
 
+**Lara, 11/12: don't suggest items 3–5.** The class won't go over about 35 students, so
+the first-page-only reads and per-student calls are fine. Revisit only if something
+actually breaks or gets slow.
+
 1. ~~Rename the token to `CANVAS_TOKEN`, base URL from User Properties~~ Done 11/12
    (Setup panel).
 2. ~~First 4 characters of the token shown~~ Done 11/12: the prompt is gone; the panel
