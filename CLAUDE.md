@@ -118,3 +118,22 @@ reviewable steps over large multi-file changes.
   change can be undone.
 - If testing in Google fails: fix it and commit again, or `git revert` the commit.
   Then `clasp push` again (after confirming with Lara) so Google matches.
+
+## To do (across projects)
+
+- **Refresh Canvas tokens and setup in the other Canvas projects (added 2026-11-11).**
+  Lara made new Canvas tokens on 11/11 and re-saved them in all four
+  `course-manager-jupiter/` workbooks (tested, all good). Still to do, workbook by
+  workbook, with that project's own menu (Lara does the saving; Claude never handles a
+  token):
+  - `assign-sheet/` (Biology, Gastronomy, AI9; template if it holds a token):
+    **Canvas Tools › ⚙️ Setup › Set Canvas token**, then **Test Canvas connection**.
+  - `gastronomy-badges/`: **Set API Key and Base URL**. Its clean-up list item 1
+    (rename to `CANVAS_TOKEN`) would make teachers re-enter the token anyway, so doing
+    that first means entering it only once.
+  - `course-manager/` (legacy, retired, never edited): nothing to change; just make sure
+    its old token is revoked.
+  - Afterward, revoke the old tokens in Canvas (Account › Settings › Approved
+    Integrations).
+  - Option, not decided: give `assign-sheet/` (and later `gastronomy-badges/`) the same
+    **Setup…** side panel as `course-manager-jupiter/` (`SetupPanel.js`).

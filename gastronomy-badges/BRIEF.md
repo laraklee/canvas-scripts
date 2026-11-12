@@ -3,6 +3,10 @@
 Script ID: `1qkZ-MH1xo1r83K9EZiaOq1rgo4cvp7WW7_wkViFbqdZ3h2bsFSmoqn7v`
 (the `MH1…` string without the `1qkZ-` prefix is a different ID and won't clone).
 
+> **TO DO (added 2026-11-11): re-save the new Canvas token** (Lara made new tokens on
+> 11/11) with Set API Key and Base URL. Doing clean-up item 1 below first (rename to
+> `CANVAS_TOKEN`) means entering it only once. See "To do" in the root CLAUDE.md.
+
 Pulls Gastronomy grades and "Etoilles" (star badge) points from Canvas into a roster
 sheet. A script bound to a Google Sheet; menu **Canvas Tools**. Read-only: no Canvas
 write calls, so no DRY_RUN setting is needed yet.
@@ -110,7 +114,9 @@ If that comes up again, the fix would be to skip assignments with
    API standard). Teachers would have to re-enter their token once, so it also needs a
    menu label check.
 2. `setUserProperties` shows the first 4 characters of the token in its prompt and
-   toast. Show only "set" / "not set".
+   toast. Show only "set" / "not set". (11/11: the first 4 are the school's shared
+   prefix, so they don't identify the token. course-manager-jupiter's Setup panel now
+   shows the **last 4 and the date saved**; ask Lara whether to match that instead.)
 3. One shared Canvas request helper with `Link`-header pagination and
    `X-Rate-Limit-Remaining` back-off. Today the enrollments call and the Etoilles
    submissions call each read only the first page (100), which is fine for one class.

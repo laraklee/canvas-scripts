@@ -5,6 +5,11 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
+> **TO DO (added 2026-11-11): re-save the new Canvas token** in each sheet (Biology,
+> Gastronomy, AI9; template if it holds one): Canvas Tools › ⚙️ Setup › Set Canvas
+> token, then Test Canvas connection. Lara made new tokens on 11/11. See "To do" in the
+> root CLAUDE.md.
+>
 > **DONE (2026-11-10): section dates (overrides) in Assignment Dates.** Live on all four
 > sheets (Biology, Gastronomy, AI9, template), code from `e4e4128`. History below.
 > **Paused 11/9 evening:** steps 1, 2, 2b, sorting, and gray rows are live on **Biology
