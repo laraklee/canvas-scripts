@@ -55,7 +55,12 @@
 >   when nothing is saved (part 1 says so); tools still use the teacher's saved
 >   `CANVAS_BASE_URL`. Address box now shows the saved address (not blank) and keeps it
 >   after Save. Guide: B2 row in the ref_Config table. **Check B2 holds the address in
->   each workbook and the template.**
+>   each workbook and the template.** Pushed to Biology 8:57 PM (ee18668).
+>   Round 4 (Lara: part 3 "kind of clunky"): one **Canvas course number** box filled in
+>   from B4 with a line telling the teacher to change it if needed, then **Save course**
+>   and the Open ref_Config link. The Check course button and the separate "works in"
+>   line are gone: Canvas's name for the course is fetched by itself when the panel
+>   opens (once credentials are saved) and after each save, and shown under the box.
 >   **Next:** commit, push Biology, Lara tests, then the others; then decide whether to
 >   trim Setup & safety.
 > - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in

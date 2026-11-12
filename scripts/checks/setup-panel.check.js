@@ -85,8 +85,7 @@ check('test connection: error type message only', c.testSetupConnection(),
   { ok: false, message: 'Not connected. Canvas did not accept your token (401).' });
 canvasAnswer = { name: 'Biology', course_code: 'BIO-P3' };
 check('check course: shows Canvas name and code', c.checkSetupCourse().message,
-  'Canvas has "Biology" (BIO-P3), course 12345. If that\'s not the course you mean, ' +
-  'change it below.');
+  'Canvas has "Biology" (BIO-P3), course 12345.');
 canvasAnswer = canvasError('NOT_FOUND', 'Canvas could not find what was asked for (404).');
 const notFound = c.checkSetupCourse();
 check('check course: not found points to cfg_CourseID',

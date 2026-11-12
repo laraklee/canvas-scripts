@@ -199,11 +199,11 @@ workbook, they may still hold their information: replace every one with yours.</
     them. (Make a token in Canvas: <b>Account › Settings › Approved Integrations › + New
     Access Token</b>. Canvas shows it only once.) The panel then tests the connection: it
     should say <b>Connected</b>.</li>
-  <li>In part <b>3</b>, click <b>Check course</b>. It shows the Canvas course that
-    <code>cfg_CourseID</code> points to; make sure it's the one you mean to work in. To
-    change it, type the course number (or paste the course's Canvas address) in
-    <b>Change course</b> and click <b>Save course</b>; the panel checks the new course
-    straight away. <b>Open ref_Config</b> jumps to the cell.</li>
+  <li>Part <b>3</b> shows the course number from ref_Config B4 (<code>cfg_CourseID</code>)
+    and, under it, Canvas's name for that course. If it's not the course you mean to work
+    in, type the right number (or paste the course's Canvas address) and click <b>Save
+    course</b>; the new course's name appears straight away. <b>Open ref_Config</b> jumps
+    to the cell.</li>
   <li>Part <b>5</b> should say <b>Setup OK</b>.</li>
   <li><span class="menu">Setup &amp; Data › Refresh tables…</span>, tick <b>All</b>, and
     click <b>Update</b>. You should see a ✓ next to each table.</li>
@@ -682,7 +682,8 @@ anything else typed on the tab is replaced.</p>
     <span class="menu">Setup &amp; Data › Setup…</span> (part 2). The panel tests it
     when you save.</td></tr>
   <tr><td>Not allowed (403)</td><td>Your Canvas account can't do that in this course.
-    Check <code>cfg_CourseID</code> (<b>Check course</b> in the Setup panel).</td></tr>
+    Check <code>cfg_CourseID</code> (part 3 of the Setup panel shows which course it
+    is).</td></tr>
   <tr><td>Canvas is busy</td><td>Wait a minute and try again.</td></tr>
   <tr><td>No <b>Canvas Tools</b> menu</td><td>Reload the page; wait a few
     seconds.</td></tr>

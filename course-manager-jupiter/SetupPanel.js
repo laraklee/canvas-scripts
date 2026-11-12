@@ -4,16 +4,17 @@
  *   workbook is ready and fix it, instead of the Setup & safety menu items. Sections:
  *   Canvas connection (address, token saved or not, Test connection), set or change the
  *   token (saved by saveCanvasCredentialsFromPanel in Credentials.js), which course
- *   (cfg_CourseID, Check course, a link to ref_Config, and a box to change the course
- *   number; Lara, 2026-11-11), dry run (status, turn on/off), and the setup check
- *   (missing tabs and named ranges; findSetupProblems_ in SetupCheck.js).
+ *   (one box filled in from cfg_CourseID to change it, Canvas's name for the course
+ *   fetched by itself, and a link to ref_Config; Lara, 2026-11-11), dry run (status,
+ *   turn on/off), and the setup check (missing tabs and named ranges;
+ *   findSetupProblems_ in SetupCheck.js).
  *   - showSetupPanel (menu: Setup & Data › Setup…): opens SetupPanelPage.html.
  *   - getSetupStatus, testSetupConnection, checkSetupCourse, saveSetupCourseId,
  *     openSetupConfig, setDryRunFromPanel: called by the panel (google.script.run). They
  *     return plain objects or text and never throw (openSetupConfig aside).
  *   The token is never sent to the panel: status says only whether one is saved.
  * Canvas endpoints called (GET, via canvasGet_): /api/v1/users/self (Test connection),
- *   /api/v1/courses/:course (Check course).
+ *   /api/v1/courses/:course (the course's name, when the panel opens and after a save).
  * Canvas write operations: none.
  * Required User/Script Properties: reads User Properties CANVAS_BASE_URL and
  *   CANVAS_TOKEN (whether saved; never shown); reads and writes Script Property DRY_RUN.
@@ -105,8 +106,8 @@ function testSetupConnection() {
 }
 
 /**
- * Called by the panel: Check course. Reads the cfg_CourseID course from Canvas and
- * returns { ok, message } with its name and code, or why it couldn't be read.
+ * Called by the panel when it opens and after a save. Reads the cfg_CourseID course from
+ * Canvas and returns { ok, message } with its name and code, or why it couldn't be read.
  */
 function checkSetupCourse() {
   try {
@@ -114,14 +115,14 @@ function checkSetupCourse() {
     const course = canvasGet_('/courses/' + courseId);
     const name = String((course && course.name) || '').trim() || '(no name)';
     const code = String((course && course.course_code) || '').trim();
-    return { ok: true, message: `Canvas has "${name}"` + (code && code !== name ? ` (${code})` : '') +
-      `, course ${courseId}. If that's not the course you mean, change it below.` };
+    const shownCode = code && code !== name ? ` (${code})` : '';
+    return { ok: true, message: `Canvas has "${name}"${shownCode}, course ${courseId}.` };
   } catch (error) {
     console.error('Setup panel: course check failed: ' + (error.canvasType || error.message));
     if (error.canvasType === 'NOT_FOUND' || error.canvasType === 'NOT_ALLOWED') {
       return { ok: false, message: `${describeCanvasError_(error)} Check the course number ` +
         '(cfg_CourseID): it should be the number in the course\'s Canvas address. Change ' +
-        'it below.' };
+        'it above.' };
     }
     return { ok: false, message: error.isSheetProblem ? error.message :
       describeCanvasError_(error) };
