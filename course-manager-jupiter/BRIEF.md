@@ -4,7 +4,7 @@
 >
 > - **Refresh tables panel built 11/11 (PC), not yet pushed.** Lara: a friendlier way to
 >   refresh. **Setup & Data › Refresh tables…** opens a side panel (`RefreshPanel.js`,
->   `RefreshPanel.html`): a checkbox per table, **All** (the five Refresh-all tables;
+>   `RefreshPanelPage.html`): a checkbox per table, **All** (the five Refresh-all tables;
 >   never Jupiter categories, which sits apart at the bottom), and **Update**, which runs
 >   one server call per table and shows ✓/✗ with counts next to each. Read-only. The
 >   table list (`refreshTableList_`) is now shared with Refresh all tables; Jupiter's

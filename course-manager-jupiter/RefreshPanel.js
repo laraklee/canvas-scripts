@@ -5,7 +5,8 @@
  *   menu items. Also holds the one list of refreshable tables, shared with Refresh all
  *   tables (Menus.js). Jupiter categories are in the panel but never in "All" (Lara
  *   refreshes them by hand while looking at ref_Config).
- *   - showRefreshPanel (menu: Setup & Data › Refresh tables…): opens RefreshPanel.html.
+ *   - showRefreshPanel (menu: Setup & Data › Refresh tables…): opens RefreshPanelPage.html
+ *     (not RefreshPanel.html: Apps Script drops extensions, so the names must differ).
  *   - getRefreshTables, refreshTableFromPanel: called by the panel (google.script.run).
  *     One call per table, so each gets its own 6-minute run. Returns counts only.
  * Canvas endpoints called: those of the refreshes (all GET; see RefSheets.js and
@@ -49,7 +50,7 @@ function refreshTableList_() {
 
 /** Menu: Setup & Data › Refresh tables…. Opens the panel on the right. */
 function showRefreshPanel() {
-  const html = HtmlService.createHtmlOutputFromFile('RefreshPanel').setTitle(REFRESH_PANEL_TITLE);
+  const html = HtmlService.createHtmlOutputFromFile('RefreshPanelPage').setTitle(REFRESH_PANEL_TITLE);
   SpreadsheetApp.getUi().showSidebar(html);
 }
 
