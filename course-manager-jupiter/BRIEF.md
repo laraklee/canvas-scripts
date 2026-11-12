@@ -30,7 +30,7 @@
 >   the panel. **Live in all four workbooks 11/11 (37499d0):** Biology 8:22 PM, then AI9,
 >   Gastronomy, template 8:24 PM (Lara: "push to the other 3"; no manifest change). A
 >   read-only `clasp clone` of each matched Git exactly (29 files).
-> - **Setup panel built 11/11 (PC), not yet committed or pushed.** **Setup & Data ›
+> - **Setup panel built 11/11 (PC); live everywhere 11/11 (see end of this item).** **Setup & Data ›
 >   Setup…** (`SetupPanel.js`, `SetupPanelPage.html`): (1) address saved?, token saved?
 >   (never the token), Test connection; (2) address + token boxes (password field,
 >   cleared on Save; blank keeps what's saved) → `saveCanvasCredentialsFromPanel` in
@@ -68,6 +68,11 @@
 >   New User Property `CANVAS_TOKEN_SAVED` (ISO time, written by both save paths via
 >   `saveToken_`); tokens saved before 11/11 show the hint with no date until re-saved.
 >   "Never shown" comments now say "except its last 4 characters, to its owner".
+>   **Live in all four workbooks 11/11 (692eba5):** Biology 9:07 PM (Lara: "Works"),
+>   then AI9, Gastronomy, template 9:10 PM (no manifest change). A read-only `clasp
+>   clone` of each matched Git exactly (31 files). **Still to do:** Lara checks
+>   ref_Config B2 holds the school's Canvas address in the template (and the others);
+>   decide whether to trim the Setup & safety submenu now that the panel covers it.
 >   **Next:** commit, push Biology, Lara tests, then the others; then decide whether to
 >   trim Setup & safety.
 > - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in
