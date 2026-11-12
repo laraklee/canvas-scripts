@@ -92,6 +92,9 @@ reviewable steps over large multi-file changes.
 ## Workflow
 
 - Work inside one project subfolder at a time.
+- **`calendar-builder/` has another editor in Google** (the only project that does).
+  Before starting any work there, compare Google with Git (`clasp pull`, then `git
+  diff`) and show Lara any differences; its BRIEF has the steps.
 - Before working in a project folder, read its `BRIEF.md` if it has one. The brief
   adds project-specific rules and decisions; if it ever conflicts with this file,
   this file wins.

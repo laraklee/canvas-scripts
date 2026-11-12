@@ -17,7 +17,13 @@ Does not call Canvas. No student data: both calendars are school schedules.
 - Script ID: `1NRaFfistbupSsmqwS1hucP0YNaUhMa6g6UVrgbKuhSgWA8ePDRuyKN9J` (standalone,
   "Faculty Calendar Builder (pilot)", in Lara's account; created 2026-11-10)
 - **Another editor may change the script in Google** (the original author, once shared).
-  So before every `clasp push`: commit, run `clasp pull`, then `git diff`. No differences =
+  **At the start of every work session, before reading or changing any code** (Lara,
+  2026-11-11): `git pull`, make sure `git status` is clean, run `clasp pull` in this
+  folder, then `git diff`. No differences = carry on. Differences = edits made in Google:
+  show Lara what changed, commit them as the other editor's change (or restore with
+  `git checkout` if she says so), and only then start work, so nothing is built on
+  out-of-date code.
+  Also before every `clasp push`: commit, run `clasp pull`, then `git diff`. No differences =
   push as usual. Differences = edits made in Google: show Lara, then commit them as the other
   editor's change (or restore with `git checkout` if she says so) before pushing. Never push
   over a diff without showing her.
