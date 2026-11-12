@@ -131,8 +131,6 @@ reviewable steps over large multi-file changes.
   - `gastronomy-badges/`: **Set API Key and Base URL**. Its clean-up list item 1
     (rename to `CANVAS_TOKEN`) would make teachers re-enter the token anyway, so doing
     that first means entering it only once.
-  - `course-manager/` (legacy, retired, never edited): nothing to change; just make sure
-    its old token is revoked.
   - Afterward, revoke the old tokens in Canvas (Account › Settings › Approved
     Integrations).
   - Option, not decided: give `assign-sheet/` (and later `gastronomy-badges/`) the same
