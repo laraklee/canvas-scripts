@@ -39,7 +39,7 @@ const JUPITER_CATEGORY_HEADERS = Object.freeze(['Canvas category', 'Export to Ju
   'Canvas group ID']);
 
 /**
- * Menu (and Config button): Course Manager › Refresh Jupiter categories.
+ * Config button: Refresh Jupiter categories (off the menu since 2026-11-11; the panel covers it).
  * Nothing changes unless Canvas answers with at least one assignment group.
  */
 function refreshJupiterCategories() {
@@ -156,7 +156,8 @@ function createActiveSheetRoster() {
       ['Section ID', 'User ID', 'Sorted Name', 'Role', 'Email']),
     readRefTable_(ss, SHEETS.SECTION_LOOKUP, ['Section ID', 'Section Name', 'Period']));
     if (!rows.length) {
-      throw sheetProblem_(`${SHEETS.PEOPLE_LIST} has no students. Run Refresh people list.`);
+      throw sheetProblem_(`${SHEETS.PEOPLE_LIST} has no students. Use Setup & Data › ` +
+        'Refresh tables… and tick People list.');
     }
 
     const lastRow = Math.max(sheet.getLastRow(), ROSTER_FIRST_ROW + rows.length - 1);
@@ -410,7 +411,8 @@ function checkGradingSheet_(sheet) {
  */
 function readRefTable_(ss, sheetName, headers) {
   const sheet = ss.getSheetByName(sheetName);
-  if (!sheet) throw sheetProblem_(`${sheetName} is missing. Refresh it from the menu first.`);
+  if (!sheet) throw sheetProblem_(`${sheetName} is missing. Refresh it first (Setup & Data › ` +
+    'Refresh tables…).');
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
   const values = sheet.getRange(1, 1, lastRow, sheet.getLastColumn()).getValues();
@@ -545,7 +547,8 @@ function readJupiterAllowed_(ss) {
   }
   if (!allowed.ids.size && !allowed.names.size) {
     throw sheetProblem_(`Tick at least one category in ${JUPITER_CATEGORY_RANGE} ` +
-      `(${SHEETS.CONFIG}), or run Refresh Jupiter categories.`);
+      `(${SHEETS.CONFIG}), or refresh them (Setup & Data › Refresh tables…, tick Jupiter ` +
+      'categories).');
   }
   return allowed;
 }

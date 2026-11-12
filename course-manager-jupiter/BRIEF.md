@@ -20,7 +20,14 @@
 >   assignment groups still updates Course Check as before. (2) Each **name is a link**
 >   (`showRefreshTableTab`): unhides and opens the tab; Jupiter selects
 >   cfg_JupiterCategories on ref_Config; missing tab → message in the panel.
->   **Next:** commit, push Biology, Lara tests, then AI9, Gastronomy, template.
+>   **Pushed to Biology 11/11 8:15 PM (4e60c07); Lara: "basically like that".** Kept
+>   Jupiter categories out of All (Lara agreed 11/11: a refresh brings new Canvas groups
+>   in unticked, so a silent refresh could stop grades going to Jupiter).
+>   **Round 3 (11/11, Lara):** the six one-table refresh items left the Setup & Data menu
+>   (panel covers them); menu is now Refresh tables…, Refresh all tables, Setup &
+>   safety. Functions kept (Home "Refresh sheet index" and ref_Config "Refresh Jupiter
+>   categories" buttons). Messages that said "Run Refresh people list" etc. now point to
+>   the panel. **Next:** commit, push Biology, Lara tests, then AI9, Gastronomy, template.
 > - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in
 >   Biology ("looks fine so far"); guide's "Being built" removed; pushed AI9, Gastronomy,
 >   then template (no manifest change). Live Quiz report and export-file report stay off

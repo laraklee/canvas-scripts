@@ -83,14 +83,10 @@ function buildMenus_() {
   ui.createMenu('Setup & Data')
     .addItem('Refresh tables…', 'showRefreshPanel')
     .addItem('Refresh all tables', 'refreshAllTables')
-    .addSeparator()
-    .addItem('Refresh course list', 'refreshCourseList')
-    .addItem('Refresh people list', 'refreshPeopleList')
-    .addItem('Refresh assignment groups', 'refreshAssignmentGroups')
-    .addItem('Refresh section list', 'refreshSectionList')
-    .addItem('Refresh sheet index', 'refreshSheetIndex')
-    .addSeparator()
-    .addItem('Refresh Jupiter categories (check ref_Config after)', 'refreshJupiterCategories')
+    // The one-table refreshes (refreshCourseList, refreshPeopleList,
+    // refreshAssignmentGroups, refreshSectionList, refreshSheetIndex,
+    // refreshJupiterCategories) left the menu on 2026-11-11 (Lara): the panel covers them.
+    // The functions stay, for the Home and ref_Config buttons.
     .addSeparator()
     .addSubMenu(ui.createMenu('Setup & safety')
       .addItem('Set Canvas token', 'setCanvasCredentials')

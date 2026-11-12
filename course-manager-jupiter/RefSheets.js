@@ -56,7 +56,7 @@ const SECTION_LOOKUP_HEADERS = Object.freeze(['Section ID', 'Section Name', 'Per
   'Section ID Copy']);
 
 /**
- * Menu: Course Manager › Refresh course list.
+ * Refresh course list (off the menu since 2026-11-11; the panel covers it).
  * Replaces ref_CourseIDs columns A:B with your active teacher courses from Canvas,
  * sorted by name, and stamps the time in CourseIDs_LastRefreshed.
  * Nothing on the sheet changes unless Canvas answers successfully.
@@ -102,7 +102,7 @@ function writeCourseListSheet_(ss) {
 }
 
 /**
- * Menu: Course Manager › Refresh people list.
+ * Refresh people list (off the menu since 2026-11-11; the panel covers it).
  * Replaces ref_peopleList columns A:I with one row per enrollment (all types, active
  * or invited) in the cfg_CourseID course, sorted by Sorted Name, with the legacy
  * Last Name / First Name formulas in H:I. Stamps PeopleList_LastRefreshed.
@@ -175,7 +175,7 @@ function writePeopleListSheet_(ss) {
 }
 
 /**
- * Menu: Course Manager › Refresh assignment groups.
+ * Refresh assignment groups (off the menu since 2026-11-11; the panel covers it).
  * Replaces ref_assignmentGroups columns A:G with one row per assignment in the
  * cfg_CourseID course (ported from legacy createAssignmentGroupsList), sorted by group
  * order and then position. Stamps AssignmentGroups_LastRefreshed.
@@ -275,7 +275,8 @@ function latestDueAt_(assignment) {
 function readAssignmentGroups_() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ASSIGNMENT_GROUPS);
   if (!sheet) {
-    throw sheetProblem_(`${SHEETS.ASSIGNMENT_GROUPS} is missing. Run Refresh assignment groups.`);
+    throw sheetProblem_(`${SHEETS.ASSIGNMENT_GROUPS} is missing. Use Setup & Data › ` +
+      'Refresh tables… and tick Assignment groups.');
   }
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
@@ -285,7 +286,7 @@ function readAssignmentGroups_() {
     const index = header.indexOf(name);
     if (index === -1) {
       throw sheetProblem_(`${SHEETS.ASSIGNMENT_GROUPS} has no "${name}" column. ` +
-        'Run Refresh assignment groups.');
+        'Use Setup & Data › Refresh tables… and tick Assignment groups.');
     }
     return index;
   };
@@ -313,7 +314,7 @@ function readAssignmentGroups_() {
 }
 
 /**
- * Menu: Course Manager › Refresh section list.
+ * Refresh section list (off the menu since 2026-11-11; the panel covers it).
  * Replaces ref_SectionLookup columns A:D with every section in the cfg_CourseID course
  * (ported from legacy createSectionLookup, which asked for each section one at a time
  * and only listed sections that had people in them). Sorted by period, then name;

@@ -20,7 +20,7 @@ const INDEX_STRIPE_EVEN = '#FFFFFF';
 const INDEX_STRIPE_ODD = '#FFF2CC';
 
 /**
- * Menu (and Home button): Course Manager › Refresh sheet index.
+ * Home button: Refresh sheet index (off the menu since 2026-11-11; the panel covers it).
  * Rebuilds ref_Index and updates cfg_ThisSheetID.
  */
 function refreshSheetIndex() {

@@ -285,18 +285,18 @@ stays open, so you can tick others and update again.</p>
     ref_Config.</li>
 </ul>
 
-<p>The menu items below do the same jobs, if you prefer them:</p>
-
 <table>
-  <tr><th>Menu item</th><th>Use it when</th></tr>
-  <tr><td>Refresh all tables</td><td>Start of a session, or after changes in Canvas (new
+  <tr><th>Refresh</th><th>When</th></tr>
+  <tr><td><b>All</b></td><td>Start of a session, or after changes in Canvas (new
     students, sections, assignments).</td></tr>
-  <tr><td>Refresh course list / people list / assignment groups / section list / sheet
-    index</td><td>Just one table needs updating.</td></tr>
-  <tr><td>Refresh Jupiter categories</td><td>Canvas assignment groups changed. Then check
-    the ticks on ref_Config (ticked = exported to Jupiter). It's not part of Refresh all
-    (or All in the panel), on purpose.</td></tr>
+  <tr><td>One table</td><td>Just that table needs updating.</td></tr>
+  <tr><td><b>Jupiter categories</b></td><td>Canvas assignment groups changed. Then check
+    the ticks on ref_Config (ticked = exported to Jupiter).</td></tr>
 </table>
+
+<p><b>Without the panel:</b> <span class="menu">Setup &amp; Data › Refresh all
+tables</span> does the same as ticking <b>All</b> and clicking Update, with one summary at
+the end.</p>
 
 <p><b>Reference tabs hide themselves.</b> After a refresh, ref_CourseIDs, ref_peopleList,
 ref_assignmentGroups, and ref_SectionLookup are hidden to keep them out of the way, unless
@@ -684,7 +684,8 @@ a newer one, open the template and look at the version in its guide.</p>
 
 <ul>
   <li><b>2026-11-11:</b> <b>Refresh tables…</b> panel: tick the tables to refresh and
-    click Update. Course check has its own box; click a name to open its tab.</li>
+    click Update. Course check has its own box; click a name to open its tab. The
+    one-table refresh items left the Setup &amp; Data menu (the panel does them).</li>
   <li><b>2026-11-10:</b> Version label and this section added to the guide.</li>
   <li><b>2026-11-09:</b> Quiz Check (course export): an overview tab of every quiz, a
     detailed report for one quiz, and quiz names that link to Canvas.</li>
@@ -703,7 +704,8 @@ stays as it is until you're done, so nothing is lost.</p>
     including <code>cfg_SeatingDeckID</code> if you use the seating chart.</li>
   <li>Run <b>Set Canvas token</b> and <b>Test Canvas connection</b>. A new copy needs your
     token again: it isn't carried over.</li>
-  <li>Run <b>Refresh all tables</b>, then <b>Refresh Jupiter categories</b>, and tick the
+  <li>Open <b>Refresh tables…</b>, tick <b>All</b> and <b>Jupiter categories</b>, click
+    <b>Update</b>, and tick the
     same categories on ref_Config as in your old workbook. Then run <b>Check
     setup</b>.</li>
   <li>Bring your work over from the old workbook:
