@@ -1,11 +1,14 @@
 
 /**
- * 00_Config.gs
- * This file contains the core setup and configuration functions for the Course Manager.
- * It is responsible for creating the custom menu, reading static settings from the *Config* sheet,
- * and securely handling the Canvas API key.
- *
- * NOTE: This version uses the advanced, two-tiered menu structure.
+ * 00_Config.js
+ * Purpose: the Canvas Tools menu (onOpen), the user guide side panel, and getConfig(),
+ *   which reads the *Config* tab. The Canvas address and token live in each teacher's
+ *   User Properties (Credentials.js) and are set in the Setup panel (SetupPanel.js,
+ *   Canvas Tools › Setup…, 2026-11-12; it replaced "1. Set API Key and Base URL").
+ * Canvas endpoints called: none.
+ * Canvas write operations: none.
+ * Required User/Script Properties: User Property CANVAS_BASE_URL (through
+ *   getCanvasBaseUrl_ in Credentials.js).
  */
 
 /**
@@ -22,8 +25,8 @@ function onOpen() {
   ui.createMenu('Canvas Tools')
     .addItem('Update Etoilles', 'syncRosterGradesAndEtoilles')
     .addSeparator()
-    .addItem('1. Set API Key and Base URL', 'setUserProperties')
-    .addItem('2. Run FULL Data Refresh (Master Setup)', 'runFullDataRefresh')
+    .addItem('Setup…', 'showSetupPanel')
+    .addItem('Run FULL Data Refresh', 'runFullDataRefresh')
     .addSeparator()
     .addItem('User guide', 'showUserGuide')
     .addToUi();
@@ -64,8 +67,9 @@ function getConfig() {
 
   var config = {};
 
-  // Canvas & User Settings (Based on your *Config* CSV)
-  config.BASE_URL = sheet.getRange("B2").getValue();
+  // Canvas address: this teacher's own saved one (Credentials.js; 2026-11-12). *Config*
+  // B2 only fills it in the first time.
+  config.BASE_URL = getCanvasBaseUrl_();
   config.CANVAS_USER_ID = sheet.getRange("B3").getValue();
   config.COURSE_ID = sheet.getRange("B4").getValue();
 
@@ -79,49 +83,4 @@ function getConfig() {
 
   config.ENCYCLOPEDIA_ID = sheet.getRange("B12").getValue();
   return config;
-}
-
-/**
- * Prompts the user for the Canvas API Key and securely stores it using PropertiesService.
- */
-function setUserProperties() {
-  var ui = SpreadsheetApp.getUi();
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var userProperties = PropertiesService.getUserProperties();
-  var config = getConfig();
-  var currentApiKey = userProperties.getProperty('CANVAS_API_KEY');
-  var baseUrl = config.BASE_URL;
-
-  // Prepare status message for the current key
-  var currentKeyDisplay = currentApiKey 
-    ? (currentApiKey.substring(0, 4) + '...') 
-    : 'NOT SET';
-
-  var promptMessage = 
-    'Your current Base URL is: ' + baseUrl + '\n' +
-    'The currently stored API Key starts with: ' + currentKeyDisplay + '\n\n' +
-    'Please enter the new Canvas API Access Token (Personal Key) below, or click CANCEL to keep the current key:';
-
-  var result = ui.prompt(
-      'Canvas API Key Setup',
-      promptMessage,
-      ui.ButtonSet.OK_CANCEL
-  );
-
-  if (result.getSelectedButton() == ui.Button.OK) {
-    var token = result.getResponseText();
-    if (token) {
-      PropertiesService.getUserProperties().setProperty('CANVAS_API_KEY', token);
-      
-      var newKeyDisplay = token.substring(0, 4) + '...';
-      var successMessage = 
-        'Success! API Key has been stored securely.\n\n' +
-        'BASE URL: ' + baseUrl + '\n' +
-        'SAVED KEY STARTS WITH: ' + newKeyDisplay;
-        
-      ss.toast(successMessage, 'API Key Saved (Success)', 8);
-    } else {
-      ss.toast('No key was entered. The API Key was not updated.', 'API Key Setup (Warning)', 8);
-    }
-  }
 }

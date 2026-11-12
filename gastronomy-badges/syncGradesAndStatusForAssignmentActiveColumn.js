@@ -13,7 +13,7 @@ function syncGradesAndStatusForAssignmentActiveColumn() {
 
   var config = getConfig();
   var baseUrl = String(config.BASE_URL || '').replace(/\/$/, '');
-  var apiKey = PropertiesService.getUserProperties().getProperty('CANVAS_API_KEY');
+  var apiKey = getCanvasToken_(); // Credentials.js
   var courseId = String(config.COURSE_ID || '').trim();
 
   var activeCol = sheet.getActiveCell().getColumn();
@@ -34,8 +34,8 @@ function syncGradesAndStatusForAssignmentActiveColumn() {
 
   if (!baseUrl || !apiKey || !courseId) {
     ss.toast(
-      'Base URL, API key, or Course ID is missing. Check configuration.',
-      '🚨 Configuration Error',
+      courseId ? missingSetupMessage_() : 'No course number in *Config* B4. Open Canvas Tools › Setup….',
+      '🚨 Setup needed',
       8
     );
     return;

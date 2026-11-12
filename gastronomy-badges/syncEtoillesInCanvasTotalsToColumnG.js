@@ -35,7 +35,7 @@ function syncEtoillesInCanvasTotalsToColumnG() {
   var config = getConfig();
   var baseUrl = String(config.BASE_URL || '').replace(/\/$/, '');
   var courseId = String(config.COURSE_ID || '').trim();
-  var apiKey = PropertiesService.getUserProperties().getProperty('CANVAS_API_KEY');
+  var apiKey = getCanvasToken_(); // Credentials.js
 
   if (rosterSheet.getName() === '*assignmentGroups*') {
     ss.toast(
@@ -48,8 +48,8 @@ function syncEtoillesInCanvasTotalsToColumnG() {
 
   if (!baseUrl || !courseId || !apiKey) {
     ss.toast(
-      'Base URL, Course ID, or Canvas API key is missing.',
-      '🚨 Configuration Error',
+      courseId ? missingSetupMessage_() : 'No course number in *Config* B4. Open Canvas Tools › Setup….',
+      '🚨 Setup needed',
       8
     );
     return;

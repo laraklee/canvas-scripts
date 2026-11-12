@@ -124,26 +124,18 @@ reviewable steps over large multi-file changes.
 
 ## To do (across projects)
 
-- **Refresh Canvas tokens and setup in the other Canvas projects (added 2026-11-11).**
-  Lara made new Canvas tokens on 11/11 and re-saved them in all four
-  `course-manager-jupiter/` workbooks (tested, all good). Still to do, workbook by
-  workbook, with that project's own menu (Lara does the saving; Claude never handles a
-  token):
-  - `assign-sheet/` (Biology, Gastronomy, AI9; template if it holds a token):
-    **Canvas Tools › ⚙️ Setup › Set Canvas token**, then **Test Canvas connection**.
-  - `gastronomy-badges/`: **Set API Key and Base URL**. Its clean-up list item 1
-    (rename to `CANVAS_TOKEN`) would make teachers re-enter the token anyway, so doing
-    that first means entering it only once.
-  - Afterward, revoke the old tokens in Canvas (Account › Settings › Approved
-    Integrations).
+- **Refresh Canvas tokens (added 2026-11-11).** Lara made new tokens on 11/11 and
+  re-saved them in every workbook (Jupiter 11/11; assign-sheet and gastronomy-badges by
+  11/12). Still to do: revoke the old tokens in Canvas (Account › Settings › Approved
+  Integrations), if Lara hasn't already.
 - **Setup side panels for the other projects (added 2026-11-11).** Model:
   `course-manager-jupiter/`'s **Setup & Data › Setup…** (`SetupPanel.js`,
   `SetupPanelPage.html`; see its BRIEF). Same way of working: Biology first, Lara tests,
   then the other workbooks; guide updated in the same commit.
   - `assign-sheet/`: a **Setup…** panel (token with last 4 + date saved, connection
     test, dry run, which course), replacing the trip through its ⚙️ Setup menu items.
-  - `gastronomy-badges/`: a **Setup…** panel, done together with its clean-up item 1
-    (rename to `CANVAS_TOKEN`, base URL from User Properties) so teachers re-enter
-    their token only once.
+  - `gastronomy-badges/`: **built 11/12, not pushed yet** (Canvas Tools › Setup…; its
+    clean-up items 1 and 2 done with it; old `CANVAS_API_KEY` token moves over by
+    itself, so nobody re-enters it). See the top of its BRIEF.
   - `anonymize-submissions/` (no Canvas calls): a small setup panel for its three
     passphrase items (Set, Check, Show my passphrase).

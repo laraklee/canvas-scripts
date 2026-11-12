@@ -8,15 +8,14 @@ function createPeopleList() {
   var ui = SpreadsheetApp.getUi();
 
   // IMPORTANT: Assume getConfig() is robust enough to pull correct keys.
-  var userProperties = PropertiesService.getUserProperties();
-  var canvasApiToken = userProperties.getProperty('CANVAS_API_KEY');
+  var canvasApiToken = getCanvasToken_(); // Credentials.js
   var config = getConfig();
   // NOTE: Corrected Config property name to match 00_Config.gs style (COURSE_ID)
   var baseUrl = config.BASE_URL; 
   var courseId = config.COURSE_ID; 
 
   if (!canvasApiToken || !baseUrl || !courseId) {
-    ss.toast("Error: Missing API Key/Course ID.", "Fatal Error", 5);
+    ss.toast(courseId ? missingSetupMessage_() : 'No course number in *Config* B4. Open Canvas Tools › Setup….', 'Setup needed', 8);
     return;
   }
 

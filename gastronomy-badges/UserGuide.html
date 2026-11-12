@@ -94,7 +94,7 @@
 
 <h1>Gastronomy Badges — User Guide</h1>
 
-<p class="version">Version 2026-11-10. See <b>6. What's new and getting updates</b>.</p>
+<p class="version">Version 2026-11-12. See <b>6. What's new and getting updates</b>.</p>
 
 <p>For teachers using the Gastronomy badges sheet (or a copy of it). It pulls scores and
 <b>Etoilles</b> (star badge) points from Canvas into a roster tab, so you can see each
@@ -136,15 +136,24 @@ who can edit the sheet cannot see it, and it is never written on the sheet.</p>
   <li>In Canvas, go to <b>Account › Settings</b>, scroll to <b>Approved Integrations</b>,
     and click <b>+ New Access Token</b>. Give it a purpose (for example "Gastronomy
     badges") and copy the token. Canvas only shows it once.</li>
-  <li>In the sheet: <span class="menu">Canvas Tools › 1. Set API Key and Base URL</span>.</li>
-  <li>The box shows the Canvas web address from <i>Config</i> B2 and whether a key is
-    already saved. Paste the token and click <b>OK</b>. (Click <b>Cancel</b> to keep the
-    saved one.)</li>
-  <li>A message in the bottom-right corner says <b>API Key Saved (Success)</b>.</li>
+  <li>In the sheet: <span class="menu">Canvas Tools › Setup…</span>. The <b>Setup</b>
+    panel opens on the right.</li>
+  <li>In part <b>2. Set or change your token</b>, check the Canvas address (it's filled in
+    from <i>Config</i> B2), paste the token, and click <b>Save</b>.</li>
+  <li>The panel tests the connection by itself. Part <b>1. Canvas connection</b> should
+    show <b>✓ Connected.</b> and <b>✓ Token: saved</b> with today's date and the last 4
+    characters of your token, so you can tell which of your Canvas tokens it is.</li>
+  <li>Part <b>3. Which course</b> shows the course number from <i>Config</i> B4 and
+    Canvas's name for it. If it's the wrong course, type the right number (or paste the
+    course's Canvas address) and click <b>Save course</b>.</li>
 </ol>
 
-<p>Despite its name, this menu item only saves the token. The Canvas web address comes
-from <i>Config</i> B2 (below).</p>
+<p>You can open <b>Setup…</b> any time to check that everything is ready, or to save a new
+token when the old one expires.</p>
+
+<p><b>Already set up before 11/12/2026?</b> You don't need to do anything: the token you
+saved with the old <b>1. Set API Key and Base URL</b> item carries over by itself. The
+panel shows it as saved without a date until you next save a token.</p>
 
 <p>If you ever think your token was exposed, delete it in Canvas (Account › Settings ›
 Approved Integrations) and make a new one.</p>
@@ -166,10 +175,12 @@ It asks to:</p>
   <tr><th>Cell</th><th>What goes there</th></tr>
   <tr><td><b>B2</b></td><td>Your school's Canvas web address: the start of the address
     bar when you're logged in to Canvas (for example
-    <code>https://yourschool.instructure.com</code>).</td></tr>
+    <code>https://yourschool.instructure.com</code>). It fills in the address in
+    <b>Setup…</b>; after that, the sheet uses the address saved there.</td></tr>
   <tr><td><b>B4</b></td><td>Your Canvas <b>course ID</b>: the number after
-    <code>/courses/</code> in the course's web address. Numbers only.</td></tr>
-  <tr><td><b>B6</b></td><td>Filled in for you by <b>2. Run FULL Data Refresh</b>. Don't
+    <code>/courses/</code> in the course's web address. Numbers only. You can also change
+    it in <b>Setup…</b>, part 3.</td></tr>
+  <tr><td><b>B6</b></td><td>Filled in for you by <b>Run FULL Data Refresh</b>. Don't
     type here.</td></tr>
 </table>
 
@@ -215,7 +226,7 @@ that tab is open.</p>
 <p>Students go one per row, starting at row 3. Column A and columns after G are yours (for
 example, student names).</p>
 
-<p><b>Where to find the IDs:</b> run <b>2. Run FULL Data Refresh</b> (section 4). The
+<p><b>Where to find the IDs:</b> run <b>Run FULL Data Refresh</b> (section 4). The
 <code>*peopleList*</code> tab then lists everyone in the course with their <b>User ID</b>
 (column D), and the <code>*assignmentGroups*</code> tab lists every assignment with its
 <b>Assignment ID</b> (column A) and group.</p>
@@ -279,7 +290,7 @@ or too low:</p>
 
 <h2 id="refresh">4. Run FULL Data Refresh</h2>
 
-<p><span class="menu">Canvas Tools › 2. Run FULL Data Refresh (Master Setup)</span></p>
+<p><span class="menu">Canvas Tools › Run FULL Data Refresh</span></p>
 
 <p>Rebuilds two reference tabs from Canvas. You don't need it to run Update Etoilles. Use
 it when you need to look up IDs for the roster tab (for example, a new student or a new
@@ -302,8 +313,10 @@ don't copy it into other files or share the sheet more widely than you need to.<
 
 <table>
   <tr><th>Message</th><th>What to do</th></tr>
-  <tr><td><i>Base URL, API key, or Course ID is missing</i></td><td>Check <i>Config</i> B2
-    and B4, then run <b>1. Set API Key and Base URL</b>.</td></tr>
+  <tr><td><i>Canvas isn't set up for you yet</i></td><td>Open <b>Canvas Tools ›
+    Setup…</b> and save your Canvas address and token (part 2).</td></tr>
+  <tr><td><i>No course number in Config B4</i></td><td>Open <b>Canvas Tools › Setup…</b>
+    and save the course number (part 3).</td></tr>
   <tr><td><i>Select a roster sheet before running the sync</i></td><td>You were on
     <code>*assignmentGroups*</code>. Click your roster tab and run it again.</td></tr>
   <tr><td><i>Assignment ID is missing from Row 2 of the active column</i></td><td>One of
@@ -320,7 +333,7 @@ don't copy it into other files or share the sheet more widely than you need to.<
   <tr><td><i>No Canvas assignment group named "Etoilles in Canvas"</i></td><td>Create the
     group in Canvas (spelled exactly like that), or check the spelling of yours.</td></tr>
   <tr><td><b>API Err: 401</b> in the cells</td><td>Your token expired or was mistyped.
-    Make a new one in Canvas and run <b>1. Set API Key and Base URL</b>.</td></tr>
+    Make a new one in Canvas and save it in <b>Setup…</b> (part 2).</td></tr>
   <tr><td><b>API Err: 403</b> in the cells</td><td>Your Canvas account can't see grades
     in that course. Check <i>Config</i> B4 is your course.</td></tr>
   <tr><td><i>Completed with Errors … could not be read</i></td><td>Some Etoilles
@@ -342,6 +355,9 @@ newer one, look at the version in the guide of the sheet you copied.</p>
 <h3>What's new</h3>
 
 <ul>
+  <li><b>2026-11-12:</b> New <b>Setup…</b> panel replaces <b>1. Set API Key and Base
+    URL</b>: save your token, test the connection, and check or change the course in one
+    place. <b>2. Run FULL Data Refresh</b> is now just <b>Run FULL Data Refresh</b>.</li>
   <li><b>2026-11-10:</b> Version label and this section added to the guide.</li>
   <li><b>2026-11-08:</b> This guide opens in a panel on the right of the sheet.</li>
 </ul>
@@ -350,10 +366,10 @@ newer one, look at the version in the guide of the sheet you copied.</p>
 
 <ol>
   <li>Make a fresh copy of the sheet you copied before.</li>
-  <li>In the new copy, fill in <i>Config</i> B2 and B4 (see <b>1. First-time setup</b>),
-    and save your Canvas token again with <b>1. Set API Key and Base URL</b>. A new copy
-    doesn't carry it over.</li>
-  <li>Run <b>2. Run FULL Data Refresh</b>.</li>
+  <li>In the new copy, open <b>Canvas Tools › Setup…</b>, save your Canvas token again,
+    and check the course (see <b>1. First-time setup</b>). A new copy doesn't carry your
+    token over.</li>
+  <li>Run <b>Run FULL Data Refresh</b>.</li>
   <li>Bring your roster tab over: in the old sheet, right-click the tab › <b>Copy to ›
     Existing spreadsheet</b> and pick the new copy. Rename it to take out "Copy of". Delete
     any roster tab that came with the new copy and holds someone else's students.</li>

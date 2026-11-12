@@ -9,15 +9,14 @@
 function createAssignmentGroupsList() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var ui = SpreadsheetApp.getUi();
-  var userProperties = PropertiesService.getUserProperties();
-  var canvasApiToken = userProperties.getProperty('CANVAS_API_KEY');
+  var canvasApiToken = getCanvasToken_(); // Credentials.js
   var config = getConfig();
   var baseUrl = config.BASE_URL;
   var courseId = config.COURSE_ID;
   var sheetName = '*assignmentGroups*';
   
   if (!canvasApiToken || !baseUrl || !courseId) {
-    ss.toast("API Key, Base URL, or Course ID is missing. Cannot fetch assignments.", "🚨 Configuration Error", 8);
+    ss.toast(courseId ? missingSetupMessage_() : 'No course number in *Config* B4. Open Canvas Tools › Setup….', '🚨 Setup needed', 8);
     return;
   }
   

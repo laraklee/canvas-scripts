@@ -3,9 +3,11 @@
 Script ID: `1qkZ-MH1xo1r83K9EZiaOq1rgo4cvp7WW7_wkViFbqdZ3h2bsFSmoqn7v`
 (the `MH1…` string without the `1qkZ-` prefix is a different ID and won't clone).
 
-> **TO DO (added 2026-11-11): re-save the new Canvas token** (Lara made new tokens on
-> 11/11) with Set API Key and Base URL. Doing clean-up item 1 below first (rename to
-> `CANVAS_TOKEN`) means entering it only once. See "To do" in the root CLAUDE.md.
+> **Setup panel built 11/12 (Mac), not pushed yet.** **Canvas Tools › Setup…**
+> (`SetupPanel.js`, `SetupPanelPage.html`, `Credentials.js`) replaces "1. Set API Key and
+> Base URL", modelled on course-manager-jupiter's. Lara had re-saved her new token
+> (11/12) under the old name; it moves over by itself. Next: Lara reviews, commit,
+> `clasp push`, test in the sheet (see "Setup panel" below).
 
 Pulls Gastronomy grades and "Etoilles" (star badge) points from Canvas into a roster
 sheet. A script bound to a Google Sheet; menu **Canvas Tools**. Read-only: no Canvas
@@ -52,8 +54,10 @@ the menu item; it is no longer updated.
      different due date. No student data. Added 10/29 to find the column G issue; Lara
      kept it as a useful check.
   4. Writes the time it finished into B1.
-- **1. Set API Key and Base URL** (`setUserProperties`): prompts for the Canvas token.
-- **2. Run FULL Data Refresh** (`runFullDataRefresh`): writes this sheet's ID into
+- **Setup…** (`showSetupPanel`): the Setup side panel (below). Replaced **1. Set API Key
+  and Base URL** (`setUserProperties`, removed 11/12).
+- **Run FULL Data Refresh** (`runFullDataRefresh`; was "2. Run FULL Data Refresh (Master
+  Setup)" until 11/12): writes this sheet's ID into
   `*Config*`!B6, then rebuilds the `*peopleList*` and `*assignmentGroups*` tabs.
   Update Etoilles no longer needs it: it asks Canvas for the Etoilles assignments
   directly.
@@ -61,8 +65,10 @@ the menu item; it is no longer updated.
 
 ## Sheet tabs
 
-- `*Config*`: B2 Canvas base URL, B4 Course ID, B6 this sheet's ID (auto). B3, B5,
-  D3, D5, B12 are read by `getConfig()` but not used by this project.
+- `*Config*`: B2 the school's Canvas address (since 11/12 only fills in a teacher's
+  `CANVAS_BASE_URL` the first time; never hardcoded, public repo), B4 Course ID (the
+  Setup panel can change it), B6 this sheet's ID (auto). B3, B5, D3, D5, B12 are read by
+  `getConfig()` but not used by this project.
 - `*assignmentGroups*`: every assignment with its group name (rebuilt by the refresh).
 - `*peopleList*`: course roster (rebuilt by the refresh). Contains student names and
   emails, so it stays inside the sheet. Never export it into this folder.
@@ -70,7 +76,8 @@ the menu item; it is no longer updated.
 
 ## Canvas endpoints (all GET)
 
-- `/api/v1/courses/:id`
+- `/api/v1/users/self` (Setup panel: Test connection)
+- `/api/v1/courses/:id` (refresh; Setup panel: course name)
 - `/api/v1/courses/:id/enrollments`
 - `/api/v1/courses/:id/assignment_groups?include[]=assignments&include[]=all_dates`
   (refresh) and `…?include[]=assignments&grading_period_id=:id` (Etoilles)
@@ -79,8 +86,12 @@ the menu item; it is no longer updated.
 
 ## Properties
 
-- User Properties: `CANVAS_API_KEY` (the Canvas token).
-- No Script Properties.
+- User Properties: `CANVAS_TOKEN`, `CANVAS_BASE_URL`, `CANVAS_TOKEN_SAVED` (when the
+  token was saved, shown in the panel). Until 11/12 the token was `CANVAS_API_KEY`;
+  `moveOldSetup_` (Credentials.js) moves it to `CANVAS_TOKEN` and deletes the old one the
+  first time any tool or the panel runs for a teacher, and saves *Config* B2 as
+  `CANVAS_BASE_URL` if none is saved (Lara's choice 11/12: nobody re-enters anything).
+- No Script Properties (no DRY_RUN: no Canvas writes).
 
 ## Permissions (appsscript.json)
 
@@ -107,19 +118,37 @@ change**; she knows why and can move 2A out of the group if she wants G to match
 If that comes up again, the fix would be to skip assignments with
 `omit_from_final_grade` (already in the assignment data; no new calls).
 
+## Setup panel (11/12)
+
+**Canvas Tools › Setup…** opens a side panel (Lara chose 11/12: same as Jupiter's, minus
+dry run and the setup check):
+1. **Canvas connection:** address saved?, token saved (date saved, last 4), **Test
+   connection** (GET /users/self).
+2. **Set or change your token:** address box (filled from *Config* B2 if none saved) and
+   password box, cleared on Save; blank keeps what's saved
+   (`saveCanvasCredentialsFromPanel`); auto-tests after Save.
+3. **Which course:** *Config* B4 in a box; Canvas's name and code fetched whenever the
+   number changes (GET /courses/:id); **Save course** takes digits or a pasted
+   `/courses/N` address, writes B4 as a number, refuses a formula cell; **Open Config**
+   link (unhides, selects B4). Sheet write only, no Canvas write.
+
+`canvasGetJson_` (SetupPanel.js) is the project's first shared request helper (auth
+header, `muteHttpExceptions`, response-code check, error types); only the panel uses it
+so far. The tools' "missing" messages now say to open Setup…. Offline check:
+`scripts/checks/badges-setup-panel.check.js`. Guide: section 1, Config table, section 5
+rows, section 6 steps and What's new; version **2026-11-12**.
+
 ## Clean-up list (not done; each one small, one at a time)
 
-1. Rename the token property to `CANVAS_TOKEN` and read the base URL from User
-   Properties (`CANVAS_BASE_URL`) instead of `*Config*`!B2 (CLAUDE.md rule 1 and Canvas
-   API standard). Teachers would have to re-enter their token once, so it also needs a
-   menu label check.
-2. `setUserProperties` shows the first 4 characters of the token in its prompt and
-   toast. Show only "set" / "not set". (11/11: the first 4 are the school's shared
-   prefix, so they don't identify the token. course-manager-jupiter's Setup panel now
-   shows the **last 4 and the date saved**; ask Lara whether to match that instead.)
+1. ~~Rename the token to `CANVAS_TOKEN`, base URL from User Properties~~ Done 11/12
+   (Setup panel).
+2. ~~First 4 characters of the token shown~~ Done 11/12: the prompt is gone; the panel
+   shows the last 4 and the date saved, like Jupiter.
 3. One shared Canvas request helper with `Link`-header pagination and
    `X-Rate-Limit-Remaining` back-off. Today the enrollments call and the Etoilles
    submissions call each read only the first page (100), which is fine for one class.
+   Start from `canvasGetJson_` in SetupPanel.js (add `Link` pagination and rate-limit
+   back-off there).
 4. Header comment on each file; `const`/`let` instead of `var`.
 5. Grade sync makes one Canvas call per student per column (about 4 × class size). Fine
    for one class under the 6-minute limit; switch to one submissions call per column if
