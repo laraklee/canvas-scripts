@@ -3,11 +3,10 @@
 Script ID: `1qkZ-MH1xo1r83K9EZiaOq1rgo4cvp7WW7_wkViFbqdZ3h2bsFSmoqn7v`
 (the `MH1…` string without the `1qkZ-` prefix is a different ID and won't clone).
 
-> **Setup panel built 11/12 (Mac), not pushed yet.** **Canvas Tools › Setup…**
-> (`SetupPanel.js`, `SetupPanelPage.html`, `Credentials.js`) replaces "1. Set API Key and
-> Base URL", modelled on course-manager-jupiter's. Lara had re-saved her new token
-> (11/12) under the old name; it moves over by itself. Next: Lara reviews, commit,
-> `clasp push`, test in the sheet (see "Setup panel" below).
+> **Setup panel live 11/12** (commit `47764fd`, pushed 12:10 PM; Lara tested: "Perfect!").
+> **Canvas Tools › Setup…** (`SetupPanel.js`, `SetupPanelPage.html`, `Credentials.js`)
+> replaces "1. Set API Key and Base URL", modelled on course-manager-jupiter's. Lara's
+> token, saved under the old name, moved over by itself (see "Setup panel" below).
 
 Pulls Gastronomy grades and "Etoilles" (star badge) points from Canvas into a roster
 sheet. A script bound to a Google Sheet; menu **Canvas Tools**. Read-only: no Canvas

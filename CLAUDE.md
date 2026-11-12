@@ -134,7 +134,7 @@ reviewable steps over large multi-file changes.
   then the other workbooks; guide updated in the same commit.
   - `assign-sheet/`: a **Setup…** panel (token with last 4 + date saved, connection
     test, dry run, which course), replacing the trip through its ⚙️ Setup menu items.
-  - `gastronomy-badges/`: **built 11/12, not pushed yet** (Canvas Tools › Setup…; its
+  - `gastronomy-badges/`: **live 11/12** (`47764fd`; Canvas Tools › Setup…; its
     clean-up items 1 and 2 done with it; old `CANVAS_API_KEY` token moves over by
     itself, so nobody re-enters it). See the top of its BRIEF.
   - `anonymize-submissions/` (no Canvas calls): a small setup panel for its three
