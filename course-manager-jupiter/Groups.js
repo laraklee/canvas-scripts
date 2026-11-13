@@ -244,7 +244,7 @@ function pullGroupsForActiveColumn() {
     const plan = planScorePull_(userIds, current, membership.groupOf, ROSTER_FIRST_ROW);
     if (!plan.writes.length) {
       throw sheetProblem_('No row from 3 down has a Canvas User ID in column A. ' +
-        'Run CreateRoster first.');
+        'Run Build class list (CreateRoster) first.');
     }
     const onSheet = new Set(userIds.map(cells => jupiterId_(cells.slice(0, 1)[0])));
     const notOnSheet = [...membership.groupOf.keys()].filter(id => !onSheet.has(id)).length;

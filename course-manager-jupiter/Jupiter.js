@@ -34,6 +34,11 @@
  *   ref_SectionLookup, and JupiterExport.
  */
 
+// Pop-up titles: the tools' Course Manager Tools menu labels (2026-11-12). Messages still
+// name the buttons on the grading sheets (CreateRoster, Update Grades) in parentheses.
+const ROSTER_TITLE = 'Build class list';
+const GRADES_TITLE = 'Get latest grades for Jupiter';
+
 const JUPITER_CATEGORY_RANGE = 'cfg_JupiterCategories';
 const JUPITER_CATEGORY_HEADERS = Object.freeze(['Canvas category', 'Export to Jupiter?',
   'Canvas group ID']);
@@ -174,7 +179,7 @@ function createActiveSheetRoster() {
     // never cleared, and covering one with the new roster needs a Yes.
     const { covered, staleRows } = rosterRowsToChange_(current, rows.length, ROSTER_FIRST_ROW);
     if (covered.length) {
-      const answer = ui.alert('CreateRoster', `The new roster (${rows.length} students) would ` +
+      const answer = ui.alert(ROSTER_TITLE, `The new roster (${rows.length} students) would ` +
         `cover row(s) ${covered.join(', ')}, which hold something other than a student in ` +
         'columns A–E (for example an Average row). Overwrite them?', ui.ButtonSet.YES_NO);
       if (answer !== ui.Button.YES) return;
@@ -187,14 +192,14 @@ function createActiveSheetRoster() {
 
     console.log(`CreateRoster: ${rows.length} student(s) written, ${staleRows.length} old ` +
       `row(s) cleared, ${covered.length} other row(s) overwritten.`);
-    ui.alert('CreateRoster', `${rows.length} students written to columns A–E (rows ` +
+    ui.alert(ROSTER_TITLE, `${rows.length} students written to columns A–E (rows ` +
       `${ROSTER_FIRST_ROW}–${ROSTER_FIRST_ROW + rows.length - 1}).` +
       (staleRows.length ? `\n${staleRows.length} old student row(s) below were cleared in A–E.` :
         '') +
-      '\n\nType each student\'s Jupiter ID in column F before using Update Grades. Later ' +
-      'runs keep each row with its student.', ui.ButtonSet.OK);
+      '\n\nType each student\'s Jupiter ID in column F before using Get latest grades ' +
+      'for Jupiter (Update Grades). Later runs keep each row with its student.', ui.ButtonSet.OK);
   } catch (error) {
-    reportRefreshFailure_('CreateRoster', 'The sheet was not changed.', error);
+    reportRefreshFailure_(ROSTER_TITLE, 'The sheet was not changed.', error);
   }
 }
 
@@ -210,7 +215,7 @@ const ROSTER_DROP_HIGHLIGHT = '#f4cccc';
 function applyRosterPlan_(sheet, plan) {
   const ui = SpreadsheetApp.getUi();
   if (plan.drops.length && !confirmRosterDrops_(sheet, plan.drops)) {
-    ui.alert('CreateRoster', 'Nothing was changed.', ui.ButtonSet.OK);
+    ui.alert(ROSTER_TITLE, 'Nothing was changed.', ui.ButtonSet.OK);
     return;
   }
 
@@ -237,11 +242,12 @@ function applyRosterPlan_(sheet, plan) {
   console.log(`CreateRoster update: ${plan.keptCount} kept, ${plan.updates.length} refreshed, ` +
     `${plan.inserts.length} added, ${plan.drops.length} deleted, ` +
     `${plan.periodChangedRows.length} changed period.`);
-  ui.alert('CreateRoster', `Roster updated: ${plan.keptCount} student row(s) kept ` +
+  ui.alert(ROSTER_TITLE, `Roster updated: ${plan.keptCount} student row(s) kept ` +
     `(${plan.updates.length} with changes in A–E), ${plan.inserts.length} added, ` +
     `${plan.drops.length} deleted.` +
     (plan.addedRows.length ? `\n\nNew student row(s): ${plan.addedRows.join(', ')}. Type ` +
-      'their Jupiter IDs in column F before using Update Grades.' : '') +
+      'their Jupiter IDs in column F before using Get latest grades for Jupiter (Update ' +
+      'Grades).' : '') +
     (plan.periodChangedRows.length ? `\n\nRow(s) ${plan.periodChangedRows.join(', ')} changed ` +
       'period. Re-sort if you want students grouped by section.' : ''), ui.ButtonSet.OK);
 }
@@ -260,7 +266,7 @@ function confirmRosterDrops_(sheet, drops) {
     ranges.forEach(range => range.setBackground(ROSTER_DROP_HIGHLIGHT));
     sheet.setActiveRange(ranges[0]);
     SpreadsheetApp.flush();
-    answer = ui.alert('CreateRoster', `${drops.length} student(s) on this sheet are no longer ` +
+    answer = ui.alert(ROSTER_TITLE, `${drops.length} student(s) on this sheet are no longer ` +
       `in the Canvas course: the highlighted row(s) ${drops.join(', ')}.\n\nDelete these ` +
       'whole rows? Their Jupiter ID, scores, and comments on this sheet are deleted too ' +
       '(Canvas keeps their records).\n\nYes: update the roster and delete them.\nNo: change ' +
@@ -325,7 +331,7 @@ function planRosterUpdate_(current, rows, firstRow) {
     if (!/^\d+$/.test(id)) return;
     if (sheetRows.has(id)) {
       throw sheetProblem_(`Rows ${sheetRows.get(id)} and ${firstRow + i} have the same User ID ` +
-        'in column A. Delete one of them, then run CreateRoster again.');
+        'in column A. Delete one of them, then run Build class list (CreateRoster) again.');
     }
     sheetRows.set(id, firstRow + i);
   });
@@ -454,7 +460,7 @@ function buildJupiterExportFromRecentCanvasGrades() {
       note = `Last sync: ${Utilities.formatDate(stamp, timeZone, 'M/d/yy h:mm a')} ` +
         `(${days} day(s) ago).`;
     }
-    const response = ui.prompt('Update Grades', `${note}\n\nClick OK to look ${days} day(s) ` +
+    const response = ui.prompt(GRADES_TITLE, `${note}\n\nClick OK to look ${days} day(s) ` +
       'back, or type a different number of days:', ui.ButtonSet.OK_CANCEL);
     if (response.getSelectedButton() !== ui.Button.OK) return;
     const typed = parseInt(response.getResponseText().trim(), 10);
@@ -478,7 +484,7 @@ function buildJupiterExportFromRecentCanvasGrades() {
     const groupNames = new Map((Array.isArray(groups) ? groups : [])
       .map(group => [jupiterId_(group.id), String(group.name || '').trim()]));
     const since = new Date(Date.now() - days * 86400000).toISOString();
-    ss.toast('Finding recently graded assignments…', 'Update Grades', -1);
+    ss.toast('Finding recently graded assignments…', GRADES_TITLE, -1);
     const recent = canvasStep_('recent submissions request', () =>
       canvasGet_('/courses/' + courseId + '/students/submissions', {
         'student_ids[]': 'all', graded_since: since, 'include[]': 'assignment' }));
@@ -486,11 +492,11 @@ function buildJupiterExportFromRecentCanvasGrades() {
       groupNames, allowed);
     if (!assignments.length) {
       ss.toast(`No assignments in checked categories were graded in the last ${days} ` +
-        'day(s). JupiterExport was not changed.', 'Update Grades', 8);
+        'day(s). JupiterExport was not changed.', GRADES_TITLE, 8);
       return;
     }
 
-    ss.toast(`Reading scores for ${assignments.length} assignment(s)…`, 'Update Grades', -1);
+    ss.toast(`Reading scores for ${assignments.length} assignment(s)…`, GRADES_TITLE, -1);
     assignments.forEach(item => {
       const submissions = canvasStep_('scores request', () =>
         canvasGet_(`/courses/${courseId}/assignments/${item.id}/submissions`));
@@ -513,14 +519,14 @@ function buildJupiterExportFromRecentCanvasGrades() {
 
     console.log(`Update Grades: ${assignments.length} assignment(s), ${result.matched} ` +
       `student row(s) matched, ${result.unmatched} not matched.`);
-    ui.alert('Update Grades', `${assignments.length} assignment(s) from checked categories ` +
+    ui.alert(GRADES_TITLE, `${assignments.length} assignment(s) from checked categories ` +
       `written to ${TOOL_SHEETS.JUPITER_EXPORT}, with scores for ${result.matched} ` +
       'student(s).' + (result.unmatched ? `\n\n${result.unmatched} student row(s) in ` +
       `${TOOL_SHEETS.JUPITER_EXPORT} have no matching Jupiter ID in column F of this sheet, ` +
       'so their scores are blank. Check column F.' : '') +
       '\n\nNext: copy JupiterExport and paste it into Jupiter.', ui.ButtonSet.OK);
   } catch (error) {
-    reportRefreshFailure_('Update Grades', 'The last sync time (B1) was not changed.', error);
+    reportRefreshFailure_(GRADES_TITLE, 'The last sync time (B1) was not changed.', error);
   }
 }
 

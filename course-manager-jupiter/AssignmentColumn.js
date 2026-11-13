@@ -47,7 +47,7 @@ const COMMENTS_TIME_LIMIT_MS = 5 * 60 * 1000;
 function pullScoresForActiveColumn() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  const title = 'Pull scores';
+  const title = 'Get scores into this column'; // its menu label (2026-11-12)
   try {
     const sheet = ss.getActiveSheet();
     checkGradingSheet_(sheet);
@@ -69,7 +69,7 @@ function pullScoresForActiveColumn() {
     const plan = planScorePull_(userIds, current, scores, ROSTER_FIRST_ROW);
     if (!plan.writes.length) {
       throw sheetProblem_('No row from 3 down has a Canvas User ID in column A. ' +
-        'Run CreateRoster first.');
+        'Run Build class list (CreateRoster) first.');
     }
 
     const name = String(assignment.name || '').trim() || 'this assignment';
@@ -168,7 +168,7 @@ function scoreRuns_(writes) {
 function postCommentsForActiveColumn() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  const title = 'Post comments';
+  const title = 'Send comments from this column'; // its menu label (2026-11-12)
   const lock = LockService.getDocumentLock();
   if (!lock.tryLock(1000)) {
     ui.alert(title, 'Comments are already being posted. Wait for that run to finish.',
@@ -248,12 +248,13 @@ function postCommentsForActiveColumn() {
       (result.refusedRows.length ? `\n\nCanvas refused row(s) ${result.refusedRows.join(', ')}` +
         ' (light red; the cell\'s note says why). The other rows still went.' : '') +
       (result.notStarted ? `\n\nStopped near the time limit with ${result.notStarted} ` +
-        'comment(s) not sent yet. Run Post comments again to send the rest.' : '') +
+        'comment(s) not sent yet. Run Send comments from this column again to send the ' +
+        'rest.' : '') +
       (dryRun ? '\n\nSee Extensions › Apps Script › Executions for the "PREVIEW MODE" lines.' : ''),
     ui.ButtonSet.OK);
   } catch (error) {
     reportRefreshFailure_(title, 'Posting stopped. Cells whose note says "Commented" ' +
-      'were sent; running Post comments again sends only the rest.', error);
+      'were sent; running Send comments from this column again sends only the rest.', error);
   } finally {
     lock.releaseLock();
   }
