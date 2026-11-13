@@ -14,7 +14,10 @@
 >   renamed routinely). (4) Then a simpler Home tab (Lara, in the Sheet); maybe "My
 >   tools" later. Open from 11/12: drop the menu items Setup… covers? Same "preview mode"
 >   wording in the other three Setup panels later?
->   **Phase 1 built 11/12 (Mac), not yet committed:** wording in PostRows, MakeAssignment,
+>   **Phase 1 (ed6e57e) live in all four workbooks 11/12:** Biology 1:54 PM (Lara: Setup
+>   panel "looks fine" after a reload; the first try was the old panel), then AI9,
+>   Gastronomy, template 2:15 PM (Lara: "push to the other 3"; no manifest change).
+>   Next: Phase 2 (one menu). Phase 1 details: wording in PostRows, MakeAssignment,
 >   Groups, AssignmentColumn, ReorderTool, CanvasApi (log prefix now "PREVIEW MODE:"),
 >   Setup panel part 4, menu labels (Check …, Preview mode: …); new on-open message
 >   (`showPreviewModeToast_`, bottom right; no trigger needed). Guide version 2026-11-12.
