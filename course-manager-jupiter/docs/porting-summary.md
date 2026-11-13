@@ -9,9 +9,9 @@
 
 | Legacy function | Legacy file | Now |
 |---|---|---|
-| `onOpen` | 00_Config.js | onOpen (SetupCheck.js) + buildMenus_ (Menus.js): two menus, Canvas Tools and Setup & Data |
+| `onOpen` | 00_Config.js | onOpen (SetupCheck.js) + buildMenus_ (Menus.js): one menu, Course Manager Tools (two menus, Canvas Tools and Setup & Data, until 2026-11-12) |
 | `getConfig` | 00_Config.js | getCfg_ + cfg_ named ranges (Config.js) |
-| `setUserProperties` | 00_Config.js | setCanvasCredentials (Credentials.js) |
+| `setUserProperties` | 00_Config.js | setCanvasCredentials (Credentials.js); since 2026-11-12 the token is saved in the Setup… panel (saveCanvasCredentialsFromPanel), and the old item is off the menu |
 | `createDropdowns1` | 01_Utilities.js | createDropdowns1 (MakeAssignment.js): Overrides Due Time only, typed times allowed |
 | `convertToUTC` | 01_Utilities.js | buildCanvasTime_ + parseSheetTime_ (PostRows.js); code, no longer a custom function |
 | `writeCurrentSpreadsheetIdToConfig` | 01_Utilities.js | buildSheetIndex_ writes cfg_ThisSheetID (SheetIndex.js) |

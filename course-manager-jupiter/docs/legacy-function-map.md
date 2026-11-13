@@ -18,9 +18,9 @@ A read-only map of every function in the legacy `course-manager` project (tag
 
 | Function | Purpose | Menu item | Sheets | Canvas endpoints | Writes? | Notes | Decision |
 |---|---|---|---|---|---|---|---|
-| `onOpen` | Builds both menus; runs `refreshIndex` first | (runs on open) | `*Index*` (via refreshIndex) | — | no | | ported → onOpen (SetupCheck.js) + buildMenus_ (Menus.js): two menus, Canvas Tools and Setup & Data |
+| `onOpen` | Builds both menus; runs `refreshIndex` first | (runs on open) | `*Index*` (via refreshIndex) | — | no | | ported → onOpen (SetupCheck.js) + buildMenus_ (Menus.js): one menu, Course Manager Tools (two menus, Canvas Tools and Setup & Data, until 2026-11-12) |
 | `getConfig` | Reads Config cells B2–B5, D3, D5, B12 into one object | — | `*Config*` | — | no | Used by nearly every Canvas tool | ported → getCfg_ + cfg_ named ranges (Config.js) |
-| `setUserProperties` | Prompts for the Canvas token and saves it in User Properties (`CANVAS_API_KEY`) | SA › 1. Set API Key and Base URL | `*Config*` (B2, shown in prompt) | — | no | Shows the first 4 characters of the token | ported → setCanvasCredentials (Credentials.js) |
+| `setUserProperties` | Prompts for the Canvas token and saves it in User Properties (`CANVAS_API_KEY`) | SA › 1. Set API Key and Base URL | `*Config*` (B2, shown in prompt) | — | no | Shows the first 4 characters of the token | ported → setCanvasCredentials (Credentials.js); since 2026-11-12 the token is saved in the Setup… panel (saveCanvasCredentialsFromPanel), and the old item is off the menu |
 
 ## 01_Utilities.js: shared helpers
 
