@@ -56,7 +56,10 @@ missing: the chart (the report should count 2, one on each Scores tab).
 - First run failed on Claude's bug (extra `)` in the field list, fixed in `c86d066`).
   Fixing it meant deleting the new copy and making it again: the copy keeps the code it
   was made with.
-- Step 4 (`SpreadsheetApp.openById` with read-only): (answer pending)
+- Step 4: `SpreadsheetApp.openById` does **not** work with read-only. Google said:
+  "Specified permissions are not sufficient… Required permissions:
+  https://www.googleapis.com/auth/spreadsheets" (full edit). So the real tool must read
+  through the Sheets API (`Sheets.Spreadsheets.get`), as this test does.
 
 ## Lessons for the real tool
 
