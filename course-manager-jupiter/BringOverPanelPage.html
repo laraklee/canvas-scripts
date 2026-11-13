@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<!--
+  BringOverPanelPage.html: the "Bring over from my old copy" side panel (opened by
+  showBringOverPanel in BringOver.js; Lara, 2026-11-13; modelled on assign-sheet's).
+  Used in a NEW copy of the Course Manager template. Steps: paste the old copy's link, Look at it (planBringOver: one line per
+  old tab, with a choice where there is one), then Bring over (runBringOver), which shows
+  what came over, any problems (nothing is changed if a check fails), and what to redo
+  by hand, with a short how-to. Messages are shown as plain text (textContent), never
+  as HTML.
+  Canvas endpoints: none. Write operations: this spreadsheet only (through
+  BringOver.js). The old copy is only read.
+-->
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 14px; color: #202124; margin: 12px 16px; }
+    h2 { font-size: 15px; margin: 18px 0 6px; padding-top: 12px; border-top: 1px solid #dadce0; }
+    h2:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+    p, li { margin: 0 0 8px; line-height: 1.4; }
+    ol, ul { padding-left: 20px; margin: 0 0 8px; }
+    .line { margin: 0 0 6px; line-height: 1.4; white-space: pre-wrap; }
+    .ok { color: #137333; }
+    .warn { color: #b3261e; }
+    .muted { color: #5f6368; font-size: 13px; }
+    button { font-size: 14px; padding: 6px 14px; margin: 2px 6px 6px 0; }
+    label { display: block; margin: 6px 0 2px; font-size: 13px; }
+    input[type=text] { width: 100%; box-sizing: border-box; font-size: 14px; padding: 5px 6px; }
+    select { font-size: 13px; max-width: 100%; }
+    .tab { border: 1px solid #dadce0; border-radius: 4px; padding: 6px 8px; margin-bottom: 6px; }
+    .tab .name { font-weight: bold; }
+    .tab .note { color: #5f6368; font-size: 12px; margin-top: 3px; }
+    .box { border: 1px solid #dadce0; background: #f8f9fa; padding: 8px 10px; border-radius: 4px;
+      margin-bottom: 8px; }
+    .box.bad { border-color: #f0b37e; background: #fff8f1; }
+    details { margin: 4px 0 8px; }
+    summary { cursor: pointer; color: #1a73e8; }
+  </style>
+</head>
+<body>
+  <h2>1. Before you start</h2>
+  <ol>
+    <li>You're in your <b>new</b> copy of the template (not your old sheet).</li>
+    <li>Your old workbook is open in another browser tab, so you can copy its link.</li>
+  </ol>
+  <p class="muted">Your old copy is only read. Nothing in it changes.</p>
+
+  <h2>2. Your old copy</h2>
+  <label for="link">Link to your old copy (the whole address from its address bar)</label>
+  <input type="text" id="link" autocomplete="off" spellcheck="false">
+  <button id="lookButton">Look at it</button>
+  <div class="line" id="lookResult" role="status" aria-live="polite"></div>
+
+  <div id="planPart" hidden>
+    <h2>3. The plan</h2>
+    <p class="muted">One line per tab in your old copy. Change a choice if you need to.</p>
+    <div id="planList"></div>
+    <button id="goButton">Bring over</button>
+    <div class="line" id="goStatus" role="status" aria-live="polite"></div>
+  </div>
+
+  <div id="resultPart" hidden>
+    <h2>4. What happened</h2>
+    <div id="resultBox" class="box"></div>
+    <div id="handPart" hidden>
+      <p><b>Redo these by hand</b> (copying can't bring them):</p>
+      <ul id="handList"></ul>
+      <details>
+        <summary>How to redo them</summary>
+        <ul>
+          <li><b>Button or picture you drew:</b> in your old copy, click it with the
+            right mouse button (that selects it without running it), press Ctrl+C (⌘C on a
+            Mac), then click a cell on the same tab here and press Ctrl+V. Click the
+            button's ⋮ › Assign script and check the name matches the old one. Or skip the
+            button: every tool is also in the Course Manager Tools menu.</li>
+          <li><b>Chart:</b> in your old copy, click the chart, press Ctrl+C (⌘C on a Mac),
+            then click a cell on the same tab here and press Ctrl+V. Then click the chart ›
+            ⋮ › Edit chart and check its data range points at this sheet's tab.</li>
+          <li><b>Pivot table:</b> in your old copy, click inside it and note its rows,
+            columns, values and filters in the editor on the right. Here, select the same
+            data and choose Insert › Pivot table, then add the same fields.</li>
+          <li><b>Protected range:</b> Data › Protect sheets and ranges, then add the same
+            range and who can edit it.</li>
+          <li><b>Filter view:</b> Data › Filter views › Create new filter view, and set the
+            same filters.</li>
+          <li><b>Alternating colors:</b> select the range, Format › Alternating colors.</li>
+          <li><b>Unusual dropdown or color rule:</b> compare Data › Data validation, or
+            Format › Conditional formatting, in both copies.</li>
+        </ul>
+      </details>
+    </div>
+    <div id="nextPart" hidden>
+      <p><b>Next:</b></p>
+      <ol>
+        <li><b>Setup…</b>: save your Canvas token (part 2; a new copy needs it again) and
+          check the course (part 3).</li>
+        <li><b>Refresh tables…</b>: tick <b>All</b> and <b>Jupiter categories</b>, then
+          Update. Your Jupiter ticks are kept.</li>
+        <li>Look over each tab next to your old copy, including its buttons.</li>
+        <li>Check preview mode in Setup…, part 4 (a new copy starts with it ON).</li>
+        <li>Rename your old workbook (for example "OLD Course Manager"). Keep it until
+          you're sure everything came over.</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let planLink = '';
+
+    function setLine(el, text, kind) {
+      el.textContent = text;
+      el.className = 'line' + (kind ? ' ' + kind : '');
+    }
+
+    function call(name, args, onDone) {
+      google.script.run
+        .withSuccessHandler(onDone)
+        .withFailureHandler(() => onDone({ ok: false, problems: [],
+          message: 'Could not run (see Extensions › Apps Script › Executions).' }))[name](...args);
+    }
+
+    function addItem(list, text) {
+      const li = document.createElement('li');
+      li.textContent = text;
+      list.appendChild(li);
+    }
+
+    function showPlan(answer) {
+      const list = $('planList');
+      list.textContent = '';
+      answer.rows.forEach(row => {
+        const box = document.createElement('div');
+        box.className = 'tab';
+        const name = document.createElement('div');
+        name.className = 'name';
+        name.textContent = row.name;
+        box.appendChild(name);
+        if (row.options.length > 1) {
+          const select = document.createElement('select');
+          select.dataset.tab = row.name;
+          select.setAttribute('aria-label', 'What to do with ' + row.name);
+          row.options.forEach(o => {
+            const opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.label;
+            if (o.value === row.action) opt.selected = true;
+            select.appendChild(opt);
+          });
+          box.appendChild(select);
+        } else {
+          const only = document.createElement('div');
+          only.textContent = row.options[0].label;
+          box.appendChild(only);
+        }
+        const note = document.createElement('div');
+        note.className = 'note';
+        note.textContent = row.note;
+        box.appendChild(note);
+        list.appendChild(box);
+      });
+      $('planPart').hidden = false;
+      $('goButton').disabled = false;
+      setLine($('goStatus'), '');
+    }
+
+    $('lookButton').addEventListener('click', () => {
+      const link = $('link').value.trim();
+      if (!link) {
+        setLine($('lookResult'), '⚠ Paste the link first.', 'warn');
+        return;
+      }
+      $('lookButton').disabled = true;
+      $('planPart').hidden = true;
+      $('resultPart').hidden = true;
+      setLine($('lookResult'), 'Reading your old copy…');
+      call('planBringOver', [link], answer => {
+        $('lookButton').disabled = false;
+        if (!answer.ok) {
+          setLine($('lookResult'), '⚠ ' + answer.message, 'warn');
+          return;
+        }
+        planLink = link;
+        setLine($('lookResult'), '✓ Found "' + answer.oldTitle + '". Check this is your old copy.', 'ok');
+        showPlan(answer);
+      });
+    });
+
+    $('goButton').addEventListener('click', () => {
+      const choices = {};
+      document.querySelectorAll('#planList select').forEach(s => { choices[s.dataset.tab] = s.value; });
+      $('goButton').disabled = true;
+      $('lookButton').disabled = true;
+      $('resultPart').hidden = true;
+      setLine($('goStatus'), 'Bringing your work over… This can take a minute. Keep this panel open.');
+      call('runBringOver', [planLink, choices], answer => {
+        $('lookButton').disabled = false;
+        setLine($('goStatus'), '');
+        const box = $('resultBox');
+        box.textContent = '';
+        box.className = 'box' + (answer.ok ? '' : ' bad');
+        const head = document.createElement('p');
+        head.textContent = (answer.ok ? '✓ ' : '⚠ ') + answer.message;
+        head.className = answer.ok ? 'ok' : 'warn';
+        box.appendChild(head);
+        const lines = answer.ok ? (answer.done || []).concat(answer.warnings || []) :
+          (answer.problems || []);
+        if (lines.length) {
+          const ul = document.createElement('ul');
+          lines.forEach(t => addItem(ul, t));
+          box.appendChild(ul);
+        }
+        $('handList').textContent = '';
+        (answer.handWork || []).forEach(t => addItem($('handList'), t));
+        $('handPart').hidden = !(answer.ok && (answer.handWork || []).length);
+        $('nextPart').hidden = !answer.ok;
+        $('resultPart').hidden = false;
+        // After a success, don't offer the same button again (it would find the cells
+        // already filled). After a failed check, the teacher fixes things and retries.
+        $('goButton').disabled = Boolean(answer.ok);
+      });
+    });
+  </script>
+</body>
+</html>

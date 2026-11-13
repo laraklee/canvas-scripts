@@ -11,8 +11,9 @@
  *   Order: Home and User guide; creating in Canvas (a list of items, one item with
  *   dates); grading (Jupiter, one assignment's scores and comments); groups; assignment
  *   order; checking and backing up the course (Course check, Quiz Check, content list,
- *   Google Docs export); classroom (seating chart, rubric); then Setup…, Refresh tables…
- *   (RefreshPanel.js), and Advanced (Refresh all tables, the two label checks).
+ *   Google Docs export); classroom (seating chart, rubric); then Setup…, 📥 Bring over
+ *   from my old copy… (BringOver.js, 2026-11-13), Refresh tables… (RefreshPanel.js),
+ *   and Advanced (Refresh all tables, the two label checks).
  *   The two older quiz reports were taken off on 2026-11-09 (see below).
  *   Also here: goToHomePage (jumps to the Home tab), showUserGuide / showUserGuideLarge,
  *   and refreshAllTables (every ref_ table refresh in a row, except Jupiter categories,
@@ -84,6 +85,7 @@ function buildMenus_() {
       .addItem("Turn this tab's rubric into a Canvas file", 'exportRubricToCanvasFormat'))
     .addSeparator()
     .addItem('Setup…', 'showSetupPanel')
+    .addItem('📥 Bring over from my old copy…', 'showBringOverPanel')
     .addItem('Refresh tables…', 'showRefreshPanel')
     .addSubMenu(ui.createMenu('Advanced')
       .addItem('Refresh all tables', 'refreshAllTables')

@@ -98,7 +98,7 @@
 
 <h1>Course Manager (Jupiter edition) — User Guide</h1>
 
-<p class="version">Version 2026-11-12g. See <b>8. What's new and getting updates</b>.</p>
+<p class="version">Version 2026-11-13. See <b>8. What's new and getting updates</b>.</p>
 
 <div class="note"><b>Draft.</b> Written for teachers new to the workbook; not yet tried by
 one. If a step doesn't match what you see, note where and what you saw.</div>
@@ -231,6 +231,8 @@ ranges).</p>
   <li>edit <b>Google Slides</b> (only used by Build seating chart);</li>
   <li>see and make <b>only the Drive files it creates itself</b> (Back up course to Google Docs).
     It can't see your other files.</li>
+  <li><b>see</b> your Google Sheets (read only), used only by <b>📥 Bring over from my old
+    copy…</b> to read the old workbook whose link you paste. It can't change them.</li>
 </ul>
 
 <h3>Safety rules</h3>
@@ -262,7 +264,8 @@ ranges).</p>
   <li><b>Course Manager Tools menu:</b> everything, grouped by job: adding items to Canvas, grades and
     Jupiter, groups, assignment order, checking and backing up the course, classroom
     tools, and at the bottom <b>Setup…</b> (token, course, preview mode),
-    <b>Refresh tables…</b>, and <b>Advanced</b>.</li>
+    <b>📥 Bring over from my old copy…</b> (see <b>8</b>), <b>Refresh tables…</b>, and
+    <b>Advanced</b>.</li>
   <li><b>Pop-up titles</b> match the menu names, so you can always tell which tool is
     talking. Buttons you drew on tabs keep their own labels.</li>
   <li><b>ref_ tabs</b> (red): reference tables the tools read. Refresh them; don't edit
@@ -722,6 +725,11 @@ a newer one, open the template and look at the version in its guide.</p>
 <h3>What's new</h3>
 
 <ul>
+  <li><b>2026-11-13:</b> <b>📥 Bring over from my old copy…</b> (in the menu, under
+    Setup…): in a fresh copy of the template, paste your old workbook's link and bring
+    your settings and tabs over in one go. Your old workbook is only read. See
+    <b>Getting the newest version</b> below. Google asks you to approve one more
+    permission (see "Permissions" in section 1).</li>
   <li><b>2026-11-12g:</b> The last pop-ups now use the menu names too: <b>Find possible
     setup mistakes</b> (Course check), <b>List everything in the course on this tab</b>,
     <b>Back up course to Google Docs</b>, and <b>Turn this tab's rubric into a Canvas
@@ -770,27 +778,44 @@ stays as it is until you're done, so nothing is lost.</p>
 <ol>
   <li>Open the template (the same link you used for your first copy) and make a
     copy.</li>
-  <li>In the new copy, fill in <b>ref_Config</b> (see <b>1. First-time setup</b>),
-    including <code>cfg_SeatingDeckID</code> if you use the seating chart.</li>
-  <li>Open <b>Setup…</b> and save your Canvas address and token (part 2). A new copy needs
-    your token again: it isn't carried over.</li>
-  <li>Open <b>Refresh tables…</b>, tick <b>All</b> and <b>Jupiter categories</b>, click
-    <b>Update</b>, and tick the
-    same categories on ref_Config as in your old workbook. Then check that part 5 of
-    <b>Setup…</b> says <b>Setup OK</b>.</li>
-  <li>Bring your work over from the old workbook:
+  <li>Open your old workbook in another browser tab and copy its whole address.</li>
+  <li>In the <b>new</b> copy, choose <span class="menu">Course Manager Tools › 📥 Bring over
+    from my old copy…</span>. A panel opens on the right. Paste the address and click
+    <b>Look at it</b>. The panel lists every tab in your old workbook and what will
+    happen to it:
     <ul>
-      <li><b>Tabs the new copy already has</b> (createByRow, makeAssignment, your grading
-        sheet such as Comments): copy your rows from the old tab and paste them into the
-        same place. On a grading sheet, this brings the Jupiter IDs in column F along.</li>
+      <li><b>ref_Config:</b> your settings come in (course number, user ID, cc email,
+        calendar, term quarters, due times, seating chart, Jupiter categories and their
+        ticks). Blank cells in the old copy are left as they are.</li>
+      <li><b>Other ref_ tabs</b> and tabs a tool makes (Course Check, Quiz Check, Quiz
+        report, Assignment Order, rubricCanvasExport, JupiterExport): skipped. Refresh
+        tables… or the tool makes them again.</li>
+      <li><b>Tabs the new copy also has</b> (createByRow, makeAssignment, your grading
+        sheet such as Comments): <b>Bring my cells in</b> puts your cells at the same
+        places in the new tab, which keeps its buttons. You can pick <b>Copy as "Name
+        (old)"</b> or <b>Skip</b> instead. Home starts on Skip.</li>
       <li><b>Tabs you added yourself</b> (extra makeAssignment tabs, rubric tabs, other
-        grading sheets): in the old workbook, right-click the tab ›
-        <b>Copy to › Existing spreadsheet</b> and pick the new copy. Then rename the copied
-        tab to take out "Copy of".</li>
-      <li><b>Don't copy</b> the ref_ tabs or JupiterExport: the refresh and Update Grades
-        fill those.</li>
+        grading sheets): copied whole, with formulas, colors, dropdowns, notes and
+        links.</li>
     </ul>
   </li>
+  <li>Click <b>Bring over</b>. It checks everything first: if a new tab already has
+    something <b>different</b> in a cell your old tab fills, <b>nothing</b> is brought
+    over, and the panel says which tab and cell. Set that tab to Copy as "Name (old)" (or
+    Skip) and click Bring over again. Nothing in the new copy is ever overwritten,
+    except the ref_Config settings.</li>
+  <li>The panel then lists what to <b>redo by hand</b>, with how: charts, pivot tables,
+    protected ranges, filter views, alternating colors, and <b>buttons or pictures you
+    drew</b> on your own tabs (copy them over, or use the menu instead: every button's
+    tool is there).</li>
+  <li>Open <b>Setup…</b> and save your Canvas address and token (part 2). A new copy needs
+    your token again: it isn't carried over. Check the course in part 3.</li>
+  <li>Open <b>Refresh tables…</b>, tick <b>All</b> and <b>Jupiter categories</b>, and
+    click <b>Update</b>. Your Jupiter ticks are kept. Then check that part 5 of
+    <b>Setup…</b> says <b>Setup OK</b>.</li>
+  <li>If you'd rather copy a tab yourself: in the old workbook, right-click the tab ›
+    <b>Copy to › Existing spreadsheet</b> and pick the new copy (this brings drawn
+    buttons too). Then rename the copied tab to take out "Copy of".</li>
   <li>Look over each copied tab for <code>#REF!</code> errors, and click a button or two.
     If a button says "Script function … not found", see <b>7. When something goes
     wrong</b>.</li>

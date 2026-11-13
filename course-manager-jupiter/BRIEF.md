@@ -1,7 +1,27 @@
 # course-manager-jupiter — Project Brief
 
-> **Where we left off (current state, 2026-11-12, Mac)**
+> **Where we left off (current state, 2026-11-13, Mac)**
 >
+> - **📥 Bring over from my old copy… (11/13, built and committed; NOT pushed yet).**
+>   Modelled on assign-sheet's (live there 11/13). Menu item after Setup… (`BringOver.js`,
+>   `BringOverPanelPage.html`; copy engine `09_TabRebuild.js`, the same file as
+>   assign-sheet's, copied unchanged: the offline check fails if the two differ, so fix
+>   the engine in both). Read-only access to the old copy: `spreadsheets.readonly` + the
+>   Sheets v4 advanced service added to `appsscript.json` (manifest change: push with
+>   `--force`; each workbook asks to re-authorize). Lara's choices 11/13: **ref_Config**
+>   brings the named settings in `BRING_OVER_CONFIG_NAMES` by name (non-blank only,
+>   replaces; never cfg_ThisSheetID, cfg_CourseName or B2); other **ref_** tabs and
+>   **tool-built tabs** (Course Check, Quiz Check, Quiz Check detail, Quiz report, Quiz
+>   export report, Assignment Order, rubricCanvasExport, JupiterExport) skipped; **tabs
+>   the template also has**: "Bring my cells in" first (Home starts on Skip), or Copy as
+>   "Name (old)", or Skip; **own tabs** copied whole. Never overwrites: any differing
+>   filled cell in a "Bring my cells in" tab stops the whole run before changes; formula
+>   cells compare by formula (so =cfg_CourseName isn't "in the way"). Drawn buttons and
+>   pictures can't be read by the Sheets API: the panel lists them as hand work with a
+>   how-to. Offline check `scripts/checks/jupiter-bring-over.check.js`. Guide 2026-11-13
+>   (Permissions bullet, section 2 menu line, section 8 steps rewritten, What's new).
+>   **Next:** Lara tests in a scratch copy of the template (bringing over from Biology),
+>   then pushes Biology → AI9, Gastronomy → template.
 > - **UI simplification (11/12, Lara): Phases 1–2 done and live; Phase 3 panel dropped; Home layout tabled.** Many teachers are intimidated by
 >   spreadsheets. Decided: (1) **dry run is called "preview mode"** everywhere a teacher
 >   sees it (`DRY_RUN`, `isDryRun_` and the safe default unchanged); the create/reorder
