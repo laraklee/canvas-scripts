@@ -6,7 +6,7 @@
  *   show status / switch on/off). Four parts: Canvas connection (address, token saved
  *   or not, Test connection), set or change the token (saveCanvasCredentialsFromPanel
  *   in 06_Credentials.js), which course (*Config* B4 in a box to change it, Canvas's
- *   name for the course, an Open Config link), and dry run (status, turn on/off).
+ *   name for the course, an Open Config link), and preview mode (DRY_RUN; status, turn on/off).
  *   - showSetupPanel (menu: Canvas Tools › ⚙️ Setup…): opens SetupPanelPage.html.
  *   - getSetupStatus, testSetupConnection, checkSetupCourse, saveSetupCourseId,
  *     openSetupConfig, setDryRunFromPanel: called by the panel (google.script.run). They
@@ -67,7 +67,7 @@ function getSetupStatus() {
   try {
     status.dryRun = isDryRun_();
   } catch (error) {
-    console.error('Setup panel: dry run read failed: ' + error.message);
+    console.error('Setup panel: preview mode read failed: ' + error.message);
   }
   try {
     status.courseId = readSetupCourseId_();
@@ -212,11 +212,11 @@ function openSetupConfig() {
 }
 
 /**
- * Called by the panel after its own "are you sure" step: turns dry run on (true) or off
+ * Called by the panel after its own "are you sure" step: turns preview mode on (true) or off
  * (false). Returns the new status (getSetupStatus).
  */
 function setDryRunFromPanel(on) {
   PropertiesService.getScriptProperties().setProperty(PROP_DRY_RUN, on ? 'true' : 'false');
-  console.log('Dry run switched ' + (on ? 'ON' : 'OFF') + ' (Setup panel).');
+  console.log('Preview mode switched ' + (on ? 'ON' : 'OFF') + ' (Setup panel).');
   return getSetupStatus();
 }

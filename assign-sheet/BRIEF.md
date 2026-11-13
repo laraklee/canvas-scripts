@@ -5,6 +5,14 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
+> **Preview mode wording built 11/12 (Mac), not yet committed:** "dry run" is now
+> "preview mode" everywhere a teacher sees it (pop-ups, status cells "Preview mode OK…",
+> Setup panel part 4, log prefix "PREVIEW MODE:", guide 2026-11-12b), matching
+> course-manager-jupiter. `DRY_RUN`, `isDryRun_` and the safe default unchanged. New
+> on-open message (`showPreviewModeToast_`, 05_CanvasApi.js). Note: preview mode is OFF
+> on the live sheets by Lara's choice, so OFF shows a calm 5-second note ("Preview mode is
+> OFF: The Canvas tools send to Canvas"), not Course Manager's warning (Lara, 11/12).
+>
 > **Setup panel live on all four sheets 11/12** (commit `a662e63`). **Canvas Tools › ⚙️
 > Setup…** (`08_SetupPanel.js`, `SetupPanelPage.html`; save in `06_Credentials.js`)
 > replaces the ⚙️ Setup submenu, modelled on course-manager-jupiter's. Pushed to Biology

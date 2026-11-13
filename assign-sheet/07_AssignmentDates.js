@@ -177,10 +177,10 @@ function pushAssignmentDatesToCanvas() {
     ss.toast(`Updating ${plan.toSend.length} row(s)...`, 'Assignment Dates', -1);
     const result = sendDateUpdates_(sheet, plan.toSend, ss.getSpreadsheetTimeZone());
     console.log(`Push assignment dates: ${result.sent} sent, ${result.failed} failed, ` +
-      `${plan.skipped} skipped, dry run ${result.dryRun ? 'ON' : 'OFF'}.`);
+      `${plan.skipped} skipped, preview mode ${result.dryRun ? 'ON' : 'OFF'}.`);
     ss.toast('', '', 1);
     ui.alert('Send assignment dates',
-      (result.dryRun ? `Dry run: ${result.sent} row(s) checked; nothing was sent to Canvas.` :
+      (result.dryRun ? `Preview mode: ${result.sent} row(s) checked; nothing was sent to Canvas.` :
         `${result.sent} row(s) updated.`) +
       (result.failed ? `\n${result.failed} failed; see Sync Status.` : '') +
       (result.stoppedMessage ? '\n\nStopped early: ' + result.stoppedMessage : ''),
@@ -430,7 +430,7 @@ function removeSelectedOverrideRows() {
       try {
         canvasWrite_('DELETE', job.path);
         if (dryRun) {
-          status.setValue('Dry run OK (would remove)');
+          status.setValue('Preview mode OK (would remove)');
         } else {
           const stamp = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(),
             'yyyy-MM-dd HH:mm');
@@ -451,10 +451,10 @@ function removeSelectedOverrideRows() {
       }
     }
     console.log(`Remove section dates: ${sent} removed, ${failed} failed, ${skipped} skipped, ` +
-      `dry run ${dryRun ? 'ON' : 'OFF'}.`);
+      `preview mode ${dryRun ? 'ON' : 'OFF'}.`);
     ss.toast('', '', 1);
     ui.alert(title,
-      (dryRun ? `Dry run: ${sent} row(s) checked; nothing was removed in Canvas.` :
+      (dryRun ? `Preview mode: ${sent} row(s) checked; nothing was removed in Canvas.` :
         `${sent} row(s) removed. They stay on the sheet, grayed out, until you Load again.`) +
       (failed ? `\n${failed} failed; see Sync Status.` : '') +
       (stoppedMessage ? '\n\nStopped early: ' + stoppedMessage : ''),
@@ -882,8 +882,8 @@ function sendDateUpdates_(sheet, jobs, tz) {
       const reply = canvasWrite_(job.method || 'PUT', job.path, job.payload);
       const stamp = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd HH:mm');
       if (result.dryRun) {
-        status.setValue(job.method === 'POST' ? 'Dry run OK (would create)' :
-          `Dry run OK (${job.fields.length} date(s))`);
+        status.setValue(job.method === 'POST' ? 'Preview mode OK (would create)' :
+          `Preview mode OK (${job.fields.length} date(s))`);
       } else if (job.method === 'POST') {
         // Now a normal section-date row: real override ID, fixed name (no dropdown).
         sheet.getRange(job.row, DATES_COL.override).setValue(reply && reply.id ? reply.id : '');

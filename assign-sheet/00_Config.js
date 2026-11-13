@@ -2,11 +2,13 @@
  * 00_Config.js
  * Purpose: the Canvas Tools menu (onOpen), the user guide side panel, and the *Config*
  *   tab readers (getConfig, getConfiguredPeriodPairs). Setup (token, connection, course,
- *   dry run) is the Setup panel, Canvas Tools › ⚙️ Setup… (08_SetupPanel.js; 2026-11-12).
+ *   preview mode) is the Setup panel, Canvas Tools › ⚙️ Setup… (08_SetupPanel.js;
+ *   2026-11-12). On open, a short message says whether preview mode is ON.
+ *   Preview mode = the DRY_RUN setting (called "dry run" until 2026-11-12).
  * Canvas endpoints called: none.
  * Canvas write operations: none.
- * Required User/Script Properties: none (the Canvas address and token are User
- *   Properties read by 05_CanvasApi.js).
+ * Required User/Script Properties: reads Script Property DRY_RUN on open (through
+ *   05_CanvasApi.js); the Canvas address and token are User Properties read there.
  */
 
 /**
@@ -32,10 +34,17 @@ function onOpen() {
     .addItem('🔗 Reset Master connection', 'updateMasterConnection')    // 01_Utilities.js (restores the IMPORTRANGE)
     .addItem('☑️ Toggle checkboxes', 'toggleSelectedCheckboxes')        // 01_Utilities.js
     .addSeparator()
-    .addItem('⚙️ Setup…', 'showSetupPanel') // 08_SetupPanel.js (token, connection, course, dry run)
+    .addItem('⚙️ Setup…', 'showSetupPanel') // 08_SetupPanel.js (token, connection, course, preview mode)
     .addSeparator()
     .addItem('❓ User guide', 'showUserGuide')
     .addToUi();
+
+  // A short "Preview mode is ON/OFF" message at the bottom right (05_CanvasApi.js).
+  try {
+    showPreviewModeToast_(SpreadsheetApp.getActiveSpreadsheet());
+  } catch (error) {
+    console.error('Preview mode message on open failed: ' + error.message);
+  }
 }
 
 /**

@@ -2,8 +2,9 @@
  * 05_CanvasApi.js
  * Purpose: the project's Canvas request helpers. Every Canvas read goes through
  *   canvasGet_(); every Canvas write goes through canvasWrite_(), which only sends when
- *   the DRY_RUN Script Property is exactly "false". Connection test and dry-run switch
- *   are in the Setup panel (08_SetupPanel.js; they were menu items until 2026-11-12).
+ *   the DRY_RUN Script Property is exactly "false". Teachers see DRY_RUN as "preview
+ *   mode" (called dry run until 2026-11-12; only the wording changed). Connection test
+ *   and the preview mode switch are in the Setup panel (08_SetupPanel.js; they were menu items until 2026-11-12).
  *   Adapted from course-manager-jupiter/CanvasApi.js.
  * Canvas endpoints called: whatever path a caller passes to canvasGet_() or
  *   canvasWrite_().
@@ -12,10 +13,10 @@
  *   07_AssignmentDates.js (assignment and section open/due/lock dates).
  * Required User/Script Properties: reads User Properties CANVAS_BASE_URL and CANVAS_TOKEN
  *   (saved in the Setup panel, 06_Credentials.js); reads and writes Script Property
- *   DRY_RUN (unset means dry run is ON).
+ *   DRY_RUN (unset means preview mode is ON).
  *
  * Error messages name the problem type only. They never include the token, the request
- * path or query (which could contain IDs), or anything Canvas sent back. Dry-run logs
+ * path or query (which could contain IDs), or anything Canvas sent back. Preview-mode logs
  * show the method, the path with every number replaced by ":id", and field names only.
  */
 
@@ -57,7 +58,7 @@ function canvasGet_(path, query) {
 /**
  * The only way to change anything in Canvas. method is POST, PUT, PATCH, or DELETE;
  * path is like '/courses/123/discussion_topics'; payload is sent as JSON.
- * While dry run is ON (the default), logs what would be sent and returns
+ * While preview mode (DRY_RUN) is ON (the default), logs what would be sent and returns
  * { dryRun: true } without contacting Canvas. Otherwise sends the request with the
  * shared retry, back-off, and response checks, and returns Canvas's reply.
  */
@@ -69,7 +70,7 @@ function canvasWrite_(method, path, payload) {
   const apiPath = canvasApiPath_(path);
   if (isDryRun_()) {
     const fields = describeFields_(payload);
-    console.log(`DRY RUN: would ${verb} ${apiPath.replace(/\/\d+(?=\/|$)/g, '/:id')}` +
+    console.log(`PREVIEW MODE: would ${verb} ${apiPath.replace(/\/\d+(?=\/|$)/g, '/:id')}` +
       ` (fields: ${fields.length ? fields.join(', ') : 'none'})`);
     return { dryRun: true };
   }
@@ -109,10 +110,23 @@ function describeFields_(payload, prefix) {
     describeFields_(value, prefix ? `${prefix}[${key}]` : key));
 }
 
+/**
+ * On open (onOpen, 00_Config.js): a short message at the bottom right saying whether
+ * preview mode is ON (Lara, 2026-11-12). Reads the Script Property only; no Canvas call.
+ * Unlike course-manager-jupiter, OFF is the everyday state on the live sheets (Lara's
+ * choice), so OFF gets a calm note, not a warning (Lara, 2026-11-12). 5 seconds each.
+ */
+function showPreviewModeToast_(ss) {
+  const on = isDryRun_();
+  ss.toast(on ? 'Nothing changes in Canvas while it is ON.' :
+    'The Canvas tools send to Canvas. Change it in ⚙️ Setup….',
+  on ? 'Preview mode is ON' : 'Preview mode is OFF', 5);
+}
+
 function describeDryRun_(dryRunOn) {
   return dryRunOn ?
-    'Dry run is ON. Changes are only logged; nothing is sent to Canvas.' :
-    'Dry run is OFF. Changes WILL be sent to Canvas.';
+    'Preview mode is ON. Changes are only logged; nothing is sent to Canvas.' :
+    'Preview mode is OFF. Changes WILL be sent to Canvas.';
 }
 
 /** Reads the saved address and token. Clear message if either is missing. */

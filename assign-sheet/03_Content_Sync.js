@@ -53,7 +53,7 @@ function runContentCopyForAllQuarters() {
  *                    replies allowed only if col G is checked; link in col I.
  * A row whose H or I cell already has a "View…" link is skipped for that part, so
  * nothing is posted twice (clear the cell to post again). Unchecked parts are left
- * alone. Asks before sending. With dry run ON, the status cell says "Dry run OK".
+ * alone. Asks before sending. With preview mode ON, the status cell says "Preview mode OK".
  */
 const EVENTS_HEADER_ROW = 2;
 const EVENTS_FIRST_DATA_ROW = 3;
@@ -104,10 +104,10 @@ function processUnifiedSheetForCanvasWithLinks() {
     ss.toast(`Posting ${jobs.toSend.length} item(s)...`, 'Canvas', -1);
     const result = sendEventJobs_(sheet, jobs.toSend);
     console.log(`Post to Canvas: ${result.sent} sent, ${result.failed} failed, ` +
-      `${jobs.skipped} skipped, dry run ${result.dryRun ? 'ON' : 'OFF'}.`);
+      `${jobs.skipped} skipped, preview mode ${result.dryRun ? 'ON' : 'OFF'}.`);
     ss.toast('', '', 1);
     ui.alert('Post to Canvas',
-      (result.dryRun ? `Dry run: ${result.sent} item(s) checked; nothing was sent to Canvas.` :
+      (result.dryRun ? `Preview mode: ${result.sent} item(s) checked; nothing was sent to Canvas.` :
         `${result.sent} item(s) posted.`) +
       (result.failed ? `\n${result.failed} item(s) failed; see columns H and I.` : '') +
       (result.stoppedMessage ? '\n\nStopped early: ' + result.stoppedMessage : ''),
@@ -198,7 +198,7 @@ function sendEventJobs_(sheet, jobs) {
       const reply = canvasWrite_('POST', job.path, job.payload);
       if (reply.dryRun) {
         result.dryRun = true;
-        cell.setValue('Dry run OK');
+        cell.setValue('Preview mode OK');
       } else if (reply.html_url) {
         cell.setFormula(`=HYPERLINK("${String(reply.html_url).replace(/"/g, '""')}", "${job.linkText}")`);
       } else {
