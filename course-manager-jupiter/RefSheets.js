@@ -205,7 +205,8 @@ function courseCheckAfterRefresh_(ss, canvasGroups) {
       TOOL_SHEETS.COURSE_CHECK + ' tab.' : 'no problems found.'}`;
   } catch (error) {
     console.error('Course check after refresh failed: ' + (error.canvasType || error.message));
-    return 'Course check could not run (use Course check in the menu to see why).';
+    return 'Course check could not run (use Course Manager Tools › Check & back up course › ' +
+      'Find possible setup mistakes to see why).';
   }
 }
 

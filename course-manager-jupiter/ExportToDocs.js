@@ -81,7 +81,7 @@ const EXPORT_TYPES = Object.freeze({
 function exportCanvasToDocs() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  const title = 'Export to Google Docs';
+  const title = 'Back up course to Google Docs'; // menu label (2026-11-12)
   const lock = LockService.getDocumentLock();
   if (!lock.tryLock(1000)) {
     ui.alert(title, 'An export is already running. Wait for it to finish.', ui.ButtonSet.OK);

@@ -23,6 +23,9 @@
  * Required User/Script Properties: none.
  */
 
+/** Pop-up title: the tool's Course Manager Tools menu label (2026-11-12). */
+const RUBRIC_TITLE = "Turn this tab's rubric into a Canvas file";
+
 const RUBRIC_TITLE_LABEL = 'Rubric Title';
 const RUBRIC_DESCRIPTION_LABEL = 'Criterion Description';
 const RUBRIC_RATING_LABEL = /^Rating (\d+) (Name|Description|Points)$/;
@@ -50,7 +53,7 @@ function exportRubricToCanvasFormat() {
     const result = buildRubricExport_(range.getValues(),
       range.getDisplayValues().map(row => row.map(value => String(value).trim())));
     if (result.problems.length) {
-      ui.alert('Export rubric for Canvas', 'The export tab was not changed. Please fix:\n• ' +
+      ui.alert(RUBRIC_TITLE, 'The export tab was not changed. Please fix:\n• ' +
         result.problems.join('\n• '), ui.ButtonSet.OK);
       return;
     }
@@ -64,13 +67,13 @@ function exportRubricToCanvasFormat() {
     const criteria = result.rows.length - 1;
     console.log(`Export rubric: ${criteria} criteria, ${result.ratingColumns} rating ` +
       `column group(s), ${result.skipped} empty criteria skipped.`);
-    ui.alert('Export rubric for Canvas', `"${result.title}": ${criteria} criteria written to ` +
+    ui.alert(RUBRIC_TITLE, `"${result.title}": ${criteria} criteria written to ` +
       `${TOOL_SHEETS.RUBRIC_EXPORT}` + (result.skipped ? ` (${result.skipped} empty ` +
       'criteria skipped)' : '') + '.\n\nNext: open that tab, then File › Download › ' +
       'Comma-separated values (.csv), and import the file in Canvas (Rubrics › Import).',
     ui.ButtonSet.OK);
   } catch (error) {
-    reportRefreshFailure_('Export rubric for Canvas', 'The export tab was not changed.', error);
+    reportRefreshFailure_(RUBRIC_TITLE, 'The export tab was not changed.', error);
   }
 }
 

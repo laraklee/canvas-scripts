@@ -34,6 +34,9 @@
  *   Lists assignment names only (no student data); logs counts only.
  */
 
+/** Pop-up title: the tool's Course Manager Tools menu label (2026-11-12; was "Course check"). */
+const COURSE_CHECK_TITLE = 'Find possible setup mistakes';
+
 const COURSE_CHECK_HEADERS = Object.freeze(['Check', 'Assignment', 'Group', 'Due', 'Link',
   'OK as is', 'Key']);
 const COURSE_CHECK_OK_COLUMN = 6;
@@ -68,17 +71,17 @@ function runCourseCheck() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
   try {
-    ss.toast('Checking the course…', 'Course check', -1);
+    ss.toast('Checking the course…', COURSE_CHECK_TITLE, -1);
     const result = writeCourseCheck_(ss, writeAssignmentGroupsSheet_(ss).canvasGroups);
     ss.getSheetByName(TOOL_SHEETS.COURSE_CHECK).activate();
-    ss.toast('Done.', 'Course check', 2);
-    ui.alert('Course check', courseCheckCountsText_(result) + '\n\n' + result.termNote +
+    ss.toast('Done.', COURSE_CHECK_TITLE, 2);
+    ui.alert(COURSE_CHECK_TITLE, courseCheckCountsText_(result) + '\n\n' + result.termNote +
       (result.jupiterNote ? '\n' + result.jupiterNote : '') +
       '\n\nDetails are on the Course Check tab. These are possible problems: tick "OK as ' +
       'is" for any that are on purpose, and they stay at the bottom next time.',
     ui.ButtonSet.OK);
   } catch (error) {
-    reportRefreshFailure_('Course check', 'The Course Check tab was not changed.', error);
+    reportRefreshFailure_(COURSE_CHECK_TITLE, 'The Course Check tab was not changed.', error);
   }
 }
 

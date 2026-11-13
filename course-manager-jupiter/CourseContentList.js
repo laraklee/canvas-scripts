@@ -52,7 +52,7 @@ const CONTENT_SKIP_SUBMISSION_TYPES = Object.freeze(['discussion_topic', 'online
 function listCourseContent() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  const title = 'List course content';
+  const title = 'List everything in the course on this tab'; // menu label (2026-11-12)
   const lock = LockService.getDocumentLock();
   if (!lock.tryLock(1000)) {
     ui.alert(title, 'An export or list is already running. Wait for it to finish.',
