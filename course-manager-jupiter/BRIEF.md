@@ -30,7 +30,12 @@
 >   **Phase 2b step 4 (assignment order; b89804d) live in all four 11/12:** Biology 2:56
 >   PM (Lara: "Works"), then AI9, Gastronomy, template 2:57 PM. Next 2b steps: check &
 >   back up, classroom.
->   **Phase 2b step 5 (check & back up + classroom) built 11/12, not yet committed:**
+>   **PHASE 2 DONE 11/12.** Step 5 (check & back up + classroom; f2cbe9a) live in all four:
+>   Biology 2:59 PM (Lara: "Works"), then AI9, Gastronomy, template 3:00 PM.
+>   **Next (not started):** Phase 3, the Course Manager Tools side panel (task cards; see
+>   decisions at the top of this item); then a simpler Home tab (Lara, in the Sheet);
+>   "preview mode" wording in the other three projects' Setup panels; optional "My
+>   tools". Step 5 details:
 >   titles Find possible setup mistakes (`COURSE_CHECK_TITLE`), List everything in the
 >   course on this tab, Back up course to Google Docs, Turn this tab's rubric into a
 >   Canvas file (`RUBRIC_TITLE`); Build seating chart already matched. Kept on purpose:
