@@ -2,8 +2,7 @@
 
 > **Where we left off (current state, 2026-11-13, Mac)**
 >
-> - **📥 Bring over from my old copy… (11/13, built and committed; tested in a scratch copy,
->   not pushed to the live workbooks yet).**
+> - **📥 Bring over from my old copy… (11/13): live in all four workbooks.**
 >   Modelled on assign-sheet's (live there 11/13). Menu item after Setup… (`BringOver.js`,
 >   `BringOverPanelPage.html`; copy engine `09_TabRebuild.js`, the same file as
 >   assign-sheet's, copied unchanged: the offline check fails if the two differ, so fix
@@ -24,8 +23,10 @@
 >   **Tested 11/13:** pushed to a scratch copy of the template (1:23 PM), Lara brought
 >   over from Gastronomy: "looks OK until tested with new users". She saw things to clean
 >   up on the template itself; she'll do that by hand after the code updates are pushed.
->   **Pushed to Biology 1:29 PM** (`--force`, code from `cf2c19f`). **Next:** Lara checks
->   Biology (re-authorize, menu item opens), then ask and push AI9, Gastronomy → template.
+>   **Pushed to Biology 1:29 PM** (`--force`, code from `cf2c19f`); Lara re-authorized and
+>   checked it ("Works, push the rest"). Then AI9 and Gastronomy 1:31 PM, template 1:32 PM
+>   (all `--force`; each asks to re-authorize on next open). **Next (Lara, by hand):** the
+>   template clean-up she noticed while testing.
 > - **UI simplification (11/12, Lara): Phases 1–2 done and live; Phase 3 panel dropped; Home layout tabled.** Many teachers are intimidated by
 >   spreadsheets. Decided: (1) **dry run is called "preview mode"** everywhere a teacher
 >   sees it (`DRY_RUN`, `isDryRun_` and the safe default unchanged); the create/reorder
