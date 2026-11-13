@@ -30,7 +30,7 @@ const IMPORT_FIELDS_ = [
     'data(startRow,startColumn,rowMetadata(pixelSize,hiddenByUser),' +
     'columnMetadata(pixelSize,hiddenByUser),' +
     'rowData(values(userEnteredValue,userEnteredFormat,dataValidation,note,' +
-    'textFormatRuns,pivotTable(source))))))',
+    'textFormatRuns,pivotTable(source)))))',
 ].join(',');
 
 const DEFAULT_ROW_PX_ = 21;
