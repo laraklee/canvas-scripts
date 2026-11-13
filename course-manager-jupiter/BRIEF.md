@@ -21,7 +21,9 @@
 >   good"; not every Home button tried), then AI9, Gastronomy, template 2:37 PM.
 >   **Phase 2b step 1 (create tools; 9f7c31f) live in all four 11/12:** Biology 2:39 PM
 >   (Lara: "Works"), then AI9, Gastronomy, template 2:41 PM.
->   **Phase 2b step 2 (grading) built 11/12, not yet committed:** titles Build class list
+>   **Phase 2b step 2 (grading; 9f6a348) live in all four 11/12:** Biology 2:45 PM (Lara:
+>   "Works"), then AI9, Gastronomy, template 2:47 PM. Next 2b steps: groups, reorder,
+>   check & back up, classroom. titles Build class list
 >   (`ROSTER_TITLE`), Get latest grades for Jupiter (`GRADES_TITLE`), Get scores into this
 >   column, Send comments from this column; messages name the buttons in parentheses
 >   ("Build class list (CreateRoster)"). Refresh Jupiter categories title unchanged (panel/
