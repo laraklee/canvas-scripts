@@ -5,7 +5,8 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
-> **Preview mode wording built 11/12 (Mac), not yet committed:** "dry run" is now
+> **Preview mode wording (c480fbc) live on all four sheets 11/12:** Biology 3:09 PM
+> (Lara: "Works"), then Gastronomy, AI9, template 3:11 PM. "dry run" is now
 > "preview mode" everywhere a teacher sees it (pop-ups, status cells "Preview mode OK…",
 > Setup panel part 4, log prefix "PREVIEW MODE:", guide 2026-11-12b), matching
 > course-manager-jupiter. `DRY_RUN`, `isDryRun_` and the safe default unchanged. New

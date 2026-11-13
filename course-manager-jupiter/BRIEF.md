@@ -40,8 +40,8 @@
 >   (Setup, Refresh, guide), links to tool tabs, and only tab-independent buttons
 >   ("this tab" tools stay on their own tabs); plus a 2–3 line instruction strip at the
 >   top of each tool tab; Claude drafts wording in chat, Lara pastes it in (no code).
->   Still open, separate: "preview mode" wording in the other three projects' Setup
->   panels. Step 5 details:
+>   Done 11/12: "preview mode" wording in assign-sheet (c480fbc; the only other project
+>   that used dry run). Step 5 details:
 >   titles Find possible setup mistakes (`COURSE_CHECK_TITLE`), List everything in the
 >   course on this tab, Back up course to Google Docs, Turn this tab's rubric into a
 >   Canvas file (`RUBRIC_TITLE`); Build seating chart already matched. Kept on purpose:
