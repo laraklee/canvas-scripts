@@ -88,9 +88,9 @@ function clearGroupData() {
       sheet.getRange(GROUPS_HEADER_ROW + 1, table.idColumn, table.rows.length, 1).clearContent();
     }
     ss.toast('Category ID, link, and group IDs cleared. Nothing was changed in Canvas.',
-      'Clear group data', 5);
+      'Clear group info', 5);
   } catch (error) {
-    reportRefreshFailure_('Clear group data', 'Nothing was cleared.', error);
+    reportRefreshFailure_('Clear group info', 'Nothing was cleared.', error);
   }
 }
 
@@ -109,12 +109,12 @@ function createGroupCategory() {
     }
     if (!isBlank_(sheet.getRange(GROUPS_CELLS.CATEGORY_ID).getValue())) {
       throw sheetProblem_(`A category was already created (its ID is in ${GROUPS_CELLS.CATEGORY_ID}). ` +
-        'To start a new set, use Clear group data first.');
+        'To start a new set, use Clear group info first.');
     }
     const courseId = getCourseIdForRefresh_();
     const dryRun = isDryRun_();
 
-    const answer = ui.alert('Create group category',
+    const answer = ui.alert('Make a group set',
       `Create the group category "${name}" in ${courseLabel_()}?\n\n` +
       (dryRun ? 'Preview mode is ON: nothing will be sent.' :
         'Preview mode is OFF: this creates it in Canvas.'), ui.ButtonSet.YES_NO);
@@ -123,7 +123,7 @@ function createGroupCategory() {
     const result = canvasWrite_('POST', `/courses/${courseId}/group_categories`, { name });
     if (result.dryRun) {
       console.log('Create group category (preview mode): 1 category would be created.');
-      ui.alert('Create group category', 'Preview mode: the category would have been created. ' +
+      ui.alert('Make a group set', 'Preview mode: the category would have been created. ' +
         `Nothing was sent, and ${GROUPS_CELLS.CATEGORY_ID} was left blank.`, ui.ButtonSet.OK);
       return;
     }
@@ -134,10 +134,10 @@ function createGroupCategory() {
     sheet.getRange(GROUPS_CELLS.CATEGORY_LINK).setRichTextValue(
       SpreadsheetApp.newRichTextValue().setText('Category URL →').setLinkUrl(link).build());
     console.log('Create group category: 1 category created.');
-    ui.alert('Create group category', `Created. Its ID (${result.id}) is in ` +
-      `${GROUPS_CELLS.CATEGORY_ID}. Next: Create groups.`, ui.ButtonSet.OK);
+    ui.alert('Make a group set', `Created. Its ID (${result.id}) is in ` +
+      `${GROUPS_CELLS.CATEGORY_ID}. Next: Make the groups.`, ui.ButtonSet.OK);
   } catch (error) {
-    reportRefreshFailure_('Create group category', 'No category was created.', error);
+    reportRefreshFailure_('Make a group set', 'No category was created.', error);
   }
 }
 
@@ -157,7 +157,7 @@ function createGroups() {
       .replace(/\.0$/, '').trim();
     if (!categoryId && !dryRun) {
       throw sheetProblem_(`There is no category ID in ${GROUPS_CELLS.CATEGORY_ID}. ` +
-        'Use Create group category first.');
+        'Use Make a group set first.');
     }
 
     const table = readGroupsTable_(sheet);
@@ -165,13 +165,13 @@ function createGroups() {
     const toCreate = named.filter(row => isBlank_(row.id));
     const skipped = named.length - toCreate.length;
     if (!toCreate.length) {
-      ui.alert('Create groups', named.length ?
+      ui.alert('Make the groups', named.length ?
         `All ${named.length} group name(s) already have a GroupID. Nothing to create.` :
         `Type group names under "${GROUPS_NAME_HEADER}" first.`, ui.ButtonSet.OK);
       return;
     }
 
-    const answer = ui.alert('Create groups',
+    const answer = ui.alert('Make the groups',
       `Create ${toCreate.length} empty group(s) in category "` +
       `${sheet.getRange(GROUPS_CELLS.CATEGORY_NAME).getDisplayValue()}" in ${courseLabel_()}?` +
       (skipped ? `\n${skipped} row(s) already have a GroupID and will be skipped.` : '') +
@@ -204,17 +204,17 @@ function createGroups() {
 
     console.log(`Create groups${dryRun ? ' (preview mode)' : ''}: ${created} created, ` +
       `${failures.length} failed, ${skipped} skipped` + (timedOut ? ', stopped at time limit.' : '.'));
-    ui.alert('Create groups',
+    ui.alert('Make the groups',
       (dryRun ? `Preview mode: ${created} group(s) would have been created. Nothing was sent.` :
         `${created} group(s) created; their IDs are in the ${GROUPS_ID_HEADER} column.`) +
       (skipped ? `\n${skipped} row(s) skipped (already had a GroupID).` : '') +
       (failures.length ? `\n\nNot created (${failures.length}):\n• ` + failures.join('\n• ') +
-        '\nFix those rows and run Create groups again; it skips the ones already made.' : '') +
-      (timedOut ? '\n\nStopped near the time limit; run Create groups again to finish.' : ''),
+        '\nFix those rows and run Make the groups again; it skips the ones already made.' : '') +
+      (timedOut ? '\n\nStopped near the time limit; run Make the groups again to finish.' : ''),
       ui.ButtonSet.OK);
   } catch (error) {
-    reportRefreshFailure_('Create groups', 'Groups already created keep their IDs on the ' +
-      'sheet; run Create groups again to finish the rest.', error);
+    reportRefreshFailure_('Make the groups', 'Groups already created keep their IDs on the ' +
+      'sheet; run Make the groups again to finish the rest.', error);
   }
 }
 
@@ -225,7 +225,7 @@ function createGroups() {
 function pullGroupsForActiveColumn() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  const title = 'Pull groups';
+  const title = 'Get groups into this column'; // its menu label (2026-11-12)
   try {
     const sheet = ss.getActiveSheet();
     checkGradingSheet_(sheet);
@@ -275,7 +275,7 @@ function pullGroupsForActiveColumn() {
       `updated for ${plan.writes.length} student(s): ${plan.scored} in a group, ` +
       `${plan.missing} in none (blank).` +
       (rule ? '\n\nEach student cell now has a dropdown of the group names.' :
-        '\n\nThis set has no groups yet, so no dropdown was added. Create groups first.') +
+        '\n\nThis set has no groups yet, so no dropdown was added. Make the groups first.') +
       (notOnSheet ? `\n\n${notOnSheet} group member(s) have no row on this sheet ` +
         '(for example, another section, a dropped student, or the Test Student).' : '') +
       (membership.duplicates.length ? '\n\nMore than one group is named: ' +
@@ -296,7 +296,7 @@ function pullGroupsForActiveColumn() {
 function putStudentsInGroupsFromActiveColumn() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  const title = 'Put students in groups';
+  const title = 'Put students in groups from this column'; // menu label
   const lock = LockService.getDocumentLock();
   if (!lock.tryLock(1000)) {
     ui.alert(title, 'Groups are already being changed. Wait for that run to finish.',
@@ -316,7 +316,8 @@ function putStudentsInGroupsFromActiveColumn() {
     if (membership.duplicates.length) {
       throw sheetProblem_('More than one group is named ' +
         membership.duplicates.map(name => `"${name}"`).join(', ') +
-        '. Rename them in Canvas so each name is different, then run Pull groups again.');
+        '. Rename them in Canvas so each name is different, then run Get groups into this ' +
+        'column again.');
     }
 
     const rows = target.lastRow - ROSTER_FIRST_ROW + 1;
@@ -326,8 +327,8 @@ function putStudentsInGroupsFromActiveColumn() {
       membership, ROSTER_FIRST_ROW);
     if (plan.unknownRows.length) {
       throw sheetProblem_(`Row(s) ${plan.unknownRows.join(', ')} name a group that isn't ` +
-        'in this set. Pick from the dropdown (run Pull groups to refresh it). Nothing was ' +
-        'sent.');
+        'in this set. Pick from the dropdown (run Get groups into this column to refresh ' +
+        'it). Nothing was sent.');
     }
     const setName = String(category.name || '').trim() || 'this group set';
     if (!plan.changes.length) {
@@ -395,7 +396,7 @@ function putStudentsInGroupsFromActiveColumn() {
 function listGroupsAndMembers() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  const title = 'List groups and members';
+  const title = 'List groups and members on this tab'; // menu label
   try {
     const sheet = ss.getActiveSheet();
     checkGroupListTab_(sheet);
@@ -654,7 +655,7 @@ function readGroupColumn_(sheet) {
   const categoryId = jupiterId_(sheet.getRange(ASSIGNMENT_ID_ROW, column).getValue());
   if (!/^\d+$/.test(categoryId)) {
     throw sheetProblem_(`Row 2 of column ${letter} should hold the group set's category ID ` +
-      `(the number Create group category puts in ${GROUPS_CELLS.CATEGORY_ID} of ` +
+      `(the number Make a group set puts in ${GROUPS_CELLS.CATEGORY_ID} of ` +
       `${TOOL_SHEETS.CREATE_GROUPS}).`);
   }
   return { column, letter, categoryId, lastRow: sheet.getLastRow() };
