@@ -48,6 +48,24 @@ H; merged "Totals"; borders; hidden column E; frozen row 1; notes on A2 and D4;
 conditional colors in A, F and G; tab colors; Settings without gridlines. Expected to be
 missing: the chart (the report should count 2, one on each Scores tab).
 
-## Results
+## Results (2026-11-13)
 
-(not run yet)
+- **Read-only rebuild works.** Sheets API `spreadsheets.get` with `spreadsheets.readonly`
+  ran on the default Google Cloud project (no standard project, no Services toggle
+  needed). Lara compared the tabs: "It looks fine." Charts did not come over, as expected.
+- First run failed on Claude's bug (extra `)` in the field list, fixed in `c86d066`).
+  Fixing it meant deleting the new copy and making it again: the copy keeps the code it
+  was made with.
+- Step 4 (`SpreadsheetApp.openById` with read-only): (answer pending)
+
+## Lessons for the real tool
+
+- **Matching tab names are normal, not an error.** The blank sheet's `Sheet1` was in both
+  copies and stopped the import. The template and an old copy share tabs (Config, Q tabs),
+  so the real tool needs a choice per matching tab: keep the template's tab and bring the
+  teacher's data into it, bring it over as `Name (old)`, or skip.
+- **Charts and pivot tables** (Lara, 11/13): warn the teacher which tabs had them, and
+  include a short refresher on bringing them over by hand (rare, but it will happen).
+  For example: copy the chart in the old copy and paste it in the new one, then fix its
+  data range; or recreate the pivot table (Insert › Pivot table) with the same rows,
+  columns and values. Also list protected ranges, filter views and alternating colors.
