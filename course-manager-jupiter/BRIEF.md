@@ -2,7 +2,8 @@
 
 > **Where we left off (current state, 2026-11-13, Mac)**
 >
-> - **📥 Bring over from my old copy… (11/13, built and committed; NOT pushed yet).**
+> - **📥 Bring over from my old copy… (11/13, built and committed; tested in a scratch copy,
+>   not pushed to the live workbooks yet).**
 >   Modelled on assign-sheet's (live there 11/13). Menu item after Setup… (`BringOver.js`,
 >   `BringOverPanelPage.html`; copy engine `09_TabRebuild.js`, the same file as
 >   assign-sheet's, copied unchanged: the offline check fails if the two differ, so fix
@@ -20,8 +21,10 @@
 >   pictures can't be read by the Sheets API: the panel lists them as hand work with a
 >   how-to. Offline check `scripts/checks/jupiter-bring-over.check.js`. Guide 2026-11-13
 >   (Permissions bullet, section 2 menu line, section 8 steps rewritten, What's new).
->   **Next:** Lara tests in a scratch copy of the template (bringing over from Biology),
->   then pushes Biology → AI9, Gastronomy → template.
+>   **Tested 11/13:** pushed to a scratch copy of the template (1:23 PM), Lara brought
+>   over from Gastronomy: "looks OK until tested with new users". She saw things to clean
+>   up on the template itself; she'll do that by hand after the code updates are pushed.
+>   **Next:** ask, then push Biology → AI9, Gastronomy → template (`--force`).
 > - **UI simplification (11/12, Lara): Phases 1–2 done and live; Phase 3 panel dropped; Home layout tabled.** Many teachers are intimidated by
 >   spreadsheets. Decided: (1) **dry run is called "preview mode"** everywhere a teacher
 >   sees it (`DRY_RUN`, `isDryRun_` and the safe default unchanged); the create/reorder
