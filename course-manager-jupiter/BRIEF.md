@@ -2,7 +2,7 @@
 
 > **Where we left off (current state, 2026-11-12, Mac)**
 >
-> - **UI simplification plan (11/12, Lara).** Many teachers are intimidated by
+> - **UI simplification (11/12, Lara): Phases 1–2 done and live; Phase 3 panel dropped; Home layout tabled.** Many teachers are intimidated by
 >   spreadsheets. Decided: (1) **dry run is called "preview mode"** everywhere a teacher
 >   sees it (`DRY_RUN`, `isDryRun_` and the safe default unchanged); the create/reorder
 >   tools' **Preview** items became **Check** so "preview" has one meaning. (2) **One
@@ -32,10 +32,16 @@
 >   back up, classroom.
 >   **PHASE 2 DONE 11/12.** Step 5 (check & back up + classroom; f2cbe9a) live in all four:
 >   Biology 2:59 PM (Lara: "Works"), then AI9, Gastronomy, template 3:00 PM.
->   **Next (not started):** Phase 3, the Course Manager Tools side panel (task cards; see
->   decisions at the top of this item); then a simpler Home tab (Lara, in the Sheet);
->   "preview mode" wording in the other three projects' Setup panels; optional "My
->   tools". Step 5 details:
+>   **Phase 3 side panel DROPPED (11/12, Lara):** planning it showed it would duplicate the
+>   Home tab, tool-tab buttons, menu, and side-panel guide, add upkeep in four workbooks,
+>   and compete with the guide (one side panel at a time). Each teacher has their own copy,
+>   so the Home tab is already customizable (no "My tools" code needed). **Home tab layout:
+>   TABLED** until there are users with different needs. If revived: Home = "Start here"
+>   (Setup, Refresh, guide), links to tool tabs, and only tab-independent buttons
+>   ("this tab" tools stay on their own tabs); plus a 2–3 line instruction strip at the
+>   top of each tool tab; Claude drafts wording in chat, Lara pastes it in (no code).
+>   Still open, separate: "preview mode" wording in the other three projects' Setup
+>   panels. Step 5 details:
 >   titles Find possible setup mistakes (`COURSE_CHECK_TITLE`), List everything in the
 >   course on this tab, Back up course to Google Docs, Turn this tab's rubric into a
 >   Canvas file (`RUBRIC_TITLE`); Build seating chart already matched. Kept on purpose:
