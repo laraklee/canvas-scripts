@@ -24,7 +24,8 @@
 >   **Tested 11/13:** pushed to a scratch copy of the template (1:23 PM), Lara brought
 >   over from Gastronomy: "looks OK until tested with new users". She saw things to clean
 >   up on the template itself; she'll do that by hand after the code updates are pushed.
->   **Next:** ask, then push Biology → AI9, Gastronomy → template (`--force`).
+>   **Pushed to Biology 1:29 PM** (`--force`, code from `cf2c19f`). **Next:** Lara checks
+>   Biology (re-authorize, menu item opens), then ask and push AI9, Gastronomy → template.
 > - **UI simplification (11/12, Lara): Phases 1–2 done and live; Phase 3 panel dropped; Home layout tabled.** Many teachers are intimidated by
 >   spreadsheets. Decided: (1) **dry run is called "preview mode"** everywhere a teacher
 >   sees it (`DRY_RUN`, `isDryRun_` and the safe default unchanged); the create/reorder
