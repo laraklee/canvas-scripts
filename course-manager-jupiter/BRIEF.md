@@ -19,7 +19,8 @@
 >   Gastronomy, template 2:15 PM (Lara: "push to the other 3"; no manifest change).
 >   **Phase 2a (95f2863) live in all four workbooks 11/12:** Biology 2:33 PM (Lara: "looks
 >   good"; not every Home button tried), then AI9, Gastronomy, template 2:37 PM.
->   **Phase 2b step 1 (create tools) built 11/12, not yet committed:** pop-up titles =
+>   **Phase 2b step 1 (create tools; 9f7c31f) live in all four 11/12:** Biology 2:39 PM
+>   (Lara: "Works"), then AI9, Gastronomy, template 2:41 PM: pop-up titles =
 >   menu labels: Send selected rows to Canvas, Check this tab, Send this tab to Canvas
 >   (`MAKE_ALL_TITLE`), Set up due-time choices, Start over; label-check pointers say
 >   Course Manager Tools › Advanced ›. Status words kept ("Posted", "Not posted"; button
