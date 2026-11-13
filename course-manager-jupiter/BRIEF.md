@@ -24,7 +24,9 @@
 >   **Phase 2b step 2 (grading; 9f6a348) live in all four 11/12:** Biology 2:45 PM (Lara:
 >   "Works"), then AI9, Gastronomy, template 2:47 PM. Next 2b steps: groups, reorder,
 >   check & back up, classroom.
->   **Phase 2b step 3 (groups) built 11/12, not yet committed:** titles Make a group set,
+>   **Phase 2b step 3 (groups; e74e09e) live in all four 11/12:** Biology 2:50 PM (Lara:
+>   "Works"), then AI9, Gastronomy, template 2:53 PM. Next 2b steps: reorder, check &
+>   back up, classroom. Step 3 details: titles Make a group set,
 >   Make the groups, Clear group info, Get groups into this column, Put students in groups
 >   from this column, List groups and members on this tab; next-step pointers use the same
 >   names. Sheet wording ("group category" in C2 etc.) unchanged. Guide 2026-11-12e. titles Build class list
