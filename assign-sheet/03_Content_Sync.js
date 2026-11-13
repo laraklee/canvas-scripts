@@ -1,8 +1,10 @@
 /**
  * 03_Content_Sync.js
- * Purpose: copies content columns between the *Qn* and Qn sheets, and posts selected
- *   rows of the calendarEvents sheet to Canvas as calendar events and/or announcements
- *   (the "Post selected rows to Canvas" button).
+ * Purpose: posts selected rows of the calendarEvents sheet to Canvas as calendar events
+ *   and/or announcements (the "Post selected rows to Canvas" button). The old *Qn* → Qn
+ *   copy functions (runContentCopyForAllQuarters, copyContentColumns,
+ *   copyFinalAssignmentData) were removed 2026-11-13: unused, and they could write over
+ *   teachers' own Q-tab columns.
  * Canvas endpoints called (both through canvasWrite_, so DRY_RUN applies):
  *   POST /api/v1/calendar_events (all-day course calendar event)
  *   POST /api/v1/courses/:course/discussion_topics with is_announcement (announcement)
@@ -11,41 +13,7 @@
  */
 
 /**
- * 1. MASTER STABILIZATION WRAPPER
- * Runs the "Copy Content" routine for all four quarters.
- * Usage: Call this to back up/stabilize your manual content columns.
- */
-function runContentCopyForAllQuarters() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-  
-  SpreadsheetApp.getActive().toast('Starting Content Stabilization...', 'Sync', 60);
-  Logger.log("STARTING MASTER CONTENT STABILIZATION LOOP...");
-
-  quarters.forEach(function(qName) {
-    var sourceSheetName = '*' + qName + '*'; // e.g., *Q1*
-    var destSheetName = qName;               // e.g., Q1
-    
-    var destSheet = ss.getSheetByName(destSheetName);
-    var sourceSheet = ss.getSheetByName(sourceSheetName);
-
-    if (!destSheet || !sourceSheet) {
-      Logger.log("Skipping: " + destSheetName + " (Source or Dest missing)");
-      return;
-    }
-
-    // Execute the copy for this quarter
-    copyContentColumns(sourceSheetName);
-    SpreadsheetApp.flush();
-  });
-
-  Logger.log("MASTER CONTENT STABILIZATION COMPLETE.");
-  SpreadsheetApp.getActive().toast('Content Stabilization Complete.', 'Success', 5);
-}
-
-
-/**
- * 2. CANVAS SYNC
+ * CANVAS SYNC
  * Button: "Post selected rows to Canvas" on the calendarEvents sheet (keep this name;
  * the drawn button calls it). For each selected row with a Title:
  *   Col A checked -> calendar event on the Calendar Date (col E), link in col H.
@@ -221,106 +189,4 @@ function sendEventJobs_(sheet, jobs) {
 /** A sheet date becomes an ISO timestamp; anything else is sent as typed. */
 function toCanvasDate_(value) {
   return value instanceof Date ? value.toISOString() : String(value).trim();
-}
-
-/**
- * 3. COPY CONTENT COLUMNS (Internal Logic)
- * Copies static data (C, D, E...) from source *Q1* to destination Q1.
- */
-function copyContentColumns(sourceSheetName) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var destSheet = ss.getActiveSheet(); 
-  var sourceSheet = ss.getSheetByName(sourceSheetName);
-
-  if (!sourceSheet) return;
-
-  var SOURCE_DATA_START_ROW = 3;
-  var DEST_WRITE_START_ROW = 4;
-  
-  var destHeaders = destSheet.getRange(2, 1, 1, destSheet.getLastColumn()).getValues()[0];
-  var lastDayCodeRow = findLastDataRow(destSheet, 1);
-  var numRowsToCopy = lastDayCodeRow - DEST_WRITE_START_ROW + 1;
-
-  if (numRowsToCopy <= 0) return;
-
-  // Loop through headers starting at Column C (index 2)
-  for (var colIndex = 2; colIndex < destHeaders.length; colIndex++) {
-    var headerText = String(destHeaders[colIndex]).trim();
-    if (headerText === "") break;
-
-    var sourceColIndex = findColumnIndexByHeader(sourceSheet, headerText);
-    if (sourceColIndex === -1) continue;
-
-    var sourceRange = sourceSheet.getRange(SOURCE_DATA_START_ROW, sourceColIndex + 1, numRowsToCopy, 1);
-    var valuesToCopy = sourceRange.getValues();
-    
-    destSheet.getRange(DEST_WRITE_START_ROW, colIndex + 1, numRowsToCopy, 1).setValues(valuesToCopy);
-  }
-  Logger.log("Copied content for " + destSheet.getName());
-}
-
-/**
- * 4. COPY FINAL ASSIGNMENT DATA
- * Updates the Day Code and Formatted Text columns (A & B) in the Q sheets.
- */
-function copyFinalAssignmentData() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-  
-  quarters.forEach(function(qName) {
-    var sourceSheetName = '*' + qName + '*';
-    var destSheet = ss.getSheetByName(qName);
-    var sourceSheet = ss.getSheetByName(sourceSheetName);
-    
-    if (!sourceSheet || !destSheet) return;
-
-    var periodPairLabel = destSheet.getRange('B2').getValue();
-    if (!periodPairLabel) return;
-
-    var sourceColIndex = findColumnIndexByHeader(sourceSheet, periodPairLabel);
-    if (sourceColIndex === -1) return;
-
-    var lastDataRow = findLastDataRow(sourceSheet, 1);
-    var numRows = lastDataRow - 2; // (Start Row 3 - 1)
-
-    if (numRows < 1) return;
-
-    // Read Col A (DayCode) and Dynamic Col (Text)
-    var sourceRange = sourceSheet.getRange(3, 1, numRows, sourceColIndex + 1);
-    var data = sourceRange.getValues();
-    var pasteArray = [];
-
-    for (var i = 0; i < data.length; i++) {
-      var dayCode = data[i][0];
-      var text = data[i][sourceColIndex];
-      pasteArray.push([dayCode, text]);
-    }
-
-    destSheet.getRange(4, 1, pasteArray.length, 2).setValues(pasteArray);
-  });
-  Logger.log("Assignment Data Copied.");
-}
-
-// --- SHARED HELPERS ---
-
-function findColumnIndexByHeader(sheet, headerText) {
-  if (!sheet) return -1;
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  var cleanSearch = String(headerText).replace(/[^0-9,]/g, '').trim();
-  
-  for (var i = 0; i < headers.length; i++) {
-    // Try exact match first, then clean match
-    if (String(headers[i]).trim() === String(headerText).trim()) return i;
-    if (String(headers[i]).replace(/[^0-9,]/g, '').trim() === cleanSearch) return i;
-  }
-  return -1;
-}
-
-function findLastDataRow(sheet, colIndex) {
-  if (!sheet) return 0;
-  var values = sheet.getRange(1, colIndex, sheet.getMaxRows(), 1).getValues();
-  for (var i = values.length - 1; i >= 0; i--) {
-    if (String(values[i][0]).trim() !== "") return i + 1;
-  }
-  return 0;
 }
