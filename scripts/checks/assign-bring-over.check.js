@@ -4,7 +4,8 @@
  *   (10_BringOver.js) and its copy engine (09_TabRebuild.js): links are read right, text
  *   that looks like a number stays text, the plan gives each kind of tab the right
  *   action, Q tabs must match in columns A–E, cells already filled in the new copy stop
- *   everything BEFORE any change, and *Config* copies only non-blank cells. Made-up data
+ *   everything BEFORE any change, *Config* copies only non-blank cells, and columns hidden in
+ *   the new copy stay hidden. Made-up data
  *   only; nothing is sent anywhere. Run with the others: npm run check-offline. Repo
  *   helper only: never clasp-pushed.
  * Canvas endpoints called: none. Canvas write operations: none.
@@ -134,5 +135,15 @@ const cfg = { data: [{ rowData: [
 const n = c.bringConfigCells_(configSheet, cfg, c.rebuildNewReport_());
 check('Config copies only non-blank cells', [n, Object.keys(written).sort()], [5, ['B2', 'B4', 'D3', 'E2', 'F2']]);
 check('Config course number stays a number', written.B4, 4573);
+
+// --- Column widths never show a column hidden in the new copy (Lara's test, 11/13)
+const colCalls = [];
+const colSheet = { isColumnHiddenByUser: col => col === 7,
+  setColumnWidth: col => colCalls.push('width ' + col), hideColumns: col => colCalls.push('hide ' + col) };
+c.rebuildWriteCells_(colSheet, { data: [{ columnMetadata: [{ pixelSize: 50 }, {}, {}, {}, {}, {},
+  { pixelSize: 200 }, { pixelSize: 200 }, { pixelSize: 200, hiddenByUser: true }] }] },
+5, c.rebuildNewReport_(), 'Q1', false);
+check('hidden column in the new copy stays hidden; A–E untouched', colCalls,
+  ['width 8', 'width 9', 'hide 9']);
 
 if (failures) process.exitCode = 1;

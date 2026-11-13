@@ -12,7 +12,7 @@
  *     gridlines, tab color, conditional colors, a plain filter).
  *   - rebuildWriteCells_ with fromCol0: the cells from one column on, into a tab that
  *     already exists (the template's own tab). The template keeps its dropdowns, notes and
- *     conditional colors where the old copy has none.
+ *     conditional colors where the old copy has none, and columns hidden here stay hidden.
  *   Not rebuilt (counted per tab for the teacher to redo by hand): charts, pivot tables,
  *   protected ranges, filter views, alternating colors, unusual dropdown or conditional
  *   rules. SpreadsheetApp.openById can't be used: it needs full edit access (tested).
@@ -273,6 +273,9 @@ function rebuildWriteCells_(sheet, src, fromCol0, report, tabTitle, wholeTab) {
     (gd.columnMetadata || []).forEach((m, i) => {
       if (i < skip) return;
       const col = startCol + i + 1;
+      // A column already hidden here stays hidden: setting a width would show it again
+      // (Lara's test, 11/13), and the template may hide a column on purpose.
+      if (sheet.isColumnHiddenByUser(col)) return;
       if (m.pixelSize && m.pixelSize !== REBUILD_DEFAULT_COL_PX_) sheet.setColumnWidth(col, m.pixelSize);
       if (m.hiddenByUser) sheet.hideColumns(col);
     });
