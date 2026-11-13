@@ -8,7 +8,7 @@
  *   fetched by itself, and a link to ref_Config; Lara, 2026-11-11), preview mode
  *   (DRY_RUN; status, turn on/off), and the setup check (missing tabs and named ranges;
  *   findSetupProblems_ in SetupCheck.js).
- *   - showSetupPanel (menu: Setup & Data › Setup…): opens SetupPanelPage.html.
+ *   - showSetupPanel (menu: Course Manager Tools › Setup…): opens SetupPanelPage.html.
  *   - getSetupStatus, testSetupConnection, checkSetupCourse, saveSetupCourseId,
  *     openSetupConfig, setDryRunFromPanel: called by the panel (google.script.run). They
  *     return plain objects or text and never throw (openSetupConfig aside).
@@ -32,7 +32,7 @@ const SETUP_PANEL_TITLE = 'Setup';
 // Kept in the sheet so the school's address never goes into this public code.
 const SETUP_DEFAULT_URL_CELL = 'B2';
 
-/** Menu: Setup & Data › Setup…. Opens the panel on the right. */
+/** Menu: Course Manager Tools › Setup…. Opens the panel on the right. */
 function showSetupPanel() {
   const html = HtmlService.createHtmlOutputFromFile('SetupPanelPage').setTitle(SETUP_PANEL_TITLE);
   SpreadsheetApp.getUi().showSidebar(html);

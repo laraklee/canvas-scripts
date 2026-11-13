@@ -31,7 +31,8 @@ const CANVAS_STOP_ALL_TYPES = Object.freeze(['NOT_SET_UP', 'TOKEN_REJECTED', 'UN
   'RATE_LIMITED', 'BAD_RESPONSE', 'BAD_METHOD']);
 
 /**
- * Menu: Course Manager › Test Canvas connection.
+ * Test Canvas connection (no longer on the menu since 2026-11-12; Setup… has Test
+ * connection).
  * Reads the user's own Canvas profile and reports only "Connected" or the error type.
  */
 function testCanvasConnection() {
@@ -133,7 +134,7 @@ function describeFields_(payload, prefix) {
     describeFields_(value, prefix ? `${prefix}[${key}]` : key));
 }
 
-/** Menu: Course Manager › Preview mode: show status. */
+/** Preview mode: show status (no longer on the menu since 2026-11-12; see Setup…). */
 function showDryRunStatus() {
   const ui = SpreadsheetApp.getUi();
   try {
@@ -144,7 +145,10 @@ function showDryRunStatus() {
   }
 }
 
-/** Menu: Course Manager › Preview mode: switch on/off. Asks first, then confirms the result. */
+/**
+ * Preview mode: switch on/off (no longer on the menu since 2026-11-12; see Setup…).
+ * Asks first, then confirms the result.
+ */
 function toggleDryRun() {
   const ui = SpreadsheetApp.getUi();
   try {
@@ -194,7 +198,7 @@ function getCanvasCredentials_() {
   const baseUrl = props.getProperty(PROP_BASE_URL);
   if (!token || !baseUrl) {
     throw canvasError_('NOT_SET_UP',
-      'Your Canvas address or token is not saved yet. Use Setup & Data › Setup….');
+      'Your Canvas address or token is not saved yet. Use Course Manager Tools › Setup….');
   }
   return { token, baseUrl };
 }
@@ -222,7 +226,7 @@ function fetchCanvas_(url, options) {
       response = UrlFetchApp.fetch(url, options);
     } catch {
       throw canvasError_('UNREACHABLE',
-        'Could not reach Canvas. Check the Canvas address in Setup & Data › Setup….');
+        'Could not reach Canvas. Check the Canvas address in Course Manager Tools › Setup….');
     }
     const code = response.getResponseCode();
     const throttled = code === 429 ||
@@ -249,7 +253,7 @@ function checkCanvasResponse_(code, throttled) {
   }
   if (code === 401) {
     throw canvasError_('TOKEN_REJECTED', 'Canvas did not accept your token (401). ' +
-      'It may be expired or mistyped. Save a new one in Setup & Data › Setup….');
+      'It may be expired or mistyped. Save a new one in Course Manager Tools › Setup….');
   }
   if (code === 403) {
     throw canvasError_('NOT_ALLOWED',

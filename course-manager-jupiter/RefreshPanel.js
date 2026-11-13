@@ -8,7 +8,7 @@
  *   (Lara, 2026-11-11; before, it ran inside the assignment groups step). Jupiter
  *   categories are in the panel but never in "All" (Lara refreshes them by hand while
  *   looking at ref_Config).
- *   - showRefreshPanel (menu: Setup & Data › Refresh tables…): opens RefreshPanelPage.html
+ *   - showRefreshPanel (menu: Course Manager Tools › Refresh tables…): opens RefreshPanelPage.html
  *     (not RefreshPanel.html: Apps Script drops extensions, so the names must differ).
  *   - getRefreshTables, refreshTableFromPanel, showRefreshTableTab: called by the panel
  *     (google.script.run). One refresh call per table, so each gets its own 6-minute run.
@@ -62,7 +62,7 @@ function refreshTableList_() {
   ];
 }
 
-/** Menu: Setup & Data › Refresh tables…. Opens the panel on the right. */
+/** Menu: Course Manager Tools › Refresh tables…. Opens the panel on the right. */
 function showRefreshPanel() {
   const html = HtmlService.createHtmlOutputFromFile('RefreshPanelPage').setTitle(REFRESH_PANEL_TITLE);
   SpreadsheetApp.getUi().showSidebar(html);

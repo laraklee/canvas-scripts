@@ -118,6 +118,15 @@ check(`all ${named.length} menu functions exist`, missing, []);
 check('no function name ends in _ (menus cannot call private functions)',
   named.filter(name => name.endsWith('_')), []);
 
+// One menu since 2026-11-12 (Lara): "Course Manager Tools", added once. The jobs the
+// Setup… panel does are not on the menu (their functions stay for old buttons).
+check('one menu, Course Manager Tools', [vm.runInContext('MENU_NAME', context),
+  (menusSource.match(/\.addToUi\(\)/g) || []).length], ['Course Manager Tools', 1]);
+check('Setup… panel jobs are not on the menu', named.filter(name => ['setCanvasCredentials',
+  'testCanvasConnection', 'showDryRunStatus', 'toggleDryRun', 'checkSetup'].includes(name)), []);
+check('no function is on the menu twice',
+  named.filter((name, i) => named.indexOf(name) !== i), []);
+
 if (failures) {
   console.log(`\n${failures} check(s) failed.`);
   process.exitCode = 1;

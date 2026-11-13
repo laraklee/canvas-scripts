@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   UserGuide.html: the Course Manager (Jupiter edition) user guide, written for other
-  teachers. Shown inside the workbook by Canvas Tools > ❓ User guide (showUserGuide in
+  teachers. Shown inside the workbook by Course Manager Tools > ❓ User guide (showUserGuide in
   Menus.js). This file is the master copy of the guide; there is no separate Google Doc
   to update. The same code (and so this guide) goes to Biology, AI9, Gastronomy, and the
   template once it exists.
@@ -98,12 +98,12 @@
 
 <h1>Course Manager (Jupiter edition) — User Guide</h1>
 
-<p class="version">Version 2026-11-12. See <b>8. What's new and getting updates</b>.</p>
+<p class="version">Version 2026-11-12b. See <b>8. What's new and getting updates</b>.</p>
 
 <div class="note"><b>Draft.</b> Written for teachers new to the workbook; not yet tried by
 one. If a step doesn't match what you see, note where and what you saw.</div>
 
-<p>This guide is always at <span class="menu">Canvas Tools › ❓ User guide</span>. It opens in a
+<p>This guide is always at <span class="menu">Course Manager Tools › ❓ User guide</span>. It opens in a
 panel on the right, so you can follow the steps while you work in the workbook. Close it
 with the ✕ at its top.</p>
 
@@ -192,7 +192,7 @@ workbook, they may still hold their information: replace every one with yours.</
 <ol>
   <li>Open the workbook. Google asks you to <b>authorize</b> the script (see "Permissions"
     below). Review and allow.</li>
-  <li>Open <span class="menu">Setup &amp; Data › Setup…</span>. A panel opens on the right
+  <li>Open <span class="menu">Course Manager Tools › Setup…</span>. A panel opens on the right
     and shows what's ready (✓) and what still needs doing (⚠).</li>
   <li>In part <b>2</b>, check the Canvas address (it's filled in from ref_Config B2) and
     paste your own Canvas token, then click <b>Save</b>. Both are saved for <b>you only</b>; other editors can't see
@@ -205,7 +205,7 @@ workbook, they may still hold their information: replace every one with yours.</
     course</b>; the new course's name appears straight away. <b>Open ref_Config</b> jumps
     to the cell.</li>
   <li>Part <b>5</b> should say <b>Setup OK</b>.</li>
-  <li><span class="menu">Setup &amp; Data › Refresh tables…</span>, tick <b>All</b>, and
+  <li><span class="menu">Course Manager Tools › Refresh tables…</span>, tick <b>All</b>, and
     click <b>Update</b>. You should see a ✓ next to each table.</li>
 </ol>
 
@@ -218,8 +218,7 @@ box keeps your saved token); <b>3</b> which course, with a link to ref_Config an
 change the course number (if preview mode is OFF, it asks first, since tools would then send
 changes to the new course; afterward, refresh the tables); <b>4</b> preview mode, ON or OFF, with a button
 to switch it (turning it off asks first); <b>5</b> the setup check (missing tabs or named
-ranges). The same jobs are still in <span class="menu">Setup &amp; Data › Setup &amp;
-safety</span>, if you prefer the menu.</p>
+ranges).</p>
 
 <h3>Permissions</h3>
 
@@ -237,7 +236,7 @@ safety</span>, if you prefer the menu.</p>
 <h3>Safety rules</h3>
 
 <ul>
-  <li><b>Preview mode</b> (part 4 of <span class="menu">Setup &amp; Data › Setup…</span>):
+  <li><b>Preview mode</b> (part 4 of <span class="menu">Course Manager Tools › Setup…</span>):
     while it's <b>ON</b>, tools that would change Canvas only show what they <i>would</i>
     send. A new copy starts with preview mode ON. Turn it OFF only when you mean to create
     things, and back ON afterward. It's one setting for the whole workbook, not per
@@ -258,11 +257,14 @@ safety</span>, if you prefer the menu.</p>
 <h2 id="where">2. Where things are</h2>
 
 <ul>
-  <li><b>🏠 Home tab:</b> buttons for the everyday tools. <span class="menu">Canvas Tools ›
-    🏠 Go to Home page</span> jumps there from anywhere.</li>
-  <li><b>Canvas Tools menu:</b> everything that <i>does</i> something, and this guide.</li>
-  <li><b>Setup &amp; Data menu:</b> refreshing reference tables, Jupiter categories, token,
-    preview mode, and checks.</li>
+  <li><b>🏠 Home tab:</b> buttons for the everyday tools. <span class="menu">Course Manager Tools ›
+    🏠 Go to Home tab</span> jumps there from anywhere.</li>
+  <li><b>Course Manager Tools menu:</b> everything, grouped by job: adding items to Canvas, grades and
+    Jupiter, groups, assignment order, checking and backing up the course, classroom
+    tools, and at the bottom <b>Setup…</b> (token, course, preview mode),
+    <b>Refresh tables…</b>, and <b>Advanced</b>.</li>
+  <li><b>Pop-up titles:</b> some pop-ups still use a tool's older name (for example
+    "Push reorder" for <b>Send the new order to Canvas</b>). They'll catch up soon.</li>
   <li><b>ref_ tabs</b> (red): reference tables the tools read. Refresh them; don't edit
     them.</li>
   <li><b>ref_Index:</b> a linked list of every tab. Click a name to jump there.</li>
@@ -275,18 +277,22 @@ safety</span>, if you prefer the menu.</p>
 
 <table>
   <tr><th>Changes Canvas (preview mode applies)</th><th>Reads Canvas only</th></tr>
-  <tr><td>Post selected rows (createByRow)</td><td>Check (either create tool), Check reorder</td></tr>
-  <tr><td>makeAll (makeAssignment)</td><td>Refresh tables, Jupiter categories</td></tr>
-  <tr><td>Push reorder</td><td>Update Grades, CreateRoster</td></tr>
-  <tr><td>Create group category, Create groups, Put students in groups</td><td>Pull
-    scores, Pull groups, List groups and members</td></tr>
-  <tr><td>Post comments</td><td>List course content, Export to Google Docs</td></tr>
-  <tr><td></td><td>Course check, Build seating chart</td></tr>
+  <tr><td>Send selected rows to Canvas (createByRow)</td><td>Check selected rows, Check
+    this tab, Check the new order</td></tr>
+  <tr><td>Send this tab to Canvas (makeAssignment; the makeAll button)</td><td>Refresh
+    tables, Jupiter categories</td></tr>
+  <tr><td>Send the new order to Canvas</td><td>Get latest grades for Jupiter, Build class
+    list (the Update Grades and CreateRoster buttons)</td></tr>
+  <tr><td>Make a group set, Make the groups, Put students in groups</td><td>Get scores,
+    Get groups, List groups and members</td></tr>
+  <tr><td>Send comments from this column</td><td>List everything in the course, Back up
+    course to Google Docs</td></tr>
+  <tr><td></td><td>Find possible setup mistakes, Check a quiz, Build seating chart</td></tr>
 </table>
 
-<h2 id="data">3. Keeping data current (Setup &amp; Data)</h2>
+<h2 id="data">3. Keeping data current (Refresh tables)</h2>
 
-<p><b>The easy way: <span class="menu">Setup &amp; Data › Refresh tables…</span></b> opens
+<p><b>The easy way: <span class="menu">Course Manager Tools › Refresh tables…</span></b> opens
 a panel on the right with a checkbox for each table. Tick the ones you want (or
 <b>All</b>), then click <b>Update</b>. Each table shows "Refreshing…", then a ✓ with what
 it found, or a ✗ with why it failed (a table that fails is left as it was). The panel
@@ -313,8 +319,8 @@ stays open, so you can tick others and update again.</p>
     the ticks on ref_Config (ticked = exported to Jupiter).</td></tr>
 </table>
 
-<p><b>Without the panel:</b> <span class="menu">Setup &amp; Data › Refresh all
-tables</span> does the same as ticking <b>All</b> and clicking Update, with one summary at
+<p><b>Without the panel:</b> <span class="menu">Course Manager Tools › Advanced › Refresh
+all tables</span> does the same as ticking <b>All</b> and clicking Update, with one summary at
 the end.</p>
 
 <p><b>Reference tabs hide themselves.</b> After a refresh, ref_CourseIDs, ref_peopleList,
@@ -351,9 +357,10 @@ Google Doc or Drive link also shows a full-width preview of the Doc underneath.<
     Link</code>, <code>Link Text</code>, <code>Published</code>. The tool fills
     <code>CanvasID</code>, <code>Canvas Link</code>, <code>Payload</code>, and
     <code>Status</code>.</li>
-  <li>Select the rows. <span class="menu">Canvas Tools › Create in Canvas › Check
-    selected rows</span>. Read Status for each row.</li>
-  <li><b>Post selected rows.</b> Rows with a CanvasID are skipped, so nothing is made
+  <li>Select the rows. <span class="menu">Course Manager Tools › Add a list of items
+    (createByRow) › Check selected rows</span>. Read Status for each row.</li>
+  <li><b>Send selected rows to Canvas</b> (same menu; the button may say Post selected
+    rows). Rows with a CanvasID are skipped, so nothing is made
     twice.</li>
 </ol>
 
@@ -364,7 +371,10 @@ Canvas). New Quizzes need points above 0.</p>
 questions)</h3>
 
 <p>Make a copy of a makeAssignment tab for each kind of item you make often; each copy
-keeps its own defaults. Every button works on the tab you're looking at.</p>
+keeps its own defaults. Every button works on the tab you're looking at. The same
+tools are in <span class="menu">Course Manager Tools › Add one item with dates (makeAssignment)</span>:
+<b>Check this tab</b>, <b>Send this tab to Canvas</b> (makeAll), <b>Set up due-time
+choices</b> (Get Times), and <b>Start over</b> (Clear IDs, Status, Payload).</p>
 
 <ol>
   <li><b>Clear IDs, Status, Payload</b> to start fresh (keeps everything else).</li>
@@ -375,7 +385,7 @@ keeps its own defaults. Every button works on the tab you're looking at.</p>
     plus School Start / School End / After School / Night. You can also type a time like
     11:59 PM.</li>
   <li><b>Quizzes (CQ or NQ):</b> fill the Questions table (below).</li>
-  <li><b>Check assignment</b>, read Status, then <b>makeAll</b>. It asks first.</li>
+  <li><b>Check this tab</b> (the button may say Preview), read Status, then <b>makeAll</b>. It asks first.</li>
   <li>If the item already exists (canvasID filled in), makeAll only adds overrides and
     questions that don't have an ID yet.</li>
 </ol>
@@ -404,7 +414,8 @@ keeps its own defaults. Every button works on the tab you're looking at.</p>
 
 <ol>
   <li>On your grading sheet (e.g. <b>Comments</b>), click <b>CreateRoster</b> (or
-    <span class="menu">Canvas Tools › Jupiter › CreateRoster</span>). The first time, it
+    <span class="menu">Course Manager Tools › Grades &amp; Jupiter › Build class list on this
+    tab</span>). The first time, it
     fills columns A–E, sorted by Period, then name.</li>
   <li>Type each student's <b>Jupiter ID</b> into column F (from a Jupiter export).
     <ul>
@@ -416,7 +427,8 @@ keeps its own defaults. Every button works on the tab you're looking at.</p>
         sorted by Period, then name, so new students land in the right spot.</li>
     </ul>
   </li>
-  <li>Click <b>Update Grades</b>. Choose how many days back to look (default: since the
+  <li>Click <b>Update Grades</b> (or <span class="menu">Course Manager Tools › Grades &amp; Jupiter ›
+    Get latest grades for Jupiter</span>). Choose how many days back to look (default: since the
     last sync in B1). It fills <b>JupiterExport</b> with recently graded work from the
     categories ticked on ref_Config. Scores are Canvas's final scores (after any late
     penalty).</li>
@@ -436,13 +448,13 @@ keeps its own defaults. Every button works on the tab you're looking at.</p>
   <li>Click any cell in that column.</li>
 </ul>
 
-<p><b>Pull scores into this column</b> (<span class="menu">Canvas Tools › Grading
-sheet</span>) reads every student's score into the column: Canvas's final score, blank if
+<p><b>Get scores into this column</b> (<span class="menu">Course Manager Tools › Grades &amp;
+Jupiter</span>) reads every student's score into the column: Canvas's final score, blank if
 excused or not graded. It asks before replacing cells that already have something in
 them. Rows without a user ID (like Average rows) are never touched.
 <b>Read-only.</b></p>
 
-<p><b>Post comments from this column</b> posts each student's comment from the column to
+<p><b>Send comments from this column</b> (same menu) posts each student's comment from the column to
 their submission for that assignment. <b>This changes Canvas</b> (preview mode applies), and
 Canvas notifies students as their settings say. Comments only, never grades.</p>
 
@@ -460,14 +472,15 @@ Canvas notifies students as their settings say. Comments only, never grades.</p>
 
 <h3 id="order">Assignment order</h3>
 
-<p><span class="menu">Canvas Tools › Assignment order</span>: <b>Open reorder tool</b>,
-number the rows you want (<b>Number selected rows 1, 2, 3…</b>), <b>Check reorder</b>,
-then <b>Push reorder</b>.</p>
+<p><span class="menu">Course Manager Tools › Assignment order</span>: <b>Open reorder tool</b>,
+number the rows you want (<b>Number selected rows 1, 2, 3…</b>), <b>Check the new
+order</b>, then <b>Send the new order to Canvas</b>.</p>
 
 <h3 id="groups">Groups</h3>
 
-<p>On the <b>createGroups</b> tab (buttons there, or <span class="menu">Canvas Tools ›
-Groups</span>):</p>
+<p>On the <b>createGroups</b> tab (buttons there, or <span class="menu">Course Manager Tools ›
+Groups</span>, where they're called Clear group info on this tab, Make a group set, and
+Make the groups):</p>
 
 <ol>
   <li><b>Clear group data</b> to start a new set (clears the category ID, link, and
@@ -481,7 +494,7 @@ Groups</span>):</p>
 
 <p>Groups are created empty (no students are added).</p>
 
-<p><b>See who is in which group (Pull groups into this column).</b> On your grading sheet
+<p><b>See who is in which group (Get groups into this column).</b> On your grading sheet
 (e.g. <b>Comments</b>):</p>
 
 <ul>
@@ -490,7 +503,7 @@ Groups</span>):</p>
     in the web address when you open that set on Canvas's People › Groups page. Students
     start on row 3, with their Canvas user ID in column A (CreateRoster sets this
     up).</li>
-  <li>Click any cell in that column, then <span class="menu">Canvas Tools › Groups › Pull
+  <li>Click any cell in that column, then <span class="menu">Course Manager Tools › Groups › Get
     groups into this column</span>.</li>
 </ul>
 
@@ -501,9 +514,9 @@ before replacing cells that already have something in them, and rows without a u
 are never touched. <b>Read-only.</b> The summary also says if a group member has no row
 on the sheet, or if two groups share a name.</p>
 
-<p><b>Put students in groups from this column.</b> After Pull groups, pick a group for
+<p><b>Put students in groups from this column.</b> After Get groups, pick a group for
 each student from the dropdowns (clear a cell to take a student out of their group). Then
-click in the column and choose <span class="menu">Canvas Tools › Groups › Put students in
+click in the column and choose <span class="menu">Course Manager Tools › Groups › Put students in
 groups from this column</span>. <b>This changes Canvas</b> (preview mode applies).</p>
 
 <ul>
@@ -528,8 +541,8 @@ group. <b>Read-only.</b> Use a new, empty tab.</p>
     and the group set's <b>category ID</b> in <b>B2</b>. Don't know the ID? Leave B2 blank
     and run it: you get a list of the course's group sets with their IDs. Copy one into
     B2.</li>
-  <li>Choose <span class="menu">Canvas Tools › Groups › List groups and members (this
-    tab)</span>.</li>
+  <li>Choose <span class="menu">Course Manager Tools › Groups › List groups and members on this
+    tab</span>.</li>
 </ol>
 
 <p>The group set's name appears in <b>C2</b>, next to its ID, so you can check it's the
@@ -546,8 +559,8 @@ example).</p>
   <li>Copy the rubric template tab and fill it in: title under "Rubric Title"; criterion
     names in the row above "Criterion Description"; Rating N Name / Description /
     Points.</li>
-  <li>Click <b>makeRubric</b> (or <span class="menu">Canvas Tools › Rubrics › Export rubric
-    for Canvas</span>). Empty criteria are skipped. If something's missing, it names the
+  <li>Click <b>makeRubric</b> (or <span class="menu">Course Manager Tools › Classroom › Turn this tab's
+    rubric into a Canvas file</span>). Empty criteria are skipped. If something's missing, it names the
     cell to fix.</li>
   <li>Open <b>rubricCanvasExport</b> › <b>File › Download › Comma-separated values
     (.csv)</b>.</li>
@@ -576,12 +589,14 @@ page) into Google Docs, one Doc per item. Both steps are <b>read-only</b> in Can
 <p><b>Steps:</b></p>
 
 <ol>
-  <li><span class="menu">Canvas Tools › List course content (this tab)</span>. Adds one
+  <li><span class="menu">Course Manager Tools › Check &amp; back up course › List everything in
+    the course on this tab</span>. Adds one
     row per item, each with an unticked <b>Back up?</b> box. Run it again any time:
     existing rows stay put (only Name, Type, Published, and Canvas Updated refresh), and
     new items are added at the bottom. Classic and New Quizzes aren't listed.</li>
   <li>Tick <b>Back up?</b> for the items you want.</li>
-  <li><span class="menu">Canvas Tools › Export to Google Docs (this tab)</span>. It asks
+  <li><span class="menu">Course Manager Tools › Check &amp; back up course › Back up course
+    to Google Docs</span>. It asks
     Yes/No with the count. Each Doc gets the item's title, a link back to Canvas, and its
     content, including pictures stored in Canvas. Docs go into Assignments / Discussions
     / Pages subfolders.</li>
@@ -607,7 +622,8 @@ page) into Google Docs, one Doc per item. Both steps are <b>read-only</b> in Can
 menu: neither could see everything students would run into (question banks, New
 Quizzes, pictures from other courses). Their replacement reads a whole-course export.</p>
 
-<p><span class="menu">Canvas Tools › Quiz Check</span> checks every quiz before a test. In Canvas,
+<p><span class="menu">Course Manager Tools › Check &amp; back up course › Check a quiz before
+giving it</span> (Quiz Check) checks every quiz before a test. In Canvas,
 go to course <b>Settings</b> › <b>Export Course Content</b> › <b>Course</b>, <b>Create
 Export</b>, and download the file when it's ready (it ends in <b>.imscc</b>). Then open
 Quiz Check (it opens in the side panel on the right), <b>Choose file</b>, pick the export,
@@ -642,7 +658,8 @@ two sets</b>, so clear the slides first if you're rebuilding.</p>
 
 <h3 id="coursecheck">Course check (possible setup mistakes)</h3>
 
-<p><span class="menu">Canvas Tools › Course check</span>. <b>Read-only.</b> Run it after
+<p><span class="menu">Course Manager Tools › Check &amp; back up course › Find possible setup
+mistakes</span>. <b>Read-only.</b> Run it after
 setting up a term, or any time. It refreshes the assignment list, then fills the
 <b>Course Check</b> tab with possible problems. (It's also in the <b>Refresh tables…</b>
 panel, and <b>All</b> includes it.)</p>
@@ -679,17 +696,17 @@ anything else typed on the tab is replaced.</p>
   <tr><td><b>"Script function … not found"</b> from a button</td><td>The button's
     assigned script name is wrong. Right-click the button › three dots › Assign script,
     and check the name.</td></tr>
-  <tr><td>Labels problem</td><td><span class="menu">Setup &amp; Data › Setup &amp; safety ›
+  <tr><td>Labels problem</td><td><span class="menu">Course Manager Tools › Advanced ›
     Check createByRow labels</span> or <b>Check makeAssignment labels (this tab)</b>.
     Labels must match exactly, including capitals and colons.</td></tr>
   <tr><td>Token rejected / not saved</td><td>Make a new token in Canvas and save it in
-    <span class="menu">Setup &amp; Data › Setup…</span> (part 2). The panel tests it
+    <span class="menu">Course Manager Tools › Setup…</span> (part 2). The panel tests it
     when you save.</td></tr>
   <tr><td>Not allowed (403)</td><td>Your Canvas account can't do that in this course.
     Check <code>cfg_CourseID</code> (part 3 of the Setup panel shows which course it
     is).</td></tr>
   <tr><td>Canvas is busy</td><td>Wait a minute and try again.</td></tr>
-  <tr><td>No <b>Canvas Tools</b> menu</td><td>Reload the page; wait a few
+  <tr><td>No <b>Course Manager Tools</b> menu</td><td>Reload the page; wait a few
     seconds.</td></tr>
   <tr><td>Anything else</td><td>Note the button or menu item and the exact message (no
     student data), then tell whoever shared the workbook with you.</td></tr>
@@ -704,6 +721,11 @@ a newer one, open the template and look at the version in its guide.</p>
 <h3>What's new</h3>
 
 <ul>
+  <li><b>2026-11-12b:</b> <b>One menu, Course Manager Tools,</b> instead of Canvas Tools and Setup &amp;
+    Data, grouped by job with plainer names (for example <b>Send selected rows to
+    Canvas</b> for Post selected rows). Token, connection test, preview mode, and the
+    setup check are only in <b>Setup…</b> now. Your buttons keep working. Some pop-ups
+    still use the older names for now.</li>
   <li><b>2026-11-12:</b> <b>Dry run is now called preview mode</b> (same setting, new
     name), and a message when the workbook opens says whether it's ON. The create and
     reorder tools' <b>Preview</b> items are now called <b>Check</b> (Check selected rows,
@@ -752,7 +774,7 @@ stays as it is until you're done, so nothing is lost.</p>
   <li>Look over each copied tab for <code>#REF!</code> errors, and click a button or two.
     If a button says "Script function … not found", see <b>7. When something goes
     wrong</b>.</li>
-  <li>Check preview mode: part 4 of <span class="menu">Setup &amp; Data › Setup…</span>
+  <li>Check preview mode: part 4 of <span class="menu">Course Manager Tools › Setup…</span>
     (or the message at the bottom right when the workbook opens). A new copy starts with
     it ON.</li>
   <li>Rename the old workbook (for example "OLD Course Manager") so you don't use it by

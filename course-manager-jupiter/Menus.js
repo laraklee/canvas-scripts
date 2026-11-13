@@ -1,112 +1,103 @@
 /**
  * Menus.js
- * Purpose: the project's two menus, built by onOpen (SetupCheck.js), all in one place so
- *   the layout is easy to see and change. Buttons on the Home tab are the everyday way
- *   in; the menus hold everything, including data chores (Lara, 2026-10-18; legacy also
- *   had two menus, "Canvas Tools" and "Setup & Admin"). Function names are unchanged, so
- *   every button keeps working.
- *   - Canvas Tools: doing things (create, reorder, groups, rubrics, Jupiter, grading
- *     sheet one-assignment tools, list course content and export to Google
- *     Docs, Quiz Check (course export; QuizCheck.js), seating; the two older quiz
- *     reports were taken off on 2026-11-09),
- *     and Course check (read-only report, CourseCheck.js) near the bottom, then
- *     ❓ User guide (showUserGuide, below; opens UserGuide.html in the side panel, with
- *     showUserGuideLarge for the big window).
- *   - Setup & Data: refreshing reference tables (Refresh tables… opens the checkbox side
- *     panel, RefreshPanel.js), Jupiter categories (manual, on purpose), Setup… (the
- *     setup side panel, SetupPanel.js), and the Setup & safety items.
- *   Also here: goToHomePage (jumps to the Home tab) and refreshAllTables (every ref_
- *   table refresh in a row, except Jupiter categories, then Course check, then one
- *   summary).
+ * Purpose: the project's one menu, "Course Manager Tools", built by onOpen
+ *   (SetupCheck.js), all in one place so the layout is easy to see and change. Buttons on
+ *   the Home tab are the everyday way in; the menu holds everything.
+ *   Since 2026-11-12 (Lara): one menu instead of two ("Canvas Tools" and "Setup & Data"),
+ *   grouped by teacher task with plain labels, because many teachers find spreadsheets
+ *   intimidating. Function names are unchanged, so every button keeps working. The items
+ *   the Setup… panel covers (Set Canvas token, Test Canvas connection, Preview mode
+ *   show/switch, Check setup) left the menu; their functions stay for any old buttons.
+ *   Order: Home and User guide; creating in Canvas (a list of items, one item with
+ *   dates); grading (Jupiter, one assignment's scores and comments); groups; assignment
+ *   order; checking and backing up the course (Course check, Quiz Check, content list,
+ *   Google Docs export); classroom (seating chart, rubric); then Setup…, Refresh tables…
+ *   (RefreshPanel.js), and Advanced (Refresh all tables, the two label checks).
+ *   The two older quiz reports were taken off on 2026-11-09 (see below).
+ *   Also here: goToHomePage (jumps to the Home tab), showUserGuide / showUserGuideLarge,
+ *   and refreshAllTables (every ref_ table refresh in a row, except Jupiter categories,
+ *   then Course check, then one summary).
  * Canvas endpoints called: those of the refreshes it runs (all GET; see RefSheets.js).
  * Canvas write operations: none here (the menu items for write tools call their own
  *   files, which go through canvasWrite_).
  * Required User/Script Properties: none here.
  */
 
-/** Builds both menus. Called once by onOpen. */
+/** The menu's name, also used in messages that point to a menu item. */
+const MENU_NAME = 'Course Manager Tools';
+
+/** Builds the menu. Called once by onOpen. */
 function buildMenus_() {
   const ui = SpreadsheetApp.getUi();
 
-  ui.createMenu('Canvas Tools')
-    .addItem('🏠 Go to Home page', 'goToHomePage')
+  ui.createMenu(MENU_NAME)
+    .addItem('🏠 Go to Home tab', 'goToHomePage')
+    .addItem('❓ User guide', 'showUserGuide')
     .addSeparator()
-    .addSubMenu(ui.createMenu('Create in Canvas')
-      .addItem('Check selected rows (createByRow)', 'previewRows')
-      .addItem('Post selected rows (createByRow)', 'postRows')
-      .addSeparator()
-      .addItem('Check assignment (this tab)', 'previewAssignment')
-      .addItem('makeAll: create assignment, overrides, questions (this tab)',
+    .addSubMenu(ui.createMenu('Add a list of items (createByRow)')
+      .addItem('Check selected rows', 'previewRows')
+      .addItem('Send selected rows to Canvas', 'postRows'))
+    .addSubMenu(ui.createMenu('Add one item with dates (makeAssignment)')
+      .addItem('Check this tab', 'previewAssignment')
+      .addItem('Send this tab to Canvas (item, section dates, questions)',
         'makeAssignmentAll')
-      .addItem('Get Times: Due Time dropdowns (this tab)', 'createDropdowns1')
-      .addItem('Clear IDs, Status, Payload (this tab)', 'clearCreationIDs'))
+      .addItem('Set up due-time choices', 'createDropdowns1')
+      .addItem('Start over: clear IDs and statuses', 'clearCreationIDs'))
+    .addSeparator()
+    .addSubMenu(ui.createMenu('Grades & Jupiter')
+      .addItem('Build class list on this tab', 'createActiveSheetRoster')
+      .addItem('Get latest grades for Jupiter', 'buildJupiterExportFromRecentCanvasGrades')
+      .addSeparator()
+      .addItem('Get scores into this column (assignment ID in row 2)',
+        'pullScoresForActiveColumn')
+      .addItem('Send comments from this column (assignment ID in row 2)',
+        'postCommentsForActiveColumn'))
+    .addSubMenu(ui.createMenu('Groups')
+      .addItem('Make a group set', 'createGroupCategory')
+      .addItem('Make the groups', 'createGroups')
+      .addItem('Clear group info on this tab', 'clearGroupData')
+      .addSeparator()
+      .addItem('Get groups into this column (group set ID in row 2)',
+        'pullGroupsForActiveColumn')
+      .addItem('Put students in groups from this column (group set ID in row 2)',
+        'putStudentsInGroupsFromActiveColumn')
+      .addSeparator()
+      .addItem('List groups and members on this tab', 'listGroupsAndMembers'))
     .addSubMenu(ui.createMenu('Assignment order')
       .addItem('Open reorder tool', 'openReorderTool')
       .addItem('Number selected rows 1, 2, 3…', 'numberSelectedRows')
-      .addItem('Check reorder', 'previewReorder')
-      .addItem('Push reorder', 'pushReorder'))
-    .addSubMenu(ui.createMenu('Groups')
-      .addItem('Create group category', 'createGroupCategory')
-      .addItem('Create groups', 'createGroups')
-      .addItem('Clear group data', 'clearGroupData')
-      .addSeparator()
-      .addItem('Pull groups into this column (set ID in row 2)', 'pullGroupsForActiveColumn')
-      .addItem('Put students in groups from this column (set ID in row 2)',
-        'putStudentsInGroupsFromActiveColumn')
-      .addSeparator()
-      .addItem('List groups and members (this tab)', 'listGroupsAndMembers'))
-    .addSubMenu(ui.createMenu('Rubrics')
-      .addItem('Export rubric for Canvas (this tab)', 'exportRubricToCanvasFormat'))
-    .addSubMenu(ui.createMenu('Jupiter')
-      .addItem('CreateRoster (grading sheet)', 'createActiveSheetRoster')
-      .addItem('Update Grades → JupiterExport (grading sheet)',
-        'buildJupiterExportFromRecentCanvasGrades'))
-    .addSubMenu(ui.createMenu('Grading sheet')
-      .addItem('Pull scores into this column (ID in row 2)', 'pullScoresForActiveColumn')
-      .addItem('Post comments from this column (ID in row 2)', 'postCommentsForActiveColumn'))
-    .addItem('List course content (this tab)', 'listCourseContent')
-    .addItem('Export to Google Docs (this tab)', 'exportCanvasToDocs')
+      .addItem('Check the new order', 'previewReorder')
+      .addItem('Send the new order to Canvas', 'pushReorder'))
     // Quiz report (runQuizReport) and Quiz report from export file (showQuizExportUpload)
     // are off the menu (Lara, 2026-11-09): neither sees everything a course export shows
     // (banks, New Quizzes, other courses' pictures), so teachers would have to guess what
     // they miss. The code stays (put a line back to bring one back); the course-export
     // Quiz Check takes their place.
-    .addItem('Quiz Check', 'showQuizCheck')
-    .addSeparator()
-    .addItem('Build seating chart', 'buildSeatingChart')
-    .addSeparator()
-    .addItem('Course check (possible setup mistakes)', 'runCourseCheck')
-    .addSeparator()
-    .addItem('❓ User guide', 'showUserGuide')
-    .addToUi();
-
-  ui.createMenu('Setup & Data')
-    .addItem('Refresh tables…', 'showRefreshPanel')
-    .addItem('Refresh all tables', 'refreshAllTables')
-    // The one-table refreshes (refreshCourseList, refreshPeopleList,
-    // refreshAssignmentGroups, refreshSectionList, refreshSheetIndex,
-    // refreshJupiterCategories) left the menu on 2026-11-11 (Lara): the panel covers them.
-    // The functions stay, for the Home and ref_Config buttons.
+    .addSubMenu(ui.createMenu('Check & back up course')
+      .addItem('Find possible setup mistakes', 'runCourseCheck')
+      .addItem('Check a quiz before giving it', 'showQuizCheck')
+      .addSeparator()
+      .addItem('List everything in the course on this tab', 'listCourseContent')
+      .addItem('Back up course to Google Docs', 'exportCanvasToDocs'))
+    .addSubMenu(ui.createMenu('Classroom')
+      .addItem('Build seating chart', 'buildSeatingChart')
+      .addItem("Turn this tab's rubric into a Canvas file", 'exportRubricToCanvasFormat'))
     .addSeparator()
     .addItem('Setup…', 'showSetupPanel')
-    .addSubMenu(ui.createMenu('Setup & safety')
-      .addItem('Set Canvas token', 'setCanvasCredentials')
-      .addItem('Test Canvas connection', 'testCanvasConnection')
-      .addItem('Preview mode: show status', 'showDryRunStatus')
-      .addItem('Preview mode: switch on/off', 'toggleDryRun')
-      .addSeparator()
-      .addItem('Check setup', 'checkSetup')
+    .addItem('Refresh tables…', 'showRefreshPanel')
+    .addSubMenu(ui.createMenu('Advanced')
+      .addItem('Refresh all tables', 'refreshAllTables')
       .addItem('Check createByRow labels', 'checkCreateByRowLabels')
       .addItem('Check makeAssignment labels (this tab)', 'checkMakeAssignmentLabels'))
     .addToUi();
 }
 
-/** Menu: Canvas Tools › Go to Home page. Finds the tab named Home (any emoji). */
+/** Menu: Course Manager Tools › Go to Home tab. Finds the tab named Home (any emoji). */
 function goToHomePage() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const home = findHomeSheet_(ss.getSheets().map(sheet => sheet.getName()));
   if (!home) {
-    SpreadsheetApp.getUi().alert('Go to Home page', 'There is no tab named "Home" (with or ' +
+    SpreadsheetApp.getUi().alert('Go to Home tab', 'There is no tab named "Home" (with or ' +
       'without an emoji).', SpreadsheetApp.getUi().ButtonSet.OK);
     return;
   }
@@ -114,7 +105,7 @@ function goToHomePage() {
 }
 
 /**
- * Menu: Canvas Tools › ❓ User guide. Opens UserGuide.html in the side panel, docked on
+ * Menu: Course Manager Tools › ❓ User guide. Opens UserGuide.html in the side panel, docked on
  * the right, so teachers can follow the steps while they work (Lara, 2026-11-08). The
  * panel has a link to showUserGuideLarge. No Canvas calls; the page holds only the guide
  * text. A Home-tab button can call showUserGuide too.
@@ -143,7 +134,7 @@ function findHomeSheet_(names) {
 }
 
 /**
- * Menu: Setup & Data › Refresh all tables. Runs each reference-table refresh in turn
+ * Menu: Course Manager Tools › Advanced › Refresh all tables. Runs each reference-table refresh in turn
  * (course list, people list, assignment groups, section list, sheet index), then Course
  * check on the assignments just downloaded (one step of its own since 2026-11-11); one that
  * fails doesn't stop the others. Jupiter categories are left out on purpose (Lara

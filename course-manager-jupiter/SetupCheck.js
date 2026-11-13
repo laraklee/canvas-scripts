@@ -48,7 +48,10 @@ function onOpen() {
   }
 }
 
-/** Menu: Course Manager › Check setup. Says "Setup OK" when nothing is missing. */
+/**
+ * Check setup (no longer on the menu since 2026-11-12; the Setup… panel runs the same
+ * check). Says "Setup OK" when nothing is missing.
+ */
 function checkSetup() {
   const ui = SpreadsheetApp.getUi();
   try {

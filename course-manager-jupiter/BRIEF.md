@@ -17,7 +17,15 @@
 >   **Phase 1 (ed6e57e) live in all four workbooks 11/12:** Biology 1:54 PM (Lara: Setup
 >   panel "looks fine" after a reload; the first try was the old panel), then AI9,
 >   Gastronomy, template 2:15 PM (Lara: "push to the other 3"; no manifest change).
->   Next: Phase 2 (one menu). Phase 1 details: wording in PostRows, MakeAssignment,
+>   **Phase 2a built 11/12 (Mac), not yet committed:** one menu `MENU_NAME` = "Course
+>   Manager Tools" (Menus.js; labels and groups as agreed 11/12). Dropped (Lara: "drop
+>   them"): Set Canvas token, Test Canvas connection, Preview mode show/switch, Check
+>   setup (functions kept). Advanced: Refresh all tables + two label checks. Messages'
+>   "Setup & Data ›" paths now "Course Manager Tools ›". Guide 2026-11-12b. **Phase 2b
+>   next:** pop-up titles/messages still use old tool names (~146 lines), one tool at a
+>   time; also old menu paths in code comments. Preview-mode wording in the other three
+>   projects' Setup panels: later, separate step.
+>   Phase 1 details: wording in PostRows, MakeAssignment,
 >   Groups, AssignmentColumn, ReorderTool, CanvasApi (log prefix now "PREVIEW MODE:"),
 >   Setup panel part 4, menu labels (Check …, Preview mode: …); new on-open message
 >   (`showPreviewModeToast_`, bottom right; no trigger needed). Guide version 2026-11-12.

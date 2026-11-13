@@ -156,7 +156,7 @@ function createActiveSheetRoster() {
       ['Section ID', 'User ID', 'Sorted Name', 'Role', 'Email']),
     readRefTable_(ss, SHEETS.SECTION_LOOKUP, ['Section ID', 'Section Name', 'Period']));
     if (!rows.length) {
-      throw sheetProblem_(`${SHEETS.PEOPLE_LIST} has no students. Use Setup & Data › ` +
+      throw sheetProblem_(`${SHEETS.PEOPLE_LIST} has no students. Use Course Manager Tools › ` +
         'Refresh tables… and tick People list.');
     }
 
@@ -411,7 +411,7 @@ function checkGradingSheet_(sheet) {
  */
 function readRefTable_(ss, sheetName, headers) {
   const sheet = ss.getSheetByName(sheetName);
-  if (!sheet) throw sheetProblem_(`${sheetName} is missing. Refresh it first (Setup & Data › ` +
+  if (!sheet) throw sheetProblem_(`${sheetName} is missing. Refresh it first (Course Manager Tools › ` +
     'Refresh tables…).');
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
@@ -547,7 +547,7 @@ function readJupiterAllowed_(ss) {
   }
   if (!allowed.ids.size && !allowed.names.size) {
     throw sheetProblem_(`Tick at least one category in ${JUPITER_CATEGORY_RANGE} ` +
-      `(${SHEETS.CONFIG}), or refresh them (Setup & Data › Refresh tables…, tick Jupiter ` +
+      `(${SHEETS.CONFIG}), or refresh them (Course Manager Tools › Refresh tables…, tick Jupiter ` +
       'categories).');
   }
   return allowed;

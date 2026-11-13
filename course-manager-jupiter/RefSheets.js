@@ -275,7 +275,7 @@ function latestDueAt_(assignment) {
 function readAssignmentGroups_() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ASSIGNMENT_GROUPS);
   if (!sheet) {
-    throw sheetProblem_(`${SHEETS.ASSIGNMENT_GROUPS} is missing. Use Setup & Data › ` +
+    throw sheetProblem_(`${SHEETS.ASSIGNMENT_GROUPS} is missing. Use Course Manager Tools › ` +
       'Refresh tables… and tick Assignment groups.');
   }
   const lastRow = sheet.getLastRow();
@@ -286,7 +286,7 @@ function readAssignmentGroups_() {
     const index = header.indexOf(name);
     if (index === -1) {
       throw sheetProblem_(`${SHEETS.ASSIGNMENT_GROUPS} has no "${name}" column. ` +
-        'Use Setup & Data › Refresh tables… and tick Assignment groups.');
+        'Use Course Manager Tools › Refresh tables… and tick Assignment groups.');
     }
     return index;
   };

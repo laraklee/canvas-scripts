@@ -20,7 +20,7 @@ const PROP_BASE_URL = 'CANVAS_BASE_URL';
 const PROP_TOKEN_SAVED = 'CANVAS_TOKEN_SAVED';
 
 /**
- * Menu: Course Manager › Set Canvas token.
+ * Set Canvas token (no longer on the menu since 2026-11-12; Setup… saves the token).
  * Asks for the Canvas address, then the token. Saves nothing unless both steps finish.
  */
 function setCanvasCredentials() {
