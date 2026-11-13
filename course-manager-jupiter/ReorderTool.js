@@ -4,8 +4,9 @@
  *   groups. Step 4a: "Open reorder tool" (refreshes ref_assignmentGroups, then rebuilds
  *   the tool sheet), "Number selected rows 1, 2, 3…" (ported from the legacy
  *   fillSelectedRangeSequentially; counts separately per group, skips hidden rows),
- *   "Check reorder" (shows what would change, sends nothing; "Preview reorder" until 11/12), and "Push reorder"
- *   (sends the changes, then checks them in Canvas).
+ *   "Check the new order" (shows what would change, sends nothing; was "Preview reorder",
+ *   then "Check reorder"), and "Send the new order to Canvas" (was "Push reorder"; sends
+ *   the changes, then checks them in Canvas).
  *   Each assignment's group always comes from ref_assignmentGroups by Assignment ID,
  *   never from the tool sheet, so the tool can never move an assignment to another group.
  *   Logs counts only.
@@ -18,6 +19,11 @@
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN
  *   (read by canvasGet_ and canvasWrite_); Script Property DRY_RUN (read by canvasWrite_).
  */
+
+// Pop-up titles: the tools' Course Manager Tools menu labels (2026-11-12; were "Check
+// reorder" / "Preview reorder" and "Push reorder").
+const CHECK_ORDER_TITLE = 'Check the new order';
+const SEND_ORDER_TITLE = 'Send the new order to Canvas';
 
 // Group ID (G) is for Lara to see only (e.g. two groups with the same name). The code
 // always finds an assignment's group in ref_assignmentGroups by Assignment ID.
@@ -72,7 +78,7 @@ function openReorderTool() {
 
     console.log(`Open reorder tool: ${count} assignment row(s) written.`);
     ss.toast(`${count} assignment(s) listed. Type new positions in the yellow column, ` +
-      'then use Check reorder.', 'Open reorder tool', 8);
+      `then use ${CHECK_ORDER_TITLE}.`, 'Open reorder tool', 8);
   } catch (error) {
     reportRefreshFailure_('Open reorder tool', 'The reorder tool did not finish.', error);
   }
@@ -186,10 +192,10 @@ function previewReorder() {
     const plan = planReorder_(readOrderSheet_(), readAssignmentGroups_());
     console.log(`Check reorder: ${plan.changes.length} group(s) would change, ` +
       `${countMoves_(plan)} move(s), ${plan.problems.length} problem(s).`);
-    ui.alert('Check reorder', formatPlan_(plan) + '\n\nNothing was sent to Canvas.',
+    ui.alert(CHECK_ORDER_TITLE, formatPlan_(plan) + '\n\nNothing was sent to Canvas.',
       ui.ButtonSet.OK);
   } catch (error) {
-    reportRefreshFailure_('Check reorder', 'Nothing was sent to Canvas.', error);
+    reportRefreshFailure_(CHECK_ORDER_TITLE, 'Nothing was sent to Canvas.', error);
   }
 }
 
@@ -208,7 +214,7 @@ function pushReorder() {
   const ui = SpreadsheetApp.getUi();
   const lock = LockService.getDocumentLock();
   if (!lock.tryLock(1000)) {
-    ui.alert('Push reorder', 'Another Push is already running. Wait for it to finish.',
+    ui.alert(SEND_ORDER_TITLE, 'Another send is already running. Wait for it to finish.',
       ui.ButtonSet.OK);
     return;
   }
@@ -220,19 +226,19 @@ function pushReorder() {
     const plan = planReorder_(orderRows, readAssignmentGroups_());
     const total = countMoves_(plan);
     if (!plan.changes.length) {
-      ui.alert('Push reorder', formatPlan_(plan) + '\n\nNothing to send.', ui.ButtonSet.OK);
+      ui.alert(SEND_ORDER_TITLE, formatPlan_(plan) + '\n\nNothing to send.', ui.ButtonSet.OK);
       return;
     }
 
     const dryRun = isDryRun_();
-    const answer = ui.alert(dryRun ? 'Push reorder (preview mode)' : 'Push reorder',
+    const answer = ui.alert(dryRun ? `${SEND_ORDER_TITLE} (preview mode)` : SEND_ORDER_TITLE,
       formatPlan_(plan) + '\n\n' + (dryRun ?
         `Preview mode is ON: nothing will be sent. The ${total} update(s) will only be logged.` :
         `Preview mode is OFF: this will send ${total} update(s) in ${plan.changes.length} ` +
           'group(s) to Canvas.') + '\n\nContinue?',
       ui.ButtonSet.YES_NO);
     if (answer !== ui.Button.YES) {
-      ui.alert('Push reorder', 'Cancelled. Nothing was sent.', ui.ButtonSet.OK);
+      ui.alert(SEND_ORDER_TITLE, 'Cancelled. Nothing was sent.', ui.ButtonSet.OK);
       return;
     }
 
@@ -243,13 +249,13 @@ function pushReorder() {
         ' A closed grading period or a locked assignment can cause this.' : '';
     const timeText = sent.timedOut ?
       ` Stopped near the time limit with ${sent.groupsNotStarted} group(s) not started; ` +
-        'run Push again to finish.' : '';
+        'run it again to finish.' : '';
     console.log(`Push reorder${dryRun ? ' (preview mode)' : ''}: ${sent.count} update(s), ` +
       `${sent.refusedCount} refused, ${plan.changes.length} group(s) planned` +
       (sent.timedOut ? ', stopped at time limit.' : '.'));
 
     if (dryRun) {
-      ui.alert('Push reorder (preview mode)', `Preview mode: ${sent.count} update(s) in ` +
+      ui.alert(`${SEND_ORDER_TITLE} (preview mode)`, `Preview mode: ${sent.count} update(s) in ` +
         `${plan.changes.length} group(s) would have been sent. Nothing was sent.${timeText}` +
         '\n\nSee Extensions › Apps Script › Executions for the "PREVIEW MODE" lines.',
         ui.ButtonSet.OK);
@@ -269,20 +275,21 @@ function pushReorder() {
     if (allMatched) buildOrderSheet_(ss);
     console.log(`Push reorder check: ${matched} of ${plan.changes.length} group(s) match.`);
 
-    ui.alert('Push reorder',
+    ui.alert(SEND_ORDER_TITLE,
       `${sent.count} update(s) sent.${refusedText}${timeText}\n\n` +
       `Canvas now matches your order in ${matched} of ${plan.changes.length} group(s).` +
       (stillDifferent.length ? '\nStill different: ' +
         stillDifferent.map(c => c.groupName).join(', ') + '.' : '') +
-      (plan.problems.length ? `\n${plan.problems.length} problem(s) were skipped (see Check reorder).` : '') +
+      (plan.problems.length ? `\n${plan.problems.length} problem(s) were skipped ` +
+        `(see ${CHECK_ORDER_TITLE}).` : '') +
       '\n\n' + (allMatched ?
         'The Assignment Order sheet was rebuilt with the new positions.' :
-        'Your New Position numbers were kept. Run Check reorder to see what is still different, ' +
-          'then Push again; it only sends what is still out of place.'),
+        `Your New Position numbers were kept. Run ${CHECK_ORDER_TITLE} to see what is still ` +
+          'different, then send again; it only sends what is still out of place.'),
       ui.ButtonSet.OK);
   } catch (error) {
-    reportRefreshFailure_('Push reorder', 'Push stopped. Run Check reorder to see where things ' +
-      'stand; running Push again only sends what is still out of place.', error);
+    reportRefreshFailure_(SEND_ORDER_TITLE, `Sending stopped. Run ${CHECK_ORDER_TITLE} to see ` +
+      'where things stand; sending again only sends what is still out of place.', error);
   } finally {
     lock.releaseLock();
   }

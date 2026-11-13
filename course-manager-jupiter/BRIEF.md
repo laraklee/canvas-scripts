@@ -26,7 +26,12 @@
 >   check & back up, classroom.
 >   **Phase 2b step 3 (groups; e74e09e) live in all four 11/12:** Biology 2:50 PM (Lara:
 >   "Works"), then AI9, Gastronomy, template 2:53 PM. Next 2b steps: reorder, check &
->   back up, classroom. Step 3 details: titles Make a group set,
+>   back up, classroom.
+>   **Phase 2b step 4 (assignment order) built 11/12, not yet committed:** titles Check the
+>   new order (`CHECK_ORDER_TITLE`), Send the new order to Canvas (`SEND_ORDER_TITLE`);
+>   "run Push again" wording now "run it again" / "send again". Guide 2026-11-12f; its
+>   "older names" note now points only at Check & back up and Classroom.
+>   Step 3 details: titles Make a group set,
 >   Make the groups, Clear group info, Get groups into this column, Put students in groups
 >   from this column, List groups and members on this tab; next-step pointers use the same
 >   names. Sheet wording ("group category" in C2 etc.) unchanged. Guide 2026-11-12e. titles Build class list
