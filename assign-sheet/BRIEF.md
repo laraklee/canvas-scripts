@@ -19,9 +19,13 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 > new copy: skip, or "Name (old)"). Charts, pivot tables, protected ranges, filter views,
 > alternating colors and unusual rules are listed per tab with a how-to. Offline check:
 > `scripts/checks/assign-bring-over.check.js`. Guide: section 5 rows, section 6 steps,
-> table and What's new; version **2026-11-13**. **Push plan:** Biology first, test with a
-> scratch copy of the template (Lara), then Gastronomy, AI9, template; `--force` needed
-> (manifest change), and every sheet asks to re-authorize.
+> table and What's new; version **2026-11-13**. **Live on all four sheets 11/13** (code
+> `b632bce`): tested by Lara in a scratch copy of the template (bringing over from
+> Biology), then pushed to Biology 11:19, Gastronomy and AI9 11:24, template 11:24, with
+> `--force` (manifest change); each sheet asks to re-authorize. The test found that
+> copying a column width un-hid columns hidden in the new copy; fixed in `b632bce`.
+> On the Mac too, `clasp push -P` needs the settings file's full path (a relative path
+> gives "srcDir escapes project root").
 >
 > **Preview mode wording (c480fbc) live on all four sheets 11/12:** Biology 3:09 PM
 > (Lara: "Works"), then Gastronomy, AI9, template 3:11 PM. "dry run" is now
