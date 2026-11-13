@@ -17,7 +17,8 @@
 >   **Phase 1 (ed6e57e) live in all four workbooks 11/12:** Biology 1:54 PM (Lara: Setup
 >   panel "looks fine" after a reload; the first try was the old panel), then AI9,
 >   Gastronomy, template 2:15 PM (Lara: "push to the other 3"; no manifest change).
->   **Phase 2a built 11/12 (Mac), not yet committed:** one menu `MENU_NAME` = "Course
+>   **Phase 2a (95f2863) live in all four workbooks 11/12:** Biology 2:33 PM (Lara: "looks
+>   good"; not every Home button tried), then AI9, Gastronomy, template 2:37 PM: one menu `MENU_NAME` = "Course
 >   Manager Tools" (Menus.js; labels and groups as agreed 11/12). Dropped (Lara: "drop
 >   them"): Set Canvas token, Test Canvas connection, Preview mode show/switch, Check
 >   setup (functions kept). Advanced: Refresh all tables + two label checks. Messages'
