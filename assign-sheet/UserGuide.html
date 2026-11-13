@@ -95,7 +95,7 @@
 
 <h1>Assignment Sheet — User Guide</h1>
 
-<p class="version">Version 2026-11-12b. See <b>6. What's new and getting updates</b>.</p>
+<p class="version">Version 2026-11-13. See <b>6. What's new and getting updates</b>.</p>
 
 <p>For teachers using a course Assignment sheet (Biology, Gastronomy, AI9, or a copy).
 Everything here is on the <b>Canvas Tools</b> menu at the top of the sheet, next to Help.
@@ -575,6 +575,14 @@ fix.</p>
   <tr><td><i>Unexpected error</i></td><td>Note what you clicked and what the message said,
     then try once more. If it happens again, tell whoever shared the sheet with
     you.</td></tr>
+  <tr><td>(Bring over) <i>Q1: 2 cell(s) in this copy already have something different…</i></td>
+    <td>Something is already typed in that place in your new copy. Clear those cells
+    (the message names the first one), or set that tab to Skip.</td></tr>
+  <tr><td>(Bring over) <i>Q1: 3 row(s) in columns A–E don't match…</i></td><td>Run <b>🔄 Update
+    schedule from Master</b> in the new copy. If it still says so, see <b>6. What's new and
+    getting updates</b>.</td></tr>
+  <tr><td><i>Could not open that sheet</i></td><td>Check the link is your old sheet's,
+    and that you can open it with the Google account you're using now.</td></tr>
   <tr><td>No <b>Canvas Tools</b> menu</td><td>Reload the page; wait a few
     seconds.</td></tr>
 </table>
@@ -588,6 +596,12 @@ newer one, open the template and look at the version in its guide.</p>
 <h3>What's new</h3>
 
 <ul>
+  <li><b>2026-11-13:</b> New <b>📥 Bring over from my old copy…</b>: in a fresh copy of the
+    template, it brings your settings, Q-tab lessons, calendarEvents rows and your own tabs
+    over from your old sheet (see <b>Getting the newest version</b> below). Google asks
+    for permission again the first time, now including <i>See all your Google Sheets
+    spreadsheets</i>: the sheet only reads the one old copy you paste, and never changes
+    it.</li>
   <li><b>2026-11-12b:</b> <b>Dry run is now called preview mode</b> (same setting, new
     name), matching Course Manager. Status cells say "Preview mode OK", and a message
     when the sheet opens says whether it's ON.</li>
@@ -603,30 +617,59 @@ newer one, open the template and look at the version in its guide.</p>
 <h3>Getting the newest version</h3>
 
 <p>You make a fresh copy of the template and bring your own work over. Your old sheet
-stays as it is until you're done, so nothing is lost.</p>
+stays as it is, so nothing is lost.</p>
 
 <ol>
   <li>Open the template (the same link you used for your first copy) and make a copy.</li>
-  <li>In the new copy, fill in the <i>Config</i> tab (see <b>1. First-time setup</b>).</li>
-  <li>Open <b>⚙️ Setup…</b>, save your token, and check the course. A new copy needs your
-    token again: it isn't carried over.</li>
-  <li>Run <b>🔄 Update schedule from Master</b> to fill the Q tabs.</li>
-  <li>Bring your work over from the old sheet:
+  <li>In the new copy, run <b>🔄 Update schedule from Master</b> so the Q tabs have their
+    dates. (If it complains about <i>Config</i>, fill in D3 and D5 first; see <b>1.
+    First-time setup</b>.)</li>
+  <li>Open <span class="menu">Canvas Tools › 📥 Bring over from my old copy…</span>. A
+    panel opens on the right.
     <ul>
-      <li><b>Q tabs:</b> copy columns F–I (and any of your own columns from J on) and
-        paste them into the same place. First check that the dates in column A line up
-        in both sheets.</li>
-      <li><b>calendarEvents:</b> copy your rows (from row 3, columns A–I). Keep columns
-        H and I, so items already posted aren't posted twice.</li>
-      <li><b>Assignment Dates:</b> nothing to copy. Run <b>Load assignment dates from
-        Canvas</b>.</li>
+      <li>Paste the link to your <b>old</b> sheet (the whole address from its address bar)
+        and click <b>Look at it</b>. Check that the name it shows is your old sheet.</li>
+      <li>The plan has one line for each tab of your old sheet. Change a choice if you need
+        to, then click <b>Bring over</b>.</li>
     </ul>
   </li>
+  <li>Read <b>4. What happened</b> in the panel. It lists anything to redo by hand (charts,
+    pivot tables and a few others), with how.</li>
+  <li>Open <b>⚙️ Setup…</b>, save your token, and check the course. A new copy needs your
+    token again: it isn't carried over.</li>
+  <li>Run <b>📝 Assignment dates › Load assignment dates from Canvas</b>.</li>
   <li>Check preview mode: <span class="menu">Canvas Tools › ⚙️ Setup…</span>, part 4. A new
     copy may start with it ON.</li>
   <li>Rename the old sheet (for example "OLD Assignment sheet") so you don't use it by
     mistake. Keep it until you're sure everything came over.</li>
 </ol>
+
+<h3>What Bring over does with each tab</h3>
+
+<table>
+  <tr><th>Tab</th><th>What happens</th></tr>
+  <tr><td><i>Config</i></td><td>B2–B5, D3, D5 and E2:F5 come over (blank cells are left
+    alone).</td></tr>
+  <tr><td>Q1–Q4</td><td>Your columns from F on come over row by row, but only if columns
+    A–E match in both sheets, so each lesson lands on the same date.</td></tr>
+  <tr><td>calendarEvents</td><td>All rows, with the links in H and I, so nothing is posted
+    twice.</td></tr>
+  <tr><td>Assignment Dates</td><td>Skipped: load it again from Canvas.</td></tr>
+  <tr><td>Helper tabs (<code>*simpleSchedule*</code>, <code>AssignmentMaster</code>…)</td>
+    <td>Skipped: <b>🔄 Update schedule from Master</b> rebuilds them.</td></tr>
+  <tr><td>Your own tabs</td><td>Copied whole: values, formulas, colors, links, notes,
+    dropdowns and checkboxes. If the new copy already has a tab with the same name, it's
+    skipped unless you choose <b>Copy as "Name (old)"</b>.</td></tr>
+</table>
+
+<p>Bring over <b>never overwrites</b> your new copy. If a Q tab (from column F on) or
+calendarEvents already has something different typed in it, or the Q tabs' dates don't
+match, it brings nothing over and tells you where. Fix that, or set that tab to Skip, and
+click <b>Bring over</b> again.</p>
+
+<div class="note">If the Q tabs' dates still don't match after <b>🔄 Update schedule from
+Master</b>, the school calendar has changed since your old sheet. Set those tabs to Skip,
+and copy your columns F onward by hand, checking the dates in column A as you go.</div>
 
 <script>
   // Contents links: scroll within this window (plain #links can misbehave inside

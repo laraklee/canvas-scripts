@@ -3,7 +3,7 @@
  * Purpose: the Canvas Tools menu (onOpen), the user guide side panel, and the *Config*
  *   tab readers (getConfig, getConfiguredPeriodPairs). Setup (token, connection, course,
  *   preview mode) is the Setup panel, Canvas Tools › ⚙️ Setup… (08_SetupPanel.js;
- *   2026-11-12). On open, a short message says whether preview mode is ON.
+ *   2026-11-12). 📥 Bring over from my old copy… is 10_BringOver.js (2026-11-13). On open, a short message says whether preview mode is ON.
  *   Preview mode = the DRY_RUN setting (called "dry run" until 2026-11-12).
  * Canvas endpoints called: none.
  * Canvas write operations: none.
@@ -35,6 +35,7 @@ function onOpen() {
     .addItem('☑️ Toggle checkboxes', 'toggleSelectedCheckboxes')        // 01_Utilities.js
     .addSeparator()
     .addItem('⚙️ Setup…', 'showSetupPanel') // 08_SetupPanel.js (token, connection, course, preview mode)
+    .addItem('📥 Bring over from my old copy…', 'showBringOverPanel') // 10_BringOver.js (new copy of the template)
     .addSeparator()
     .addItem('❓ User guide', 'showUserGuide')
     .addToUi();

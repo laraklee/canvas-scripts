@@ -5,6 +5,24 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
+> **Bring over from my old copy (11/13, built; not pushed yet).** **Canvas Tools › 📥 Bring
+> over from my old copy…** (`10_BringOver.js`, `BringOverPanelPage.html`; copy engine
+> `09_TabRebuild.js`, written to be shared with the other workbook projects). Used in a
+> NEW copy of the template: paste the old copy's link, see a plan (one line per old tab),
+> Bring over. Lara's choices 11/13: read-only permission (`spreadsheets.readonly` + the
+> Sheets advanced service, added to `appsscript.json`; `SpreadsheetApp.openById` needs full
+> edit access, tested in `readonly-import-test/`); Q tabs: columns F→ row by row only if
+> A–E match row by row; never overwrite (anything different already in Q F→ or
+> calendarEvents stops the whole run before any change); side panel with per-tab choices.
+> *Config*: B2–B5, D3, D5, E2:F5 (non-blank only, overwrites). calendarEvents: all cells.
+> Assignment Dates and helper tabs: skipped. Other tabs: copied whole (same name in the
+> new copy: skip, or "Name (old)"). Charts, pivot tables, protected ranges, filter views,
+> alternating colors and unusual rules are listed per tab with a how-to. Offline check:
+> `scripts/checks/assign-bring-over.check.js`. Guide: section 5 rows, section 6 steps,
+> table and What's new; version **2026-11-13**. **Push plan:** Biology first, test with a
+> scratch copy of the template (Lara), then Gastronomy, AI9, template; `--force` needed
+> (manifest change), and every sheet asks to re-authorize.
+>
 > **Preview mode wording (c480fbc) live on all four sheets 11/12:** Biology 3:09 PM
 > (Lara: "Works"), then Gastronomy, AI9, template 3:11 PM. "dry run" is now
 > "preview mode" everywhere a teacher sees it (pop-ups, status cells "Preview mode OK…",
