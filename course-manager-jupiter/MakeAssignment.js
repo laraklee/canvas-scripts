@@ -45,6 +45,9 @@
  *   Reads ref_simpleSchedule (Get Times).
  */
 
+/** Pop-up title for makeAll: its menu label (Course Manager Tools menu, 2026-11-12). */
+const MAKE_ALL_TITLE = 'Send this tab to Canvas';
+
 const MAKE_ASSIGNMENT_TABLES = Object.freeze([
   {
     key: 'item',
@@ -112,9 +115,9 @@ function previewAssignment() {
       `${questions.length} question(s) ready.`);
     ss.toast(`Item: ${item.request ? 'ready' : 'see Status'}. Overrides: ${overridesReady} ` +
       `ready of ${overrides.length}.` + (questions.length ? ` Questions: ${questionsReady} ` +
-      `ready of ${questions.length}.` : '') + ' Nothing was sent.', 'Check assignment', 8);
+      `ready of ${questions.length}.` : '') + ' Nothing was sent.', 'Check this tab', 8);
   } catch (error) {
-    reportRefreshFailure_('Check assignment', 'Nothing was sent.', error);
+    reportRefreshFailure_('Check this tab', 'Nothing was sent.', error);
   }
 }
 
@@ -139,12 +142,12 @@ function makeAssignmentAll() {
       .forEach(plan => job.writeQuestion(plan, 'Status', plan.message));
     if (!item.request && !item.canvasId) {
       job.writeItem('Status', item.message);
-      ui.alert('makeAll', `The item isn't ready, so nothing was sent.\n\n${item.message}`,
+      ui.alert(MAKE_ALL_TITLE, `The item isn't ready, so nothing was sent.\n\n${item.message}`,
         ui.ButtonSet.OK);
       return;
     }
     if (item.canvasId && !readyOverrides.length && !readyQuestions.length) {
-      ui.alert('makeAll', 'Nothing to send: the item already has a canvasID and no override ' +
+      ui.alert(MAKE_ALL_TITLE, 'Nothing to send: the item already has a canvasID and no override ' +
         'or question row is ready (see Status).', ui.ButtonSet.OK);
       return;
     }
@@ -154,7 +157,7 @@ function makeAssignmentAll() {
       questions.length - readyQuestions.length;
     const parts = [`${readyOverrides.length} override(s)`]
       .concat(readyQuestions.length ? [`${readyQuestions.length} question(s)`] : []);
-    const answer = ui.alert('makeAll',
+    const answer = ui.alert(MAKE_ALL_TITLE,
       (item.request ? `Create 1 item (${item.label}), ` : 'The item already exists. Create ') +
       `${parts.join(' and ')} in ${courseLabel_()}?` +
       (skipped ? `\n${skipped} row(s) will be skipped (see Status).` : '') +
@@ -167,9 +170,9 @@ function makeAssignmentAll() {
       `${result.created} override(s) sent, ${result.failed} refused, ` +
       `${result.questionsCreated} question(s) sent, ${result.questionsFailed} refused` +
       (result.timedOut ? ', stopped at time limit.' : '.'));
-    ui.alert('makeAll', describeMakeAllResult_(result, dryRun, skipped), ui.ButtonSet.OK);
+    ui.alert(MAKE_ALL_TITLE, describeMakeAllResult_(result, dryRun, skipped), ui.ButtonSet.OK);
   } catch (error) {
-    reportRefreshFailure_('makeAll', 'Anything already created has its ID filled in; see ' +
+    reportRefreshFailure_(MAKE_ALL_TITLE, 'Anything already created has its ID filled in; see ' +
       'the Status cells.', error);
   }
 }
@@ -235,7 +238,8 @@ function runMakeAssignment_(job, send, started = Date.now()) {
   const sendRow = (plan, path, write, idLabel, onCreated, onFailed) => {
     if (result.timedOut || Date.now() - started > CREATE_BY_ROW_TIME_LIMIT_MS) {
       result.timedOut = true;
-      write(plan, 'Status', 'Not sent: stopped near the time limit; click makeAll again');
+      write(plan, 'Status',
+        'Not sent: stopped near the time limit; run Send this tab to Canvas again');
       return;
     }
     write(plan, 'Payload', JSON.stringify(plan.payload));
@@ -274,10 +278,10 @@ function runMakeAssignment_(job, send, started = Date.now()) {
   return result;
 }
 
-/** The pop-up after makeAll. */
+/** The pop-up after makeAll (menu: Send this tab to Canvas). */
 function describeMakeAllResult_(result, dryRun, skipped) {
   const timeNote = result.timedOut ?
-    '\n\nStopped near the time limit; click makeAll again to send the rest.' : '';
+    '\n\nStopped near the time limit; run Send this tab to Canvas again to send the rest.' : '';
   if (dryRun || result.itemOutcome === 'dry run') {
     return `Preview mode: the item${result.itemOutcome === 'existing' ? ' (already created)' : ''}, ` +
       `${result.created} override(s), and ${result.questionsCreated} question(s) would have ` +
@@ -318,7 +322,7 @@ function createDropdowns1() {
       .map(row => row.map(value => String(value).trim())));
     if (layout.problemCount) {
       throw sheetProblem_(`This tab's labels have ${layout.problemCount} problem(s). Use ` +
-        'Course Manager › Check makeAssignment labels (this tab).');
+        'Course Manager Tools › Advanced › Check makeAssignment labels (this tab).');
     }
     const standard = readStandardTimes_();
     const timeZone = ss.getSpreadsheetTimeZone();
@@ -352,9 +356,10 @@ function createDropdowns1() {
       `${missing.length} period/date not in the schedule.`);
     ss.toast(`Due Time dropdowns set on ${rows} override row(s); ${withPeriod} include ` +
       'Period Start/End.' + (missing.length ? ` No schedule found for the Period and Due ` +
-      `Date in row(s) ${missing.join(', ')} (check ref_simpleSchedule).` : ''), 'Get Times', 8);
+      `Date in row(s) ${missing.join(', ')} (check ref_simpleSchedule).` : ''),
+      'Set up due-time choices', 8);
   } catch (error) {
-    reportRefreshFailure_('Get Times', 'No dropdowns were changed.', error);
+    reportRefreshFailure_('Set up due-time choices', 'No dropdowns were changed.', error);
   }
 }
 
@@ -378,13 +383,13 @@ function clearCreationIDs() {
     const layout = findMakeAssignmentLayout_(shown);
     if (layout.problemCount) {
       throw sheetProblem_(`This tab's labels have ${layout.problemCount} problem(s). Use ` +
-        'Course Manager › Check makeAssignment labels (this tab).');
+        'Course Manager Tools › Advanced › Check makeAssignment labels (this tab).');
     }
     const cells = clearCreationCells_(layout);
     const ids = cells.filter(cell => cell.isId &&
       shown.slice(cell.row - 1, cell.row)[0].slice(cell.column - 1, cell.column)[0]).length;
     if (ids) {
-      const answer = ui.alert('Clear IDs', `Clear ${ids} Canvas ID(s), plus the Canvas URL, ` +
+      const answer = ui.alert('Start over', `Clear ${ids} Canvas ID(s), plus the Canvas URL, ` +
         'Status, and Payload cells, on this tab?\n\nThis only clears the sheet. Anything ' +
         'already created stays in Canvas.', ui.ButtonSet.YES_NO);
       if (answer !== ui.Button.YES) return;
@@ -392,9 +397,9 @@ function clearCreationIDs() {
     cells.forEach(cell => sheet.getRange(cell.row, cell.column).clearContent());
     console.log(`Clear IDs: ${cells.length} cell(s) cleared, ${ids} of them IDs.`);
     ss.toast('IDs, Canvas URL, Status, and Payload cleared. Ready for the next assignment.',
-      'Clear IDs', 5);
+      'Start over', 5);
   } catch (error) {
-    reportRefreshFailure_('Clear IDs', 'Nothing was cleared.', error);
+    reportRefreshFailure_('Start over', 'Nothing was cleared.', error);
   }
 }
 
@@ -520,7 +525,7 @@ function readMakeAssignment_(ss) {
   const layout = findMakeAssignmentLayout_(shown);
   if (layout.problemCount) {
     throw sheetProblem_(`This tab's labels have ${layout.problemCount} problem(s). Use ` +
-      'Course Manager › Check makeAssignment labels (this tab).');
+      'Course Manager Tools › Advanced › Check makeAssignment labels (this tab).');
   }
   const courseId = getCourseIdForRefresh_();
   const plan = planMakeAssignment_(layout, values, shown, courseId,

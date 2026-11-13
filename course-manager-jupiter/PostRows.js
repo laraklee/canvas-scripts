@@ -126,14 +126,14 @@ function postRows() {
     const notSent = job.plans.filter(plan => !plan.request);
     notSent.forEach(plan => job.write(plan, CREATE_BY_ROW_LABELS.STATUS, plan.message));
     if (!toSend.length) {
-      ui.alert('Post selected rows', 'Nothing to post: every selected row was skipped or has ' +
-        'a problem. See the Status column.', ui.ButtonSet.OK);
+      ui.alert('Send selected rows to Canvas', 'Nothing to send: every selected row was ' +
+        'skipped or has a problem. See the Status column.', ui.ButtonSet.OK);
       return;
     }
 
     const dryRun = isDryRun_();
-    const answer = ui.alert('Post selected rows',
-      `Post ${toSend.length} row(s) (${countTypes_(toSend)}) to ${courseLabel_()}?` +
+    const answer = ui.alert('Send selected rows to Canvas',
+      `Send ${toSend.length} row(s) (${countTypes_(toSend)}) to ${courseLabel_()}?` +
       (notSent.length ? `\n${notSent.length} other row(s) will be skipped (see Status).` : '') +
       '\n\n' + (dryRun ? 'Preview mode is ON: nothing will be sent.' :
         'Preview mode is OFF: this creates them in Canvas.'), ui.ButtonSet.YES_NO);
@@ -172,16 +172,16 @@ function postRows() {
 
     console.log(`Post rows${dryRun ? ' (preview mode)' : ''}: ${posted} sent, ${failed} refused, ` +
       `${notSent.length} skipped` + (timedOut ? ', stopped at time limit.' : '.'));
-    ui.alert('Post selected rows',
-      (dryRun ? `Preview mode: ${posted} row(s) would have been posted. Nothing was sent.` :
+    ui.alert('Send selected rows to Canvas',
+      (dryRun ? `Preview mode: ${posted} row(s) would have been sent. Nothing was sent.` :
         `${posted} row(s) posted.`) +
       (failed ? `\n${failed} row(s) were refused by Canvas (see Status).` : '') +
       (notSent.length ? `\n${notSent.length} row(s) skipped (see Status).` : '') +
-      (timedOut ? '\n\nStopped near the time limit; select the rest and post again.' : ''),
+      (timedOut ? '\n\nStopped near the time limit; select the rest and send again.' : ''),
       ui.ButtonSet.OK);
   } catch (error) {
-    reportRefreshFailure_('Post selected rows', 'Rows already posted keep their CanvasID; ' +
-      'see the Status column.', error);
+    reportRefreshFailure_('Send selected rows to Canvas', 'Rows already posted keep their ' +
+      'CanvasID; see the Status column.', error);
   }
 }
 
@@ -223,7 +223,8 @@ function readSelectedRows_(ss) {
   const { columns, missing } = findCreateByRowColumns_(sheet);
   if (missing.length) {
     throw sheetProblem_(`Row ${CREATE_BY_ROW_HEADER_ROW} of ${TOOL_SHEETS.CREATE_BY_ROW} is ` +
-      `missing these labels: ${missing.join(', ')}. Use Check createByRow labels.`);
+      `missing these labels: ${missing.join(', ')}. Use Course Manager Tools › Advanced › ` +
+      'Check createByRow labels.');
   }
   const range = SpreadsheetApp.getActiveRange();
   const firstRow = range ? Math.max(range.getRow(), CREATE_BY_ROW_FIRST_ROW) : 0;

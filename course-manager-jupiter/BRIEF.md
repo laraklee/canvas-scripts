@@ -18,7 +18,14 @@
 >   panel "looks fine" after a reload; the first try was the old panel), then AI9,
 >   Gastronomy, template 2:15 PM (Lara: "push to the other 3"; no manifest change).
 >   **Phase 2a (95f2863) live in all four workbooks 11/12:** Biology 2:33 PM (Lara: "looks
->   good"; not every Home button tried), then AI9, Gastronomy, template 2:37 PM: one menu `MENU_NAME` = "Course
+>   good"; not every Home button tried), then AI9, Gastronomy, template 2:37 PM.
+>   **Phase 2b step 1 (create tools) built 11/12, not yet committed:** pop-up titles =
+>   menu labels: Send selected rows to Canvas, Check this tab, Send this tab to Canvas
+>   (`MAKE_ALL_TITLE`), Set up due-time choices, Start over; label-check pointers say
+>   Course Manager Tools › Advanced ›. Status words kept ("Posted", "Not posted"; button
+>   names makeAll etc. stay in the guide). Guide 2026-11-12c. Next 2b steps: grading
+>   (Jupiter, scores/comments), groups, reorder, check & back up, classroom.
+>   Phase 2a details: one menu `MENU_NAME` = "Course
 >   Manager Tools" (Menus.js; labels and groups as agreed 11/12). Dropped (Lara: "drop
 >   them"): Set Canvas token, Test Canvas connection, Preview mode show/switch, Check
 >   setup (functions kept). Advanced: Refresh all tables + two label checks. Messages'

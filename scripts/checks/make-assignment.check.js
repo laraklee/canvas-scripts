@@ -491,7 +491,7 @@ r = c.runMakeAssignment_(job, (method, p2) => {
 }, Date.now() - 6 * 60 * 1000);
 check('time limit: only the item sent', [sent.length, r.timedOut], [1, true]);
 check('time limit: rows say so', written(job, 'q23', 'Status'),
-  'Not sent: stopped near the time limit; click makeAll again');
+  'Not sent: stopped near the time limit; run Send this tab to Canvas again');
 
 // Clear IDs on a CQ tab: question rows too, never the "Questions" title in A20.
 const clearedCq = c.clearCreationCells_(cqTab(QUESTIONS).layout)
