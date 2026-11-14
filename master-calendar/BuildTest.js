@@ -1,6 +1,8 @@
 /**
- * BuildTest.js — builds a "Test" tab for a school year from the school's public calendars.
- * Purpose: a trial of replacing the PDF reading. For each school day it fills
+ * BuildTest.js — the Master Calendar menu, and the "Test" tab (menu: Preview a year): a
+ *   preview of a school year from the school's public calendars. The year tab itself is
+ *   made by BuildYear.js, which reuses the reading and building code here.
+ * For each school day the preview fills
  *   Q, Wk, Date, Day, Schedule (Lara's codes), Periods and *JSON* from the
  *   "Bell Schedule with Periods" calendar, suggests *Data Drills* notes (grey italic) from
  *   the day titles and the Faculty Calendar, and adds a Review column (days to check) and a
@@ -56,33 +58,49 @@ const KEEP_UPPER_ = ['US', 'LS', 'AP', 'PD', 'PSAT', 'SAC', 'JNHS', 'RL', 'RSJ',
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Master Calendar')
     .addItem('Setup…', 'showSetupPanel')
-    .addItem('Build Test tab from calendars…', 'buildTestTab')
+    .addItem('Build year tab from calendars…', 'buildYearTab')
+    .addItem('Preview a year (Test tab)…', 'buildTestTab')
     .addToUi();
 }
 
-/** Menu: builds the Test tab for a school year. */
+/** The two calendar links, or null (after telling the user to run Setup). */
+function calendarUrls_(ui) {
+  const props = PropertiesService.getScriptProperties();
+  const bellUrl = props.getProperty(PROP_BELL_URL_);
+  const facultyUrl = props.getProperty(PROP_FACULTY_URL_);
+  if (!bellUrl || !facultyUrl) {
+    ui.alert('First use Master Calendar › Setup… to add the two calendar links.');
+    return null;
+  }
+  return { bell: bellUrl, faculty: facultyUrl };
+}
+
+/** Asks for a school year like 2026.2027; returns it, or null if cancelled or mistyped. */
+function askYear_(ui, title, message) {
+  const res = ui.prompt(title, 'School year, for example 2026.2027.\n\n' + message, ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return null;
+  const year = res.getResponseText().trim();
+  if (!/^\d{4}\.\d{4}$/.test(year) || Number(year.slice(5)) !== Number(year.slice(0, 4)) + 1) {
+    ui.alert('Please type the year like 2026.2027.');
+    return null;
+  }
+  return year;
+}
+
+/** Menu: builds the Test tab for a school year (a preview, compared with the year tab). */
 function buildTestTab() {
   const ui = SpreadsheetApp.getUi();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   try {
-    const props = PropertiesService.getScriptProperties();
-    const bellUrl = props.getProperty(PROP_BELL_URL_);
-    const facultyUrl = props.getProperty(PROP_FACULTY_URL_);
-    if (!bellUrl || !facultyUrl) {
-      ui.alert('First use Master Calendar › Setup… to add the two calendar links.');
-      return;
-    }
+    const urls = calendarUrls_(ui);
+    if (!urls) return;
+    const bellUrl = urls.bell;
+    const facultyUrl = urls.faculty;
 
-    const res = ui.prompt('Build Test tab',
-      'School year to build, for example 2026.2027.\n\nOnly the "' + TEST_TAB_ + '" tab is changed. ' +
-      'If a tab with this year\'s name exists, it is only read, to compare.',
-      ui.ButtonSet.OK_CANCEL);
-    if (res.getSelectedButton() !== ui.Button.OK) return;
-    const year = res.getResponseText().trim();
-    if (!/^\d{4}\.\d{4}$/.test(year) || Number(year.slice(5)) !== Number(year.slice(0, 4)) + 1) {
-      ui.alert('Please type the year like 2026.2027.');
-      return;
-    }
+    const year = askYear_(ui, 'Preview a year (Test tab)',
+      'Only the "' + TEST_TAB_ + '" tab is changed. ' +
+      'If a tab with this year\'s name exists, it is only read, to compare.');
+    if (!year) return;
 
     let testSheet = ss.getSheetByName(TEST_TAB_);
     if (testSheet && testSheet.getLastRow() > 0) {

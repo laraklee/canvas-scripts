@@ -136,6 +136,23 @@ After the fix, K flags exactly the 8 days above (9/16, 12/4, 12/15, 2/12, 2/26, 
 4/28). **Lara's decision 11/13:** she fixes the real `2026.2027` tab's days by hand (no
 code for that); future years come straight from the automatic build.
 
+**Next years (Lara, 11/13):** build the year tab directly, no Test step. Menu
+**Master Calendar › Build year tab from calendars…** (`BuildYear.js`): asks the year,
+stops if that tab exists (never overwrites), inserts it before the newest year tab.
+Columns A–I only (assign-sheets import `A:M` into *simpleSchedule*, so no extra columns).
+D, F and I are the year tabs' formulas (Lara chose formulas, so a later fix is just the
+code in E): D `=LEFT(TEXT(Cn,"ddd"),2)`, F `=IFERROR(VLOOKUP(En,'*Data Sched-Per*'!A:B,2,FALSE),"---")`,
+I2 only `=GET_SCHEDULE_JSON(E2:E, F2:F, '*schedule*'!A:D)`. Days to check: yellow, reason
+in a note on the Schedule cell (the Test tab's Review reasons, plus "code … has no times
+in *schedule*" when *Data Sched-Per* lists class periods but *schedule* has no rows).
+The old item is now **Preview a year (Test tab)…** (unchanged). Offline check 11/13
+(2026.2027 feed, no Faculty Calendar): 184 rows, 6 to review, formulas as in the year tab.
+Not in Google yet.
+
+Fixing the 2026.2027 tab (11/13): Lara fixed 2/26, 4/28, 4/2 and the CH days, and fixed
+`*schedule*` (ESpA, FSpAr, SpFair added; Ch → CH; A3 periods 3, 6, 8). Checked against the
+calendar for 2025-26 and 2026-27: all codes match.
+
 Setup panel is in Google (checked 11/13 with `clasp pull`: Google matches commit
 `6bc6654`). Next: Lara saves the two links in Setup, runs Build Test tab for 2026.2027,
 and compares. Later:
