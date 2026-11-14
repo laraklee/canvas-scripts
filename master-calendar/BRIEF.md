@@ -72,13 +72,49 @@ exams) need a short lookup table.
 2027-28 is not in the calendar yet (on 11/13). If the PDF comes out first, start from the
 PDF and check against the calendar once it's loaded.
 
-## Plan (not started)
+## Test tab (built 11/13; not pushed yet)
 
-Replace the manual PDF reading with an import from "Bell Schedule with Periods", read
-through its public ICS link (the same way calendar-builder reads it; reuse its parser):
-- Fill C, D, E, F, I from the calendar; G and H stay typed.
-- Flag days to review: period count wrong for the letter, a title with no known code, a
-  date in the sheet missing from the calendar.
-- Probably two menu items: **Check against Bell Schedule** (read-only report) and
-  **Build year from Bell Schedule** (new tab). Details to decide with Lara.
-- Fix the four days above (by hand or with the tool), once Lara confirms.
+Lara's choices 11/13: try it in a **Test** tab, as if the year hadn't started, so the real
+`2026.2027` tab (read by many projects) is never touched. Suggest *Data Drills* notes
+from the calendars as defaults for Lara to check.
+
+Menu **Master Calendar › Build Test tab from calendars…** (`BuildTest.js`; parser
+`Ics.js`, copied from calendar-builder). Asks for the school year, then writes only the
+Test tab:
+- **From "Bell Schedule with Periods":** C Date, D Day (same formula as the year tabs),
+  E Schedule (code built from the title), F Periods (from the timed events: Meeting/Lunch
+  → M/L, Meeting then Lunch → M/L, Assembly or Chapel/Assembly → A, Chapel 1/2 → Ch-A/Ch-B,
+  Homeroom and Break left out), I JSON (periods with their real times). Days with no timed
+  events (holidays, PSAT, exams) take F from `*Data Sched-Per*`.
+- **A Q, B Wk:** a new quarter after a gap of more than 7 days (the long breaks); weeks
+  counted Monday to Friday.
+- **Rows:** weekdays from the first school day to the last exam day. Breaks left out; a
+  holiday next to a break counts as the break (as in the year tabs).
+- **G *Data Drills*, grey italic = suggestions:** First Day of School, No Chapel,
+  holidays, special schedules (from the day titles), plus Faculty Calendar events matching
+  `DRILL_PATTERNS_` (Open House, MQ from "End of … Mid-Quarter", exams, Senior Camp, SAC
+  Review, Christmas/Easter Chapel, awards, Honors Day…). Expect some noise (e.g. other
+  open houses). The Faculty Calendar keeps only about a month back.
+- **H** left blank (AP exams aren't in any feed).
+- **J Review (yellow rows):** wrong number of periods for the letter (6 for A–D, 4 for
+  E/F, 8 for CH), a guessed code (special schedules), a code not in `*Data Sched-Per*`,
+  or periods that differ from it.
+- **K:** differences from the year tab of the same name, if it exists (read only).
+- Exam days: the Bell Schedule may only say "NO US CLASSES" (12/17–18/26); a Faculty
+  Calendar exam note makes them EX1, EX2….
+- Calendar links are read from Script Properties `BELL_PERIODS_ICS_URL` and
+  `FACULTY_ICS_URL` (set with **Set calendar links…**; links in the private notes repo).
+
+Offline run on 11/13 (downloaded feeds, 2026.2027): 184 days, 8/10 to 6/3. Matched the
+real tab apart from the expected days: the four above, 9/16 flagged, 12/4 (calendar: plain
+E; the PDF had Christmas Chapel there before it moved to 12/15), 12/15 coded `FSpAr` (new
+code, flagged), 2/12 (`?`, "NO US & LS CLASSES"; Lara had PD), 4/16 Fair Day periods listed
+instead of "All", 6/5 Graduation (not in the calendar).
+
+**Permissions** (`appsscript.json`, now listed): this spreadsheet, pop-ups, fetching web
+addresses. No Drive, so `RefreshSchedule.js` (which reads a Drive file) no longer runs;
+the Test tab replaces it. `GET_SCHEDULE_JSON` is unchanged.
+
+Next: push (ask first), set the two links, run it for 2026.2027, Lara compares. Later:
+decide how a real year tab gets made (copy Test, or a "Build year" item), and fix the
+real tab's wrong days once Lara confirms.
