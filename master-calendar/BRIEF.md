@@ -36,9 +36,9 @@ Reference tabs: `*schedule*` (schedule code + period → start/end), `*Data Sche
   letter's times instead.
 - `RefreshSchedule.js`: `syncFutureDraftSchedule()` reads a faculty calendar .ics that was
   downloaded by hand and uploaded to Drive, and lists day titles in `*Calendar_Import*`.
-  **Changed in the repo, not yet in Google:** the Drive file name it looks for is now
-  `faculty_master.ics` (the school's name was removed for the public repo). Expected to be
-  replaced (see the plan below).
+  It looks for `faculty_master.ics` (school name removed for the public repo; in Google
+  since 11/13). **No longer runs:** the Drive permission was dropped, and the year tab is
+  now built from the calendars (Build year tab). Safe to delete later.
 - `appsscript.json`: no `oauthScopes` list yet. `DriveApp.getFilesByName` makes Google ask
   for all of Drive. The replacement should not need Drive at all.
 
@@ -160,7 +160,9 @@ Fixing the 2026.2027 tab (11/13): Lara fixed 2/26, 4/28, 4/2 and the CH days, an
 calendar for 2025-26 and 2026-27: all codes match.
 
 Setup panel is in Google (checked 11/13 with `clasp pull`: Google matches commit
-`6bc6654`). Next: Lara saves the two links in Setup, runs Build Test tab for 2026.2027,
-and compares. Later:
-decide how a real year tab gets made (copy Test, or a "Build year" item), and fix the
-real tab's wrong days once Lara confirms.
+`6bc6654`). Links saved and tested by Lara 11/13.
+
+**Status 11/13 evening:** all done for now. 2026.2027 fixed by hand; Build year tab, Preview
+a year and the User guide are live. Next step: August 2027, run Build year tab for
+2027.2028 once the year is in the Bell Schedule calendar, then change *Config* in each
+workbook. Optional later: delete `RefreshSchedule.js`.
