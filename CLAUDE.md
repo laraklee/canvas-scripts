@@ -108,7 +108,8 @@ reviewable steps over large multi-file changes.
   the project, opened from the project's menu (**User guide**, which calls
   `showUserGuide()`). That file is then the only master copy: no `USER-GUIDE.md` and no
   Google Doc copy to update. The same-commit rule above still applies. So far:
-  `gastronomy-badges/`, `assign-sheet/`, `course-manager-jupiter/`, `anonymize-submissions/`.
+  `gastronomy-badges/`, `assign-sheet/`, `course-manager-jupiter/`, `anonymize-submissions/`,
+  `master-calendar/`.
   **Side panel (2026-11-08):** Lara prefers the guide docked on the right (`showSidebar`,
   with an "Open in a large window" link calling `showUserGuideLarge`, and narrow-screen
   CSS) so teachers can follow steps while working. **Live in all four projects and every

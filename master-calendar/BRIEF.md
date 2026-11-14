@@ -148,8 +148,12 @@ in *schedule*" when *Data Sched-Per* lists class periods but *schedule* has no r
 The old item is now **Preview a year (Test tab)…** (unchanged). Offline check 11/13
 (2026.2027 feed, no Faculty Calendar): 184 rows, 6 to review, formulas as in the year tab.
 Pushed 11/13 8:15 PM (commit `0157fca`); first real run when 2027-28 is in the calendar.
-Before then, in *Data Sched-Per*: SpFair says "All" (change to 1–8 for times) and FSpAr
-is missing (`Ch-A,Ch-B,7,8,L,5,6`).
+
+**User guide (11/13, Lara):** in-sheet guide like the other projects: `UserGuide.html`
+(the only master copy), **Master Calendar › User guide** opens it docked on the right
+(`showUserGuide`, with "Open in a large window" → `showUserGuideLarge`, both in
+`BuildTest.js`). Update it in the same commit as any change Lara would see. Lara fixed
+SpFair (1–8) and added FSpAr in *Data Sched-Per* on 11/13.
 
 Fixing the 2026.2027 tab (11/13): Lara fixed 2/26, 4/28, 4/2 and the CH days, and fixed
 `*schedule*` (ESpA, FSpAr, SpFair added; Ch → CH; A3 periods 3, 6, 8). Checked against the

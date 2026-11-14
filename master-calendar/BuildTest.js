@@ -60,7 +60,28 @@ function onOpen() {
     .addItem('Setup…', 'showSetupPanel')
     .addItem('Build year tab from calendars…', 'buildYearTab')
     .addItem('Preview a year (Test tab)…', 'buildTestTab')
+    .addSeparator()
+    .addItem('User guide', 'showUserGuide')
     .addToUi();
+}
+
+/**
+ * Menu: Master Calendar › User guide. Opens UserGuide.html in the side panel, docked on the
+ * right, like the other projects' guides (Lara, 2026-11-13). The panel has a link to
+ * showUserGuideLarge. No web requests; the page holds only the guide text.
+ */
+function showUserGuide() {
+  const html = HtmlService.createHtmlOutputFromFile('UserGuide').setTitle('Master Calendar — User Guide');
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+/**
+ * Called from the side panel's "Open in a large window" link (google.script.run), so it
+ * has no trailing underscore. Opens the same guide in a big window over the sheet.
+ */
+function showUserGuideLarge() {
+  const html = HtmlService.createHtmlOutputFromFile('UserGuide').setWidth(900).setHeight(650);
+  SpreadsheetApp.getUi().showModelessDialog(html, 'Master Calendar — User Guide');
 }
 
 /** The two calendar links, or null (after telling the user to run Setup). */
@@ -110,7 +131,7 @@ function buildTestTab() {
       if (ok !== ui.Button.YES) return;
     }
 
-    ss.toast('Downloading the calendars…', 'Build Test tab', 30);
+    ss.toast('Downloading the calendars…', 'Preview a year', 30);
     const bellEvents = parseIcs_(fetchIcs_(bellUrl, 'Bell Schedule with Periods'));
     const facultyEvents = parseIcs_(fetchIcs_(facultyUrl, 'Faculty Calendar'));
 
