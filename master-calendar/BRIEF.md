@@ -132,6 +132,10 @@ real tab's next day; Fridays said "not in the year tab"): the sheet is in Los An
 and the script in Honolulu time, so dates read from the year tab came out a day early.
 Fixed in `readYearTab_` (reads dates in the sheet's time zone); pushed 11/13 7:32 PM (commit `26e74e4`).
 
+After the fix, K flags exactly the 8 days above (9/16, 12/4, 12/15, 2/12, 2/26, 4/2, 4/16,
+4/28). **Lara's decision 11/13:** she fixes the real `2026.2027` tab's days by hand (no
+code for that); future years come straight from the automatic build.
+
 Setup panel is in Google (checked 11/13 with `clasp pull`: Google matches commit
 `6bc6654`). Next: Lara saves the two links in Setup, runs Build Test tab for 2026.2027,
 and compares. Later:
