@@ -15,7 +15,8 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 > them. Guide: What's new, section 6 steps and table. No manifest change.
 >   **Live on all four sheets 11/13** (code `37b8609`, no `--force`): Biology 3:18 PM,
 >   then Gastronomy, AI9, template 3:18 PM, at Lara's request without a Biology check
->   first (she was short on time). Not yet seen in a real bring-over.
+>   first (she was short on time). Lara looked afterwards: "They look like they work."
+>   First real use expected next quarter, when teachers re-copy the template.
 >
 > **Bring over from my old copy (11/13, built; not pushed yet).** **Canvas Tools › 📥 Bring
 > over from my old copy…** (`10_BringOver.js`, `BringOverPanelPage.html`; copy engine
