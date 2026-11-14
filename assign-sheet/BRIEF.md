@@ -24,7 +24,7 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 > NEW copy of the template: paste the old copy's link, see a plan (one line per old tab),
 > Bring over. Lara's choices 11/13: read-only permission (`spreadsheets.readonly` + the
 > Sheets advanced service, added to `appsscript.json`; `SpreadsheetApp.openById` needs full
-> edit access, tested in `readonly-import-test/`); Q tabs: columns F→ row by row only if
+> edit access, tested 11/13 in a scratch project, since removed; see commit `abb474d`); Q tabs: columns F→ row by row only if
 > A–E match row by row; never overwrite (anything different already in Q F→ or
 > calendarEvents stops the whole run before any change); side panel with per-tab choices.
 > *Config*: B2–B5, D3, D5, E2:F5 (non-blank only, overwrites). calendarEvents: all cells.
