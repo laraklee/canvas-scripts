@@ -25,6 +25,18 @@ own saved passphrase (User Properties) after a "no one watching" warning, so a t
 can copy it into Set passphrase in a new workbook instead of keeping a record. Never
 logged; other users see only their own. This replaces the earlier "never shown" rule.
 
+**Already-anonymized check (11/13, Lara; guide 2026-11-13; not pushed yet):** Lara decided
+no Bring over tool here (assignments are finished in the old workbook; the passphrase is
+in User Properties; the Index rebuilds; old Review tabs should stay put; and it would need
+the read-only Sheets scope). Instead, `anonymizedElsewhere_` (Anonymize.js): Anonymize
+stops before copying or making any tab if the `anonymized` subfolder already has files but
+this workbook's Key tab has no rows for that assignment ID (anonymized in another
+workbook). A re-run in the same workbook is unaffected. Rare edge: if the very first copy
+of a run crashed before its Key row was written, the check also stops; the message's
+"delete the anonymized folder" path covers it. Offline check
+`scripts/checks/anonymize-earlier-run.check.js`. Guide: section 8 row, section 9 step,
+What's new. No new permissions.
+
 **Setup panel (11/12; live in all four workbooks, commit `f91df37`):** **Anonymize › ⚙️ Setup…**
 (`showSetupPanel` in Passphrase.js, `SetupPanelPage.html`) replaces the Set / Check /
 Show my passphrase menu items (their functions are gone). Lara's choices 11/12: (1) status

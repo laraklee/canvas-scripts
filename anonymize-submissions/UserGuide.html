@@ -114,7 +114,7 @@
 
 <h1>AI Grading Helper — User Guide</h1>
 
-<p class="version">Version 2026-11-12. See <b>9. What's new and getting updates</b>.</p>
+<p class="version">Version 2026-11-13. See <b>9. What's new and getting updates</b>.</p>
 
 <div class="note"><b>Work in progress.</b> Written for teachers in our AI grading group.
 If a step doesn't match what you see, note where and what you saw.</div>
@@ -444,6 +444,12 @@ class="menu">Anonymize › Archive selected row…</span>.</p>
   <tr><td>"No essay answers found" (Classic quiz)</td><td>No answer in the report looked
     like an essay. Check you downloaded the Student Analysis report for the right
     quiz.</td></tr>
+  <tr><td><b>Already anonymized somewhere else</b></td><td>That assignment's
+    <b>anonymized</b> folder already has files, but this workbook has no Key for it, so
+    it was anonymized in another workbook (usually your old copy). Nothing was copied.
+    Finish it there (Match and Archive) and delete its row here. To start it over in this
+    workbook instead, delete its <b>anonymized</b> folder in Drive and run Anonymize
+    again.</td></tr>
   <tr><td>A row says <b>Archived</b></td><td>That assignment is finished. To start it
     over, delete its <b>anonymized</b> folder and clear the Anonymized cell.</td></tr>
   <tr><td><b>No passphrase is saved yet</b></td><td>Open <b>Anonymize › ⚙️ Setup…</b> and
@@ -467,6 +473,10 @@ a newer one, open the template and look at the version in its guide.</p>
 <h3>What's new</h3>
 
 <ul>
+  <li><b>2026-11-13:</b> <b>Anonymize selected row</b> now stops, before copying
+    anything, if that assignment was already anonymized in another workbook (its
+    <b>anonymized</b> folder has files but this workbook has no Key for it). This protects
+    you after getting a new copy of the template.</li>
   <li><b>2026-11-12:</b> New <b>⚙️ Setup…</b> panel replaces Set passphrase, Check
     passphrase, and Show my passphrase. It also shows a <b>check code</b>, so you can see
     that your workbooks use the same passphrase without showing it.</li>
@@ -492,9 +502,9 @@ new assignments in the new copy.</p>
   <li>In the new copy, run <b>Refresh folder list</b> and paste the link to the same
     course folder.</li>
   <li>On the new Index tab, type the Quiz/Assignment ID for each new row. Rows for
-    assignments you finished in the old workbook show up too: delete those rows, and
-    <b>never run Anonymize on them</b> here (with no Key in this copy, every file would be
-    copied again).</li>
+    assignments you finished in the old workbook show up too: delete those rows. If you
+    run Anonymize on one by mistake, it stops and copies nothing (<i>Already anonymized
+    somewhere else</i>).</li>
   <li>Rename the old workbook (for example "OLD AI Grading") so you don't use it by
     mistake. Keep it private: its hidden Review tabs still have names and scores.</li>
 </ol>

@@ -15,6 +15,10 @@
  *   Originals are only read, never changed, moved, or renamed.
  *   Re-running is safe: files already in the Key tab for that assignment are skipped,
  *   so a run that stops at the time limit can simply be run again.
+ *   Safety check (Lara, 2026-11-13): if the "anonymized" subfolder already has files but
+ *   this workbook's Key tab has none for the assignment, it stops before copying or
+ *   making any tab. That folder was anonymized in another workbook (usually the old copy,
+ *   after getting a new copy of the template); running here would copy every file again.
  *   Started from a row of the Index tab (Index.js), which supplies the folder,
  *   quiz/assignment ID, and short name.
  * Canvas endpoints called: none (works on files already downloaded to Drive).
@@ -60,6 +64,24 @@ function runAnonymize_(ui, folderId, assignmentId, shortName) {
         'account can see the folder.');
       return null;
     }
+    stage = 'checking for an earlier run';
+    const earlierKey = SpreadsheetApp.getActiveSpreadsheet()
+      .getSheetByName(tabName_(shortName, 'Key'));
+    if (anonymizedElsewhere_(folder, earlierKey, assignmentId)) {
+      console.log('anonymize: assignment ' + assignmentId + ' refused (anonymized folder has ' +
+        'files, no Key rows here).');
+      ui.alert('Already anonymized somewhere else',
+        'This assignment\'s "' + ANON_FOLDER_NAME + '" folder already has files, but this ' +
+        'workbook has no Key for it. It was probably anonymized in another workbook (for ' +
+        'example your old copy). Nothing was copied.\n\n' +
+        'Finish this assignment (Match and Archive) in the workbook that anonymized it, and ' +
+        'delete its row here.\n\n' +
+        'To start it over here instead: delete the "' + ANON_FOLDER_NAME + '" folder inside ' +
+        'this assignment\'s folder in Drive, then run Anonymize again.',
+        ui.ButtonSet.OK);
+      return null;
+    }
+
     const outFolder = getOrCreateSubfolder_(folder, ANON_FOLDER_NAME);
     const keySheet = getOrCreateSheet_(tabName_(shortName, 'Key'), KEY_HEADERS);
     // The AI tab is made now, ready for pasting. Flagged is only made if something is.
@@ -297,6 +319,18 @@ function sniffExtension_(blob) {
 function extensionOf_(fileName) {
   const match = /\.[^./\s]+$/.exec(fileName);
   return match ? match[0] : '';
+}
+
+/**
+ * True if the folder's "anonymized" subfolder already has files but keySheet (this
+ * workbook's Key tab for the assignment, or null) has no rows for assignmentId: the
+ * files came from another workbook. Doesn't create anything.
+ */
+function anonymizedElsewhere_(folder, keySheet, assignmentId) {
+  const existing = folder.getFoldersByName(ANON_FOLDER_NAME);
+  if (!existing.hasNext()) return false;
+  if (!existing.next().getFiles().hasNext()) return false;
+  return !keySheet || readKeyState_(keySheet, assignmentId).done.size === 0;
 }
 
 /**
