@@ -167,6 +167,12 @@ Does not call Canvas. No student data: both calendars are school schedules.
   `BETA-NOTE.md` (a draft message; paste the link in). The link stays on version 1: to send
   a fix, `clasp push`, then `clasp deploy -i <deployment ID> -d "Beta 2"` (ask Lara first),
   so the link doesn't change. The test deployment (`@HEAD`) is still Lara's for trying changes.
+  By hand in the editor (Lara asked for these to be kept here, 11/13): Deploy › Manage
+  deployments › Beta 1 › pencil › Version: **New version** (description "Beta 2") ›
+  Deploy. Never **New deployment**: that makes a second address the testers don't have.
+  Saving or `clasp push` alone changes nothing for testers. **Checked 11/13:** Version 1,
+  Google's current code and Git were identical (read-only clones), so testers had the
+  current code.
 - The beta should answer the faculty calendar question below: does card 4 load for others?
 
 ## Open questions
