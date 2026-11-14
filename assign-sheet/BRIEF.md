@@ -13,6 +13,11 @@ not create the Q sheets; they come with the workbook), and posts rows of the
 > copies to match). (2) Drawn buttons and pictures can't be read through the Sheets API:
 > when a tab is copied, the result lists them as hand work, and the how-to says how to copy
 > them. Guide: What's new, section 6 steps and table. No manifest change.
+>   **Where it stands (11/13, end of day on the Mac):** committed (`37b8609`) and on
+>   GitHub; **not in Google yet**. Lara said "Push to Biology", but that push was cut off
+>   before it ran (a read-only `clasp clone` of Biology confirmed the old code). **Next:**
+>   `git pull`, confirm with Lara, then `clasp push` Biology (no `--force` needed), Lara
+>   checks, then Gastronomy and AI9, template last.
 >
 > **Bring over from my old copy (11/13, built; not pushed yet).** **Canvas Tools › 📥 Bring
 > over from my old copy…** (`10_BringOver.js`, `BringOverPanelPage.html`; copy engine
