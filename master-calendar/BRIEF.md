@@ -124,6 +124,14 @@ instead of "All", 6/5 Graduation (not in the calendar).
 addresses. No Drive, so `RefreshSchedule.js` (which reads a Drive file) no longer runs;
 the Test tab replaces it. `GET_SCHEDULE_JSON` is unchanged.
 
+**First run in Google (11/13):** Lara built the Test tab for 2026.2027. Claude compared it
+with the real tab date by date: Q and Wk match on every day; the differences are the ones
+from the offline run, plus CH days (10/9, 12/16, 5/28), where the real tab's JSON is empty
+and Test has the times. But **column K was off by one day** on every row (it showed the
+real tab's next day; Fridays said "not in the year tab"): the sheet is in Los Angeles time
+and the script in Honolulu time, so dates read from the year tab came out a day early.
+Fixed in `readYearTab_` (reads dates in the sheet's time zone); not in Google yet.
+
 Setup panel is in Google (checked 11/13 with `clasp pull`: Google matches commit
 `6bc6654`). Next: Lara saves the two links in Setup, runs Build Test tab for 2026.2027,
 and compares. Later:

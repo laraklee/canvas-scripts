@@ -168,11 +168,14 @@ function readYearTab_(sheet) {
   const n = sheet.getLastRow() - 1;
   const dates = sheet.getRange(2, 3, n, 1).getValues();
   const codes = sheet.getRange(2, 5, n, 2).getDisplayValues();
+  // Read the date in the spreadsheet's time zone (Los Angeles), not the script's (Honolulu):
+  // midnight in LA is the evening before in Honolulu, which put every day one day early.
+  const tz = sheet.getParent().getSpreadsheetTimeZone();
   const map = {};
   dates.forEach(function (r, i) {
     const d = r[0];
     if (!(d instanceof Date)) return;
-    const key = ymdKey_({ y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() });
+    const key = Utilities.formatDate(d, tz, 'yyyy-MM-dd');
     map[key] = { code: codes[i][0].trim(), periods: codes[i][1].trim() };
   });
   return map;
