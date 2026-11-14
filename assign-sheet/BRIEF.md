@@ -5,19 +5,17 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
-> **Bring over: two fixes from Course Manager's version (11/13, guide 2026-11-13b; not
-> pushed yet).** (1) The "in the way" check is now `bringFindInTheWay_` (10_BringOver.js):
+> **Bring over: two fixes from Course Manager's version (11/13, guide 2026-11-13b; live on
+> all four sheets).** (1) The "in the way" check is now `bringFindInTheWay_` (10_BringOver.js):
 > a formula already in the new copy counts as different unless the old cell has the same
 > formula, so a template formula is never replaced by another that shows the same value.
 > `09_TabRebuild.js` stays unchanged (shared; course-manager-jupiter's check requires both
 > copies to match). (2) Drawn buttons and pictures can't be read through the Sheets API:
 > when a tab is copied, the result lists them as hand work, and the how-to says how to copy
 > them. Guide: What's new, section 6 steps and table. No manifest change.
->   **Where it stands (11/13, end of day on the Mac):** committed (`37b8609`) and on
->   GitHub; **not in Google yet**. Lara said "Push to Biology", but that push was cut off
->   before it ran (a read-only `clasp clone` of Biology confirmed the old code). **Next:**
->   `git pull`, confirm with Lara, then `clasp push` Biology (no `--force` needed), Lara
->   checks, then Gastronomy and AI9, template last.
+>   **Live on all four sheets 11/13** (code `37b8609`, no `--force`): Biology 3:18 PM,
+>   then Gastronomy, AI9, template 3:18 PM, at Lara's request without a Biology check
+>   first (she was short on time). Not yet seen in a real bring-over.
 >
 > **Bring over from my old copy (11/13, built; not pushed yet).** **Canvas Tools › 📥 Bring
 > over from my old copy…** (`10_BringOver.js`, `BringOverPanelPage.html`; copy engine
