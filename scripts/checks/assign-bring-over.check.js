@@ -4,7 +4,7 @@
  *   (10_BringOver.js) and its copy engine (09_TabRebuild.js): links are read right, text
  *   that looks like a number stays text, the plan gives each kind of tab the right
  *   action, Q tabs must match in columns A–E, cells already filled in the new copy stop
- *   everything BEFORE any change, *Config* copies only non-blank cells, and columns hidden in
+ *   everything BEFORE any change (formula cells compared by formula), *Config* copies only non-blank cells, and columns hidden in
  *   the new copy stay hidden. Made-up data
  *   only; nothing is sent anywhere. Run with the others: npm run check-offline. Repo
  *   helper only: never clasp-pushed.
@@ -91,6 +91,22 @@ check('a different value is in the way', c.rebuildFindInTheWay_(
   waySheet([['Lesson', ''], ['', ''], ['x', '']], [['Lesson', ''], ['', ''], ['x', '']]), wayOld, 0),
 { count: 1, first: 'A3' });
 
+// --- Formula cells compare by formula (11/13, from Course Manager's version)
+const fx = (f, shown) => ({ formattedValue: shown, userEnteredValue: { formulaValue: f } });
+const fOld = src([['', '', '', '', '', 'Lesson', ''], ['', '', '', '', '', 'Cells', '']]);
+fOld.data[0].rowData[0].values[6] = fx('=SUM(A1)', '3');
+const fSheet = (values, shown, formulas) => ({ getMaxRows: () => 50, getMaxColumns: () => 10,
+  getRange: () => ({ getValues: () => values, getDisplayValues: () => shown, getFormulas: () => formulas }) });
+check('same formula showing something else for now: not in the way', c.bringFindInTheWay_(
+  fSheet([['Lesson', 9], ['Cells', '']], [['Lesson', '9'], ['Cells', '']], [['', '=SUM(A1)'], ['', '']]),
+  fOld, 5), { count: 0, first: '' });
+check('a different formula showing the same thing: in the way', c.bringFindInTheWay_(
+  fSheet([['Lesson', 3], ['Cells', '']], [['Lesson', '3'], ['Cells', '']], [['', '=3'], ['', '']]),
+  fOld, 5), { count: 1, first: 'G1' });
+check('a typed value is still compared by what it shows', c.bringFindInTheWay_(
+  fSheet([['Lesson', ''], ['Labs', '']], [['Lesson', ''], ['Labs', '']], [['', ''], ['', '']]),
+  fOld, 5), { count: 1, first: 'F2' });
+
 // --- A failed check changes nothing
 let changed = 0;
 const qTab = { getMaxRows: () => 100, getMaxColumns: () => 10,
@@ -106,7 +122,7 @@ const qOldWithLesson = src([['Q1', '', '', '', '', 'Lesson'], ['8/20', 'Thu', '1
   ['8/21', 'Fri', '1,2', 'B', '', '']]);
 c.rebuildReadTabs_ = () => ({ namedRanges: [], sheets: new Map([['Q1', qOldWithLesson],
   ['Mine', { properties: { title: 'Mine' }, data: [] }]]) });
-c.rebuildFindInTheWay_ = () => ({ count: 2, first: 'F3' });
+c.bringFindInTheWay_ = () => ({ count: 2, first: 'F3' });
 const stopped = c.doBringOver_('link', {});
 check('a cell in the way stops everything', [stopped.ok, stopped.problems.length, changed], [false, 1, 0]);
 const allSkip = c.doBringOver_('link', { Q1: 'skip', Mine: 'skip' });

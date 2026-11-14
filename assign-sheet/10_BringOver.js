@@ -18,7 +18,10 @@
  *     that name, skipped unless the teacher picks "copy as Name (old)".
  *   Never overwrites: if the new copy has something in a Q tab (F onward) or in
  *   calendarEvents that differs from the old copy, nothing at all is brought over and the
- *   panel says where (Lara, 11/13). All checks run before the first change.
+ *   panel says where (Lara, 11/13). A formula already here counts as different unless
+ *   the old cell has the same formula (bringFindInTheWay_). All checks run before the
+ *   first change. Buttons and pictures drawn over cells can't be read through the
+ *   Sheets API, so they don't come over; the panel says so and how to copy them.
  *   The old copy is only read (Sheets API, read-only permission; 09_TabRebuild.js).
  * Canvas endpoints called: none. Canvas write operations: none.
  * Logging: counts only, never cell contents, tab names, or the old copy's name.
@@ -188,7 +191,7 @@ function doBringOver_(link, choices) {
     }
     if (c.action === 'quarter' || c.action === 'data') {
       const fromCol0 = c.action === 'quarter' ? BRING_OVER_QUARTER_FROM_COL0 : 0;
-      const w = rebuildFindInTheWay_(ss.getSheetByName(c.name), src, fromCol0);
+      const w = bringFindInTheWay_(ss.getSheetByName(c.name), src, fromCol0);
       if (w.count > 0) {
         problems.push(c.name + ': ' + w.count + ' cell(s) in this copy already have ' +
           'something different from the old copy (first: ' + w.first + '). Clear them, or ' +
@@ -239,6 +242,10 @@ function doBringOver_(link, choices) {
   plan.outline.sheets.filter((s) => !s.isGrid).forEach((s) => {
     handWork.push(s.title + ': a chart on its own tab');
   });
+  if (chosen.some((c) => c.action === 'copy' || c.action === 'copyOld')) {
+    handWork.push('Buttons or pictures you drew on your own tabs: these can\'t be copied ' +
+      'this way. Look over each copied tab next to your old copy.');
+  }
   return {
     ok: true,
     message: 'Done. Your old copy was not changed.',
@@ -246,6 +253,42 @@ function doBringOver_(link, choices) {
     handWork,
     warnings: report.warnings.slice(0, 10),
   };
+}
+
+/**
+ * Like rebuildFindInTheWay_ (09_TabRebuild.js, shared and kept unchanged), but formula
+ * cells are compared by formula (Lara, 11/13, from Course Manager's version): a cell with
+ * a formula here is in the way unless the old cell has the same formula, even if both
+ * show the same thing today, so a template formula is never replaced. Other cells are
+ * compared by what they show, as before. Looks from column fromCol0 on.
+ * { count, first } (first is like "F12", or '').
+ */
+function bringFindInTheWay_(sheet, src, fromCol0) {
+  const rows = rebuildRows_(src);
+  const nCols = rows.reduce((m, r) => Math.max(m, (r.values || []).length), 0);
+  const rowsHere = Math.min(rows.length, sheet.getMaxRows());
+  const colsHere = Math.min(nCols, sheet.getMaxColumns()) - fromCol0;
+  if (rowsHere <= 0 || colsHere <= 0) return { count: 0, first: '' };
+  const range = sheet.getRange(1, fromCol0 + 1, rowsHere, colsHere);
+  const values = range.getValues();
+  const shown = range.getDisplayValues();
+  const formulas = range.getFormulas();
+  let count = 0;
+  let first = '';
+  values.forEach((row, r) => {
+    row.forEach((v, c) => {
+      if (v === '' || v === false) return;
+      const old = rebuildCellAt_(rows, r, fromCol0 + c);
+      const formula = formulas.at(r).at(c);
+      const oldFormula = old.userEnteredValue && old.userEnteredValue.formulaValue;
+      if (formula ? formula === oldFormula : shown.at(r).at(c) === (old.formattedValue || '')) {
+        return;
+      }
+      count++;
+      if (!first) first = rebuildA1_(r + 1, fromCol0 + c + 1);
+    });
+  });
+  return { count, first };
 }
 
 /**

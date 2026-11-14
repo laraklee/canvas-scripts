@@ -5,6 +5,15 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
+> **Bring over: two fixes from Course Manager's version (11/13, guide 2026-11-13b; not
+> pushed yet).** (1) The "in the way" check is now `bringFindInTheWay_` (10_BringOver.js):
+> a formula already in the new copy counts as different unless the old cell has the same
+> formula, so a template formula is never replaced by another that shows the same value.
+> `09_TabRebuild.js` stays unchanged (shared; course-manager-jupiter's check requires both
+> copies to match). (2) Drawn buttons and pictures can't be read through the Sheets API:
+> when a tab is copied, the result lists them as hand work, and the how-to says how to copy
+> them. Guide: What's new, section 6 steps and table. No manifest change.
+>
 > **Bring over from my old copy (11/13, built; not pushed yet).** **Canvas Tools › 📥 Bring
 > over from my old copy…** (`10_BringOver.js`, `BringOverPanelPage.html`; copy engine
 > `09_TabRebuild.js`, written to be shared with the other workbook projects). Used in a
