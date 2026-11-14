@@ -7,7 +7,8 @@
  *   for selected row" (menu items, or buttons drawn on the Index assigned to
  *   anonymizeSelectedRow / matchSelectedRow / refreshFolderList). "Archive selected
  *   row…" deletes that assignment's Key, AI, and Flagged tabs (after asking), keeps
- *   Review but hides it, and marks the row Archived so it can't be re-run by mistake.
+ *   Review but hides it, and marks the row Archived (the word links to the hidden
+ *   Review tab) so it can't be re-run by mistake.
  *   "Sort Review by question / by student" re-sort the open quiz Review tab
  *   (MatchResults.js). "❓ User guide" opens UserGuide.html in the side panel
  *   (showUserGuide, below; showUserGuideLarge for the big window).
@@ -186,9 +187,12 @@ function archiveSelectedRow() {
     review.hideSheet();
     // Counts and IDs only: no student data in logs.
     console.log('archive: assignment ' + job.assignmentId + ' tabsDeleted=' + toDelete.length);
-    writeStatus_(job, COL.ANONYMIZED, ARCHIVED_PREFIX + 'Key and AI tabs deleted');
-    ui.alert('Archived. "' + review.getName() + '" is kept but hidden. To see it, use ' +
-      'View › Hidden sheets.');
+    // "Archived" links to the hidden Review tab, so it can be found without the
+    // Hidden sheets list (Lara, 2026-11-14).
+    writeStatus_(job, COL.ANONYMIZED, ARCHIVED_PREFIX + 'Key and AI tabs deleted',
+      'Archived', '#gid=' + review.getSheetId());
+    ui.alert('Archived. "' + review.getName() + '" is kept but hidden. To see it, click ' +
+      'Archived in this row\'s Anonymized cell, or use View › Hidden sheets.');
   } catch (err) {
     console.error('archiveSelectedRow failed: ' + err.message);
     ui.alert('Something went wrong while archiving. Check which tabs are left; ' +
@@ -259,10 +263,22 @@ function selectedJob_(ui) {
 }
 
 /** "12 files, 1 flagged · 10/19 9:40 AM" in the row's status column. */
-function writeStatus_(job, column, status) {
+/**
+ * Writes "status · date" in the row's column. With linkPrefix and linkUrl, the start of
+ * the text (for example "Archived") becomes a link, written as rich text (always text,
+ * so no leading apostrophe is needed).
+ */
+function writeStatus_(job, column, status, linkPrefix, linkUrl) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const when = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'M/d h:mm a');
-  job.sheet.getRange(job.row, column).setValue(asText_(status + ' · ' + when));
+  const text = status + ' · ' + when;
+  const cell = job.sheet.getRange(job.row, column);
+  if (linkPrefix && linkUrl && text.startsWith(linkPrefix)) {
+    cell.setRichTextValue(SpreadsheetApp.newRichTextValue().setText(text)
+      .setLinkUrl(0, linkPrefix.length, linkUrl).build());
+  } else {
+    cell.setValue(asText_(text));
+  }
 }
 
 function getOrCreateIndex_() {
