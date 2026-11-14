@@ -130,7 +130,7 @@ from the offline run, plus CH days (10/9, 12/16, 5/28), where the real tab's JSO
 and Test has the times. But **column K was off by one day** on every row (it showed the
 real tab's next day; Fridays said "not in the year tab"): the sheet is in Los Angeles time
 and the script in Honolulu time, so dates read from the year tab came out a day early.
-Fixed in `readYearTab_` (reads dates in the sheet's time zone); not in Google yet.
+Fixed in `readYearTab_` (reads dates in the sheet's time zone); pushed 11/13 7:32 PM (commit `26e74e4`).
 
 Setup panel is in Google (checked 11/13 with `clasp pull`: Google matches commit
 `6bc6654`). Next: Lara saves the two links in Setup, runs Build Test tab for 2026.2027,
