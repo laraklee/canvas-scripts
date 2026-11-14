@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<!--
+  SetupPanelPage.html: the "Setup" side panel (opened by showSetupPanel in SetupPanel.js;
+  Lara, 2026-11-13, same look as the other projects' Setup panels). Part 1 shows whether
+  each calendar link is saved and has Test links (downloads both and reports how many
+  events and which dates). Part 2 has a box per link, filled in with the saved link, and
+  Save. Messages are shown as plain text (textContent), never as HTML.
+  Canvas endpoints: none. Write operations: Script Properties BELL_PERIODS_ICS_URL and
+  FACULTY_ICS_URL (Save, through SetupPanel.js).
+-->
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 14px; color: #202124; margin: 12px 16px; }
+    h2 { font-size: 15px; margin: 18px 0 6px; padding-top: 12px; border-top: 1px solid #dadce0; }
+    h2:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+    p { margin: 0 0 8px; line-height: 1.4; }
+    .line { margin: 0 0 6px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .ok { color: #137333; }
+    .warn { color: #b3261e; }
+    .muted { color: #5f6368; font-size: 13px; }
+    button { font-size: 14px; padding: 6px 14px; margin: 2px 6px 6px 0; }
+    label { display: block; margin: 6px 0 2px; font-size: 13px; }
+    input[type=text] { width: 100%; box-sizing: border-box; font-size: 14px; padding: 5px 6px; }
+  </style>
+</head>
+<body>
+  <h2>1. Calendar links</h2>
+  <p class="muted">Build Test tab reads the school's schedule from these two public
+    calendars.</p>
+  <div id="statusLines"><div class="line">Loading…</div></div>
+  <button id="testButton">Test links</button>
+  <div id="testResult" role="status" aria-live="polite"></div>
+
+  <h2>2. Set or change the links</h2>
+  <p class="muted">In Google Calendar, open the calendar's <b>Settings</b> and copy
+    <b>Public address in iCal format</b> (it ends in .ics). Leave a box blank to keep the
+    link saved before. The links are saved with this spreadsheet's script.</p>
+  <div id="boxes"></div>
+  <button id="saveButton">Save</button>
+  <div class="line" id="saveResult" role="status" aria-live="polite"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    function line(text, kind) {
+      const el = document.createElement('div');
+      el.className = 'line' + (kind ? ' ' + kind : '');
+      el.textContent = text;
+      return el;
+    }
+
+    function setLine(el, text, kind) {
+      el.textContent = text;
+      el.className = 'line' + (kind ? ' ' + kind : '');
+    }
+
+    function call(name, arg, onDone) {
+      const runner = google.script.run
+        .withSuccessHandler(onDone)
+        .withFailureHandler(() => onDone({ ok: false,
+          message: 'Could not run (see Extensions › Apps Script › Executions).' }));
+      if (arg === undefined) runner[name](); else runner[name](arg);
+    }
+
+    // Boxes show the saved links unless the user has started typing in one.
+    const typed = {};
+    let boxesMade = false;
+
+    function show(status) {
+      if (!status || status.ok === false) {
+        $('statusLines').replaceChildren(line('⚠ ' + ((status && status.message) || 'Could not load.'), 'warn'));
+        return;
+      }
+      $('statusLines').replaceChildren(...status.links.map(l => l.url ?
+        line('✓ ' + l.label + ': saved', 'ok') :
+        line('⚠ ' + l.label + ': not saved yet (part 2).', 'warn')));
+      $('testButton').disabled = !status.links.some(l => l.url);
+
+      if (!boxesMade) {
+        status.links.forEach(l => {
+          const label = document.createElement('label');
+          label.htmlFor = l.key;
+          label.textContent = l.label;
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.id = l.key;
+          input.autocomplete = 'off';
+          input.spellcheck = false;
+          input.addEventListener('input', () => { typed[l.key] = true; });
+          $('boxes').append(label, input);
+        });
+        boxesMade = true;
+      }
+      status.links.forEach(l => { if (!typed[l.key]) $(l.key).value = l.url; });
+    }
+
+    function refresh(after) {
+      call('getSetupStatus', undefined, status => { show(status); if (after) after(status); });
+    }
+
+    function test() {
+      $('testButton').disabled = true;
+      $('testResult').replaceChildren(line('Downloading the calendars…'));
+      call('testCalendarLinks', undefined, answer => {
+        $('testButton').disabled = false;
+        if (!answer || !answer.results) {
+          $('testResult').replaceChildren(line('⚠ ' + ((answer && answer.message) || 'Could not test.'), 'warn'));
+          return;
+        }
+        $('testResult').replaceChildren(...answer.results.map(r =>
+          line((r.ok ? '✓ ' : '⚠ ') + r.label + ': ' + r.message, r.ok ? 'ok' : 'warn')));
+      });
+    }
+
+    $('testButton').addEventListener('click', test);
+
+    $('saveButton').addEventListener('click', () => {
+      const form = {};
+      document.querySelectorAll('#boxes input').forEach(input => { form[input.id] = input.value; });
+      $('saveButton').disabled = true;
+      setLine($('saveResult'), 'Saving…');
+      call('saveCalendarLinks', form, answer => {
+        $('saveButton').disabled = false;
+        setLine($('saveResult'), (answer.ok ? '✓ ' : '⚠ ') + answer.message, answer.ok ? 'ok' : 'warn');
+        if (!answer.ok) return;
+        Object.keys(typed).forEach(k => { typed[k] = false; }); // show the saved links again
+        refresh(status => { if (status && status.links && status.links.every(l => l.url)) test(); });
+      });
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

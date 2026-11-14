@@ -72,7 +72,7 @@ exams) need a short lookup table.
 2027-28 is not in the calendar yet (on 11/13). If the PDF comes out first, start from the
 PDF and check against the calendar once it's loaded.
 
-## Test tab (built 11/13; not pushed yet)
+## Test tab (built and pushed 11/13, commit `361a828`; not run in Google yet)
 
 Lara's choices 11/13: try it in a **Test** tab, as if the year hadn't started, so the real
 `2026.2027` tab (read by many projects) is never touched. Suggest *Data Drills* notes
@@ -103,7 +103,16 @@ Test tab:
 - Exam days: the Bell Schedule may only say "NO US CLASSES" (12/17–18/26); a Faculty
   Calendar exam note makes them EX1, EX2….
 - Calendar links are read from Script Properties `BELL_PERIODS_ICS_URL` and
-  `FACULTY_ICS_URL` (set with **Set calendar links…**; links in the private notes repo).
+  `FACULTY_ICS_URL` (links in the private notes repo).
+
+**Setup side panel** (Lara, 11/13: setup as a side panel, like the other projects;
+replaces the first version's two prompts). **Master Calendar › Setup…**
+(`SetupPanel.js`, `SetupPanelPage.html`):
+1. *Calendar links:* ✓/⚠ saved or not for each link, and **Test links** (downloads both;
+   shows the number of events and the first and last dates, or the error).
+2. *Set or change the links:* a box per link, filled in with the saved one; **Save**
+   checks each looks like an https …ics link (saves nothing if one doesn't), then runs
+   Test links. A blank box keeps the saved link.
 
 Offline run on 11/13 (downloaded feeds, 2026.2027): 184 days, 8/10 to 6/3. Matched the
 real tab apart from the expected days: the four above, 9/16 flagged, 12/4 (calendar: plain
@@ -115,6 +124,7 @@ instead of "All", 6/5 Graduation (not in the calendar).
 addresses. No Drive, so `RefreshSchedule.js` (which reads a Drive file) no longer runs;
 the Test tab replaces it. `GET_SCHEDULE_JSON` is unchanged.
 
-Next: push (ask first), set the two links, run it for 2026.2027, Lara compares. Later:
+Next: push the Setup panel (ask first), save the two links in Setup, run Build Test tab
+for 2026.2027, Lara compares. Later:
 decide how a real year tab gets made (copy Test, or a "Build year" item), and fix the
 real tab's wrong days once Lara confirms.

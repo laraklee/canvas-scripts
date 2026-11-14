@@ -10,8 +10,8 @@
  * Canvas endpoints called: none.
  * Other web requests: the two calendars' public .ics links (GET only).
  * Write operations: clears and rewrites the "Test" tab in this spreadsheet.
- * Required Script Properties (calendar links, not secrets; set with the menu's
- *   "Set calendar links…", which also explains them): BELL_PERIODS_ICS_URL, FACULTY_ICS_URL.
+ * Required Script Properties (calendar links, not secrets; set in Master Calendar › Setup…,
+ *   the Setup side panel, SetupPanel.js): BELL_PERIODS_ICS_URL, FACULTY_ICS_URL.
  */
 
 const TEST_TAB_ = 'Test';
@@ -55,33 +55,9 @@ const KEEP_UPPER_ = ['US', 'LS', 'AP', 'PD', 'PSAT', 'SAC', 'JNHS', 'RL', 'RSJ',
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Master Calendar')
+    .addItem('Setup…', 'showSetupPanel')
     .addItem('Build Test tab from calendars…', 'buildTestTab')
-    .addItem('Set calendar links…', 'setCalendarLinks')
     .addToUi();
-}
-
-/** Asks for the two calendar links and saves them in Script Properties. */
-function setCalendarLinks() {
-  const ui = SpreadsheetApp.getUi();
-  const props = PropertiesService.getScriptProperties();
-  const ask = function (key, label) {
-    const now = props.getProperty(key);
-    const res = ui.prompt('Calendar link: ' + label,
-      'Paste the public .ics link (Google Calendar › Settings › "Public address in iCal format").' +
-      (now ? '\n\nNow set to:\n' + now + '\n\nLeave blank to keep it.' : ''),
-      ui.ButtonSet.OK_CANCEL);
-    if (res.getSelectedButton() !== ui.Button.OK) return false;
-    const text = res.getResponseText().trim();
-    if (text && !/^https:\/\/\S+\.ics$/i.test(text)) {
-      ui.alert('That does not look like an .ics link, so it was not saved.');
-      return false;
-    }
-    if (text) props.setProperty(key, text);
-    return true;
-  };
-  if (ask(PROP_BELL_URL_, 'Bell Schedule with Periods') && ask(PROP_FACULTY_URL_, 'Faculty Calendar')) {
-    ui.alert('Calendar links saved.');
-  }
 }
 
 /** Menu: builds the Test tab for a school year. */
@@ -93,7 +69,7 @@ function buildTestTab() {
     const bellUrl = props.getProperty(PROP_BELL_URL_);
     const facultyUrl = props.getProperty(PROP_FACULTY_URL_);
     if (!bellUrl || !facultyUrl) {
-      ui.alert('First use Master Calendar › Set calendar links… to add the two calendar links.');
+      ui.alert('First use Master Calendar › Setup… to add the two calendar links.');
       return;
     }
 
@@ -171,8 +147,8 @@ function fetchIcs_(url, label) {
     if (code !== 429 && code < 500) break;
     if (attempt < 3) Utilities.sleep(2000 * attempt);
   }
-  throw new Error('Google returned error ' + code + ' for the ' + label + ' calendar. Try again in a minute, ' +
-    'or check the link with Master Calendar › Set calendar links….');
+  throw new Error('Google returned error ' + code + ' for the ' + label + ' link. Try again in a minute, ' +
+    'or use Test links in Master Calendar › Setup.');
 }
 
 /** *Data Sched-Per*: { code: periods string }. */
