@@ -124,7 +124,8 @@ instead of "All", 6/5 Graduation (not in the calendar).
 addresses. No Drive, so `RefreshSchedule.js` (which reads a Drive file) no longer runs;
 the Test tab replaces it. `GET_SCHEDULE_JSON` is unchanged.
 
-Next: push the Setup panel (ask first), save the two links in Setup, run Build Test tab
-for 2026.2027, Lara compares. Later:
+Setup panel is in Google (checked 11/13 with `clasp pull`: Google matches commit
+`6bc6654`). Next: Lara saves the two links in Setup, runs Build Test tab for 2026.2027,
+and compares. Later:
 decide how a real year tab gets made (copy Test, or a "Build year" item), and fix the
 real tab's wrong days once Lara confirms.
