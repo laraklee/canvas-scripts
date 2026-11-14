@@ -25,7 +25,7 @@ own saved passphrase (User Properties) after a "no one watching" warning, so a t
 can copy it into Set passphrase in a new workbook instead of keeping a record. Never
 logged; other users see only their own. This replaces the earlier "never shown" rule.
 
-**Already-anonymized check (11/13, Lara; guide 2026-11-13; pushed to Biology 3:29 PM, code `3936210`; AI9, Gastronomy, template not yet):** Lara decided
+**Already-anonymized check (11/13, Lara; guide 2026-11-13; live in all four workbooks, code `3936210`):** Biology 3:29 PM; Lara tested on an archived row with its Anonymized cell cleared (first try ran stale code; retest showed the new message); then AI9, Gastronomy, template 3:41 PM. Lara decided
 no Bring over tool here (assignments are finished in the old workbook; the passphrase is
 in User Properties; the Index rebuilds; old Review tabs should stay put; and it would need
 the read-only Sheets scope). Instead, `anonymizedElsewhere_` (Anonymize.js): Anonymize
