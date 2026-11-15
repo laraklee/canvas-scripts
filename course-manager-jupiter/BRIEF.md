@@ -2,6 +2,41 @@
 
 > **Where we left off (current state, 2026-11-13, Mac)**
 >
+> - **TABLED 11/14 (PC): "no banks" quiz converter, planned, nothing built.** Goal (Lara):
+>   turn a quiz whose groups pull from banks (Classic, or a New Quiz) back into an ordinary
+>   Classic quiz whose groups hold their questions. Local tool beside `/quiz-check` (Node,
+>   reuses `QtiReader.js`; no Canvas calls; Lara imports the result by hand in Settings ›
+>   Import Course Content, "Import as New Quiz" unticked). **Biology only** (AI9 and
+>   Gastronomy have almost no quizzes). Findings from Lara's 11/14 Biology course export
+>   (46 quizzes, 11 use banks, every bank present):
+>   - **Read from the course export (.imscc), never single-quiz exports** (Lara agreed 11/14):
+>     it has the banks and shows other-course picture links. New Quizzes (Unit 2 Test 25.26)
+>     come out in the **same layout** as Classic, so one converter covers both.
+>   - A Classic single-quiz export is 3 files: `imsmanifest.xml` (two resources: the quiz,
+>     type `imsqti_xmlv1p2`, depending on its meta), `<id>/<id>.xml`, `<id>/assessment_meta.xml`;
+>     no banks. Its `<id>.xml` is **byte-identical** to the course export's
+>     `non_cc_assessments/<id>.xml.qti`.
+>   - Bank group vs ordinary group: same `<section>` with `selection_number` and
+>     `points_per_item`; the bank one has `<sourcebank_ref>` and no items, the ordinary one
+>     has its `<item>`s after `</selection_ordering>`. Conversion = drop the ref, copy the
+>     bank's raw items in (the reader already keeps them raw: `ctx.banks`).
+>   - Build in: **fresh identifiers** (quiz, assignment, groups, items) so an import into
+>     Biology can't be taken as an update of the real quiz; title + " (no banks)"; clear
+>     due/unlock/lock dates; never print the access code; **stop and list** other-course
+>     picture links (about 44 course-page links in the export), New-Quiz-only question
+>     types, missing banks, points mismatches; list outside-site pictures; run the quiz
+>     reader on its own output (same questions and points as the original).
+>   - **Output, to decide by testing:** (1) one QTI .zip per quiz in the layout above
+>     (proven layout; how pictures pack is unknown), or (2) a slim course package (only
+>     the quizzes plus the `web_resources` files they use; pictures handled natively,
+>     several quizzes per import; minimum files Canvas needs untested). Plan: (1) first.
+>   - **Test order:** 3.9-3.10D Data Scramble Quiz (2 bank groups, no pictures), then
+>     Unit 2 PT: Analysis of Photosynthesis (1 bank group, pictures; try output (2)), then
+>     Unit 2 Test 25.26 (New Quiz, 21 bank groups). Still open: import into Biology
+>     (arrives unpublished; delete after comparing) or Sequence 9 first.
+>   - Question for Lara: the export has **two unpublished "Unit 1 Test 26.27"** quizzes,
+>     one with 18 bank groups, one with 18 ordinary groups. A hand-made no-bank copy? If
+>     so, it's the comparison for the converter's output.
 > - **📥 Bring over from my old copy… (11/13): live in all four workbooks.**
 >   Modelled on assign-sheet's (live there 11/13). Menu item after Setup… (`BringOver.js`,
 >   `BringOverPanelPage.html`; copy engine `09_TabRebuild.js`, the same file as
