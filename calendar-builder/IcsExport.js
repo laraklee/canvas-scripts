@@ -9,7 +9,8 @@
  * recognize the same event when a newer file is imported.
  *
  * Endpoints: the bell schedule's ICS link (through fetchBellScheduleText_ in Code.js, unless the
- *   teacher picked their own file) and the faculty calendar, read-only (CalendarApp).
+ *   teacher picked their own file) and the faculty calendar's ICS link (through facultyEvents_
+ *   in SchoolEvents.js), both read-only.
  * Write calls: none. Nothing is written to any calendar; the page downloads the text.
  * User Properties: BUILDER_CHOICES (the choices on screen are saved first, as the preview does).
  */
@@ -26,9 +27,8 @@ const ICS_LINE_OCTETS = 75; // The ICS standard's longest line, in bytes.
 function buildIcsFile(choices, ownIcsText) {
   const saved = saveChoices(choices);
   const tz = Session.getScriptTimeZone();
-  const range = dateRange_(saved.start, saved.end, tz);
   const classes = classItems_(saved, tz, typeof ownIcsText === 'string' && ownIcsText ? ownIcsText : null);
-  const events = schoolEventItems_(saved, range, tz);
+  const events = schoolEventItems_(saved, tz);
   const result = { fileName: ICS_FILE_NAME, text: '', classes: classes.length, events: events.length };
   if (!classes.length && !events.length) return result;
 

@@ -4,14 +4,22 @@
  * "School Events" section. Titles are grouped the way calendar-filter groups them, so a
  * "CHANGED: ..." note on one date does not split an event into two titles.
  *
- * Endpoints: Google Calendar, read-only (CalendarApp), for the calendar in FACULTY_CALENDAR_ID.
+ * The faculty calendar is downloaded from the school's own ICS link (the one teachers
+ * subscribe to), the same for everyone, so teachers needn't add it to Google Calendar.
+ * (Until 11/15 it was read with CalendarApp from one person's subscribed copy, which no one
+ * else could open.) The download is shared through the Script Cache like the bell schedule's
+ * (fetchFeedText_ in Code.js), so a change at school can take up to an hour to show.
+ * The feed has no repeating events (checked 11/15), so Ics.js not expanding them is fine.
+ *
+ * Endpoints: the faculty calendar's ICS link (read-only GET, from FACULTY_CALENDAR_URL).
  * Write calls: none.
- * Script Properties: FACULTY_CALENDAR_ID (the faculty calendar's Google Calendar ID; not a
- *   secret, but kept out of the code because this repo is public).
- * Each teacher must already have the faculty calendar in their own Google Calendar list.
+ * Script Properties: FACULTY_CALENDAR_URL (the faculty calendar's ICS link; not a secret,
+ *   but kept out of the code because this repo is public).
  */
 
 const DAY_MS = 86400000;
+
+const FACULTY_FEED = { cachePrefix: 'faculty_ics_v1', label: 'faculty calendar', url: function () { return facultyCalendarUrl_(); } };
 
 /**
  * Called from the page. startKey and endKey are "yyyy-MM-dd" (either may be blank).
@@ -19,18 +27,19 @@ const DAY_MS = 86400000;
  * nextLabel is the next date from today on, or the first date if they are all past.
  */
 function getSchoolEventTitles(startKey, endKey) {
-  const calendar = facultyCalendar_();
   const tz = Session.getScriptTimeZone();
   const range = dateRange_(startKey, endKey, tz);
-  const events = calendar.getEvents(range.start, range.end);
+  const events = facultyEvents_(tz).filter(function (ev) {
+    return ev.startDate < range.end && ev.endDate > range.start; // Overlaps the range.
+  });
   const todayKey = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
 
   const groups = new Map();
   events.forEach(function (ev) {
-    const title = baseTitle_(ev.getTitle() || '(no title)');
+    const title = baseTitle_(ev.title);
     const key = title.toLowerCase();
-    const start = ev.isAllDayEvent() ? ev.getAllDayStartDate() : ev.getStartTime();
-    const dayKey = Utilities.formatDate(start, tz, 'yyyy-MM-dd');
+    const start = ev.startDate;
+    const dayKey = ev.dayKey;
 
     let g = groups.get(key);
     if (!g) {
@@ -56,23 +65,43 @@ function getSchoolEventTitles(startKey, endKey) {
   return { total: events.length, titles: titles };
 }
 
-/** Opens the faculty calendar, or throws a message the teacher can act on. */
-function facultyCalendar_() {
-  const id = (PropertiesService.getScriptProperties().getProperty('FACULTY_CALENDAR_ID') || '').trim();
-  if (!id) {
-    throw new Error('The faculty calendar is not set up yet (Script Property FACULTY_CALENDAR_ID is missing).');
+/**
+ * Every faculty calendar event, as parsed by parseIcs_ (Ics.js), plus:
+ *   dayKey    "yyyy-MM-dd" of the first day, in Hawaii (script) time;
+ *   startDate / endDate  Dates for range checks (endDate is the moment it ends; for all-day
+ *             events, midnight after the last day).
+ */
+function facultyEvents_(tz) {
+  const midnight = function (ymd) { return Utilities.parseDate(ymdKey_(ymd), tz, 'yyyy-MM-dd'); };
+  return parseIcs_(fetchFeedText_(FACULTY_FEED)).map(function (ev) {
+    if (ev.allDay) {
+      ev.dayKey = ymdKey_(ev.start);
+      ev.startDate = midnight(ev.start);
+      ev.endDate = midnight(addDays_(ev.end, 1));
+    } else {
+      ev.dayKey = Utilities.formatDate(ev.start, tz, 'yyyy-MM-dd');
+      ev.startDate = ev.start;
+      ev.endDate = new Date(Math.max(ev.end.getTime(), ev.start.getTime() + 1)); // Never zero length.
+    }
+    return ev;
+  });
+}
+
+/** The faculty calendar's ICS link from the FACULTY_CALENDAR_URL Script Property. */
+function facultyCalendarUrl_() {
+  const url = (PropertiesService.getScriptProperties().getProperty('FACULTY_CALENDAR_URL') || '').trim();
+  if (!url) {
+    throw new Error('The faculty calendar is not set up yet (Script Property FACULTY_CALENDAR_URL is missing).');
   }
-  const calendar = CalendarApp.getCalendarById(id);
-  if (!calendar) {
-    throw new Error('Could not open the faculty calendar. Add it to your Google Calendar first, ' +
-      'then click Load School Events again.');
+  if (!/^https:\/\//i.test(url)) {
+    throw new Error('The faculty calendar link (Script Property FACULTY_CALENDAR_URL) must start with https://');
   }
-  return calendar;
+  return url;
 }
 
 /**
- * Turns the page's dates into a range for CalendarApp. The end is midnight AFTER the last day,
- * in the script's time zone, so late events on the last day are kept. Blank dates default to
+ * Turns the page's dates into a range. The end is midnight AFTER the last day, in the
+ * script's time zone, so late events on the last day are kept. Blank dates default to
  * a year back and a year and a half ahead.
  */
 function dateRange_(startKey, endKey, tz) {

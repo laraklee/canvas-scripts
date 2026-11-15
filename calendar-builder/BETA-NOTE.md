@@ -23,9 +23,9 @@ Anything you put in your calendar is left alone.
    and you can check the result by eye. Change it to the whole year once you're happy.
 3. Check the periods you teach and give them new names if you like (card 3). Typing a name
    checks the box for you.
-4. Check the kinds of school events you want (card 4). If this card says it can't open the
-   faculty calendar, add the faculty calendar to your Google Calendar and reload the page.
-   Please tell me if that happens!
+4. Check the kinds of school events you want (card 4). You don't need to subscribe to the
+   faculty calendar first; the app reads the school's copy. If the list doesn't load, wait a
+   minute and click **Load School Events**, and please tell me what it said!
 5. Card 5: click **Add to my Google Calendar**. You'll see exactly what will change first.
    Nothing happens until you click **Confirm**. Keep the page open until it says it's done.
    Or, if you'd rather not touch your Google Calendar, click **Download .ics file** instead.

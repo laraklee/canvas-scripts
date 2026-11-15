@@ -55,9 +55,10 @@ Does not call Canvas. No student data: both calendars are school schedules.
 - **No feedback button for the pilot.** The original emailed reports; running as the
   teacher, that would need send-mail permission from everyone. Teachers tell Lara directly.
 - **Keep the .ics download** as a smaller second option, for Apple or Outlook users.
-- **No school details in code.** The two source calendar IDs are read from Script
-  Properties (`BELL_SCHEDULE_ID`, `FACULTY_CALENDAR_ID`); they are not secrets, but
-  they contain the school's domain and this repo is public.
+- **No school details in code.** The two sources are read from Script Properties
+  (`BELL_SCHEDULE_ID`, and `FACULTY_CALENDAR_URL` since 11/15, which replaced
+  `FACULTY_CALENDAR_ID`); they are not secrets, but they contain the school's domain and
+  this repo is public. The values are in the private notes repo.
 
 ## Plan
 
@@ -188,11 +189,19 @@ Does not call Canvas. No student data: both calendars are school schedules.
   waits of 2, 4, and 8 seconds. Page load only tries once and never waits. So a schedule
   change can take up to an hour to show. If 429s still happen, switch the bell schedule to
   CalendarApp (5c could add the calendar to each teacher's list).
-- **Faculty calendar ID for other teachers (decide before the pilot opens).** The ID in
-  `FACULTY_CALENDAR_ID` ends in `@import.calendar.google.com`, so it may be one person's
-  "From URL" copy that other teachers can't open. Options: use the school's original
-  Google calendar ID if there is one, share the imported copy with the domain, or read
-  the ICS link (which hit 429 errors). Test by having one colleague open the page.
+- **Faculty calendar for other teachers: answered 11/15.** Beta 1 showed card 4 failing for
+  a colleague: `FACULTY_CALENDAR_ID` was Lara's own "From URL" copy
+  (`@import.calendar.google.com`), which only she can open, and every subscriber gets a
+  different ID. The faculty calendar is not a Google calendar at all; it comes from the
+  school website's ICS feed. **Fix (11/15):** `SchoolEvents.js` downloads that feed
+  (Script Property `FACULTY_CALENDAR_URL`) with the bell schedule's shared download code,
+  now `fetchFeedText_` in `Code.js` (own cache, `faculty_ics_v1`; same lock, retries, and
+  1-hour sharing). Card 4, the sync, and the .ics download all use it; teachers no longer
+  need to subscribe. Checked 11/15: about 580 KB, 2,854 events, no repeating events, no
+  repeated UIDs, dates in UTC or all-day. The earlier 429s came from Google's copy of the
+  feed, not the school website. Tags still hold the source event's UID; if Lara's
+  already-synced school events had different IDs through her copy, her next preview shows
+  them as removed and added once.
 - Who maintains it after the pilot, and which teachers try it first.
 - The page allows embedding on any site (`XFrameOptionsMode.ALLOWALL`), kept from the
   original, probably for Google Sites. Keep it only if the pilot is embedded somewhere.

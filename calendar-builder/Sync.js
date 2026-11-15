@@ -15,8 +15,9 @@
  *    own (typed in, or imported from an .ics). It is left alone, and no copy is added.
  *  - Only events inside the date range are looked at.
  *
- * Endpoints: Google Calendar (the teacher's chosen calendars; the faculty calendar, read-only),
- *   and the bell schedule's ICS link through fetchBellScheduleText_() in Code.js.
+ * Endpoints: Google Calendar (the teacher's chosen calendars), the bell schedule's ICS link
+ *   through fetchBellScheduleText_() in Code.js, and the faculty calendar's ICS link through
+ *   facultyEvents_() in SchoolEvents.js (both read-only).
  * Write calls (Google Calendar, only after the teacher confirms a preview, and only through the
  *   helpers in "Calendar writes" below):
  *   - create a calendar: only "My Classes" / "School Events", only if the teacher has none by
@@ -126,7 +127,7 @@ function buildSyncPlan_(choices, createMissing) {
   const range = dateRange_(choices.start, choices.end, tz);
   const wanted = {
     classes: classItems_(choices, tz),
-    events: schoolEventItems_(choices, range, tz),
+    events: schoolEventItems_(choices, tz),
   };
 
   const last = loadLastCalendars_();
@@ -236,34 +237,20 @@ function classItems_(choices, tz, icsText) {
 }
 
 /** Faculty calendar events whose titles the teacher checked. Skips the calendar if none are. */
-function schoolEventItems_(choices, range, tz) {
+function schoolEventItems_(choices, tz) {
   if (!choices.schoolEvents.length) return [];
   const picks = new Set(choices.schoolEvents);
-  const ymdOf = function (date) {
-    const p = Utilities.formatDate(date, tz, 'yyyy-MM-dd').split('-');
-    return { y: +p[0], m: +p[1], d: +p[2] };
-  };
   const items = [];
-  facultyCalendar_().getEvents(range.start, range.end).forEach(function (ev) {
-    const title = ev.getTitle() || '(no title)';
-    if (!picks.has(baseTitle_(title).toLowerCase())) return;
-    const allDay = ev.isAllDayEvent();
-    const startDay = Utilities.formatDate(allDay ? ev.getAllDayStartDate() : ev.getStartTime(), tz, 'yyyy-MM-dd');
-    if (startDay < choices.start || startDay > choices.end) return; // Started before the range.
+  const seen = new Set();
+  facultyEvents_(tz).forEach(function (ev) {
+    if (!picks.has(baseTitle_(ev.title).toLowerCase())) return;
+    // Hawaii dates; an event that started before the range is left out.
+    if (ev.dayKey < choices.start || ev.dayKey > choices.end) return;
 
-    // Every date of a repeating event shares one ID, so add the start time to tell them apart.
-    const uid = ev.isRecurringEvent() ? ev.getId() + '|' + ev.getStartTime().toISOString() : ev.getId();
-    let start;
-    let end;
-    if (allDay) {
-      start = ymdOf(ev.getAllDayStartDate());
-      end = addDays_(ymdOf(ev.getAllDayEndDate()), -1); // Calendar's end is the day after.
-      if (ymdKey_(end) < ymdKey_(start)) end = start;
-    } else {
-      start = ev.getStartTime();
-      end = ev.getEndTime();
-    }
-    items.push(makeSyncItem_(uid, title, ev.getLocation(), ev.getDescription(), allDay, start, end, tz));
+    let uid = ev.uid;
+    if (seen.has(uid)) uid += '|' + ev.dayKey; // Never let two events share a tag.
+    seen.add(uid);
+    items.push(makeSyncItem_(uid, ev.title, ev.location, ev.description, ev.allDay, ev.start, ev.end, tz));
   });
   return items;
 }
