@@ -25,6 +25,16 @@ own saved passphrase (User Properties) after a "no one watching" warning, so a t
 can copy it into Set passphrase in a new workbook instead of keeping a record. Never
 logged; other users see only their own. This replaces the earlier "never shown" rule.
 
+**Archived link (11/14, Lara; guide 2026-11-14; live in all four workbooks, code `847e18b`):**
+Archive selected row writes "Archived" in the Anonymized cell as a link (`#gid=`) to the
+hidden Review tab (`writeStatus_` takes an optional link prefix and URL). Sheets won't open
+a hidden tab from a link, but says it's hidden and offers an **Unhide** button; Lara
+prefers that to a "Show Review for selected row" menu item (tried in `1cc2b05`, reverted
+in `664f984`) to keep the menu short. Rows archived before 11/14 have no link (View ›
+Hidden sheets). The after-archive note is a 10-second toast, so the Yes/No is the only
+click. Tested on Biology 2:11 PM; then AI9, Gastronomy, template 2:13 PM. No new
+permissions.
+
 **Already-anonymized check (11/13, Lara; guide 2026-11-13; live in all four workbooks, code `3936210`):** Biology 3:29 PM; Lara tested on an archived row with its Anonymized cell cleared (first try ran stale code; retest showed the new message); then AI9, Gastronomy, template 3:41 PM. Lara decided
 no Bring over tool here (assignments are finished in the old workbook; the passphrase is
 in User Properties; the Index rebuilds; old Review tabs should stay put; and it would need
