@@ -7,9 +7,8 @@
  *   for selected row" (menu items, or buttons drawn on the Index assigned to
  *   anonymizeSelectedRow / matchSelectedRow / refreshFolderList). "Archive selected
  *   row…" deletes that assignment's Key, AI, and Flagged tabs (after asking), keeps
- *   Review but hides it, and marks the row Archived so it can't be re-run by mistake.
- *   "Show Review for selected row" unhides and opens that row's Review tab (a link to a
- *   hidden tab doesn't unhide it, Lara tested 11/14).
+ *   Review but hides it, and marks the row Archived (the word links to the hidden
+ *   Review tab) so it can't be re-run by mistake.
  *   "Sort Review by question / by student" re-sort the open quiz Review tab
  *   (MatchResults.js). "❓ User guide" opens UserGuide.html in the side panel
  *   (showUserGuide, below; showUserGuideLarge for the big window).
@@ -32,7 +31,6 @@ function onOpen() {
     .addItem('Anonymize selected row', 'anonymizeSelectedRow')
     .addItem('Match AI results for selected row', 'matchSelectedRow')
     .addItem('Archive selected row…', 'archiveSelectedRow')
-    .addItem('Show Review for selected row', 'showReviewForSelectedRow')
     .addSeparator()
     .addItem('Sort Review by question', 'sortReviewByQuestion')
     .addItem('Sort Review by student', 'sortReviewByStudent')
@@ -189,47 +187,18 @@ function archiveSelectedRow() {
     review.hideSheet();
     // Counts and IDs only: no student data in logs.
     console.log('archive: assignment ' + job.assignmentId + ' tabsDeleted=' + toDelete.length);
-    writeStatus_(job, COL.ANONYMIZED, ARCHIVED_PREFIX + 'Key and AI tabs deleted');
+    // "Archived" links to the hidden Review tab, so it can be found without the
+    // Hidden sheets list (Lara, 2026-11-14). Sheets doesn't open a hidden tab from a
+    // link, but says it's hidden and offers an Unhide button (Lara chose this over a
+    // separate menu item to keep the menu short).
+    writeStatus_(job, COL.ANONYMIZED, ARCHIVED_PREFIX + 'Key and AI tabs deleted',
+      'Archived', '#gid=' + review.getSheetId());
     ui.alert('Archived. "' + review.getName() + '" is kept but hidden. To see it, click ' +
-      'this row, then Anonymize › Show Review for selected row.');
+      'Archived in this row\'s Anonymized cell, then Unhide.');
   } catch (err) {
     console.error('archiveSelectedRow failed: ' + err.message);
     ui.alert('Something went wrong while archiving. Check which tabs are left; ' +
       'File › Version history can restore anything deleted.');
-  }
-}
-
-/**
- * Menu: unhides and opens the Review tab for the selected Index row (archived or not), so
- * an archived assignment's Review can be found without the Hidden sheets list (Lara,
- * 2026-11-14). Reads only the row's short name (or folder name); no Drive or Canvas calls.
- */
-function showReviewForSelectedRow() {
-  const ui = SpreadsheetApp.getUi();
-  try {
-    const sheet = SpreadsheetApp.getActiveSheet();
-    if (sheet.getName() !== INDEX_SHEET_NAME) {
-      ui.alert('Go to the Index tab and click the assignment\'s row first.');
-      return;
-    }
-    const row = sheet.getActiveRange().getRow();
-    if (row < INDEX_FIRST_ROW || row > sheet.getLastRow()) {
-      ui.alert('Click a cell in an assignment\'s row (row ' + INDEX_FIRST_ROW + ' or below) first.');
-      return;
-    }
-    const [folderName, shortText] = sheet.getRange(row, COL.FOLDER, 1, 2).getDisplayValues()[0];
-    const shortName = cleanShortName_(shortText) || cleanShortName_(folderName);
-    const review = shortName &&
-      SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tabName_(shortName, 'Review'));
-    if (!review) {
-      ui.alert('Row ' + row + ' has no Review tab. Run Match AI results to make one.');
-      return;
-    }
-    if (review.isSheetHidden()) review.showSheet();
-    review.activate();
-  } catch (err) {
-    console.error('showReviewForSelectedRow failed: ' + err.message);
-    ui.alert('Something went wrong while opening the Review tab. Try View › Hidden sheets.');
   }
 }
 
@@ -296,10 +265,22 @@ function selectedJob_(ui) {
 }
 
 /** "12 files, 1 flagged · 10/19 9:40 AM" in the row's status column. */
-function writeStatus_(job, column, status) {
+/**
+ * Writes "status · date" in the row's column. With linkPrefix and linkUrl, the start of
+ * the text (for example "Archived") becomes a link, written as rich text (always text,
+ * so no leading apostrophe is needed).
+ */
+function writeStatus_(job, column, status, linkPrefix, linkUrl) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const when = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'M/d h:mm a');
-  job.sheet.getRange(job.row, column).setValue(asText_(status + ' · ' + when));
+  const text = status + ' · ' + when;
+  const cell = job.sheet.getRange(job.row, column);
+  if (linkPrefix && linkUrl && text.startsWith(linkPrefix)) {
+    cell.setRichTextValue(SpreadsheetApp.newRichTextValue().setText(text)
+      .setLinkUrl(0, linkPrefix.length, linkUrl).build());
+  } else {
+    cell.setValue(asText_(text));
+  }
 }
 
 function getOrCreateIndex_() {
