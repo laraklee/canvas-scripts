@@ -193,8 +193,9 @@ function archiveSelectedRow() {
     // separate menu item to keep the menu short).
     writeStatus_(job, COL.ANONYMIZED, ARCHIVED_PREFIX + 'Key and AI tabs deleted',
       'Archived', '#gid=' + review.getSheetId());
-    ui.alert('Archived. "' + review.getName() + '" is kept but hidden. To see it, click ' +
-      'Archived in this row\'s Anonymized cell, then Unhide.');
+    // A toast, not an alert: the Yes/No above was the only click needed (Lara, 11/14).
+    ss.toast('"' + review.getName() + '" is kept but hidden. To see it, click Archived in ' +
+      'this row\'s Anonymized cell, then Unhide.', 'Archived', 10);
   } catch (err) {
     console.error('archiveSelectedRow failed: ' + err.message);
     ui.alert('Something went wrong while archiving. Check which tabs are left; ' +
