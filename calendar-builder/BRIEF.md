@@ -202,6 +202,11 @@ Does not call Canvas. No student data: both calendars are school schedules.
   feed, not the school website. Tags still hold the source event's UID; if Lara's
   already-synced school events had different IDs through her copy, her next preview shows
   them as removed and added once.
+  **Pushed 11/17** (needed `--force`: Google had reformatted `appsscript.json`, no scope
+  change). Before the push, Google held the pre-fix code unchanged (no other-editor edits).
+  `FACULTY_CALENDAR_URL` is set in Script Properties; the feed answered 11/17 (580 KB, 2,842
+  events). **Still to do:** test card 4 on the test deployment (`@HEAD`), then update Beta 1
+  to a new version ("Beta 2", see Beta below) so testers get the fix.
 - Who maintains it after the pilot, and which teachers try it first.
 - The page allows embedding on any site (`XFrameOptionsMode.ALLOWALL`), kept from the
   original, probably for Google Sites. Keep it only if the pilot is embedded somewhere.
