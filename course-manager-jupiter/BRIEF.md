@@ -1124,6 +1124,12 @@
 >   N to where she can see it (fine: columns are found by row 3 label). Built, not yet
 >   tested in the Sheet.
 >   Lara has added the Published checkbox column to `createByRow`.
+>   **Tested 2026-11-17 (Type A): ticked publishes.** A retest first made both rows drafts
+>   (Status "A, draft", Payload `"published":false`): the row 3 heading was misspelled
+>   "Publshed", so the optional column wasn't found and every row became a draft. Check
+>   createByRow labels showed "Published: not used (optional)". Lara fixed the heading in
+>   every copy; no code change. Offered a warning in the send confirmation when no Published
+>   column is found; Lara declined for now.
 > - **makeAssignment redesign: decisions so far (2026-10-17, nothing built yet).** Legacy
 >   (03a/03b/03c) had one tab per type with fixed cells (row 3 main item, F4/H4/H5
 >   description bits, rows 7–11 overrides, K–O `convertToUTC`/JSON formulas, F1 edit
