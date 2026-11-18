@@ -178,7 +178,7 @@ Does not call Canvas. No student data: both calendars are school schedules.
   deployments shows the deployment as "Beta 3". Mix-up to avoid repeating: **version 2**
   (made 11/15 10:23 AM, before the fix was pushed, now labeled "Beta 3") holds the **old**
   code; renaming a deployment does not change its code, only Version › **New version** does.
-  Version 3 has no description. Check what testers run with `clasp deployments` (the `@N`)
+  Version 3 is labeled "Beta 3: faculty feed fix (11/17)". Check what testers run with `clasp deployments` (the `@N`)
   and compare with Git via `clasp pull --versionNumber N`, `git diff`, then `git checkout --
   .` to restore. An archived "Beta 1" deployment also exists (does not run).
 - The beta answered the faculty calendar question below: card 4 loads for others (11/17).
