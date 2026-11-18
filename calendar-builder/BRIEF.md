@@ -174,7 +174,14 @@ Does not call Canvas. No student data: both calendars are school schedules.
   Saving or `clasp push` alone changes nothing for testers. **Checked 11/13:** Version 1,
   Google's current code and Git were identical (read-only clones), so testers had the
   current code.
-- The beta should answer the faculty calendar question below: does card 4 load for others?
+- **Now on version 3 (11/17)**, the 11/15 faculty-feed fix. The same tester link; Manage
+  deployments shows the deployment as "Beta 3". Mix-up to avoid repeating: **version 2**
+  (made 11/15 10:23 AM, before the fix was pushed, now labeled "Beta 3") holds the **old**
+  code; renaming a deployment does not change its code, only Version › **New version** does.
+  Version 3 has no description. Check what testers run with `clasp deployments` (the `@N`)
+  and compare with Git via `clasp pull --versionNumber N`, `git diff`, then `git checkout --
+  .` to restore. An archived "Beta 1" deployment also exists (does not run).
+- The beta answered the faculty calendar question below: card 4 loads for others (11/17).
 
 ## Open questions
 
@@ -205,8 +212,9 @@ Does not call Canvas. No student data: both calendars are school schedules.
   **Pushed 11/17** (needed `--force`: Google had reformatted `appsscript.json`, no scope
   change). Before the push, Google held the pre-fix code unchanged (no other-editor edits).
   `FACULTY_CALENDAR_URL` is set in Script Properties; the feed answered 11/17 (580 KB, 2,842
-  events). **Still to do:** test card 4 on the test deployment (`@HEAD`), then update Beta 1
-  to a new version ("Beta 2", see Beta below) so testers get the fix.
+  events). Card 4 tested on `@HEAD` (Lara), then **live for testers as version 3 (11/17)**;
+  card 4 loaded on a second school account that had never subscribed (753 kinds of events,
+  2,786 dates). **Answered: card 4 now loads for others.**
 - Who maintains it after the pilot, and which teachers try it first.
 - The page allows embedding on any site (`XFrameOptionsMode.ALLOWALL`), kept from the
   original, probably for Google Sites. Keep it only if the pilot is embedded somewhere.
