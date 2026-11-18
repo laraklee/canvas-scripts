@@ -213,8 +213,8 @@ Does not call Canvas. No student data: both calendars are school schedules.
   change). Before the push, Google held the pre-fix code unchanged (no other-editor edits).
   `FACULTY_CALENDAR_URL` is set in Script Properties; the feed answered 11/17 (580 KB, 2,842
   events). Card 4 tested on `@HEAD` (Lara), then **live for testers as version 3 (11/17)**;
-  card 4 loaded on a second school account that had never subscribed (753 kinds of events,
-  2,786 dates). **Answered: card 4 now loads for others.**
+  card 4 loaded on a second school account that had never subscribed (a student account, in
+  an Edge InPrivate window; 753 kinds of events, 2,786 dates). **Answered: card 4 now loads for others.**
 - Who maintains it after the pilot, and which teachers try it first.
 - The page allows embedding on any site (`XFrameOptionsMode.ALLOWALL`), kept from the
   original, probably for Google Sites. Keep it only if the pilot is embedded somewhere.
