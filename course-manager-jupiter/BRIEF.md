@@ -140,7 +140,8 @@
 >   (`showPreviewModeToast_`, bottom right; no trigger needed). Guide version 2026-11-12.
 >   Old "Dry run"/"Preview" Status cells in sheets are harmless (nothing reads them).
 >   Lara may want to retype drawn buttons that say "Preview".
-> - **Refresh tables panel built 11/11 (PC), not yet pushed.** Lara: a friendlier way to
+> - **Refresh tables panel built 11/11 (PC); live in all four workbooks 11/11 (37499d0, see
+>   end of this item).** Lara: a friendlier way to
 >   refresh. **Setup & Data › Refresh tables…** opens a side panel (`RefreshPanel.js`,
 >   `RefreshPanelPage.html`): a checkbox per table, **All** (the five Refresh-all tables;
 >   never Jupiter categories, which sits apart at the bottom), and **Update**, which runs
@@ -211,15 +212,13 @@
 >   clone` of each matched Git exactly (31 files). **Still to do:** Lara checks
 >   ref_Config B2 holds the school's Canvas address in the template (and the others);
 >   decide whether to trim the Setup & safety submenu now that the panel covers it.
->   **Next:** commit, push Biology, Lara tests, then the others; then decide whether to
->   trim Setup & safety.
 > - **Step 4 done 11/9 (PC): Quiz Check live in all four workbooks.** Lara tested 3b in
 >   Biology ("looks fine so far"); guide's "Being built" removed; pushed AI9, Gastronomy,
 >   then template (no manifest change). Live Quiz report and export-file report stay off
 >   the menu (Lara asked; Quiz Check covers everything they did; deleting them is an
 >   option for later). File availability dates are read but untested on real data.
 > - **Quiz links pushed to Biology and tested 11/9 (PC; Lara: "They're good").**
-> - **Step 3b built 11/9 (PC), not yet pushed.** Decided (Lara): Quiz Check opens in the
+> - **Step 3b built 11/9 (PC); tested in Biology and live everywhere with step 4 (above).** Decided (Lara): Quiz Check opens in the
 >   **side panel** (showSidebar), not a modal, so the sheet stays usable; detailed reports
 >   go on **one shared "Quiz Check detail" tab** (A1 "Quiz Check detail:", B1 file name),
 >   replaced each click. After the check the panel lists the quizzes (tab order and
@@ -232,7 +231,7 @@
 >   check 49 pass. **Next:** push Biology, Lara tests on the 11/9 export (try Lab 2.1 for
 >   orange + red rows, Raw Score Unit 2 for many reds, a fine one, both Unit 1 Test copies),
 >   then step 4 (drop "Being built", push AI9, Gastronomy, template).
-> - **Quiz links built 11/9 evening (PC), after 3a; not yet pushed.** Lara: quiz names in
+> - **Quiz links built 11/9 evening (PC), after 3a; pushed and tested 11/9 (above).** Lara: quiz names in
 >   column A should link to Canvas for fixing, using the assignment list, refreshed
 >   automatically at the start. How: when the export's course (context.xml) matches
 >   cfg_CourseID, `writeAssignmentGroupsSheet_` refreshes ref_assignmentGroups (read-only;
