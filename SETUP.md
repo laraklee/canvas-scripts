@@ -31,7 +31,9 @@ Start Claude Code in this folder and paste this:
 > 6. Clone my private notes repo into a `private` folder here:
 >    `git clone https://github.com/laraklee/canvas-scripts-private.git private`.
 >    (This repo is public; the personal-info check reads `private/blocked-words.txt`.)
-> 7. Run `npm run scan` and summarize the results for me. Don't fix anything yet,
+> 7. Install pypdf for the CK-12 PDF splitter (`ck12-splitter/`):
+>    `pip3 install --user pypdf`.
+> 8. Run `npm run scan` and summarize the results for me. Don't fix anything yet,
 >    and don't commit yet.
 
 If the scan finds a Canvas token, **revoke it in Canvas first**: go to Account > Settings >

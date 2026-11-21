@@ -12,7 +12,11 @@ import re
 import sys
 from pathlib import Path
 
-from pypdf import PdfReader, PdfWriter
+try:
+    from pypdf import PdfReader, PdfWriter
+except ImportError:
+    sys.exit("This script needs the pypdf library. Install it once per computer with:\n"
+             "    pip3 install --user pypdf")
 
 # "4.12 Mitosis" or a bare "4.17" -- but not a page footer like "4.12. Mitosis www.ck12.org"
 HEADING = re.compile(r"^(\d+\.\d+)(?:\s+(.*))?$")
