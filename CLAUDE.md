@@ -110,6 +110,11 @@ reviewable steps over large multi-file changes.
   Google Doc copy to update. The same-commit rule above still applies. So far:
   `gastronomy-badges/`, `assign-sheet/`, `course-manager-jupiter/`, `anonymize-submissions/`,
   `master-calendar/`.
+  **What's new list (2026-11-22):** a guide with a version label and What's new gets one
+  entry per change a teacher would see. Teachers' copies last a quarter, a semester, or a
+  year, so there is no date cut-off: when the list passes 5 entries, the review summary
+  asks Lara whether the older ones can go (naming the oldest date), and Claude trims only
+  what she approves, in that same commit. She may also ask to trim at any time.
   **Side panel (2026-11-08):** Lara prefers the guide docked on the right (`showSidebar`,
   with an "Open in a large window" link calling `showUserGuideLarge`, and narrow-screen
   CSS) so teachers can follow steps while working. **Live in all four projects and every
