@@ -175,7 +175,7 @@ function sendEventJobs_(sheet, jobs) {
       result.sent++;
     } catch (error) {
       result.failed++;
-      cell.setValue('Failed: ' + (error.canvasType || 'UNEXPECTED'));
+      cell.setValue('Failed: ' + describeCanvasError_(error));
       if (EVENTS_STOP_ALL_TYPES.includes(error.canvasType)) {
         result.stoppedMessage = describeCanvasError_(error);
         break;

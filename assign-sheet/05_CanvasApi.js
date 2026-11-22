@@ -15,9 +15,13 @@
  *   (saved in the Setup panel, 06_Credentials.js); reads and writes Script Property
  *   DRY_RUN (unset means preview mode is ON).
  *
- * Error messages name the problem type only. They never include the token, the request
- * path or query (which could contain IDs), or anything Canvas sent back. Preview-mode logs
- * show the method, the path with every number replaced by ":id", and field names only.
+ * Error messages name the problem type only. They never include the token or the request
+ * path or query (which could contain IDs). The one thing from Canvas's reply they may show:
+ * when Canvas refuses a change (HTTP 400 or 422), which field it objected to and its short
+ * reason, and only a reason made of plain words (no digits, no @), so no IDs, emails, or
+ * dates can come through (canvasRefusalReason_). These messages go on the sheet and in
+ * pop-ups, never in logs. Preview-mode logs show the method, the path with every number
+ * replaced by ":id", and field names only.
  */
 
 const CANVAS_PAGE_SIZE = 100;
@@ -27,6 +31,15 @@ const CANVAS_RATE_LIMIT_FLOOR = 100;
 const CANVAS_PAUSE_MS = 2000;
 const CANVAS_WRITE_METHODS = Object.freeze(['POST', 'PUT', 'PATCH', 'DELETE']);
 const PROP_DRY_RUN = 'DRY_RUN';
+// Canvas field names -> the words a teacher sees, for "Canvas refused …" messages.
+const CANVAS_FIELD_LABELS = Object.freeze({
+  unlock_at: 'open date', due_at: 'due date', lock_at: 'lock date',
+  start_at: 'start time', end_at: 'end time', delayed_post_at: 'post-later time',
+  title: 'title', message: 'message', name: 'name', points_possible: 'points',
+  course_section_id: 'section', student_ids: 'students',
+});
+const CANVAS_DATE_FIELDS = Object.freeze(['unlock_at', 'due_at', 'lock_at', 'start_at',
+  'end_at', 'delayed_post_at']);
 
 /**
  * GETs a Canvas API path, for example canvasGet_('/courses', {'state[]': 'available'}).
@@ -173,7 +186,7 @@ function fetchCanvas_(url, options) {
       Utilities.sleep(CANVAS_PAUSE_MS * attempt);
       continue;
     }
-    checkCanvasResponse_(code, throttled);
+    checkCanvasResponse_(code, throttled, response);
     const remaining = Number(getHeader_(response.getHeaders(), 'X-Rate-Limit-Remaining'));
     if (!isNaN(remaining) && remaining < CANVAS_RATE_LIMIT_FLOOR) {
       Utilities.sleep(CANVAS_PAUSE_MS);
@@ -183,8 +196,8 @@ function fetchCanvas_(url, options) {
   throw canvasError_('RATE_LIMITED', 'Canvas is busy. Wait a minute and try again.');
 }
 
-/** Turns a non-2xx response code into a clear error. */
-function checkCanvasResponse_(code, throttled) {
+/** Turns a non-2xx response code into a clear error. response is read only for 400/422. */
+function checkCanvasResponse_(code, throttled, response) {
   if (code >= 200 && code < 300) return;
   if (throttled) {
     throw canvasError_('RATE_LIMITED', 'Canvas is busy. Wait a minute and try again.');
@@ -200,7 +213,70 @@ function checkCanvasResponse_(code, throttled) {
   if (code === 404) {
     throw canvasError_('NOT_FOUND', 'Canvas could not find what was asked for (404).');
   }
+  if (code === 400 || code === 422) {
+    const refusal = response ? canvasRefusalReason_(response.getContentText()) : null;
+    if (refusal) {
+      throw canvasError_('HTTP_' + code, `Canvas refused ${refusal.text}.` +
+        (refusal.dates ? ' Check the dates on this row, and the course\'s term and ' +
+          'section dates in Canvas.' : ''));
+    }
+    throw canvasError_('HTTP_' + code, `Canvas refused this change (HTTP ${code}) without ` +
+      'saying why. Check the dates and other values on this row.');
+  }
   throw canvasError_('HTTP_' + code, `Canvas returned an error (HTTP ${code}).`);
+}
+
+/**
+ * Canvas's reply to a refused change -> { text, dates } or null. text is like
+ * 'the due date ("must be between availability dates")'; dates is true when a date field
+ * is named. Reads the reply shapes Canvas uses: errors as { field: [{ message }] },
+ * errors as [{ message }], or { message }. Shows at most two reasons, and only reasons
+ * made of plain words (see safeCanvasReason_).
+ */
+function canvasRefusalReason_(bodyText) {
+  let body;
+  try {
+    body = JSON.parse(bodyText);
+  } catch {
+    return null;
+  }
+  const found = [];
+  let dates = false;
+  const add = (field, message) => {
+    const reason = safeCanvasReason_(typeof message === 'string' ? message :
+      message && message.message);
+    if (!reason || found.length >= 2) return;
+    const label = Object.prototype.hasOwnProperty.call(CANVAS_FIELD_LABELS, field) ?
+      CANVAS_FIELD_LABELS[field] : '';
+    if (CANVAS_DATE_FIELDS.includes(field)) dates = true;
+    const text = label ? `the ${label} ("${reason}")` : `it ("${reason}")`;
+    if (!found.includes(text)) found.push(text);
+  };
+  const walk = (errors, field, depth) => {
+    if (depth > 3 || errors === null || errors === undefined) return;
+    if (typeof errors === 'string') return add(field, errors);
+    if (Array.isArray(errors)) {
+      return errors.forEach(e => (e && typeof e === 'object' && !e.message ?
+        walk(e, field, depth + 1) : add((e && e.attribute) || field, e)));
+    }
+    if (typeof errors === 'object') {
+      if (typeof errors.message === 'string') return add(errors.attribute || field, errors);
+      Object.entries(errors).forEach(([key, value]) => walk(value, key, depth + 1));
+    }
+  };
+  if (body && typeof body === 'object') walk(body.errors || body, '', 0);
+  return found.length ? { text: found.join(' and '), dates } : null;
+}
+
+/**
+ * A reason Canvas gave, trimmed, if it is short and made of plain words only (letters,
+ * spaces, and . , ' ( ) / : ; -); else ''. No digits or @, so it can't carry IDs, emails,
+ * or dates.
+ */
+function safeCanvasReason_(message) {
+  const text = String(message || '').trim().replace(/\s+/g, ' ');
+  return text.length && text.length <= 150 && /^[A-Za-z ,.'()/:;-]+$/.test(text) ?
+    text.replace(/\.$/, '') : '';
 }
 
 function parseCanvasJson_(response) {

@@ -95,7 +95,7 @@
 
 <h1>Assignment Sheet — User Guide</h1>
 
-<p class="version">Version 2026-11-13b. See <b>6. What's new and getting updates</b>.</p>
+<p class="version">Version 2026-11-22. See <b>6. What's new and getting updates</b>.</p>
 
 <p>For teachers using a course Assignment sheet (Biology, Gastronomy, AI9, or a copy).
 Everything here is on the <b>Canvas Tools</b> menu at the top of the sheet, next to Help.
@@ -337,7 +337,8 @@ announcements, or both. <b>This changes Canvas</b> (preview mode applies).</p>
   <li><b>View Event / View Announcement</b> in H or I: posted; click to open it in
     Canvas.</li>
   <li><b>Preview mode OK</b>: checked but not sent (preview mode was on).</li>
-  <li><b>Failed: …</b>: that item didn't post; the pop-up says why.</li>
+  <li><b>Failed: …</b>: that item didn't post; the rest of the cell says why and what to
+    check.</li>
 </ul>
 
 <h3>Good to know</h3>
@@ -545,11 +546,18 @@ nothing; change those in Canvas.</p>
     course changed. Load again.</td></tr>
   <tr><td><b>Section dates not found in Canvas: fetch again</b></td><td>Someone removed
     those section dates in Canvas. Load again.</td></tr>
-  <tr><td><b>Failed: …</b></td><td>Not sent; the reason follows.</td></tr>
+  <tr><td><b>Not sent: lock date is before the due date</b> (or <b>due date is before the
+    open date</b>, or <b>lock date is before the open date</b>)</td><td>Canvas won't take
+    dates in that order, so nothing was sent. Fix the dates on this row (the pop-up says
+    how) and send again.</td></tr>
+  <tr><td><b>Failed: …</b></td><td>Not sent; the reason and what to check follow. See
+    <b>5. When something goes wrong</b>.</td></tr>
 </table>
 
-<p>If a date or time is typed wrong, nothing is sent and a pop-up lists the rows to
-fix.</p>
+<p>Before anything is sent, every checked row is checked. If a date or time is typed
+wrong, or a row's dates are out of order, nothing is sent and a pop-up lists each row and
+how to fix it. The order Canvas needs: open date, then due date, then lock date (the same
+time is fine, and any of them can be blank).</p>
 
 <h2 id="problems">5. When something goes wrong</h2>
 
@@ -567,6 +575,13 @@ fix.</p>
   <tr><td><i>The Course ID in *Config* B4 is missing or not a number</i></td><td>Put just
     the course number in B4.</td></tr>
   <tr><td><i>Canvas is busy</i></td><td>Wait a minute and try again.</td></tr>
+  <tr><td><i>Canvas refused the due date ("…")</i> (or another date or field)</td><td>Canvas
+    names what it didn't like, in its own words. For a date, check the row's dates. If they
+    look right, the date may be outside the course's term or section dates; check those in
+    Canvas (course <b>Settings</b>).</td></tr>
+  <tr><td><i>Canvas refused this change (HTTP 400) without saying why</i></td><td>Check the
+    row's dates and other values, fix anything odd, and send again. Make the change in
+    Canvas itself to see Canvas's own message.</td></tr>
   <tr><td>Nothing was posted, or some rows were skipped</td><td>Column H or I already
     has a link or "View …" text from an earlier post, so that part is skipped. Clear
     those cells and run it again.</td></tr>
@@ -598,6 +613,11 @@ newer one, open the template and look at the version in its guide.</p>
 <h3>What's new</h3>
 
 <ul>
+  <li><b>2026-11-22:</b> Clearer error messages. <b>Send changed dates</b> now catches
+    dates in the wrong order (for example, a lock date before the due date) before
+    sending, and says which row and how to fix it. When Canvas refuses something, the
+    status cell now says what Canvas objected to instead of just "HTTP 400". The
+    calendar events tab shows the reason in the cell too.</li>
   <li><b>2026-11-13b:</b> <b>Bring over</b> now says that buttons or pictures you drew on
     your own tabs don't come over, and how to copy them. It also never replaces a formula
     the new copy already has with a different one.</li>

@@ -31,6 +31,9 @@
  *   DELETE /api/v1/courses/:course/assignments/:id/overrides/:override_id (write) by
  *     "Remove section/student dates on selected rows", for selected "↳" rows only, after
  *     re-reading the assignments (GET above) and asking. The row stays, grayed out.
+ *   Before sending, Send checks each checked row's date order (open, then due, then lock;
+ *   datesOrderProblem_) and sends nothing if any row is out of order, since Canvas would
+ *   refuse it with a bare HTTP 400.
  *   All writes go through canvasWrite_, so DRY_RUN applies. Name, points, and
  *   submission type on the sheet are for reference only.
  * Required User/Script Properties: User Properties CANVAS_BASE_URL and CANVAS_TOKEN;
@@ -721,6 +724,16 @@ function planDateUpdates_(sheet, courseId, live, lists, tz) {
     if (overrideId === DATES_REMOVED) return skip('Removed: Load again to clear this row');
     const assignment = live.get(id);
     if (!assignment) return skip('Not found in Canvas: fetch again');
+    const order = datesOrderProblem_(shown[i], tz);
+    if (order) {
+      sheet.getRange(sheetRow, DATES_COL.status).setValue('Not sent: ' + order.short);
+      // The assignment's name, never column C: on a student row that holds student names.
+      const name = String(assignment.name || '');
+      const shortName = name.length > 40 ? name.slice(0, 39) + '…' : name;
+      const who = overrideId ? `section/student dates for "${shortName}"` : `"${shortName}"`;
+      plan.problems.push(`Row ${sheetRow} (${who}): ${order.fix}`);
+      return;
+    }
     const newKind = Object.values(DATES_NEW_KINDS).find(k => k.marker === overrideId);
     if (newKind) {
       const who = newKind === DATES_NEW_KINDS.section ?
@@ -1018,6 +1031,44 @@ function parseSheetDateTime_(dateText, timeText, tz) {
     return { error: `"${dateStr}" is not a real date.` };
   }
   return { date: parsed };
+}
+
+/**
+ * A row's dates in the wrong order -> { short, fix } (for Sync Status and the pop-up), or
+ * null when they are in order. Canvas refuses (HTTP 400) a due date before the open date
+ * and a lock date before the due or open date. Blank dates are skipped, and so is a row
+ * with a mistyped date (the date checks in planDateUpdates_ report that).
+ */
+function datesOrderProblem_(shownRow, tz) {
+  const at = {};
+  for (const f of DATES_FIELDS) {
+    const dateText = String(shownRow[f.dateCol - 1]).trim();
+    const timeText = String(shownRow[f.timeCol - 1]).trim();
+    const parsed = parseSheetDateTime_(dateText, timeText, tz);
+    if (parsed.error) return null;
+    at[f.label] = parsed.date ?
+      { minute: Math.floor(parsed.date.getTime() / 60000), text: `${dateText} ${timeText}` } :
+      null;
+  }
+  const before = (later, earlier) => at[later] && at[earlier] &&
+    at[later].minute < at[earlier].minute;
+  if (before('due', 'open')) {
+    return { short: 'due date is before the open date',
+      fix: `the due date (${at.due.text}) is before the open date (${at.open.text}). ` +
+        'Move the due date to the open date or later, or clear the open date so it ' +
+        'opens now.' };
+  }
+  if (before('lock', 'due')) {
+    return { short: 'lock date is before the due date',
+      fix: `the lock date (${at.lock.text}) is before the due date (${at.due.text}). ` +
+        'Move the lock date to the due date or later, or clear it so it never locks.' };
+  }
+  if (before('lock', 'open')) {
+    return { short: 'lock date is before the open date',
+      fix: `the lock date (${at.lock.text}) is before the open date (${at.open.text}). ` +
+        'Move the lock date to the open date or later, or clear it so it never locks.' };
+  }
+  return null;
 }
 
 /** True when a sheet Date (or null) and a Canvas ISO string (or null) match to the minute. */
