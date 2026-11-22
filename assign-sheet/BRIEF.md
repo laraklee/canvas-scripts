@@ -5,6 +5,17 @@ Refreshes the data the Q1–Q4 schedule sheets read from the master calendar (it
 not create the Q sheets; they come with the workbook), and posts rows of the
 **calendarEvents** sheet to Canvas as calendar events and/or announcements.
 
+> **Clearer error messages (11/22, guide 2026-11-22; live on all four sheets).** Send
+> changed dates checks each checked row's date order first (`datesOrderProblem_`:
+> open ≤ due ≤ lock, blanks skipped); any row out of order stops the Send with a fix-it
+> pop-up and "Not sent: …" in Sync Status. Found when a lock date left before a moved due
+> date gave a bare HTTP 400. A Canvas 400/422 now shows the field and Canvas's short
+> reason (`canvasRefusalReason_`, 05_CanvasApi.js), only when the reason is plain words
+> (no digits or @); the events tab's status cell shows the full message too. Offline
+> check: `scripts/checks/assign-error-messages.check.js`. Code `617cb3e`, no manifest
+> change: Biology 8:46 AM (Lara tested the order check: "Works"), then Gastronomy, AI9,
+> template 8:48 AM.
+>
 > **Bring over: two fixes from Course Manager's version (11/13, guide 2026-11-13b; live on
 > all four sheets).** (1) The "in the way" check is now `bringFindInTheWay_` (10_BringOver.js):
 > a formula already in the new copy counts as different unless the old cell has the same
