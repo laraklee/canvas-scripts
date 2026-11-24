@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<!--
+  UserGuide.html: the Quiz Check workbook's user guide, written for other teachers. Shown
+  inside the workbook by Quiz Check › ❓ User guide (showUserGuide in Menu.js), docked on
+  the right, with a link to a large window (showUserGuideLarge). This file is the master
+  copy of the guide. Update it in the same commit as any change a teacher would see (menu
+  labels, tabs, columns, colors, messages).
+  Canvas endpoints: none. Write operations: none. Properties: none.
+-->
+<html>
+<head>
+  <base target="_blank">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #202124;
+      margin: 0 auto;
+      padding: 4px 16px 32px;
+      max-width: 820px;
+    }
+    h1 { font-size: 22px; margin: 8px 0 4px; }
+    h2 {
+      font-size: 18px;
+      margin: 28px 0 8px;
+      padding-top: 12px;
+      border-top: 1px solid #dadce0;
+    }
+    h3 { font-size: 15px; margin: 18px 0 6px; }
+    p, ul, ol { margin: 6px 0 10px; }
+    li { margin: 3px 0; }
+    li > ul { margin: 4px 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: #f1f3f4;
+      padding: 0 3px;
+      border-radius: 3px;
+    }
+    table { border-collapse: collapse; margin: 8px 0 14px; width: 100%; }
+    th, td {
+      border: 1px solid #dadce0;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f1f3f4; }
+    .note {
+      background: #fef7e0;
+      border-left: 4px solid #f9ab00;
+      padding: 8px 12px;
+      margin: 12px 0;
+    }
+    .warn {
+      background: #fce8e6;
+      border-left: 4px solid #d93025;
+      padding: 8px 12px;
+      margin: 12px 0;
+    }
+    .copybox {
+      background: #f8f9fa;
+      border: 1px dashed #9aa0a6;
+      padding: 10px 12px;
+      margin: 8px 0 14px;
+      white-space: pre-wrap;
+      font-size: 13px;
+      user-select: all;
+      -webkit-user-select: all;
+    }
+    .contents {
+      background: #f8f9fa;
+      border: 1px solid #dadce0;
+      padding: 8px 16px;
+      margin: 12px 0;
+    }
+    .contents ol { margin: 4px 0; }
+    .version { color: #5f6368; margin-top: -6px; }
+    .contents a { color: #1a73e8; text-decoration: none; cursor: pointer; }
+    .contents a:hover { text-decoration: underline; }
+    .menu { font-weight: bold; }
+    .large-link {
+      display: none;
+      margin: 4px 0 8px;
+      padding: 6px 10px;
+      background: #e8f0fe;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .large-link a { color: #1a73e8; cursor: pointer; text-decoration: underline; }
+
+    /* Side panel (about 300px wide): smaller type, tighter tables, long words wrap. */
+    @media (max-width: 500px) {
+      body { font-size: 13px; padding: 2px 8px 24px; overflow-wrap: break-word; }
+      h1 { font-size: 17px; }
+      h2 { font-size: 15px; margin: 20px 0 6px; padding-top: 8px; }
+      h3 { font-size: 13.5px; margin: 14px 0 4px; }
+      ul, ol { padding-left: 20px; }
+      th, td { padding: 4px 5px; font-size: 12px; }
+      .note, .warn { padding: 6px 8px; }
+      .warn ul { padding-left: 16px; }
+      .copybox { font-size: 11.5px; padding: 8px; }
+      .contents { padding: 6px 10px; }
+      .large-link { display: block; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="large-link">Wide tables hard to read here?
+  <a id="open-large">Open in a large window</a></div>
+
+<h1>Quiz Check — User Guide</h1>
+
+<p class="version">Version 2026-11-24. See <b>6. What's new and getting updates</b>.</p>
+
+<p>This guide is always at <span class="menu">Quiz Check › ❓ User guide</span>. It opens in
+a panel on the right, so you can follow the steps while you work in the sheet. Close it
+with the ✕ at its top.</p>
+
+<h3>What it does</h3>
+
+<p>Checks every quiz in a Canvas course <b>before you give it</b>, looking for the problems
+that make a test go wrong in class:</p>
+
+<ul>
+  <li><b>Pictures</b> students can't open (from another course, someone's personal files,
+    an outside site, an old question-bank file, unpublished, or missing) and pictures big
+    enough to load slowly.</li>
+  <li><b>Questions</b> with no question text, no correct answer marked, or a blank answer
+    choice.</li>
+  <li><b>Question groups</b> that pick 0 questions, pick more than they have, or pull from a
+    question bank that isn't there.</li>
+  <li><b>Points</b> that don't add up to the quiz's total.</li>
+</ul>
+
+<p>It checks Classic Quizzes and New Quizzes, including the questions inside question banks
+and item banks. It works from a copy of your course that you download from Canvas, so it
+needs <b>no Canvas password, token, or setup</b>, and it <b>never changes anything in
+Canvas</b>.</p>
+
+<div class="contents">
+  <b>Contents</b>
+  <ol>
+    <li><a data-target="copy">Your own copy</a></li>
+    <li><a data-target="export">Download your course from Canvas</a></li>
+    <li><a data-target="check">Check the quizzes</a></li>
+    <li><a data-target="read">Read the results</a></li>
+    <li><a data-target="good">Good to know</a></li>
+    <li><a data-target="updates">What's new and getting updates</a></li>
+  </ol>
+</div>
+
+<h2 id="copy">1. Your own copy</h2>
+
+<p>Make your own copy of this workbook with <b>File › Make a copy</b>. One copy works for
+all your courses. The <b>Quiz Check</b> menu appears at the top a few seconds after the
+workbook opens.</p>
+
+<p>The first time you use the menu, Google asks you to allow the script. It asks for two
+things only: to <b>view and change this spreadsheet</b> (to write the results) and to
+<b>show its side panel</b>. It can't see your other files, your email, or Canvas.</p>
+
+<h2 id="export">2. Download your course from Canvas</h2>
+
+<ol>
+  <li>In your Canvas course, open <b>Settings</b> and click <b>Export Course Content</b>
+    (on the right).</li>
+  <li>Choose <b>Course</b> (not Quiz), then <b>Create Export</b>.</li>
+  <li>Wait for it to finish (a big course can take several minutes; you can leave the page
+    and come back), then click the new export's link to download it. The file ends in
+    <b>.imscc</b>.</li>
+</ol>
+
+<div class="note"><b>Why the whole course, not just the quiz?</b> A single quiz's export
+is made with your teacher access, so it can pack in pictures that students can't open
+(for example pictures that still point to last year's course). The course export shows
+those. A single-quiz export (.zip) still works, but the check will remind you that the
+course export is stricter.</div>
+
+<h2 id="check">3. Check the quizzes</h2>
+
+<ol>
+  <li><span class="menu">Quiz Check › Check quizzes…</span> opens a panel on the right.</li>
+  <li><b>Choose file</b>, pick the .imscc you downloaded, then click <b>Check</b>.</li>
+  <li>After a few seconds to a minute, the <b>Quiz Check</b> tab lists every quiz in the
+    course.</li>
+</ol>
+
+<p>The file is read <b>on your computer</b>. Only the quiz text and the size of each picture
+go to the workbook; the pictures themselves and the rest of the course never leave your
+computer. Use a current Chrome, Edge, Safari (16.4 or later), or Firefox. On an iPad, ask
+for the desktop site.</p>
+
+<h2 id="read">4. Read the results</h2>
+
+<h3>The Quiz Check tab</h3>
+
+<p>One row per quiz, published or not. <b>Red</b> rows need fixing, <b>orange</b> rows have
+only suggestions (pictures worth shrinking), and plain rows look fine. Red rows come first.
+<b>What to look at</b> says what was found and in how many questions, for example
+<i>picture from another course (3)</i>. The tab is replaced each time you check.</p>
+
+<h3>Detailed report for one quiz</h3>
+
+<p>After the check, the panel lists the quizzes in the same order and colors. Click one and
+its report goes on the <b>Quiz Check detail</b> tab: one row per question group (gray) and
+per question, with its choices, correct answer, pictures, and a <b>Check</b> column saying
+what to fix. Rows to fix are <b>red</b>, rows with only suggestions are <b>orange</b>. The
+panel stays open, so you can click the next quiz; each click replaces the detail tab
+(duplicate the tab first if you want to keep one).</p>
+
+<h3>What to do about each one</h3>
+
+<table>
+  <tr><th>What to look at</th><th>What to do in Canvas</th></tr>
+  <tr><td>picture from another course</td><td>The question still points to a picture in
+    another course (often last year's). Students in this course can't see it. Save the
+    picture, then upload it again into the question.</td></tr>
+  <tr><td>picture in personal files</td><td>Students can't open your personal files. Upload
+    the picture into the question or the course's Files.</td></tr>
+  <tr><td>picture from an outside site</td><td>It can change or disappear. Save it and upload
+    it to Canvas.</td></tr>
+  <tr><td>old question-bank picture</td><td>Often broken for students. Upload the picture
+    again into the question.</td></tr>
+  <tr><td>unpublished picture</td><td>Publish the file (or its folder) in Files, or set it to
+    "Only available to students with link".</td></tr>
+  <tr><td>picture with availability dates</td><td>Make sure test day is inside the dates set
+    on the file or folder.</td></tr>
+  <tr><td>picture not in export</td><td>Canvas couldn't copy it, so students may not see it
+    either. Open the question in Canvas and check the picture shows.</td></tr>
+  <tr><td>picture to shrink (red)</td><td>1 MB or more: slow on busy school Wi-Fi. Make it
+    smaller and upload it again.</td></tr>
+  <tr><td>picture worth shrinking (orange)</td><td>500 KB to 1 MB. A suggestion, not a
+    must.</td></tr>
+  <tr><td>no question text, no correct answer, blank answer choice</td><td>Edit the
+    question.</td></tr>
+  <tr><td>group picks 0, group picks more than it has</td><td>Edit the question group's "Pick"
+    number.</td></tr>
+  <tr><td>bank not in export</td><td>The group pulls from a question bank that isn't in this
+    course, so its questions weren't checked. Check that the bank still exists.</td></tr>
+  <tr><td>points add up to X, not Y</td><td>The questions' points don't match the quiz's
+    total. Check the question and group points.</td></tr>
+</table>
+
+<h2 id="good">5. Good to know</h2>
+
+<ul>
+  <li><b>The check shows the course as it was when you exported it.</b> After fixing things,
+    make a new export and check again.</li>
+  <li><b>Nothing in Canvas changes.</b> The workbook never contacts Canvas; you fix things
+    in Canvas yourself.</li>
+  <li><b>No student information.</b> A course export holds course content only (quizzes,
+    pages, files), never students' names, answers, or grades.</li>
+  <li><b>Tab names:</b> if you already have a tab called <i>Quiz Check</i> or <i>Quiz Check
+    detail</i> that you use for something else, the check asks you to rename it and
+    changes nothing.</li>
+  <li><b>If something goes wrong,</b> the panel says what happened. Try once more; for a
+    very large course, try a computer instead of a tablet.</li>
+</ul>
+
+<h2 id="updates">6. What's new and getting updates</h2>
+
+<p><b>Getting updates:</b> your copy doesn't update by itself. When there's a new version,
+make a fresh copy of the original workbook (<b>File › Make a copy</b>). Your old copy's
+results aren't needed: each check starts fresh from a new export.</p>
+
+<h3>What's new</h3>
+
+<ul>
+  <li><b>2026-11-24:</b> First version.</li>
+</ul>
+
+<script>
+  // In-page links: scroll within this window (plain #links can misbehave inside
+  // Google's pop-up frame).
+  document.querySelectorAll('.contents a, a.jump').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const target = document.getElementById(link.dataset.target);
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // Side panel only (the link is hidden in the large window): open the big window.
+  const openLarge = document.getElementById('open-large');
+  openLarge.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (typeof google !== 'undefined' && google.script) {
+      google.script.run.showUserGuideLarge();
+    }
+  });
+</script>
+
+</body>
+</html>

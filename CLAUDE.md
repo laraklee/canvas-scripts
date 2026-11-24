@@ -109,7 +109,7 @@ reviewable steps over large multi-file changes.
   `showUserGuide()`). That file is then the only master copy: no `USER-GUIDE.md` and no
   Google Doc copy to update. The same-commit rule above still applies. So far:
   `gastronomy-badges/`, `assign-sheet/`, `course-manager-jupiter/`, `anonymize-submissions/`,
-  `master-calendar/`.
+  `master-calendar/`, `quiz-check-workbook/`.
   **What's new list (2026-11-22):** a guide with a version label and What's new gets one
   entry per change a teacher would see. Teachers' copies last a quarter, a semester, or a
   year, so there is no date cut-off: when the list passes 5 entries, the review summary

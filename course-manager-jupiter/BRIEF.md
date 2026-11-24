@@ -2,6 +2,11 @@
 
 > **Where we left off (current state, 2026-11-13, Mac)**
 >
+> - **Quiz Check has a standalone twin (2026-11-24): `quiz-check-workbook/`.** Its
+>   QtiReader.js, the panel's zip reader, and the shared report/check functions are copies
+>   of this project's; a quiz-check fix here must be copied there in the same commit
+>   (`npm run check-offline` fails if they drift; see that BRIEF's table).
+>
 > - **TABLED 11/14 (PC): "no banks" quiz converter, planned, nothing built.** Goal (Lara):
 >   turn a quiz whose groups pull from banks (Classic, or a New Quiz) back into an ordinary
 >   Classic quiz whose groups hold their questions. Local tool beside `/quiz-check` (Node,
