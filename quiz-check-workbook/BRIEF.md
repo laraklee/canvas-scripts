@@ -11,7 +11,7 @@ links on quiz names.
   `scripts/checks/quiz-check-workbook.check.js` passes (16).
 - **2026-11-24 (PC): Google Sheet "Quiz Check" made, `.clasp.json` added, code pushed.**
   First test on a Biology sandbox export worked (overview tab: 2 quizzes, both red).
-- **2026-11-24: BUILT, committed, not yet pushed to Google (Lara said go):** "Quiz Check ›
+- **2026-11-24: BUILT and pushed to Google (commit `e22e777`), not yet tested there:** "Quiz Check ›
   Detail for selected quiz" and "Clear check results…". Hidden tab **Quiz Check data**
   (A1 label `Quiz Check data:`; row 2 piece and quiz counts; from row 4: quiz ID, quiz
   name, upload piece with a "p" in front so a piece starting with "=" isn't a formula).
