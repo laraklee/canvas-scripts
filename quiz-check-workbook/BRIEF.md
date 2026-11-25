@@ -9,8 +9,19 @@ links on quiz names.
 
 - **2026-11-24: built, not yet in Google.** Offline check
   `scripts/checks/quiz-check-workbook.check.js` passes (16).
-- **2026-11-24 (PC): Google Sheet "Quiz Check" made, `.clasp.json` added** (setup steps
-  1–2 done). Next: `clasp push`, then test (step 4).
+- **2026-11-24 (PC): Google Sheet "Quiz Check" made, `.clasp.json` added, code pushed.**
+  First test on a Biology sandbox export worked (overview tab: 2 quizzes, both red).
+- **PROPOSED 11/24, waiting for Lara's go-ahead, nothing built:** "Quiz Check › Detail
+  for selected quiz". Problem (Lara): the detail needs the upload, which lives only in
+  the panel, so closing the panel means re-running the check to see another quiz.
+  Plan: at check time, also save the gzipped upload (base64, chunked under 50k chars per
+  cell) plus the quiz IDs in overview-row order on a hidden tab; the menu item reads the
+  selected row on the Quiz Check tab and writes that quiz's detail. Panel buttons stay.
+  Add **Clear check results** too, so the original is cleared before sharing (else copies
+  carry Lara's quiz text). Menu, not a checkbox column: an onEdit simple trigger has a
+  30-second limit and two-boxes-ticked questions. Only entry points change, so the
+  Jupiter drift check still passes; same feature for Jupiter later if Lara wants it.
+  Same commit: guide's "Detailed report" section, offline checks for the new parts.
 
 ## How it works
 
