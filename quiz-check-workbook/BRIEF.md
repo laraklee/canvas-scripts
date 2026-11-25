@@ -8,8 +8,9 @@ links on quiz names.
 ## Status
 
 - **2026-11-24: built, not yet in Google.** Offline check
-  `scripts/checks/quiz-check-workbook.check.js` passes (16). No Google Sheet, script ID,
-  or `.clasp.json` yet: see **Setting it up** below.
+  `scripts/checks/quiz-check-workbook.check.js` passes (16).
+- **2026-11-24 (PC): Google Sheet "Quiz Check" made, `.clasp.json` added** (setup steps
+  1–2 done). Next: `clasp push`, then test (step 4).
 
 ## How it works
 
