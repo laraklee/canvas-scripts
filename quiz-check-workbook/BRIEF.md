@@ -11,7 +11,15 @@ links on quiz names.
   `scripts/checks/quiz-check-workbook.check.js` passes (16).
 - **2026-11-24 (PC): Google Sheet "Quiz Check" made, `.clasp.json` added, code pushed.**
   First test on a Biology sandbox export worked (overview tab: 2 quizzes, both red).
-- **PROPOSED 11/24, waiting for Lara's go-ahead, nothing built:** "Quiz Check › Detail
+- **2026-11-24: BUILT, committed, not yet pushed to Google (Lara said go):** "Quiz Check ›
+  Detail for selected quiz" and "Clear check results…". Hidden tab **Quiz Check data**
+  (A1 label `Quiz Check data:`; row 2 piece and quiz counts; from row 4: quiz ID, quiz
+  name, upload piece with a "p" in front so a piece starting with "=" isn't a formula).
+  The menu item refuses if the selected row's name no longer matches the saved list
+  (tab sorted or edited). Clear deletes only tabs whose A1 is our label; the workbook's
+  last tab is emptied instead. After push: test both on the Biology export, then
+  Clear before sharing (setup step 5).
+  Original proposal: "Quiz Check › Detail
   for selected quiz". Problem (Lara): the detail needs the upload, which lives only in
   the panel, so closing the panel means re-running the check to see another quiz.
   Plan: at check time, also save the gzipped upload (base64, chunked under 50k chars per
@@ -49,7 +57,7 @@ no library versions to pin). The offline check fails if they drift:
 | `QuizCheckUpload.html` `<script id="zip-slice-reader">` | same | identical block; the rest of the panel differs (no `url` sent) |
 | `QuizReport.js` | `QuizReport.js` | trimmed: only picture helpers, cell text, `writeQuizReport_`; each function identical |
 | `QuizCheck.js` below "kept identical" | `QuizCheck.js`, `QuizExportReport.js` | each function identical, except `quizExportFiles_`'s too-large message |
-| `QuizCheck.js` entry points | `receiveCourseExport`, `receiveQuizCheckDetail` | differ on purpose: no Canvas links |
+| `QuizCheck.js` entry points | `receiveCourseExport`, `receiveQuizCheckDetail` | differ on purpose: no Canvas links; plus the saved upload, Detail for selected quiz, and Clear (this workbook only so far) |
 
 **When a quiz-check fix lands in Jupiter, copy it here in the same commit** (and the other
 way round), then `npm run check-offline`.

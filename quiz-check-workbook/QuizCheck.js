@@ -11,6 +11,11 @@
  *   Clicking a quiz in the panel sends the same upload again with that quiz's id to
  *   receiveQuizCheckDetail, which writes its detailed report on the "Quiz Check detail"
  *   tab, replaced each click.
+ *   Each check also saves the upload (already gzipped, base64) in pieces on the hidden
+ *   "Quiz Check data" tab, with the quiz IDs in the overview's row order, so the menu's
+ *   "Detail for selected quiz" can write a quiz's detail after the panel is closed
+ *   (Lara, 2026-11-24). "Clear check results…" deletes all three tabs so a shared copy
+ *   doesn't carry the teacher's quiz text.
  *   A copy of course-manager-jupiter/QuizCheck.js without the Canvas links (Jupiter
  *   links each quiz name to Canvas through the API; this workbook never calls Canvas, so
  *   it needs no token or setup). The helper functions below the two entry points are
@@ -27,6 +32,11 @@ const QUIZ_CHECK_TAB = 'Quiz Check';
 const QUIZ_CHECK_LABEL = 'Quiz Check:';
 const QUIZ_CHECK_DETAIL_TAB = 'Quiz Check detail';
 const QUIZ_CHECK_DETAIL_LABEL = 'Quiz Check detail:';
+// Hidden tab holding the last check's upload, for "Detail for selected quiz".
+const QUIZ_CHECK_DATA_TAB = 'Quiz Check data';
+const QUIZ_CHECK_DATA_LABEL = 'Quiz Check data:';
+const QUIZ_CHECK_DATA_FIRST_ROW = 4;
+const QUIZ_CHECK_PIECE_CHARS = 45000; // a Sheets cell holds at most 50,000 characters
 const QUIZ_CHECK_SUGGESTION_COLOR = '#fce5cd'; // light orange: suggestions only
 const QUIZ_CHECK_HEADERS = Object.freeze(['Quiz', 'Published', 'Points', 'Points found',
   'Questions', 'Pictures', 'Rows to look at', 'What to look at']);
@@ -83,8 +93,22 @@ function receiveCourseExport(upload) {
     }
     const quizzes = quizCheckSort_(result.quizzes.map(quizCheckSummary_));
     const name = String(upload.fileName || '').slice(0, 200);
-    const sheet = quizCheckSheet_(SpreadsheetApp.getActiveSpreadsheet());
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = quizCheckSheet_(ss);
     writeQuizCheckOverview_(sheet, quizCheckOverview_(quizzes, name, new Date()));
+    let later = '\n\nTo see a quiz\'s details later (with this panel closed), click its row on the ' +
+      `"${sheet.getName()}" tab and choose Quiz Check › Detail for selected quiz.`;
+    try {
+      quizCheckSaveUpload_(ss, name, upload.gzip, quizzes);
+    } catch (error) {
+      // The check itself worked; only the menu item won't. Drop stale saved data.
+      console.error(`${QUIZ_CHECK_TITLE}: couldn't save the upload (${error.isSheetProblem ? 'SHEET_PROBLEM' : 'UNEXPECTED'}).`);
+      quizCheckDropData_(ss);
+      later = '\n\nQuiz Check › Detail for selected quiz won\'t work for this check (the workbook ' +
+        `couldn't save the file; if you have your own tab named "${QUIZ_CHECK_DATA_TAB}", rename it). ` +
+        'Click quizzes in this panel instead.';
+    }
+    sheet.activate();
     const red = quizzes.filter(q => q.level === 'problem').length;
     const orange = quizzes.filter(q => q.level === 'suggestion').length;
     console.log(`${QUIZ_CHECK_TITLE}: ${quizzes.length} quiz(zes), ${red} red, ${orange} orange, ` +
@@ -97,7 +121,7 @@ function receiveCourseExport(upload) {
       courseExport: result.courseExport,
       quizzes,
       message: `Checked ${quizzes.length} quiz(zes) from "${name}". See the "${sheet.getName()}" tab: ` +
-        `${quizCheckCountLine_(quizzes)}.${single}`,
+        `${quizCheckCountLine_(quizzes)}.${single}${later}`,
     };
   } catch (error) {
     // Kind of failure and the code line only: never the error text (it could quote the file).
@@ -118,31 +142,170 @@ function receiveCourseExport(upload) {
 function receiveQuizCheckDetail(upload) {
   const started = Date.now();
   try {
-    const files = quizCheckUnpack_(upload);
-    const quiz = qtiReadExport_(files).quizzes.find(q => q.id === String(upload.quizId || ''));
-    if (!quiz) throw sheetProblem_('That quiz isn\'t in this export. Run the check again and pick it from the new list.');
-    const report = qtiQuizReport_(quiz, 1);
-    const sheet = quizCheckSheet_(SpreadsheetApp.getActiveSpreadsheet(), QUIZ_CHECK_DETAIL_TAB, QUIZ_CHECK_DETAIL_LABEL);
-    sheet.getRange(1, 1).setValue(QUIZ_CHECK_DETAIL_LABEL).setFontWeight('bold');
-    sheet.getRange(1, 2).setNumberFormat('@').setValue(quizCellText_(String(upload.fileName || '').slice(0, 200)));
-    const headerRow = writeQuizReport_(sheet, report, new Date());
-    const orange = quizCheckOrangeRows_(sheet, report, headerRow);
-    sheet.activate();
-    const n = report.counts;
-    console.log(`${QUIZ_CHECK_TITLE} detail: ${n.groups} group(s), ${n.questions} question(s), ` +
-      `${n.checks} check(s), ${orange} orange, ${Date.now() - started} ms.`);
-    const shaded = n.checks - orange;
-    return { ok: true, message: `"${quiz.title}": ${n.groups} group(s) and ${n.questions} question(s) on the ` +
-      `"${sheet.getName()}" tab.\n\nPoints: ${report.pointsMessage}\n\nPictures: ${report.picturesMessage}` +
-      (shaded ? `\n\n${shaded} row(s) need fixing (red).` : '') +
-      (orange ? `\n\n${orange} row(s) have suggestions only (orange).` : '') };
+    return { ok: true, message: quizCheckWriteDetail_(upload, started) };
+  } catch (error) {
+    return { ok: false, message: quizCheckDetailFailure_(error, started) };
+  }
+}
+
+/**
+ * Menu: Quiz Check › Detail for selected quiz. Writes the detail for the quiz whose row
+ * is selected on the Quiz Check tab, from the upload the last check saved (hidden "Quiz
+ * Check data" tab), so the panel needn't be open. Shows the result in a message box.
+ */
+function showQuizCheckDetailForSelection() {
+  const started = Date.now();
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getActiveSheet();
+    const howTo = `On the "${QUIZ_CHECK_TAB}" tab, click a quiz's row, then choose Quiz Check › Detail for selected quiz.`;
+    if (sheet.getName() !== QUIZ_CHECK_TAB) throw sheetProblem_(howTo);
+    const row = sheet.getActiveRange().getRow();
+    const saved = quizCheckLoadUpload_(ss);
+    const index = row - QUIZ_CHECK_HEADER_ROW - 1;
+    if (index < 0 || index >= saved.quizzes.length) throw sheetProblem_(howTo);
+    const [quizId, title] = saved.quizzes[index];
+    // The saved list follows the tab's rows as written; sorting or editing the tab breaks that.
+    if (String(sheet.getRange(row, 1).getDisplayValue()) !== title) {
+      throw sheetProblem_(`The "${QUIZ_CHECK_TAB}" tab has changed since the check (rows sorted, moved, or ` +
+        'edited). Run Quiz Check › Check quizzes… again.');
+    }
+    const message = quizCheckWriteDetail_({ fileName: saved.fileName, gzip: saved.gzip, quizId }, started);
+    ui.alert(QUIZ_CHECK_TITLE, message, ui.ButtonSet.OK);
+  } catch (error) {
+    ui.alert(QUIZ_CHECK_TITLE, quizCheckDetailFailure_(error, started), ui.ButtonSet.OK);
+  }
+}
+
+/**
+ * Menu: Quiz Check › Clear check results…. After a yes, deletes this workbook's Quiz
+ * Check, Quiz Check detail, and hidden Quiz Check data tabs (only ones whose A1 shows
+ * they're ours), so a copy of the workbook doesn't carry the teacher's quiz text. If a
+ * tab is the workbook's last one, it's emptied instead (a workbook needs one tab).
+ */
+function clearQuizCheckResults() {
+  const ui = SpreadsheetApp.getUi();
+  const answer = ui.alert('Clear check results', `This deletes the "${QUIZ_CHECK_TAB}" and ` +
+    `"${QUIZ_CHECK_DETAIL_TAB}" tabs and the saved copy of your quizzes, so a copy of this workbook ` +
+    'won\'t carry your quiz text. Nothing in Canvas changes, and you can check again any time.\n\n' +
+    'Clear them?', ui.ButtonSet.YES_NO);
+  if (answer !== ui.Button.YES) return;
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const tabs = [[QUIZ_CHECK_DETAIL_TAB, QUIZ_CHECK_DETAIL_LABEL], [QUIZ_CHECK_DATA_TAB, QUIZ_CHECK_DATA_LABEL],
+      [QUIZ_CHECK_TAB, QUIZ_CHECK_LABEL]];
+    let cleared = 0;
+    const leftAlone = [];
+    tabs.forEach(([name, label]) => {
+      const sheet = ss.getSheetByName(name);
+      if (!sheet) return;
+      if (!quizCheckIsOurs_(sheet, label)) {
+        leftAlone.push(name);
+        return;
+      }
+      if (ss.getSheets().length > 1) ss.deleteSheet(sheet);
+      else sheet.clear();
+      cleared++;
+    });
+    console.log(`${QUIZ_CHECK_TITLE}: cleared ${cleared} tab(s), left ${leftAlone.length} alone.`);
+    ui.alert('Clear check results', (cleared ? 'Check results cleared.' : 'There were no check results to clear.') +
+      (leftAlone.length ? `\n\nLeft alone (used for something else): ${leftAlone.map(n => `"${n}"`).join(', ')}.` : ''),
+    ui.ButtonSet.OK);
   } catch (error) {
     const where = String(error.stack || '').split('\n')[1] || '';
-    console.error(`${QUIZ_CHECK_TITLE} detail failed after ${Date.now() - started} ms: ` +
-      `${error.isSheetProblem ? 'SHEET_PROBLEM' : `UNEXPECTED ${where.trim()}`}`);
-    return { ok: false, message: error.isSheetProblem ? error.message :
-      'Something went wrong writing the report. See Extensions › Apps Script › Executions.' };
+    console.error(`${QUIZ_CHECK_TITLE}: clear failed: UNEXPECTED ${where.trim()}`);
+    ui.alert('Clear check results', 'Something went wrong clearing the results. See Extensions › Apps Script › Executions.',
+      ui.ButtonSet.OK);
   }
+}
+
+/**
+ * Writes one quiz's detailed report on the "Quiz Check detail" tab from an upload
+ * ({ fileName, gzip, quizId }) and returns the message to show. Throws on failure.
+ */
+function quizCheckWriteDetail_(upload, started) {
+  const files = quizCheckUnpack_(upload);
+  const quiz = qtiReadExport_(files).quizzes.find(q => q.id === String(upload.quizId || ''));
+  if (!quiz) throw sheetProblem_('That quiz isn\'t in this export. Run the check again and pick it from the new list.');
+  const report = qtiQuizReport_(quiz, 1);
+  const sheet = quizCheckSheet_(SpreadsheetApp.getActiveSpreadsheet(), QUIZ_CHECK_DETAIL_TAB, QUIZ_CHECK_DETAIL_LABEL);
+  sheet.getRange(1, 1).setValue(QUIZ_CHECK_DETAIL_LABEL).setFontWeight('bold');
+  sheet.getRange(1, 2).setNumberFormat('@').setValue(quizCellText_(String(upload.fileName || '').slice(0, 200)));
+  const headerRow = writeQuizReport_(sheet, report, new Date());
+  const orange = quizCheckOrangeRows_(sheet, report, headerRow);
+  sheet.activate();
+  const n = report.counts;
+  console.log(`${QUIZ_CHECK_TITLE} detail: ${n.groups} group(s), ${n.questions} question(s), ` +
+    `${n.checks} check(s), ${orange} orange, ${Date.now() - started} ms.`);
+  const shaded = n.checks - orange;
+  return `"${quiz.title}": ${n.groups} group(s) and ${n.questions} question(s) on the ` +
+    `"${sheet.getName()}" tab.\n\nPoints: ${report.pointsMessage}\n\nPictures: ${report.picturesMessage}` +
+    (shaded ? `\n\n${shaded} row(s) need fixing (red).` : '') +
+    (orange ? `\n\n${orange} row(s) have suggestions only (orange).` : '');
+}
+
+/** Logs a failed detail (kind and code line only) and returns the message to show. */
+function quizCheckDetailFailure_(error, started) {
+  const where = String(error.stack || '').split('\n')[1] || '';
+  console.error(`${QUIZ_CHECK_TITLE} detail failed after ${Date.now() - started} ms: ` +
+    `${error.isSheetProblem ? 'SHEET_PROBLEM' : `UNEXPECTED ${where.trim()}`}`);
+  return error.isSheetProblem ? error.message :
+    'Something went wrong writing the report. See Extensions › Apps Script › Executions.';
+}
+
+/**
+ * Saves the upload on the hidden "Quiz Check data" tab: row 1 label and file name, row 2
+ * piece and quiz counts, row 3 headings, then from row 4 one quiz per row (ID, name as on
+ * the Quiz Check tab, in its row order) beside the upload in pieces of up to 45,000
+ * characters, each with "p" in front. Course content only (an export holds no student data).
+ */
+function quizCheckSaveUpload_(ss, fileName, gzip, quizzes) {
+  const sheet = quizCheckSheet_(ss, QUIZ_CHECK_DATA_TAB, QUIZ_CHECK_DATA_LABEL);
+  const pieces = [];
+  for (let at = 0; at < gzip.length; at += QUIZ_CHECK_PIECE_CHARS) pieces.push(gzip.slice(at, at + QUIZ_CHECK_PIECE_CHARS));
+  const count = Math.max(pieces.length, quizzes.length);
+  const first = QUIZ_CHECK_DATA_FIRST_ROW;
+  sheet.clear();
+  if (sheet.getMaxRows() < first + count) sheet.insertRowsAfter(sheet.getMaxRows(), first + count - sheet.getMaxRows());
+  sheet.getRange(1, 1, 1, 2).setNumberFormat('@').setValues([[QUIZ_CHECK_DATA_LABEL, quizCellText_(fileName)]]);
+  sheet.getRange(2, 1, 1, 3).setValues([['Pieces, quizzes', pieces.length, quizzes.length]]);
+  sheet.getRange(3, 1, 1, 3).setValues([['Quiz ID', 'Quiz', 'Upload (gzipped, base64)']]);
+  sheet.getRange(first, 1, count, 3).setNumberFormat('@').setValues(Array.from({ length: count }, (_, i) => [
+    // "p" in front: a piece can start with "=" (base64 padding), which Sheets reads as a formula.
+    quizzes[i] ? String(quizzes[i].id) : '', quizzes[i] ? quizCellText_(quizzes[i].title) : '', pieces[i] ? `p${pieces[i]}` : '']));
+  if (!sheet.isSheetHidden()) sheet.hideSheet();
+}
+
+/** The saved upload as { fileName, gzip, quizzes: [[id, name]] }; throws if there's none. */
+function quizCheckLoadUpload_(ss) {
+  const none = () => sheetProblem_('There\'s no saved check to read. Run Quiz Check › Check quizzes… first, ' +
+    `then click a quiz's row on the "${QUIZ_CHECK_TAB}" tab.`);
+  const sheet = ss.getSheetByName(QUIZ_CHECK_DATA_TAB);
+  if (!sheet || !quizCheckIsOurs_(sheet, QUIZ_CHECK_DATA_LABEL)) throw none();
+  const [, pieces, quizCount] = sheet.getRange(2, 1, 1, 3).getValues()[0].map(Number);
+  if (!(pieces > 0) || !(quizCount > 0)) throw none();
+  const values = sheet.getRange(QUIZ_CHECK_DATA_FIRST_ROW, 1, Math.max(pieces, quizCount), 3).getValues();
+  return {
+    fileName: String(sheet.getRange(1, 2).getDisplayValue()),
+    gzip: values.slice(0, pieces).map(row => String(row[2]).slice(1)).join(''),
+    quizzes: values.slice(0, quizCount).map(row => [String(row[0]), String(row[1])]),
+  };
+}
+
+/** Deletes the hidden data tab if it's ours (after a failed save, so it can't be stale). */
+function quizCheckDropData_(ss) {
+  try {
+    const sheet = ss.getSheetByName(QUIZ_CHECK_DATA_TAB);
+    if (sheet && quizCheckIsOurs_(sheet, QUIZ_CHECK_DATA_LABEL) && ss.getSheets().length > 1) ss.deleteSheet(sheet);
+  } catch {
+    console.error(`${QUIZ_CHECK_TITLE}: couldn't remove old saved data.`);
+  }
+}
+
+/** True when a tab's A1 shows it's one of ours (its label). */
+function quizCheckIsOurs_(sheet, label) {
+  return String(sheet.getRange('A1').getDisplayValue()).trim().toLowerCase() === label.toLowerCase();
 }
 
 /** An error whose message is safe and useful to show as-is. */

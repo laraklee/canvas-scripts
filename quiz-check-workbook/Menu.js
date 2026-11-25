@@ -1,7 +1,8 @@
 /**
  * Menu.js (Quiz Check workbook)
  * Purpose: the "Quiz Check" menu and the in-sheet user guide. "Check quizzes…" opens the
- *   Quiz Check side panel (QuizCheck.js); "❓ User guide" opens UserGuide.html docked on
+ *   Quiz Check side panel (QuizCheck.js); "Detail for selected quiz" and "Clear check
+ *   results…" are in QuizCheck.js too; "❓ User guide" opens UserGuide.html docked on
  *   the right (showUserGuide), with an "Open in a large window" link (showUserGuideLarge).
  *   The workbook has no settings, so there is no Setup panel.
  * Canvas endpoints called: none.
@@ -14,6 +15,9 @@ const QUIZ_CHECK_GUIDE_TITLE = 'Quiz Check — User Guide';
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Quiz Check')
     .addItem('Check quizzes…', 'showQuizCheck')
+    .addItem('Detail for selected quiz', 'showQuizCheckDetailForSelection')
+    .addSeparator()
+    .addItem('Clear check results…', 'clearQuizCheckResults')
     .addSeparator()
     .addItem('❓ User guide', 'showUserGuide')
     .addToUi();
