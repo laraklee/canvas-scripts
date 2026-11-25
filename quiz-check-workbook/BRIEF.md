@@ -11,7 +11,9 @@ links on quiz names.
   `scripts/checks/quiz-check-workbook.check.js` passes (16).
 - **2026-11-24 (PC): Google Sheet "Quiz Check" made, `.clasp.json` added, code pushed.**
   First test on a Biology sandbox export worked (overview tab: 2 quizzes, both red).
-- **2026-11-24: BUILT and pushed to Google (commit `e22e777`), not yet tested there:** "Quiz Check ›
+- **2026-11-24: one detail tab per quiz (Lara's ask), BUILT, committed, not yet pushed.**
+  See "How it works".
+- **2026-11-24: BUILT and pushed to Google (commit `e22e777`); Lara tested, it worked:** "Quiz Check ›
   Detail for selected quiz" and "Clear check results…". Hidden tab **Quiz Check data**
   (A1 label `Quiz Check data:`; row 2 piece and quiz counts; from row 4: quiz ID, quiz
   name, upload piece with a "p" in front so a piece starting with "=" isn't a formula).
@@ -38,7 +40,11 @@ links on quiz names.
   reads it on their computer and sends only quiz, bank, and settings text plus file
   sizes (gzipped, ~1 MB for a 47-quiz course). Pictures never leave the computer.
 - Writes the **Quiz Check** tab (one row per quiz: red / orange / plain) and, per click,
-  the **Quiz Check detail** tab. Same layout, colors, and wording as Jupiter.
+  that quiz's own tab, **Detail – quiz name** (A1 `Quiz Check detail:`, B1 file, B2 quiz
+  ID; a quiz clicked again updates its tab, found by B2; a name taken by any tab gets
+  " (2)"; cut to 100 characters). Same layout, colors, and wording as Jupiter otherwise
+  (Jupiter keeps one "Quiz Check detail" tab). Clear deletes every tab whose A1 is one of
+  our labels, data tab first.
 - **No Canvas calls at all**: no token, no Setup panel, no User or Script Properties.
   The course export carries everything the check needs, including published state of
   quizzes, files, and folders (found 11/9; that's why the live API report was retired).

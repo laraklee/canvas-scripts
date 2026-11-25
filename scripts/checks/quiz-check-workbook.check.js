@@ -185,11 +185,27 @@ check('tab: rows, colors, frozen', [tab.cells['5,1'], tab.cells['6,2'], tab.cell
   ['Quiz A', 'No', 'picture worth shrinking (1)', '#f4cccc', '#fce5cd', [4, 1]]);
 
 const detail = c.receiveQuizCheckDetail({ fileName: 'made-up.imscc', gzip, quizId: 'gc' });
-const detailTab = workbook.tabs.find(t => t.name === 'Quiz Check detail');
-check('detail: ok, tab written and shown', [detail.ok, Boolean(detailTab), detailTab && detailTab.active, detailTab && detailTab.cells['1,1']],
-  [true, true, true, 'Quiz Check detail:']);
-check('detail: message', detail.message.startsWith('"Quiz C": 0 group(s) and 1 question(s)') &&
+const detailTab = workbook.tabs.find(t => t.name === 'Detail – Quiz C');
+check('detail: ok, quiz\'s own tab written and shown', [detail.ok, Boolean(detailTab), detailTab && detailTab.active,
+  detailTab && detailTab.cells['1,1'], detailTab && detailTab.cells['1,2'], detailTab && detailTab.cells['2,2']],
+[true, true, true, 'Quiz Check detail:', 'made-up.imscc', 'gc']);
+check('detail: message', detail.message.startsWith('"Quiz C": 0 group(s) and 1 question(s) on the "Detail – Quiz C" tab') &&
   detail.message.includes('1 row(s) have suggestions only (orange).'), true);
+const detailTabs = () => workbook.tabs.filter(t => t.name.startsWith('Detail – ')).map(t => t.name);
+c.receiveQuizCheckDetail({ fileName: 'made-up.imscc', gzip, quizId: 'gc' });
+check('detail: same quiz again updates its tab, no new tab', detailTabs(), ['Detail – Quiz C']);
+c.receiveQuizCheckDetail({ fileName: 'made-up.imscc', gzip, quizId: 'ga' });
+check('detail: another quiz gets its own tab', detailTabs(), ['Detail – Quiz C', 'Detail – Quiz A']);
+workbook.makeTab('Detail – Quiz B').cells['1,1'] = 'My notes';
+c.receiveQuizCheckDetail({ fileName: 'made-up.imscc', gzip, quizId: 'gb' });
+check('detail: a name taken by the teacher\'s tab gets " (2)"; theirs untouched',
+  [detailTabs(), workbook.tabs.find(t => t.name === 'Detail – Quiz B').cells],
+  [['Detail – Quiz C', 'Detail – Quiz A', 'Detail – Quiz B', 'Detail – Quiz B (2)'], { '1,1': 'My notes' }]);
+const longTitle = 'L'.repeat(150);
+const longName = c.quizCheckDetailSheet_(workbook.ss, { id: 'long1', title: longTitle }).getName();
+const longName2 = c.quizCheckDetailSheet_(workbook.ss, { id: 'long2', title: longTitle }).getName();
+check('detail: long names cut to 100 characters, " (2)" still fits',
+  [longName.length, longName2.length, longName2.endsWith('L (2)')], [100, 100, true]);
 check('detail: unknown quiz → clear message', c.receiveQuizCheckDetail({ fileName: 'x', gzip, quizId: 'nope' }).message,
   'That quiz isn\'t in this export. Run the check again and pick it from the new list.');
 check('bad upload → clear message, nothing written', [c.receiveCourseExport({ fileName: 'x', gzip: 'not gzip' }).message],
@@ -219,7 +235,7 @@ check(`saved: upload in ${pieceCount} pieces, each with "p" in front, rejoins ex
 const overviewTab = workbook.tabs.find(t => t.name === 'Quiz Check');
 overviewTab.activeRow = 7; // Quiz C
 c.showQuizCheckDetailForSelection();
-const menuDetail = workbook.tabs.find(t => t.name === 'Quiz Check detail');
+const menuDetail = workbook.tabs.find(t => t.name === 'Detail – Quiz C');
 check('menu detail: Quiz C written from the saved upload and shown',
   [lastAlert().startsWith('"Quiz C": 0 group(s) and 1 question(s)'), Boolean(menuDetail && menuDetail.active),
     menuDetail && menuDetail.cells['1,2']], [true, true, 'made-up.imscc']);
@@ -237,28 +253,39 @@ overviewTab.activeRow = 5;
 c.showQuizCheckDetailForSelection();
 check('menu detail after the tab changed → asks to check again', lastAlert().startsWith('The "Quiz Check" tab has changed'), true);
 
+overviewTab.sheet.activate();
+overviewTab.cells['5,1'] = 'Quiz A'; // put the row back
+overviewTab.activeRow = 5;
+c.showQuizCheckDetailForSelection();
+check('menu detail: a second quiz gets its own tab', detailTabs(), ['Detail – Quiz C', 'Detail – Quiz A']);
+workbook.makeTab('Detail – Quiz B').cells['1,1'] = 'My notes'; // the teacher's, same style of name
+
 ui.answer = 'NO';
 c.clearQuizCheckResults();
 check('clear: "No" leaves every tab', workbook.tabs.map(t => t.name).sort(),
-  ['Quiz Check', 'Quiz Check data', 'Quiz Check detail', 'Start here']);
+  ['Detail – Quiz A', 'Detail – Quiz B', 'Detail – Quiz C', 'Quiz Check', 'Quiz Check data', 'Start here']);
 ui.answer = 'YES';
 c.clearQuizCheckResults();
-check('clear: "Yes" deletes our three tabs, keeps the rest', [workbook.tabs.map(t => t.name), lastAlert()],
-  [['Start here'], 'Check results cleared.']);
+check('clear: "Yes" deletes all our tabs (every detail tab too), keeps the teacher\'s',
+  [workbook.tabs.map(t => t.name), lastAlert()], [['Start here', 'Detail – Quiz B'], 'Check results cleared (4 tab(s)).']);
 c.showQuizCheckDetailForSelection();
 check('menu detail after clearing → asks to go to the tab', askToClick(), true);
 workbook = makeWorkbook();
 workbook.makeTab('Quiz Check').cells['1,1'] = 'Quiz Check:';
+const hiddenData = workbook.makeTab('Quiz Check data');
+hiddenData.cells['1,1'] = 'Quiz Check data:';
+hiddenData.hidden = true;
 c.clearQuizCheckResults();
-check('clear: the workbook\'s only tab is emptied, not deleted',
-  [workbook.tabs.map(t => [t.name, Object.keys(t.cells).length]), lastAlert()], [[['Quiz Check', 0]], 'Check results cleared.']);
+check('clear: hidden data tab goes first; our last tab is emptied, not deleted',
+  [workbook.tabs.map(t => [t.name, Object.keys(t.cells).length]), lastAlert()],
+  [[['Quiz Check', 0]], 'Check results cleared (2 tab(s)).']);
 workbook = makeWorkbook();
 workbook.makeTab('Start here');
-workbook.makeTab('Quiz Check detail').cells['1,1'] = 'My notes';
+workbook.makeTab('Quiz Check detail').cells['1,1'] = 'Quiz Check detail:'; // from the first version
 c.clearQuizCheckResults();
-check('clear: someone else\'s tab is left alone',
-  [workbook.tabs.map(t => [t.name, Object.keys(t.cells).length]), lastAlert()],
-  [[['Start here', 0], ['Quiz Check detail', 1]],
-    'There were no check results to clear.\n\nLeft alone (used for something else): "Quiz Check detail".']);
+check('clear: the first version\'s single detail tab is cleared too',
+  [workbook.tabs.map(t => t.name), lastAlert()], [['Start here'], 'Check results cleared (1 tab(s)).']);
+c.clearQuizCheckResults();
+check('clear: nothing to clear says so', lastAlert(), 'There were no check results to clear.');
 
 process.exitCode = failures ? 1 : 0;

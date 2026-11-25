@@ -12,7 +12,8 @@
   receiveCourseExport. Pictures never leave the computer. Messages are shown as plain
   text (textContent), never as HTML. After the check, the panel lists the quizzes (same
   order and colors as the tab); clicking one sends the same packed text again with that
-  quiz's id to receiveQuizCheckDetail, which writes its detailed report.
+  quiz's id to receiveQuizCheckDetail, which writes its detailed report on that quiz's
+  own "Detail – quiz name" tab.
   Canvas endpoints: none. Write operations: none. Properties: none.
   An export holds course content only (quizzes, pages, files), no student data.
 -->
@@ -49,8 +50,8 @@
   </div>
   <div id="status" role="status" aria-live="polite"></div>
   <div id="details" hidden>
-    <p><b>Detailed report:</b> click a quiz. It goes on the <b>Quiz Check detail</b> tab,
-      which is replaced each time.</p>
+    <p><b>Detailed report:</b> click a quiz. It goes on its own tab, <b>Detail – </b>
+      <i>quiz name</i>; clicking the same quiz again updates that tab.</p>
     <div id="detailStatus" role="status" aria-live="polite"></div>
     <div id="quizList"></div>
   </div>

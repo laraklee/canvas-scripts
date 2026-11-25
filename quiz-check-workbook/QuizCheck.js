@@ -9,8 +9,8 @@
  *   are only suggestions (pictures "worth shrinking", 500 KB–1 MB), plain if fine; red
  *   first, then orange, then fine, A–Z within each. The tab is rewritten each run.
  *   Clicking a quiz in the panel sends the same upload again with that quiz's id to
- *   receiveQuizCheckDetail, which writes its detailed report on the "Quiz Check detail"
- *   tab, replaced each click.
+ *   receiveQuizCheckDetail, which writes its detailed report on that quiz's own tab,
+ *   "Detail – quiz name" (updated if the quiz is clicked again; Lara, 2026-11-24).
  *   Each check also saves the upload (already gzipped, base64) in pieces on the hidden
  *   "Quiz Check data" tab, with the quiz IDs in the overview's row order, so the menu's
  *   "Detail for selected quiz" can write a quiz's detail after the panel is closed
@@ -30,8 +30,12 @@
 const QUIZ_CHECK_TITLE = 'Quiz Check';
 const QUIZ_CHECK_TAB = 'Quiz Check';
 const QUIZ_CHECK_LABEL = 'Quiz Check:';
-const QUIZ_CHECK_DETAIL_TAB = 'Quiz Check detail';
+// Each quiz's detail gets its own tab, "Detail – quiz name" (Lara, 2026-11-24): A1 the
+// label below (how Clear finds them all), B1 the file, A2/B2 the quiz ID (how a quiz's
+// tab is found again, so clicking it again updates that tab).
+const QUIZ_CHECK_DETAIL_PREFIX = 'Detail – ';
 const QUIZ_CHECK_DETAIL_LABEL = 'Quiz Check detail:';
+const QUIZ_CHECK_TAB_NAME_MAX = 100; // Google's limit on a tab name
 // Hidden tab holding the last check's upload, for "Detail for selected quiz".
 const QUIZ_CHECK_DATA_TAB = 'Quiz Check data';
 const QUIZ_CHECK_DATA_LABEL = 'Quiz Check data:';
@@ -136,7 +140,7 @@ function receiveCourseExport(upload) {
 /**
  * Called from the panel (google.script.run) when a quiz in its list is clicked, with
  * { fileName, gzip, quizId }: the same upload as receiveCourseExport and the quiz's id.
- * Writes that quiz's detailed report on the "Quiz Check detail" tab and returns
+ * Writes that quiz's detailed report on its own "Detail – quiz name" tab and returns
  * { ok, message }; never throws to the panel.
  */
 function receiveQuizCheckDetail(upload) {
@@ -179,39 +183,32 @@ function showQuizCheckDetailForSelection() {
 }
 
 /**
- * Menu: Quiz Check › Clear check results…. After a yes, deletes this workbook's Quiz
- * Check, Quiz Check detail, and hidden Quiz Check data tabs (only ones whose A1 shows
- * they're ours), so a copy of the workbook doesn't carry the teacher's quiz text. If a
- * tab is the workbook's last one, it's emptied instead (a workbook needs one tab).
+ * Menu: Quiz Check › Clear check results…. After a yes, deletes every tab of ours (A1 is
+ * one of our labels: the Quiz Check tab, every quiz's detail tab, the hidden Quiz Check
+ * data tab), so a copy of the workbook doesn't carry the teacher's quiz text. Tabs of the
+ * teacher's are never touched, whatever their names. The data tab goes first (so a
+ * hidden tab is never the last one left); if one of ours is the workbook's last tab, it's
+ * emptied instead (a workbook needs one tab).
  */
 function clearQuizCheckResults() {
   const ui = SpreadsheetApp.getUi();
-  const answer = ui.alert('Clear check results', `This deletes the "${QUIZ_CHECK_TAB}" and ` +
-    `"${QUIZ_CHECK_DETAIL_TAB}" tabs and the saved copy of your quizzes, so a copy of this workbook ` +
-    'won\'t carry your quiz text. Nothing in Canvas changes, and you can check again any time.\n\n' +
-    'Clear them?', ui.ButtonSet.YES_NO);
+  const answer = ui.alert('Clear check results', `This deletes the "${QUIZ_CHECK_TAB}" tab, every ` +
+    `"${QUIZ_CHECK_DETAIL_PREFIX}…" tab, and the saved copy of your quizzes, so a copy of this workbook ` +
+    'won\'t carry your quiz text. Your other tabs stay. Nothing in Canvas changes, and you can check ' +
+    'again any time.\n\nClear them?', ui.ButtonSet.YES_NO);
   if (answer !== ui.Button.YES) return;
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const tabs = [[QUIZ_CHECK_DETAIL_TAB, QUIZ_CHECK_DETAIL_LABEL], [QUIZ_CHECK_DATA_TAB, QUIZ_CHECK_DATA_LABEL],
-      [QUIZ_CHECK_TAB, QUIZ_CHECK_LABEL]];
-    let cleared = 0;
-    const leftAlone = [];
-    tabs.forEach(([name, label]) => {
-      const sheet = ss.getSheetByName(name);
-      if (!sheet) return;
-      if (!quizCheckIsOurs_(sheet, label)) {
-        leftAlone.push(name);
-        return;
-      }
+    const labels = [QUIZ_CHECK_DATA_LABEL, QUIZ_CHECK_LABEL, QUIZ_CHECK_DETAIL_LABEL];
+    const ours = ss.getSheets().filter(sheet => labels.some(label => quizCheckIsOurs_(sheet, label)))
+      .sort((a, b) => Number(quizCheckIsOurs_(b, QUIZ_CHECK_DATA_LABEL)) - Number(quizCheckIsOurs_(a, QUIZ_CHECK_DATA_LABEL)));
+    ours.forEach(sheet => {
       if (ss.getSheets().length > 1) ss.deleteSheet(sheet);
       else sheet.clear();
-      cleared++;
     });
-    console.log(`${QUIZ_CHECK_TITLE}: cleared ${cleared} tab(s), left ${leftAlone.length} alone.`);
-    ui.alert('Clear check results', (cleared ? 'Check results cleared.' : 'There were no check results to clear.') +
-      (leftAlone.length ? `\n\nLeft alone (used for something else): ${leftAlone.map(n => `"${n}"`).join(', ')}.` : ''),
-    ui.ButtonSet.OK);
+    console.log(`${QUIZ_CHECK_TITLE}: cleared ${ours.length} tab(s).`);
+    ui.alert('Clear check results', ours.length ? `Check results cleared (${ours.length} tab(s)).` :
+      'There were no check results to clear.', ui.ButtonSet.OK);
   } catch (error) {
     const where = String(error.stack || '').split('\n')[1] || '';
     console.error(`${QUIZ_CHECK_TITLE}: clear failed: UNEXPECTED ${where.trim()}`);
@@ -221,7 +218,7 @@ function clearQuizCheckResults() {
 }
 
 /**
- * Writes one quiz's detailed report on the "Quiz Check detail" tab from an upload
+ * Writes one quiz's detailed report on its own tab (quizCheckDetailSheet_) from an upload
  * ({ fileName, gzip, quizId }) and returns the message to show. Throws on failure.
  */
 function quizCheckWriteDetail_(upload, started) {
@@ -229,9 +226,10 @@ function quizCheckWriteDetail_(upload, started) {
   const quiz = qtiReadExport_(files).quizzes.find(q => q.id === String(upload.quizId || ''));
   if (!quiz) throw sheetProblem_('That quiz isn\'t in this export. Run the check again and pick it from the new list.');
   const report = qtiQuizReport_(quiz, 1);
-  const sheet = quizCheckSheet_(SpreadsheetApp.getActiveSpreadsheet(), QUIZ_CHECK_DETAIL_TAB, QUIZ_CHECK_DETAIL_LABEL);
-  sheet.getRange(1, 1).setValue(QUIZ_CHECK_DETAIL_LABEL).setFontWeight('bold');
-  sheet.getRange(1, 2).setNumberFormat('@').setValue(quizCellText_(String(upload.fileName || '').slice(0, 200)));
+  const sheet = quizCheckDetailSheet_(SpreadsheetApp.getActiveSpreadsheet(), quiz);
+  sheet.getRange(1, 1, 2, 1).setValues([[QUIZ_CHECK_DETAIL_LABEL], ['Quiz ID']]).setFontWeight('bold');
+  sheet.getRange(1, 2, 2, 1).setNumberFormat('@')
+    .setValues([[quizCellText_(String(upload.fileName || '').slice(0, 200))], [String(quiz.id)]]);
   const headerRow = writeQuizReport_(sheet, report, new Date());
   const orange = quizCheckOrangeRows_(sheet, report, headerRow);
   sheet.activate();
@@ -243,6 +241,26 @@ function quizCheckWriteDetail_(upload, started) {
     `"${sheet.getName()}" tab.\n\nPoints: ${report.pointsMessage}\n\nPictures: ${report.picturesMessage}` +
     (shaded ? `\n\n${shaded} row(s) need fixing (red).` : '') +
     (orange ? `\n\n${orange} row(s) have suggestions only (orange).` : '');
+}
+
+/**
+ * The quiz's own detail tab: the one of ours (A1 label) whose B2 is this quiz's ID, else a
+ * new tab at the end named "Detail – quiz name" (cut to Google's 100-character limit),
+ * with " (2)", " (3)"… added if any tab (ours or the teacher's) already has that name.
+ */
+function quizCheckDetailSheet_(ss, quiz) {
+  const sheets = ss.getSheets();
+  const mine = sheets.find(sheet => quizCheckIsOurs_(sheet, QUIZ_CHECK_DETAIL_LABEL) &&
+    String(sheet.getRange(2, 2).getDisplayValue()) === String(quiz.id));
+  if (mine) return mine;
+  const taken = new Set(sheets.map(sheet => sheet.getName().toLowerCase()));
+  const base = (QUIZ_CHECK_DETAIL_PREFIX + String(quiz.title || 'Untitled quiz').replace(/[\u0000-\u001f]+/g, ' ')).trim();
+  let name = base.slice(0, QUIZ_CHECK_TAB_NAME_MAX);
+  for (let n = 2; taken.has(name.toLowerCase()); n++) {
+    const suffix = ` (${n})`;
+    name = base.slice(0, QUIZ_CHECK_TAB_NAME_MAX - suffix.length) + suffix;
+  }
+  return ss.insertSheet(name, sheets.length);
 }
 
 /** Logs a failed detail (kind and code line only) and returns the message to show. */
